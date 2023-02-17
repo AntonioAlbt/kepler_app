@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/drawer.dart';
+import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/about.dart';
+import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home.dart';
 import 'package:kepler_app/tabs/hourtable.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
+import 'package:kepler_app/tabs/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,55 +37,18 @@ class MyApp extends StatelessWidget {
 
 T? cast<T>(x) => x is T ? x : null;
 
-final lernSaxIcon = Image.asset("assets/lernsax_icon.png", height: 24, width: 24, color: const Color.fromARGB(255, 0, 0, 0));
+final lernSaxIcon = Image.asset("assets/lernsax_icon.png", height: 24, width: 24, color: const Color.fromARGB(255, 162, 162, 162));
 final lernSaxIconColorful = Image.asset("assets/lernsax_icon.png", height: 24, width: 24);
-
-final destinations = <Widget>[
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.home_outlined),
-    label: Text("Startseite"),
-    selectedIcon: Icon(Icons.home),
-  ),
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.school_outlined),
-    label: Text("Stundenplan"),
-    selectedIcon: Icon(Icons.school),
-  ),
-  NavigationDrawerDestination(
-    icon: lernSaxIcon,
-    label: const Text("LernSax"),
-    selectedIcon: lernSaxIconColorful,
-  ),
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.restaurant_outlined),
-    label: Text("Essensbestellung"),
-    selectedIcon: Icon(Icons.restaurant),
-  ),
-  const Divider(),
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.euro_outlined),
-    label: Text("FFJKG"),
-    selectedIcon: Icon(Icons.euro),
-  ),
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.settings_outlined),
-    label: Text("Einstellungen"),
-    selectedIcon: Icon(Icons.settings),
-  ),
-  const NavigationDrawerDestination(
-    icon: Icon(Icons.info_outlined),
-    label: Text("Über diese App"),
-    selectedIcon: Icon(Icons.info),
-  )
-];
 
 const tabs = [
   HomepageTab(),
+  NewsTab(),
   HourtableTab(),
   LernSaxTab(),
   MealOrderingTab(),
   FFJKGTab(),
   SettingsTab(),
+  FeedbackTab(),
   AboutTab()
 ];
 
@@ -91,58 +59,144 @@ class KeplerApp extends StatefulWidget {
   State<KeplerApp> createState() => _KeplerAppState();
 }
 
+final destinations = [
+  const NavEntryData(
+    icon: Icon(Icons.home_outlined),
+    label: Text("Startseite"),
+    selectedIcon: Icon(Icons.home),
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.newspaper_outlined),
+    label: Text("JKG News"),
+    selectedIcon: Icon(Icons.newspaper)
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.school_outlined),
+    label: Text("Vertretungsplan"),
+    selectedIcon: Icon(Icons.school),
+    children: [
+      NavEntryData(
+        icon: Icon(Icons.list_alt_outlined),
+        label: Text("Dein Vertretungsplan"),
+        selectedIcon: Icon(Icons.list_alt)
+      ),
+      NavEntryData(
+        icon: Icon(Icons.groups_outlined),
+        label: Text("Klassenplan"),
+        selectedIcon: Icon(Icons.groups)
+      ),
+      NavEntryData(
+        icon: Icon(Icons.door_back_door_outlined),
+        label: Text("Freie Zimmer"),
+        selectedIcon: Icon(Icons.door_back_door)
+      )
+    ]
+  ),
+  NavEntryData(
+    icon: lernSaxIcon,
+    label: const Text("LernSax"),
+    selectedIcon: lernSaxIconColorful,
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.restaurant_outlined),
+    label: Text("Essensbestellung"),
+    selectedIcon: Icon(Icons.restaurant),
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.euro_outlined),
+    label: Text("FFJKG"),
+    selectedIcon: Icon(Icons.euro),
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.settings_outlined),
+    label: Text("Einstellungen"),
+    selectedIcon: Icon(Icons.settings),
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.message_outlined),
+    label: Text("Feedback & Kontakt"),
+    selectedIcon: Icon(Icons.message),
+  ),
+  const NavEntryData(
+    icon: Icon(Icons.info_outlined),
+    label: Text("Über diese App"),
+    selectedIcon: Icon(Icons.info),
+  )
+];
+
 class _KeplerAppState extends State<KeplerApp> {
-  int _index = 0;
+  /// String to make sub-selections possible (scheme: <code>lvl1.lvl2.lvl3...</code>)<br>
+  /// example values: <code>"1", "4", "2.1", "5.2.3", "3.0"</code>
+  String _index = "0"; // 
+
+  List<int> indices() => _index.split(".").map((e) => int.parse(e)).toList();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text((_index == 0) ? "Kepler-App" : cast<Text>(cast<NavigationDrawerDestination>(destinations[(_index > 3) ? _index + 1 : _index])?.label)?.data ?? "Kepler-App"),
-        scrolledUnderElevation: 5,
-        elevation: 5,
+    final mainIndex = indices().first;
+    return ChangeNotifierProvider(
+      create: (context) => AppState(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text((_index == "0") ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[mainIndex])?.label)?.data ?? "Kepler-App"),
+          scrolledUnderElevation: 5,
+          elevation: 5,
+        ),
+        drawer: Consumer<AppState>(
+          builder: (context, state, w) {
+            return TheDrawer(
+              selectedIndex: _index,
+              onDestinationSelected: (val) {
+                setState(() => _index = val);
+                state.setNavIndex(val);
+              },
+              entries: destinations,
+              dividers: const [5],
+            );
+          }
+        ),
+        body: tabs[mainIndex],
+        // drawer: NavigationDrawer(
+        //   selectedIndex: _index,
+        //   onDestinationSelected: (val) {
+        //     setState(() => _index = val);
+        //     Navigator.pop(context);
+        //   },
+        //   children: [
+        //     Padding(
+        //       padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
+        //       child: Column(
+        //         children: [
+        //           const Icon(Icons.filter_outlined, size: 104),
+        //           Text("Kepler-App", style: Theme.of(context).textTheme.titleLarge)
+        //         ],
+        //       ),
+        //     ),
+        //     ...destinations
+        //   ],
+        // ),
+        // drawer: Drawer(
+        //   child: ListView(
+        //     padding: EdgeInsets.zero,
+        //     children: [
+        //       const DrawerHeader(
+        //         decoration: BoxDecoration(
+        //           color: Colors.blue,
+        //         ),
+        //         child: Text('Kepler-App'),
+        //       ),
+        //       ListTile(
+        //         leading: const Icon(Icons.home),
+        //         title: const Text("Startseite"),
+        //         onTap: () {
+        //           _index = 0;
+        //           Navigator.pop(context);
+        //         },
+        //       )
+        //     ],
+        //   ),
+        // ),
       ),
-      drawer: NavigationDrawer(
-        selectedIndex: _index,
-        onDestinationSelected: (val) {
-          setState(() => _index = val);
-          Navigator.pop(context);
-        },
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            child: Column(
-              children: [
-                const Icon(Icons.filter_outlined, size: 104),
-                Text("Kepler-App", style: Theme.of(context).textTheme.titleLarge)
-              ],
-            ),
-          ),
-          ...destinations
-        ],
-      ),
-      body: tabs[_index],
-      // drawer: Drawer(
-      //   child: ListView(
-      //     padding: EdgeInsets.zero,
-      //     children: [
-      //       const DrawerHeader(
-      //         decoration: BoxDecoration(
-      //           color: Colors.blue,
-      //         ),
-      //         child: Text('Kepler-App'),
-      //       ),
-      //       ListTile(
-      //         leading: const Icon(Icons.home),
-      //         title: const Text("Startseite"),
-      //         onTap: () {
-      //           _index = 0;
-      //           Navigator.pop(context);
-      //         },
-      //       )
-      //     ],
-      //   ),
-      // ),
     );
   }
 }
