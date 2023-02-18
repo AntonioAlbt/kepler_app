@@ -67,7 +67,7 @@ final destinations = [
   ),
   const NavEntryData(
     icon: Icon(Icons.newspaper_outlined),
-    label: Text("JKG News"),
+    label: Text("Kepler-News"),
     selectedIcon: Icon(Icons.newspaper)
   ),
   const NavEntryData(
@@ -84,6 +84,11 @@ final destinations = [
         icon: Icon(Icons.groups_outlined),
         label: Text("Klassenplan"),
         selectedIcon: Icon(Icons.groups)
+      ),
+      NavEntryData(
+        icon: Icon(Icons.list_outlined),
+        label: Text("Alle Vertretungen"),
+        selectedIcon: Icon(Icons.list)
       ),
       NavEntryData(
         icon: Icon(Icons.door_back_door_outlined),
@@ -103,9 +108,9 @@ final destinations = [
     selectedIcon: Icon(Icons.restaurant),
   ),
   const NavEntryData(
-    icon: Icon(Icons.euro_outlined),
-    label: Text("FFJKG"),
-    selectedIcon: Icon(Icons.euro),
+    icon: Icon(Icons.diversity_1_outlined),
+    label: Text("Förderverein (FFJKG)"),
+    selectedIcon: Icon(Icons.diversity_1),
   ),
   const NavEntryData(
     icon: Icon(Icons.settings_outlined),

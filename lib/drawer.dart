@@ -39,62 +39,68 @@ class _NavEntryState extends State<NavEntry> {
     final color = (widget.parentOfSelected) ? HSLColor.fromColor(keplerColorBlue).withLightness(1/3).toColor() : keplerColorBlue;
     return Padding(
       padding: (widget.layer == 0) ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5) : const EdgeInsets.only(top: 6),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: ((widget.selected || widget.parentOfSelected) ? Colors.blue.shade900 : Colors.grey).withAlpha(40)
-              ),
-              borderRadius: const BorderRadius.all(Radius.circular(16))
-            ),
-            child: ListTile(
-              leading: (widget.selected || widget.parentOfSelected) ? widget.selectedIcon ?? widget.icon : widget.icon,
-              trailing: widget.isParent ? Transform.translate(
-                offset: const Offset(7.5, 0),
-                child: IconButton(
-                  onPressed: () => setState(() {
-                    expanded = !expanded;
-                  }),
-                  icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+      child: AnimatedSize(
+        alignment: Alignment.topCenter,
+        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 200),
+        reverseDuration: const Duration(milliseconds: 100),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: ((widget.selected || widget.parentOfSelected) ? Colors.blue.shade900 : Colors.grey).withAlpha(40)
                 ),
-              ) : null,
-              title: Transform.translate(
-                offset: const Offset(-7.5, 0),
-                child: DefaultTextStyle.merge(
-                  style: TextStyle(
-                    fontWeight: (widget.selected) ? FontWeight.bold : null,
-                    fontSize: 16
+                borderRadius: const BorderRadius.all(Radius.circular(16))
+              ),
+              child: ListTile(
+                leading: (widget.selected || widget.parentOfSelected) ? widget.selectedIcon ?? widget.icon : widget.icon,
+                trailing: widget.isParent ? Transform.translate(
+                  offset: const Offset(7.5, 0),
+                  child: IconButton(
+                    onPressed: () => setState(() {
+                      expanded = !expanded;
+                    }),
+                    icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
                   ),
-                  child: widget.label
+                ) : null,
+                title: Transform.translate(
+                  offset: const Offset(-7.5, 0),
+                  child: DefaultTextStyle.merge(
+                    style: TextStyle(
+                      fontWeight: (widget.selected) ? FontWeight.bold : null,
+                      fontSize: 16
+                    ),
+                    child: widget.label
+                  ),
+                ),
+                selected: widget.selected || widget.parentOfSelected,
+                selectedColor: color,
+                onTap: () {
+                  setState(() {
+                    expanded = true;
+                  });
+                  widget.onSelect();
+                },
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                selectedTileColor: (widget.parentOfSelected) ? color.withAlpha(10) : color.withAlpha(40),
+                // tileColor: Theme.of(context).highlightColor.withAlpha(20),
+                visualDensity: const VisualDensity(
+                  vertical: -.5,
+                  horizontal: -4
                 ),
               ),
-              selected: widget.selected || widget.parentOfSelected,
-              selectedColor: color,
-              onTap: () {
-                setState(() {
-                  expanded = true;
-                });
-                widget.onSelect();
-              },
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-              ),
-              selectedTileColor: (widget.parentOfSelected) ? color.withAlpha(10) : color.withAlpha(40),
-              // tileColor: Theme.of(context).highlightColor.withAlpha(20),
-              visualDensity: const VisualDensity(
-                vertical: -.5,
-                horizontal: -4
+            ),
+            if (widget.isParent && expanded) Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Column(
+                children: widget.children!,
               ),
             ),
-          ),
-          if (widget.isParent && expanded) Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Column(
-              children: widget.children!,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
