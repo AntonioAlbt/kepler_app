@@ -32,7 +32,7 @@ class NavEntry extends StatefulWidget {
 }
 
 class _NavEntryState extends State<NavEntry> {
-  late bool expanded = widget.parentOfSelected;
+  late bool expanded = widget.parentOfSelected || widget.selected;
 
   @override
   Widget build(BuildContext context) {

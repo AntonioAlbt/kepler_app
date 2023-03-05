@@ -132,7 +132,7 @@ final destinations = [
 class _KeplerAppState extends State<KeplerApp> {
   /// String to make sub-selections possible (scheme: <code>lvl1.lvl2.lvl3...</code>)<br>
   /// example values: <code>"1", "4", "2.1", "5.2.3", "3.0"</code>
-  String _index = "0"; // 
+  String _index = "0";
 
   List<int> indices() => _index.split(".").map((e) => int.parse(e)).toList();
 
