@@ -1,23 +1,45 @@
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/tabs/news.dart';
 
 final credentialStore = CredentialStore();
+final newsCache = NewsCache();
 
-class CredentialStore {
+class CredentialStore extends SerializableObject {
   final _serializer = Serializer();
-  final _store = _CredentialStore();
   bool loaded = false;
 
-  String serialize() => _serializer.serialize(_store);
+  String get lernSaxToken => attributes["lern_sax_token"];
+  set lernSaxToken(String token) => attributes["lern_sax_token"] = token;
+
+  String serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
-    _serializer.deserialize(json, _store);
+    _serializer.deserialize(json, this);
     loaded = true;
   }
 }
-class _CredentialStore extends SerializableObject {
-  String get lernSaxToken => attributes["lern_sax_token"];
-  set lernSaxToken(String token) => attributes["lern_sax_token"] = token;
+
+class NewsCache extends SerializableObject {
+  NewsCache() {
+    objectCreators["news_data"] = (map) => <NewsEntryData>[];
+  }
+
+  final _serializer = Serializer();
+  bool loaded = false;
+
+  List<NewsEntryData> get newsData => attributes["news_data"];
+  set newsData(List<NewsEntryData> val) => attributes["news_data"] = val;
+
+  String serialize() => _serializer.serialize(this);
+  void loadFromJson(String json) {
+    _serializer.deserialize(json, this);
+    loaded = true;
+  }
+
+  NewsEntryData? getCachedNewsData(String link) {
+     return newsData.firstWhere((element) => element.link == link);
+  }
 }
 
 class AppState extends ChangeNotifier {

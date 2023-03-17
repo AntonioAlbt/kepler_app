@@ -43,6 +43,9 @@ dependencies:
   http: ^0.13.5
   intl: ^0.17.0
 
+  # libs for background tasks
+  workmanager: ^0.5.1
+
   # libs for settings / prefs
   shared_preferences: ^2.0.17
   enough_serialization: ^1.4.0

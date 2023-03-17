@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
@@ -12,8 +13,31 @@ import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
+import 'dart:developer' as dev;
+
+@pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) {
+    if (task == newsFetchTaskName) {
+      dev.log("fetching news...");
+    }
+    return Future.value(true);
+  });
+}
+
+const newsFetchTaskName = "fetch_news";
 
 void main() {
+  Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: kDebugMode
+  );
+  Workmanager().registerPeriodicTask(
+    newsFetchTaskName, newsFetchTaskName,
+    frequency: const Duration(hours: 2),
+    backoffPolicy: BackoffPolicy.linear
+  );
   runApp(const MyApp());
 }
 

@@ -1,6 +1,7 @@
 import 'dart:developer' as dev;
 import 'dart:math';
 
+import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:dart_rss/dart_rss.dart';
 import 'package:html_unescape/html_unescape.dart';
@@ -26,17 +27,29 @@ class NewsTab extends StatefulWidget {
   State<NewsTab> createState() => _NewsTabState();
 }
 
-class NewsEntry extends StatelessWidget {
-  final String title;
-  final String summary;
-  final String link;
-  final Image? previewImage;
-  final DateTime createdDate;
-  late final Color color;
-  final String? writer;
+class NewsEntryData extends SerializableObject {
+  String get title => attributes["title"];
+  set title(String val) => attributes["title"] = val;
 
-  NewsEntry({super.key, required this.title, required this.summary, required this.link, required this.createdDate, this.writer, this.previewImage}) {
-    final random = Random(link.hashCode);
+  String get summary => attributes["summary"];
+  set summary(String val) => attributes["summary"] = val;
+
+  String get link => attributes["link"];
+  set link(String val) => attributes["link"] = val;
+
+  DateTime get createdDate => DateTime.parse(attributes["created"]);
+  set createdDate(DateTime val) => attributes["created"] = val.toIso8601String();
+
+  String? get writer => attributes["writer"];
+  set writer(String? val) => attributes["writer"] = val;
+}
+
+class NewsEntry extends StatelessWidget with SerializableObject {
+  final NewsEntryData data;
+  late final Color color;
+
+  NewsEntry({super.key, required this.data}) {
+    final random = Random(data.link.hashCode);
     color = HSLColor.fromAHSL(1, random.nextDouble() * 360, random.nextDouble(), 0.9).toColor();
   }
 
@@ -47,7 +60,6 @@ class NewsEntry extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: ListTile(
-          trailing: previewImage,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -55,11 +67,11 @@ class NewsEntry extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: DateFormat.yMMMMd().format(createdDate),
+                      text: DateFormat.yMMMMd().format(data.createdDate),
                       style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
                     ),
                     TextSpan(
-                      text: "  -  von $writer",
+                      text: "  -  verfasst von ${data.writer}",
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600
@@ -69,12 +81,12 @@ class NewsEntry extends StatelessWidget {
                 ),
               ),
               Text(
-                HtmlUnescape().convert(title),
+                HtmlUnescape().convert(data.title),
               ),
             ],
           ),
           subtitle: Text(
-            HtmlUnescape().convert(summary.stripHtmlIfNeeded()),
+            HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
             textAlign: TextAlign.justify,
@@ -84,8 +96,8 @@ class NewsEntry extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => NewsView(
-                  newsLink: Uri.parse(link),
-                  newsTitle: title,
+                  newsLink: Uri.parse(data.link),
+                  newsTitle: data.title,
                 ),
               ),
             );
@@ -226,11 +238,12 @@ class _NewsTabState extends State<NewsTab> {
     final feed = AtomFeed.parse(res.body);
     for (var e in feed.items) {
       final entry = NewsEntry(
-        title: e.title ?? "???",
-        createdDate: (e.published != null) ? DateTime.parse(e.published!) : DateTime(2023),
-        link: ((e.links.isNotEmpty) ? e.links.first.href : e.id) ?? "https://kepler-chemnitz.de",
-        summary: e.summary ?? "...",
-        writer: (e.authors.isNotEmpty) ? e.authors.first.name : null,
+        data: NewsEntryData()
+          ..title = e.title ?? "???"
+          ..createdDate = ((e.published != null) ? DateTime.parse(e.published!) : DateTime(2023))
+          ..link = ((e.links.isNotEmpty) ? e.links.first.href : e.id) ?? "https://kepler-chemnitz.de"
+          ..summary = e.summary ?? "..."
+          ..writer = (e.authors.isNotEmpty) ? e.authors.first.name : null
       );
       newNews.add(
         entry
@@ -238,7 +251,7 @@ class _NewsTabState extends State<NewsTab> {
     }
     lastNewsPage++;
     setState(() {
-      if (loadedNews.any((element1) => newNews.any((element2) => element1.title == element2.title))) dev.log("loaded news which is alr existing.... :(");
+      if (loadedNews.any((element1) => newNews.any((element2) => element1.data.title == element2.data.title))) dev.log("loaded news which is alr existing.... :(");
       loadedNews.addAll(newNews);
       loading = false;
     });
