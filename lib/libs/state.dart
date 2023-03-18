@@ -1,10 +1,16 @@
+import 'dart:convert';
+
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:kepler_app/tabs/news.dart';
+import 'package:kepler_app/main.dart';
+import 'package:kepler_app/tabs/news/news_data.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-final credentialStore = CredentialStore();
-final newsCache = NewsCache();
+final credentialStore = CredentialStore()
+  ..lernSaxToken = "";
+final newsCache = NewsCache()
+  ..newsData = [];
 
 class CredentialStore extends SerializableObject {
   final _serializer = Serializer();
@@ -20,18 +26,30 @@ class CredentialStore extends SerializableObject {
   }
 }
 
-class NewsCache extends SerializableObject {
+class NewsCache extends SerializableObject with ChangeNotifier {
   NewsCache() {
     objectCreators["news_data"] = (map) => <NewsEntryData>[];
+    objectCreators["news_data.value"] = (val) {
+      final obj = NewsEntryData();
+      _serializer.deserialize(jsonEncode(val), obj);
+      return obj;
+    };
   }
 
   final _serializer = Serializer();
   bool loaded = false;
+  save() async {
+    (await SharedPreferences.getInstance()).setString(newsCachePrefKey, _serialize());
+  }
 
   List<NewsEntryData> get newsData => attributes["news_data"];
-  set newsData(List<NewsEntryData> val) => attributes["news_data"] = val;
+  set newsData(List<NewsEntryData> val) {
+    attributes["news_data"] = val;
+    notifyListeners();
+    save();
+  }
 
-  String serialize() => _serializer.serialize(this);
+  String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
     _serializer.deserialize(json, this);
     loaded = true;
@@ -39,6 +57,12 @@ class NewsCache extends SerializableObject {
 
   NewsEntryData? getCachedNewsData(String link) {
      return newsData.firstWhere((element) => element.link == link);
+  }
+
+  void addNewsData(List<NewsEntryData> data) {
+    final oldData = newsData;
+    oldData.addAll(data);
+    newsData = oldData;
   }
 }
 

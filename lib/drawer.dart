@@ -76,6 +76,7 @@ class _NavEntryState extends State<NavEntry> {
                 ),
                 selected: widget.selected || widget.parentOfSelected,
                 selectedColor: color,
+                splashColor: (widget.selected || widget.parentOfSelected) ? color.withOpacity(0.5) : null,
                 onTap: () {
                   setState(() {
                     expanded = true;
