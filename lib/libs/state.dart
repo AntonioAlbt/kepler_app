@@ -68,7 +68,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
 
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
-  List<int> selectedNavigationIndex = [];
+  List<int> selectedNavigationIndex = [0];
 
   void setNavIndex(String newNavIndex) {
     selectedNavigationIndex = newNavIndex.split(".").map((e) => int.parse(e)).toList();
