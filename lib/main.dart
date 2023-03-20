@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -19,11 +18,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
-const newsCachePrefKey = "";
-const credStorePrefKey = "";
-const securePrefs = FlutterSecureStorage(
-  aOptions: AndroidOptions(encryptedSharedPreferences: true)
-);
 Future<void> prepare() async {
   final prefs = await SharedPreferences.getInstance();
   if (prefs.containsKey(newsCachePrefKey)) newsCache.loadFromJson(prefs.getString(newsCachePrefKey)!);

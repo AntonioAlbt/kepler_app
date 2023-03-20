@@ -3,23 +3,39 @@ import 'dart:convert';
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+
+const newsCachePrefKey = "news_cache";
+const credStorePrefKey = "cred_store";
+const securePrefs = FlutterSecureStorage(
+  aOptions: AndroidOptions(encryptedSharedPreferences: true),
+);
+
 
 final credentialStore = CredentialStore()
   ..lernSaxToken = "";
 final newsCache = NewsCache()
   ..newsData = [];
 
-class CredentialStore extends SerializableObject {
+class CredentialStore extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
   bool loaded = false;
+  save() async {
+    await securePrefs.write(key: credStorePrefKey, value: _serialize());
+  }
 
   String get lernSaxToken => attributes["lern_sax_token"];
-  set lernSaxToken(String token) => attributes["lern_sax_token"] = token;
+  set lernSaxToken(String token) {
+    attributes["lern_sax_token"] = token;
+    notifyListeners();
+    save();
+  }
 
-  String serialize() => _serializer.serialize(this);
+  String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
     _serializer.deserialize(json, this);
     loaded = true;
