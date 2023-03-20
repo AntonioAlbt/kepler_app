@@ -8,7 +8,7 @@ import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
-import 'package:kepler_app/tabs/home.dart';
+import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';

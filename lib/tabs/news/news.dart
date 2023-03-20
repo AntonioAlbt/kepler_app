@@ -24,70 +24,6 @@ class NewsTab extends StatefulWidget {
   State<NewsTab> createState() => _NewsTabState();
 }
 
-class NewsEntry extends StatelessWidget with SerializableObject {
-  final NewsEntryData data;
-  late final Color color;
-
-  NewsEntry({super.key, required this.data}) {
-    final random = Random(data.link.hashCode);
-    color = HSLColor.fromAHSL(1, random.nextDouble() * 360, random.nextDouble(), 0.9).toColor();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: color,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: ListTile(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: DateFormat.yMMMMd().format(data.createdDate),
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
-                    ),
-                    TextSpan(
-                      text: "  -  verfasst von ${data.writer}",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade600
-                      ),
-                    )
-                  ]
-                ),
-              ),
-              Text(
-                HtmlUnescape().convert(data.title),
-              ),
-            ],
-          ),
-          subtitle: Text(
-            HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-            textAlign: TextAlign.justify,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => NewsView(
-                  newsLink: Uri.parse(data.link),
-                  newsTitle: data.title,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
 class _NewsTabState extends State<NewsTab> {
   double opacity = 0;
   int lastNewsPage = 0;
@@ -96,6 +32,15 @@ class _NewsTabState extends State<NewsTab> {
 
   late final AutoScrollController controller;
 
+  Future _resetNews() {
+    newsCache.newsData.clear();
+    setState(() {
+      noMoreNews = false;
+      lastNewsPage = 0;
+    });
+    return _loadMoreNews();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -103,67 +48,30 @@ class _NewsTabState extends State<NewsTab> {
       builder: (context, _) {
         final loadedNews = newsCache.newsData.map((d) => NewsEntry(data: d)).toList();
         return Scaffold(
-          body: (loadedNews.isEmpty) ?
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 14),
-                    child: CircularProgressIndicator(),
-                  ),
-                  Text("News werden geladen...")
-                ],
-              ),
-            )
-            :
-            LazyLoadScrollView(
-              onEndOfPage: () => _loadMoreNews(),
-              child: Scrollbar(
-                controller: controller,
-                radius: const Radius.circular(4),
-                thickness: 4.75,
+          body: LazyLoadScrollView(
+            onEndOfPage: () => _loadMoreNews(),
+            child: Scrollbar(
+              controller: controller,
+              radius: const Radius.circular(4),
+              thickness: 4.75,
+              child: RefreshIndicator(
+                onRefresh: () async { _resetNews(); },
                 child: ListView.builder(
                   itemCount: loadedNews.length + 2,
                   itemBuilder: (context, index) {
                     if (index == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 8, right: 8),
-                        child: ListTile(
-                          title: Transform.translate(
-                            offset: const Offset(0, 5),
-                            child: Column(
-                              children: [
-                                const Text(
-                                  "Tippe auf die Nachrichten, um sie anzusehen.",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 14
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    newsCache.newsData.clear();
-                                    setState(() {
-                                      noMoreNews = false;
-                                      lastNewsPage = 0;
-                                    });
-                                    _loadMoreNews();
-                                  },
-                                  child: Text(
-                                    "News neu laden",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue.shade700,
-                                    ),
-                                  ),
-                                )
-                              ],
+                      return ListTile(
+                        title: Transform.translate(
+                          offset: const Offset(0, 5),
+                          child: const Text(
+                            "Tippe auf die Nachrichten, um sie anzusehen.",
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 15
                             ),
                           ),
                         ),
+                        visualDensity: const VisualDensity(vertical: -4),
                       );
                     }
                     if (index == loadedNews.length + 1) {
@@ -172,11 +80,11 @@ class _NewsTabState extends State<NewsTab> {
                           title: Text("Keine weiteren News."),
                         );
                       }
-                      return const Padding(
-                        padding: EdgeInsets.all(8.0),
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
                         child: ListTile(
-                          leading: CircularProgressIndicator(),
-                          title: Text("Lädt mehr News..."),
+                          leading: const CircularProgressIndicator(),
+                          title: Text("Lädt${(loadedNews.isNotEmpty) ? " mehr" : ""} News..."),
                         ),
                       );
                     }
@@ -194,6 +102,7 @@ class _NewsTabState extends State<NewsTab> {
                 ),
               ),
             ),
+          ),
           floatingActionButton: AnimatedOpacity(
             opacity: opacity,
             duration: const Duration(milliseconds: 100),
@@ -256,5 +165,69 @@ class _NewsTabState extends State<NewsTab> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+}
+
+class NewsEntry extends StatelessWidget with SerializableObject {
+  final NewsEntryData data;
+  late final Color color;
+
+  NewsEntry({super.key, required this.data}) {
+    final random = Random(data.link.hashCode);
+    color = HSLColor.fromAHSL(1, random.nextDouble() * 360, random.nextDouble(), 0.9).toColor();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: color,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: ListTile(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: DateFormat.yMMMMd().format(data.createdDate),
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    ),
+                    TextSpan(
+                      text: "  -  verfasst von ${data.writer}",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade600
+                      ),
+                    )
+                  ]
+                ),
+              ),
+              Text(
+                HtmlUnescape().convert(data.title),
+              ),
+            ],
+          ),
+          subtitle: Text(
+            HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
+            textAlign: TextAlign.justify,
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NewsView(
+                  newsLink: Uri.parse(data.link),
+                  newsTitle: data.title,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
