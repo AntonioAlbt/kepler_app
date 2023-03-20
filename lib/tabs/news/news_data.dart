@@ -5,6 +5,10 @@ import 'package:http/http.dart' as http;
 const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 
 class NewsEntryData extends SerializableObject {
+  NewsEntryData() {
+    objectCreators["categories"] = (_) => <String>[];
+  }
+
   String get title => attributes["title"];
   set title(String val) => attributes["title"] = val;
 
@@ -20,6 +24,9 @@ class NewsEntryData extends SerializableObject {
 
   String? get writer => attributes["writer"];
   set writer(String? val) => attributes["writer"] = val;
+
+  List<String>? get categories => attributes["categories"];
+  set categories(List<String>? val) => attributes["categories"] = val;
 }
 
 Future<List<NewsEntryData>?> loadNews(int page) async {
@@ -35,7 +42,8 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
       ..createdDate = ((e.published != null) ? DateTime.parse(e.published!) : DateTime(2023))
       ..link = ((e.links.isNotEmpty) ? e.links.first.href : e.id) ?? "https://kepler-chemnitz.de"
       ..summary = e.summary ?? "..."
-      ..writer = (e.authors.isNotEmpty) ? e.authors.first.name : null;
+      ..writer = (e.authors.isNotEmpty) ? e.authors.first.name : null
+      ..categories = (e.categories.isNotEmpty) ? e.categories.map((e) => e.term ?? "?").toList() : null;
     newNewsData.add(
       data
     );

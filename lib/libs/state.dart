@@ -4,7 +4,6 @@ import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

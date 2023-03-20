@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 
@@ -155,7 +156,7 @@ class _NewsTabState extends State<NewsTab> {
   void initState() {
     controller = AutoScrollController();
     super.initState();
-    _loadMoreNews();
+    if (!newsCache.loaded || newsCache.newsData.isEmpty) _loadMoreNews();
     controller.addListener(() {
       setState(() => opacity = (controller.hasClients && controller.offset >= 300) ? 1 : 0);
     }); // update opacity depending on scroll position
@@ -190,12 +191,65 @@ class NewsEntry extends StatelessWidget with SerializableObject {
               RichText(
                 text: TextSpan(
                   children: [
-                    TextSpan(
-                      text: DateFormat.yMMMMd().format(data.createdDate),
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    WidgetSpan(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 3),
+                        child: Transform.translate(
+                          offset: const Offset(0, -2),
+                          child: Icon(MdiIcons.calendar,
+                              size: 12, color: Colors.grey.shade700),
+                        ),
+                      ),
                     ),
                     TextSpan(
-                      text: "  -  verfasst von ${data.writer}",
+                      text: DateFormat.yMMMMd().format(data.createdDate),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                HtmlUnescape().convert(data.title),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: DefaultTextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium!,
+                  child: Text(
+                    HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    WidgetSpan(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 3),
+                        child: Transform.translate(
+                          offset: const Offset(0, -2),
+                          child: Icon(MdiIcons.formatListText,
+                              size: 12, color: Colors.grey.shade700),
+                        ),
+                      ),
+                    ),
+                    TextSpan(
+                      text: data.categories?.join(", ") ?? "Keine",
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                    ),
+                    const WidgetSpan(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 4, right: 1),
+                        child: Icon(MdiIcons.accountEdit, size: 14),
+                      )
+                    ),
+                    TextSpan(
+                      text: "${data.writer}",
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600
@@ -204,16 +258,7 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                   ]
                 ),
               ),
-              Text(
-                HtmlUnescape().convert(data.title),
-              ),
             ],
-          ),
-          subtitle: Text(
-            HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 3,
-            textAlign: TextAlign.justify,
           ),
           onTap: () {
             Navigator.push(

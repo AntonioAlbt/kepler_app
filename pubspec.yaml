@@ -43,6 +43,9 @@ dependencies:
   http: ^0.13.5
   intl: ^0.17.0
 
+  # icon lib
+  material_design_icons_flutter: ^6.0.7096
+
   # libs for background tasks
   workmanager: ^0.5.1
 
