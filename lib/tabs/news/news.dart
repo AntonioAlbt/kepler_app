@@ -8,7 +8,6 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 
 extension StringExtension on String {
@@ -31,7 +30,7 @@ class _NewsTabState extends State<NewsTab> {
   bool noMoreNews = false;
   bool loading = false;
 
-  late final AutoScrollController controller;
+  late final ScrollController controller;
 
   Future _resetNews() {
     newsCache.newsData.clear();
@@ -89,14 +88,9 @@ class _NewsTabState extends State<NewsTab> {
                         ),
                       );
                     }
-                    return AutoScrollTag(
-                      key: ValueKey(index),
-                      index: index,
-                      controller: controller,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: loadedNews[index - 1],
-                      ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: loadedNews[index - 1],
                     );
                   },
                   controller: controller,
@@ -108,7 +102,7 @@ class _NewsTabState extends State<NewsTab> {
             opacity: opacity,
             duration: const Duration(milliseconds: 100),
             child: FloatingActionButton(
-              onPressed: () => controller.scrollToIndex(0),
+              onPressed: () => controller.animateTo(1, duration: const Duration(milliseconds: 1000), curve: Curves.decelerate),
               child: const Icon(Icons.arrow_upward),
             )
           ),
@@ -154,11 +148,11 @@ class _NewsTabState extends State<NewsTab> {
 
   @override
   void initState() {
-    controller = AutoScrollController();
     super.initState();
+    controller = ScrollController();
     if (!newsCache.loaded || newsCache.newsData.isEmpty) _loadMoreNews();
     controller.addListener(() {
-      setState(() => opacity = (controller.hasClients && controller.offset >= 300) ? 1 : 0);
+      setState(() => opacity = (controller.hasClients && controller.offset >= 600) ? 1 : 0);
     }); // update opacity depending on scroll position
   }
 
