@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
@@ -38,8 +40,9 @@ void main() {
       isInDebugMode: kDebugMode
     );
     Workmanager().registerPeriodicTask(
-      newsFetchTaskName, newsFetchTaskName,
-      frequency: const Duration(hours: 2)
+      (Platform.isIOS) ? Workmanager.iOSBackgroundTask : newsFetchTaskName, newsFetchTaskName,
+      frequency: const Duration(hours: 2),
+      existingWorkPolicy: ExistingWorkPolicy.keep
     );
     runApp(const MyApp());
   });
@@ -98,32 +101,38 @@ final destinations = [
     label: Text("Kepler-News"),
     selectedIcon: Icon(Icons.newspaper)
   ),
-  const NavEntryData(
-    icon: Icon(Icons.school_outlined),
-    label: Text("Vertretungsplan"),
-    selectedIcon: Icon(Icons.school),
+  NavEntryData(
+    icon: const Icon(Icons.school_outlined),
+    label: const Text("Vertretungsplan"),
+    selectedIcon: const Icon(Icons.school),
     children: [
-      NavEntryData(
+      const NavEntryData(
         icon: Icon(Icons.list_alt_outlined),
         label: Text("Dein Vertretungsplan"),
         selectedIcon: Icon(Icons.list_alt)
       ),
-      NavEntryData(
+      const NavEntryData(
         icon: Icon(Icons.groups_outlined),
         label: Text("Klassenplan"),
         selectedIcon: Icon(Icons.groups)
       ),
-      NavEntryData(
+      const NavEntryData(
         icon: Icon(Icons.list_outlined),
         label: Text("Alle Vertretungen"),
         selectedIcon: Icon(Icons.list)
       ),
-      NavEntryData(
+      const NavEntryData(
         icon: Icon(Icons.door_back_door_outlined),
         label: Text("Freie Zimmer"),
         selectedIcon: Icon(Icons.door_back_door)
-      )
-    ]
+      ),
+      NavEntryData(
+        icon: const Icon(Icons.groups_outlined),
+        label: const Text("Lehrerplan"),
+        selectedIcon: const Icon(Icons.groups),
+        isVisible: (context) => Provider.of<AppState>(context, listen: false).role == Role.teacher
+      ),
+    ],
   ),
   NavEntryData(
     icon: lernSaxIcon,

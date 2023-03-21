@@ -81,9 +81,12 @@ class NewsCache extends SerializableObject with ChangeNotifier {
   }
 }
 
+enum Role { teacher, student, parent, other, unknown }
+
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
   List<int> selectedNavigationIndex = [0];
+  Role role = Role.unknown;
 
   void setNavIndex(String newNavIndex) {
     selectedNavigationIndex = newNavIndex.split(".").map((e) => int.parse(e)).toList();

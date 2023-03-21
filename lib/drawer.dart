@@ -6,10 +6,11 @@ class NavEntryData {
   final Widget? selectedIcon;
   final Widget label;
   final List<NavEntryData>? children;
+  final bool Function(BuildContext context)? isVisible;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntryData({required this.icon, this.selectedIcon, required this.label, this.children});
+  const NavEntryData({required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible});
 }
 
 class NavEntry extends StatefulWidget {
@@ -152,7 +153,7 @@ class _TheDrawerState extends State<TheDrawer> {
       },
       index: index,
       layer: layer,
-      children: entryData.children?.asMap().map((i, e) => MapEntry(i, dataToEntry(e, i, selectedIndex, layer + 1, selectionIndex))).values.toList().cast(),
+      children: entryData.children?.asMap().map((i, data) => MapEntry(i, ((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex) : null)).values.toList().where((element) => element != null).toList().cast(),
     );
   }
 
