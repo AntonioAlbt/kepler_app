@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -59,8 +58,7 @@ Future<void> runNewsFetchTask() async {
     NotificationContent(
       id: lastNotifId,
       channelKey: newsNotificationKey,
-      title: "<b>Es gibt neue Kepler-News!</b>",
-      body: "${newNews.sublist(0, min(5, newNews.length)).map((e) => e.title).join((Platform.isAndroid) ? "<br>" : "\n")}${(newNews.length > 5) ? "\nund weitere..." : ""}",
+      body: "Wir haben neue Kepler-News!<br>${newNews.sublist(0, min(5, newNews.length)).map((e) => "- ${e.title}").join("<br>")}${(newNews.length > 5) ? "\nund weitere..." : ""}",
       category: NotificationCategory.Recommendation,
       notificationLayout: NotificationLayout.BigText
     ),
