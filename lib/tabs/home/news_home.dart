@@ -46,18 +46,20 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
                 behavior: const ScrollBehavior().copyWith(overscroll: false),
                 child: ListView.separated(
                   itemBuilder: (context, index) {
-                    if (index < min(3, newsCache.newsData.length)) {
+                    final data = newsCache.newsData.toList()
+                      ..sort((a, b) => b.createdDate.compareTo(a.createdDate));
+                    if (index < min(3, data.length)) {
                       return ListTile(
-                        title: Text(newsCache.newsData[index].title),
-                        subtitle: Text(newsCache.newsData[index].summary,
+                        title: Text(data[index].title),
+                        subtitle: Text(data[index].summary,
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => NewsView(
-                              newsLink: Uri.parse(newsCache.newsData[index].link),
-                              newsTitle: newsCache.newsData[index].title
+                              newsLink: Uri.parse(data[index].link),
+                              newsTitle: data[index].title
                             ),
                           ),
                         ),

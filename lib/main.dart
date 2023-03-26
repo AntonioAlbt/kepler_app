@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
+import 'package:kepler_app/libs/notifications.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/tabs/about.dart';
@@ -23,27 +25,31 @@ import 'package:workmanager/workmanager.dart';
 Future<void> prepare() async {
   final prefs = await SharedPreferences.getInstance();
   if (prefs.containsKey(newsCachePrefKey)) newsCache.loadFromJson(prefs.getString(newsCachePrefKey)!);
-  if (newsCache.newsData.isEmpty) {
-    loadNews(0).then((news) {
-      if (news == null) return;
-      newsCache.addNewsData(news);
-    });
-  }
   if (await securePrefs.containsKey(key: credStorePrefKey)) credentialStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
+
+  Workmanager().initialize(
+    taskCallbackDispatcher,
+    isInDebugMode: kDebugMode
+  );
+  Workmanager().registerPeriodicTask(
+    (Platform.isIOS) ? Workmanager.iOSBackgroundTask : newsFetchTaskName, newsFetchTaskName,
+    frequency: const Duration(minutes: (kDebugMode) ? 15 : 120),
+    existingWorkPolicy: ExistingWorkPolicy.replace,
+    initialDelay: const Duration(seconds: 5)
+  );
+  if (newsCache.newsData.isNotEmpty) {
+    loadAllNewNews(newsCache.newsData.first.link).then((data) { if (data != null) newsCache.insertNewsData(0, data); });
+  } else {
+    final data = await loadNews(0);
+    if (data != null) newsCache.addNewsData(data); 
+  }
+
+  initializeNotifications();
 }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   prepare().then((_) {
-    Workmanager().initialize(
-      taskCallbackDispatcher,
-      isInDebugMode: kDebugMode
-    );
-    Workmanager().registerPeriodicTask(
-      (Platform.isIOS) ? Workmanager.iOSBackgroundTask : newsFetchTaskName, newsFetchTaskName,
-      frequency: const Duration(hours: 2),
-      existingWorkPolicy: ExistingWorkPolicy.keep
-    );
     runApp(const MyApp());
   });
 }
@@ -130,7 +136,7 @@ final destinations = [
         icon: const Icon(Icons.groups_outlined),
         label: const Text("Lehrerplan"),
         selectedIcon: const Icon(Icons.groups),
-        isVisible: (context) => Provider.of<AppState>(context, listen: false).role == Role.teacher
+        isVisible: (context) => Provider.of<AppState>(context, listen: false).userPrefs.role == Role.teacher
       ),
     ],
   ),
@@ -166,6 +172,8 @@ final destinations = [
   )
 ];
 
+final appKey = GlobalKey();
+
 class _KeplerAppState extends State<KeplerApp> {
   /// String to make sub-selections possible (scheme: <code>lvl1.lvl2.lvl3...</code>)<br>
   /// example values: <code>"1", "4", "2.1", "5.2.3", "3.0"</code>
@@ -179,6 +187,7 @@ class _KeplerAppState extends State<KeplerApp> {
         builder: (context, state, __) {
           final index = state.selectedNavigationIndex;
           return Scaffold(
+            key: appKey,
             appBar: AppBar(
               title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
               scrolledUnderElevation: 5,

@@ -1,12 +1,16 @@
 import 'package:enough_serialization/enough_serialization.dart';
 
-final prefs = Preferences();
+enum Role { teacher, student, parent, other, unknown }
 
 class Preferences extends SerializableObject {
-  String get name => attributes['name'];
-  set name(String value) => attributes['name'] = value;
+  Role _role = Role.unknown;
+  Role get role => _role;
 
   bool get loaded => attributes.isNotEmpty;
+
+  void setRole(Role role) {
+    _role = role;
+  }
 
   Preferences();
 }

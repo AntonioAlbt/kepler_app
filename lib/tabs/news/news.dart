@@ -46,7 +46,8 @@ class _NewsTabState extends State<NewsTab> {
     return AnimatedBuilder(
       animation: newsCache,
       builder: (context, _) {
-        final loadedNews = newsCache.newsData.map((d) => NewsEntry(data: d)).toList();
+        final loadedNews = newsCache.newsData.map((d) => NewsEntry(data: d)).toList()
+          ..sort((a, b) => b.data.createdDate.compareTo(a.data.createdDate));
         return Scaffold(
           body: LazyLoadScrollView(
             onEndOfPage: () => _loadMoreNews(),
@@ -113,6 +114,10 @@ class _NewsTabState extends State<NewsTab> {
 
   Future _loadMoreNews() async {
     if (noMoreNews || loading) return;
+    if (newsCache.newsData.isNotEmpty) {
+      final newStartNews = await loadAllNewNews(newsCache.newsData.first.link);
+      if (newStartNews != null) newsCache.insertNewsData(0, newStartNews);
+    }
     if (lastNewsPage > 50) {
       setState(() {
         noMoreNews = true;

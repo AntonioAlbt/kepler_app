@@ -1,6 +1,6 @@
-import 'package:dart_rss/dart_rss.dart';
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:http/http.dart' as http;
+import 'package:universal_feed/universal_feed.dart';
 
 const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 
@@ -35,18 +35,35 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
   if (res.statusCode == 404) {
     return null;
   }
-  final feed = AtomFeed.parse(res.body);
-  for (var e in feed.items) {
+  final feed = Atom.parseFromString(res.body);
+  if (feed.entries == null) return null;
+  for (var e in feed.entries!) {
     final data = NewsEntryData()
       ..title = e.title ?? "???"
-      ..createdDate = ((e.published != null) ? DateTime.parse(e.published!) : DateTime(2023))
-      ..link = ((e.links.isNotEmpty) ? e.links.first.href : e.id) ?? "https://kepler-chemnitz.de"
+      ..createdDate = ((e.published != null) ? e.published!.parseValue() ?? DateTime(2023) : DateTime(2023))
+      ..link = ((e.links?.isNotEmpty == true) ? e.links!.first.href : e.id) ?? "https://kepler-chemnitz.de"
       ..summary = e.summary ?? "..."
-      ..writer = (e.authors.isNotEmpty) ? e.authors.first.name : null
-      ..categories = (e.categories.isNotEmpty) ? e.categories.map((e) => e.term ?? "?").toList() : null;
-    newNewsData.add(
-      data
-    );
+      ..writer = (e.authors?.isNotEmpty == true) ? e.authors!.first.name : null
+      ..categories = (e.categories?.isNotEmpty == true) ? e.categories!.map((e) => e.term ?? "?").toList() : null;
+    newNewsData.add(data);
   }
   return newNewsData;
+}
+
+Future<List<NewsEntryData>?> loadAllNewNews(String lastKnownNewsLink, [int maxCount = -1]) async {
+  var page = 0;
+  List<NewsEntryData>? latestNews = [];
+  
+  final newNews = <NewsEntryData>[];
+  while (!latestNews!.any((element) => element.link == lastKnownNewsLink) && page < 50 && (newNews.length < maxCount || maxCount < 1)) {
+    latestNews = await loadNews(page);
+    if (latestNews == null || latestNews.isEmpty) return newNews;
+    var count = 0;
+    while (count < latestNews.length && latestNews[count].link != lastKnownNewsLink) {
+      newNews.add(latestNews[count]);
+      count++;
+    }
+    page++;
+  }
+  return newNews;
 }

@@ -4,6 +4,7 @@ import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,14 +80,19 @@ class NewsCache extends SerializableObject with ChangeNotifier {
     oldData.addAll(data);
     newsData = oldData;
   }
-}
 
-enum Role { teacher, student, parent, other, unknown }
+  void insertNewsData(int index, List<NewsEntryData> data) {
+    final oldData = newsData;
+    oldData.insertAll(index, data);
+    newsData = oldData;
+  }
+}
 
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
   List<int> selectedNavigationIndex = [0];
-  Role role = Role.unknown;
+
+  Preferences userPrefs = Preferences();
 
   void setNavIndex(String newNavIndex) {
     selectedNavigationIndex = newNavIndex.split(".").map((e) => int.parse(e)).toList();
