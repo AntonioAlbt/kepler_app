@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:flutter/foundation.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
@@ -34,24 +33,24 @@ Future<void> runNewsFetchTask() async {
 
   final newNews = await loadAllNewNews(newsCache.newsData.first.link, 6);
   if (newNews == null) return;
-  if (kDebugMode) {
-    newNews.add(
-      NewsEntryData()
-        ..createdDate = DateTime.now()
-        ..link = "https://kepler-chemnitz.de/allgemein/"
-        ..title = "Vielen Dank an alle, die sich diese App angeschaut haben!"
-        ..summary = "Es gibt wieder tolles neues Zeug an unserem Gymnasium. Ich habe hier über alles geschrieben, wenn du das aber genau wissen willst, musst du hier klicken."
-        ..writer = "Einerd Er-Schreiber"
-    );
-    newNews.add(
-      NewsEntryData()
-        ..createdDate = DateTime.now()
-        ..link = "https://kepler-chemnitz.de/allgemein/"
-        ..title = "Landesseminar mit diesem Vlad"
-        ..summary = "der hat mir auch geholfen"
-        ..writer = "Jeman D'Anderes"
-    );
-  }
+  // if (kDebugMode) {
+  //   newNews.add(
+  //     NewsEntryData()
+  //       ..createdDate = DateTime.now()
+  //       ..link = "https://kepler-chemnitz.de/allgemein/"
+  //       ..title = "Vielen Dank an alle, die sich diese App angeschaut haben!"
+  //       ..summary = "Es gibt wieder tolles neues Zeug an unserem Gymnasium. Ich habe hier über alles geschrieben, wenn du das aber genau wissen willst, musst du hier klicken."
+  //       ..writer = "Einerd Er-Schreiber"
+  //   );
+  //   newNews.add(
+  //     NewsEntryData()
+  //       ..createdDate = DateTime.now()
+  //       ..link = "https://kepler-chemnitz.de/allgemein/"
+  //       ..title = "Landesseminar mit diesem Vlad"
+  //       ..summary = "der hat mir auch geholfen"
+  //       ..writer = "Jeman D'Anderes"
+  //   );
+  // }
   if (newNews.isEmpty) return;
 
   sendNotification(

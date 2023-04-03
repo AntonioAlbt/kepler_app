@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
+import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -29,11 +29,11 @@ Future<void> prepare() async {
 
   Workmanager().initialize(
     taskCallbackDispatcher,
-    isInDebugMode: kDebugMode
+    //isInDebugMode: kDebugMode
   );
   Workmanager().registerPeriodicTask(
     (Platform.isIOS) ? Workmanager.iOSBackgroundTask : newsFetchTaskName, newsFetchTaskName,
-    frequency: const Duration(minutes: (kDebugMode) ? 15 : 120),
+    frequency: const Duration(minutes: 120),
     existingWorkPolicy: ExistingWorkPolicy.replace,
     initialDelay: const Duration(seconds: 5)
   );
@@ -186,66 +186,36 @@ class _KeplerAppState extends State<KeplerApp> {
       child: Consumer<AppState>(
         builder: (context, state, __) {
           final index = state.selectedNavigationIndex;
-          return Scaffold(
-            key: appKey,
-            appBar: AppBar(
-              title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
-              scrolledUnderElevation: 5,
-              elevation: 5,
-            ),
-            drawer: Consumer<AppState>(
-              builder: (context, state, w) {
-                return TheDrawer(
-                  selectedIndex: index.join("."),
-                  onDestinationSelected: (val) {
-                    state.setNavIndex(val);
-                  },
-                  entries: destinations,
-                  dividers: const [5],
-                );
+          return WillPopScope(
+            onWillPop: () async {
+              if (state.infoScreen != null) {
+                if (infoScreenKey.currentState!.canCloseCurrentScreen()) state.clearInfoScreen();
+                return false;
               }
+              return true;
+            },
+            child: Stack(
+              children: [
+                Scaffold(
+                  key: appKey,
+                  appBar: AppBar(
+                    title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
+                    scrolledUnderElevation: 5,
+                    elevation: 5,
+                  ),
+                  drawer: TheDrawer(
+                    selectedIndex: index.join("."),
+                    onDestinationSelected: (val) {
+                      state.setNavIndex(val);
+                    },
+                    entries: destinations,
+                    dividers: const [5],
+                  ),
+                  body: tabs[index.first],
+                ),
+                if (state.infoScreen != null) state.infoScreen!
+              ],
             ),
-            body: tabs[index.first],
-            // drawer: NavigationDrawer(
-            //   selectedIndex: _index,
-            //   onDestinationSelected: (val) {
-            //     setState(() => _index = val);
-            //     Navigator.pop(context);
-            //   },
-            //   children: [
-            //     Padding(
-            //       padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
-            //       child: Column(
-            //         children: [
-            //           const Icon(Icons.filter_outlined, size: 104),
-            //           Text("Kepler-App", style: Theme.of(context).textTheme.titleLarge)
-            //         ],
-            //       ),
-            //     ),
-            //     ...destinations
-            //   ],
-            // ),
-            // drawer: Drawer(
-            //   child: ListView(
-            //     padding: EdgeInsets.zero,
-            //     children: [
-            //       const DrawerHeader(
-            //         decoration: BoxDecoration(
-            //           color: Colors.blue,
-            //         ),
-            //         child: Text('Kepler-App'),
-            //       ),
-            //       ListTile(
-            //         leading: const Icon(Icons.home),
-            //         title: const Text("Startseite"),
-            //         onTap: () {
-            //           _index = 0;
-            //           Navigator.pop(context);
-            //         },
-            //       )
-            //     ],
-            //   ),
-            // ),
           );
         }
       ),

@@ -4,6 +4,7 @@ import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,8 +95,17 @@ class AppState extends ChangeNotifier {
 
   Preferences userPrefs = Preferences();
 
+  InfoScreenDisplay? infoScreen;
+
   void setNavIndex(String newNavIndex) {
     selectedNavigationIndex = newNavIndex.split(".").map((e) => int.parse(e)).toList();
     notifyListeners();
   }
+
+  void setInfoScreen(InfoScreenDisplay? newInfoScreen) {
+    infoScreen = newInfoScreen;
+    notifyListeners();
+  }
+
+  void clearInfoScreen() => setInfoScreen(null);
 }
