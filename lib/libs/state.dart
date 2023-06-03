@@ -5,10 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
-import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
+late final SharedPreferences sharedPreferences;
 
 const newsCachePrefKey = "news_cache";
 const credStorePrefKey = "cred_store";
@@ -18,7 +19,9 @@ const securePrefs = FlutterSecureStorage(
 
 
 final credentialStore = CredentialStore()
-  ..lernSaxToken = "";
+  ..lernSaxToken = ""
+  ..vpUser = null
+  ..vpPassword = null;
 final newsCache = NewsCache()
   ..newsData = [];
 
@@ -32,6 +35,18 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   String get lernSaxToken => attributes["lern_sax_token"];
   set lernSaxToken(String token) {
     attributes["lern_sax_token"] = token;
+    notifyListeners();
+    save();
+  }
+  String? get vpUser => attributes["vp_user"];
+  set vpUser(String? user) {
+    attributes["vp_user"] = user;
+    notifyListeners();
+    save();
+  }
+  String? get vpPassword => attributes["vp_password"];
+  set vpPassword(String? password) {
+    attributes["vp_password"] = password;
     notifyListeners();
     save();
   }
@@ -56,7 +71,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
   bool loaded = false;
   save() async {
-    (await SharedPreferences.getInstance()).setString(newsCachePrefKey, _serialize());
+    sharedPreferences.setString(newsCachePrefKey, _serialize());
   }
 
   List<NewsEntryData> get newsData => attributes["news_data"];
@@ -93,8 +108,6 @@ class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
   List<int> selectedNavigationIndex = [0];
 
-  Preferences userPrefs = Preferences();
-
   InfoScreenDisplay? infoScreen;
 
   void setNavIndex(String newNavIndex) {
@@ -108,4 +121,32 @@ class AppState extends ChangeNotifier {
   }
 
   void clearInfoScreen() => setInfoScreen(null);
+}
+
+const internalStatePrefsKey = "internal_state";
+
+final internalState = InternalState()
+  ..introductionStep = 0;
+
+class InternalState extends SerializableObject with ChangeNotifier {
+  final _serializer = Serializer();
+
+  int get introductionStep => attributes["introduction_step"];
+  set introductionStep(int step) {
+    attributes["introduction_step"] = step;
+    notifyListeners();
+    save();
+  }
+
+  bool loaded = false;
+
+  save() async {
+    sharedPreferences.setString(internalStatePrefsKey, _serialize());
+  }
+
+  String _serialize() => _serializer.serialize(this);
+  void loadFromJson(String json) {
+    _serializer.deserialize(json, this);
+    loaded = true;
+  }
 }

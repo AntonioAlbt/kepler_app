@@ -14,7 +14,7 @@ var lastNotifId = 153;
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    if (task == newsFetchTaskName) {
+    if (task == newsFetchTaskName || task == Workmanager.iOSBackgroundTask) {
       await runNewsFetchTask();
     }
     return true;

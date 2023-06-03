@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
   Widget build(BuildContext context) {
     return Card(
       color: HSLColor.fromColor(keplerColorBlue)
-          .withLightness(.9)
+          .withLightness((prefs.darkTheme) ? .1 : .9)
           .toColor(),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -66,8 +67,8 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
                       );
                     } else {
                       return ListTile(
-                        title: Row(
-                          children: const [
+                        title: const Row(
+                          children: [
                             Padding(
                               padding: EdgeInsets.only(right: 4),
                               child: Text("Weitere News"),

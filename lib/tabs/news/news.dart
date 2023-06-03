@@ -1,9 +1,9 @@
-import 'dart:math';
-
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:intl/intl.dart';
+import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
@@ -46,7 +46,7 @@ class _NewsTabState extends State<NewsTab> {
     return AnimatedBuilder(
       animation: newsCache,
       builder: (context, _) {
-        final loadedNews = newsCache.newsData.map((d) => NewsEntry(data: d)).toList()
+        final loadedNews = newsCache.newsData.asMap().map((i, d) => MapEntry(i, NewsEntry(data: d, count: i))).values.toList()
           ..sort((a, b) => b.data.createdDate.compareTo(a.data.createdDate));
         return Scaffold(
           body: LazyLoadScrollView(
@@ -170,11 +170,12 @@ class _NewsTabState extends State<NewsTab> {
 
 class NewsEntry extends StatelessWidget with SerializableObject {
   final NewsEntryData data;
+  final int count;
   late final Color color;
 
-  NewsEntry({super.key, required this.data}) {
-    final random = Random(data.link.hashCode);
-    color = HSLColor.fromAHSL(1, random.nextDouble() * 360, random.nextDouble(), 0.9).toColor();
+  NewsEntry({super.key, required this.data, this.count = 0}) {
+    final colors = [keplerColorOrange, keplerColorYellow];
+    color = HSLColor.fromColor(colors[count % colors.length]).withLightness((prefs.darkTheme) ? .2 : .9).withSaturation(.3).toColor();
   }
 
   @override
@@ -196,14 +197,14 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                         child: Transform.translate(
                           offset: const Offset(0, -2),
                           child: Icon(MdiIcons.calendar,
-                              size: 12, color: Colors.grey.shade700),
+                              size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
                         ),
                       ),
                     ),
                     TextSpan(
                       text: DateFormat.yMMMMd().format(data.createdDate),
                       style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                          TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
                     ),
                   ],
                 ),
@@ -232,14 +233,14 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                         child: Transform.translate(
                           offset: const Offset(0, -2),
                           child: Icon(MdiIcons.formatListText,
-                              size: 12, color: Colors.grey.shade700),
+                              size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
                         ),
                       ),
                     ),
                     TextSpan(
                       text: data.categories?.join(", ") ?? "Keine",
                       style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade800),
+                          TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
                     ),
                     const WidgetSpan(
                       child: Padding(
@@ -251,7 +252,7 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                       text: "${data.writer}",
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey.shade600
+                        color: Colors.grey[(prefs.darkTheme) ? 400 : 600]
                       ),
                     )
                   ]

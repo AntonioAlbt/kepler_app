@@ -12,7 +12,7 @@ import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
-import 'package:kepler_app/tabs/hourtable.dart';
+import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
@@ -22,10 +22,11 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
-Future<void> prepare() async {
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.containsKey(newsCachePrefKey)) newsCache.loadFromJson(prefs.getString(newsCachePrefKey)!);
+Future<void> loadAndPrepareApp() async {
+  final sprefs = sharedPreferences;
+  if (sprefs.containsKey(newsCachePrefKey)) newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
   if (await securePrefs.containsKey(key: credStorePrefKey)) credentialStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
+  if (sprefs.containsKey(internalStatePrefsKey)) internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
 
   Workmanager().initialize(
     taskCallbackDispatcher,
@@ -47,9 +48,15 @@ Future<void> prepare() async {
   initializeNotifications();
 }
 
+Future<void> prepareApp() async {
+  sharedPreferences = await SharedPreferences.getInstance();
+  final sprefs = sharedPreferences;
+  if (sprefs.containsKey(prefsPrefKey)) prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  prepare().then((_) {
+  prepareApp().then((_) {
     runApp(const MyApp());
   });
 }
@@ -59,16 +66,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "",
-      home: const KeplerApp(),
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: keplerColorBlue
-        )
-      ),
-    );
+    return const KeplerApp();
   }
 }
 
@@ -136,7 +134,7 @@ final destinations = [
         icon: const Icon(Icons.groups_outlined),
         label: const Text("Lehrerplan"),
         selectedIcon: const Icon(Icons.groups),
-        isVisible: (context) => Provider.of<AppState>(context, listen: false).userPrefs.role == Role.teacher
+        isVisible: (context) => prefs.role == Role.teacher
       ),
     ],
   ),
@@ -175,13 +173,18 @@ final destinations = [
 final appKey = GlobalKey();
 
 class _KeplerAppState extends State<KeplerApp> {
-  /// String to make sub-selections possible (scheme: <code>lvl1.lvl2.lvl3...</code>)<br>
-  /// example values: <code>"1", "4", "2.1", "5.2.3", "3.0"</code>
-  // String _index = "0";
+  Future _load() async {
+    await loadAndPrepareApp();
+    setState(() {
+      _loading = false;
+    });
+  }
+
+  bool _loading = true;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    final mainWidget = ChangeNotifierProvider(
       create: (context) => AppState(),
       child: Consumer<AppState>(
         builder: (context, state, __) {
@@ -220,5 +223,30 @@ class _KeplerAppState extends State<KeplerApp> {
         }
       ),
     );
+    const loadingWidget = Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    return MaterialApp(
+      title: "",
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 100),
+        child: (_loading) ? loadingWidget : mainWidget,
+      ),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: keplerColorBlue,
+          brightness: (prefs.darkTheme) ? Brightness.dark : Brightness.light
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    _load();
+    super.initState();
   }
 }

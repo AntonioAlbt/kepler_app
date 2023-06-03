@@ -41,9 +41,9 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
                 mode: LaunchMode.externalApplication
               );
             },
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Flexible(child: Text("DLS-Webseite öffnen")),
                 Flexible(child: Padding(
                   padding: EdgeInsets.only(left: 4),
