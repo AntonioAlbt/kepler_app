@@ -185,6 +185,7 @@ class _KeplerAppState extends State<KeplerApp> {
   @override
   Widget build(BuildContext context) {
     final mainWidget = ChangeNotifierProvider(
+      key: const Key("mainWidget"),
       create: (context) => AppState(),
       child: Consumer<AppState>(
         builder: (context, state, __) {
@@ -224,22 +225,29 @@ class _KeplerAppState extends State<KeplerApp> {
       ),
     );
     const loadingWidget = Scaffold(
+      key: Key("loadingWidget"),
       body: Center(
         child: CircularProgressIndicator(),
       ),
     );
-    return MaterialApp(
-      title: "",
-      home: AnimatedSwitcher(
+    return AnimatedBuilder(
+      animation: prefs,
+      builder: (context, home) {
+        return MaterialApp(
+          title: "",
+          home: home,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: keplerColorBlue,
+              brightness: (prefs.darkTheme) ? Brightness.dark : Brightness.light
+            ),
+          ),
+        );
+      },
+      child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 100),
         child: (_loading) ? loadingWidget : mainWidget,
-      ),
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: keplerColorBlue,
-          brightness: (prefs.darkTheme) ? Brightness.dark : Brightness.light
-        ),
       ),
     );
   }

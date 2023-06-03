@@ -175,7 +175,7 @@ class NewsEntry extends StatelessWidget with SerializableObject {
 
   NewsEntry({super.key, required this.data, this.count = 0}) {
     final colors = [keplerColorOrange, keplerColorYellow];
-    color = HSLColor.fromColor(colors[count % colors.length]).withLightness((prefs.darkTheme) ? .2 : .9).withSaturation(.3).toColor();
+    color = HSLColor.fromColor(colors[count % colors.length]).withLightness((prefs.darkTheme) ? .2 : .8).withSaturation((prefs.darkTheme) ? .3 : .7).toColor();
   }
 
   @override

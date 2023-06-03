@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:provider/provider.dart';
 
@@ -90,9 +91,9 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Container(
-                        decoration: const BoxDecoration(
-                          color: Color.fromRGBO(255, 255, 255, 0.4),
-                          borderRadius: BorderRadius.all(Radius.circular(8))
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.background.withOpacity(0.5),
+                          borderRadius: const BorderRadius.all(Radius.circular(8))
                         ),
                         child: AnimatedBuilder(
                           animation: _controller,
@@ -110,7 +111,7 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                                       width: 10,
                                       height: 10,
                                       decoration: BoxDecoration(
-                                        color: (_controller.index == i) ? Colors.grey.shade800 : Colors.grey.shade400,
+                                        color: (_controller.index == i) ? Colors.grey[(prefs.darkTheme) ? 200 : 800] : Colors.grey[(prefs.darkTheme) ? 600 : 400],
                                         shape: BoxShape.circle
                                       ),
                                     ),
@@ -131,9 +132,9 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                           children: [
                             Container(
                               margin: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: RadialGradient(colors: [Colors.white, Color.fromARGB(0, 255, 255, 255)], stops: [0.9, 1])
+                                gradient: RadialGradient(colors: [Theme.of(context).colorScheme.background, Theme.of(context).colorScheme.background.withAlpha(0)], stops: const [0.9, 1]),
                               ),
                               child: IconButton(
                                 onPressed: state.clearInfoScreen,

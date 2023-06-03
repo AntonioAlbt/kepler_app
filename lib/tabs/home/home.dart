@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/home/news_home.dart';
 import 'package:provider/provider.dart';
@@ -37,7 +38,11 @@ class _HomepageTabState extends State<HomepageTab> {
                 ),
                 child: const Text("info screen test"),
               )
-            )
+            ),
+            ElevatedButton(
+              onPressed: () => prefs.darkTheme = !prefs.darkTheme,
+              child: const Text("toggle dark theme"),
+            ),
           ],
         ),
       ),
