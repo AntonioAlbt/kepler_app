@@ -12,9 +12,6 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 - [Benachrichtigungen](#benarichtigungen)
 - [Kepler-Stundenplan](#kepler-stundenplan)
 - [LernSax](#lernsax)
-
-Noch zu erledigen:
-
 - [FFJKG](#ffjkg)
 - [Einstellungen](#einstellungen)
 
@@ -26,6 +23,10 @@ Noch zu erledigen:
   - gute Übersichtlichkeit
   - angenehme Farben und Größe
   - auch Meinungen von Freunden und Familie eingeholt
+- Dark Mode hinzugefügt, kann ohne Neustart smooth geändert werden (wird von Flutter direkt unterstützt, [`ColorScheme.brightness`](https://github.com/Gamer153/kepler_app/blob/0413b2a63be3ca92d8059f11a1346401a670533e/lib/main.dart#L243))
+  - wird von allen Widgets unterstützt
+  - im News-Browser umsetzen?
+- Kepler-Farbpalette sollte mehr verwendet werden
 
 ### Navigationssystem
 
@@ -124,11 +125,12 @@ Noch zu erledigen:
 
 ### FFJKG
 
-- Unterstützung?
+- Unterstützung eigentlich garantiert, Absprache bei Stammtisch
+- Bereitstellung eines Macs?
 
 ### Einstellungen
 
-*TODO*
+- Dark Mode kommt als Einstellung
 
 ### Benarichtigungen
 
