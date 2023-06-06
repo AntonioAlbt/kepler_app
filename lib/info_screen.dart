@@ -32,9 +32,10 @@ class _InfoScreenState extends State<InfoScreen> {
           child: widget.infoImage!,
         ),
         if (widget.infoTitle != null) DefaultTextStyle(
-          style: Theme.of(context).textTheme.headlineMedium!,
+          style: Theme.of(context).textTheme.headlineSmall!,
+          textAlign: TextAlign.center,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16),
             child: widget.infoTitle!,
           ),
         ),

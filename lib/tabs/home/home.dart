@@ -30,7 +30,7 @@ class _HomepageTabState extends State<HomepageTab> {
                   InfoScreenDisplay(
                     infoScreens: [
                       const InfoScreen(closeable: false, infoText: Text("hi"), infoTitle: Text("Info. - nicht closeable"),),
-                      const InfoScreen(closeable: true, infoText: Text("das ist eine Findo."), infoTitle: Text("Digga, bitte geb uns mal dein Geld.\nWir brauchen das wirklich dringend."),),
+                      const InfoScreen(closeable: true, infoText: Text("das ist eine Info."), infoTitle: Text("Digga, bitte geb uns mal dein Geld.\nWir brauchen das wirklich dringend."),),
                       const InfoScreen(closeable: true, infoText: Text("testt"), infoTitle: Text("closeable"), secondaryText: Text("mooore text"), infoImage: Icon(Icons.abc),),
                       InfoScreen(closeable: true, customScreen: Container(color: Colors.cyan.shade400),)
                     ],
