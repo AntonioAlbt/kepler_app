@@ -65,15 +65,12 @@ class _NavEntryState extends State<NavEntry> {
                     icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
                   ),
                 ) : null,
-                title: Transform.translate(
-                  offset: const Offset(-7.5, 0),
-                  child: DefaultTextStyle.merge(
-                    style: TextStyle(
-                      fontWeight: (widget.selected) ? FontWeight.bold : null,
-                      fontSize: 16
-                    ),
-                    child: widget.label
+                title: DefaultTextStyle.merge(
+                  style: TextStyle(
+                    fontWeight: (widget.selected) ? FontWeight.bold : null,
+                    fontSize: 16
                   ),
+                  child: widget.label
                 ),
                 selected: widget.selected || widget.parentOfSelected,
                 selectedColor: color,

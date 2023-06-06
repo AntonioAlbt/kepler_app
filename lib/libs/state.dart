@@ -18,12 +18,8 @@ const securePrefs = FlutterSecureStorage(
 );
 
 
-final credentialStore = CredentialStore()
-  ..lernSaxToken = ""
-  ..vpUser = null
-  ..vpPassword = null;
-final newsCache = NewsCache()
-  ..newsData = [];
+final credentialStore = CredentialStore();
+final newsCache = NewsCache();
 
 class CredentialStore extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
@@ -32,7 +28,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     await securePrefs.write(key: credStorePrefKey, value: _serialize());
   }
 
-  String get lernSaxToken => attributes["lern_sax_token"];
+  String get lernSaxToken => attributes["lern_sax_token"] ?? "";
   set lernSaxToken(String token) {
     attributes["lern_sax_token"] = token;
     notifyListeners();
@@ -74,7 +70,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
     sharedPreferences.setString(newsCachePrefKey, _serialize());
   }
 
-  List<NewsEntryData> get newsData => attributes["news_data"];
+  List<NewsEntryData> get newsData => attributes["news_data"] ?? [];
   set newsData(List<NewsEntryData> val) {
     attributes["news_data"] = val;
     notifyListeners();
@@ -125,13 +121,12 @@ class AppState extends ChangeNotifier {
 
 const internalStatePrefsKey = "internal_state";
 
-final internalState = InternalState()
-  ..introductionStep = 0;
+final internalState = InternalState();
 
 class InternalState extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
-  int get introductionStep => attributes["introduction_step"];
+  int get introductionStep => attributes["introduction_step"] ?? 0;
   set introductionStep(int step) {
     attributes["introduction_step"] = step;
     notifyListeners();

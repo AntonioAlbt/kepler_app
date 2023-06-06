@@ -11,14 +11,15 @@ class InfoScreen extends StatefulWidget {
   final Widget? customScreen;
 
   final bool closeable;
+  final bool Function(int index)? onTryClose;
 
-  const InfoScreen({super.key, this.infoImage, this.infoTitle, this.infoText, this.secondaryText, this.customScreen, this.closeable = true});
+  const InfoScreen({super.key, this.infoImage, this.infoTitle, this.infoText, this.secondaryText, this.customScreen, this.closeable = true, this.onTryClose});
 
   @override
-  State<InfoScreen> createState() => _InfoScreenState();
+  State<InfoScreen> createState() => InfoScreenState();
 }
 
-class _InfoScreenState extends State<InfoScreen> {
+class InfoScreenState extends State<InfoScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.customScreen != null) return widget.customScreen!;
@@ -40,8 +41,12 @@ class _InfoScreenState extends State<InfoScreen> {
           ),
         ),
         if (widget.infoText != null) Padding(
-          padding: const EdgeInsets.all(8),
-          child: widget.infoText!,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+          child: DefaultTextStyle(
+            style: Theme.of(context).textTheme.bodyLarge!,
+            textAlign: TextAlign.center,
+            child: widget.infoText!,
+          ),
         ),
         if (widget.infoText == null && widget.infoTitle == null && widget.infoImage == null) const Padding(
           padding: EdgeInsets.all(8),
@@ -54,21 +59,76 @@ class _InfoScreenState extends State<InfoScreen> {
 
 final infoScreenKey = GlobalKey<_InfoScreenDisplayState>();
 
+class InfoScreenDisplayController extends ChangeNotifier {
+  int _index = 0;
+  int get index => _index;
+  set index(int val) {
+    final old = _index;
+    _index = val;
+    if (val != old) notifyListeners();
+  }
+
+  int _nocIndex = 0;
+  int get nextOrCurrentIndex => _index;
+  set nextOrCurrentIndex(int val) {
+    final old = _nocIndex;
+    _nocIndex = val;
+    if (val != old) notifyListeners();
+  }
+
+  void next() {
+    index += 1;
+  }
+
+  bool disposed = false;
+  @override
+  void dispose() {
+    disposed = true;
+    super.dispose();
+  }
+}
+
 class InfoScreenDisplay extends StatefulWidget {
   final List<InfoScreen> infoScreens;
+  final InfoScreenDisplayController? controller;
+  final bool scrollable;
 
-  InfoScreenDisplay({required this.infoScreens}): super(key: infoScreenKey);
+  InfoScreenDisplay({required this.infoScreens, this.controller, this.scrollable = false}): super(key: infoScreenKey);
 
   @override
   State<InfoScreenDisplay> createState() => _InfoScreenDisplayState();
 }
 
+// chatgpt helper function: https://chat.openai.com/share/abec05b9-9556-4909-8eb9-53e69feb17b9
+int roundNumberAway(double number, double otherNumber) {
+  double difference = number - otherNumber;
+
+  if (difference > 0) {
+    return number.ceil();
+  } else if (difference < 0) {
+    return number.floor();
+  } else {
+    return number.round();
+  }
+}
+
+// rounds a number away if its fractional part is further away from the number than tolerance, otherwise rounds it normally
+int roundNumberAwayWithTolerance(double number, double awayFrom, double tolerance) {
+  if (number % 1 <= tolerance || (1 - number % 1) <= tolerance) return number.round();
+  return roundNumberAway(number, awayFrom);
+}
+
 class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerProviderStateMixin {
   late TabController _controller;
 
+  int get nextOrCurrentIndex => roundNumberAwayWithTolerance(_controller.animation!.value, _controller.index.toDouble(), 0.1);
+
   bool canCloseCurrentScreen() {
-    return widget.infoScreens[_controller.index].closeable;
+    if (!widget.infoScreens[_controller.index].closeable) return widget.infoScreens[_controller.animation!.value.round()].closeable;
+    return widget.infoScreens[nextOrCurrentIndex].closeable;
   }
+
+  bool tryCloseCurrentScreen() => canCloseCurrentScreen() && (widget.infoScreens[nextOrCurrentIndex].onTryClose?.call(nextOrCurrentIndex) ?? true);
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +145,7 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                 children: [
                   TabBarView(
                     controller: _controller,
+                    physics: (!widget.scrollable) ? const NeverScrollableScrollPhysics() : null,
                     children: widget.infoScreens,
                   ),
                   Align(
@@ -97,61 +158,67 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                           borderRadius: const BorderRadius.all(Radius.circular(8))
                         ),
                         child: AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) {
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                widget.infoScreens.length,
-                                (i) => GestureDetector(
-                                  onTap: () => _controller.animateTo(i),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: (_controller.index == i) ? Colors.grey[(prefs.darkTheme) ? 200 : 800] : Colors.grey[(prefs.darkTheme) ? 600 : 400],
-                                        shape: BoxShape.circle
-                                      ),
+                          animation: _controller.animation!,
+                          builder: (context, _) => Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              widget.infoScreens.length,
+                              (i) => GestureDetector(
+                                // onTap: () => _controller.animateTo(i),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: (_controller.animation!.value.round() == i) ? Colors.grey[(prefs.darkTheme) ? 200 : 800] : Colors.grey[(prefs.darkTheme) ? 600 : 400],
+                                      shape: BoxShape.circle,
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          }
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                   AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, _) {
-                      if (widget.infoScreens[_controller.index].closeable) {
-                        return Row(
+                    animation: _controller.animation!,
+                    builder: (context, _) => AnimatedOpacity(
+                      duration: const Duration(milliseconds: 100),
+                      opacity: canCloseCurrentScreen() ? 1 : 0,
+                      child: IgnorePointer(
+                        ignoring: !canCloseCurrentScreen(),
+                        child: Row(
                           children: [
                             Container(
-                              margin: const EdgeInsets.all(8),
+                              margin: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: RadialGradient(colors: [Theme.of(context).colorScheme.background, Theme.of(context).colorScheme.background.withAlpha(0)], stops: const [0.9, 1]),
+                                // gradient: RadialGradient(colors: [Theme.of(context).colorScheme.background, Theme.of(context).colorScheme.background.withAlpha(0)], stops: const [0.9, 1]),
+                                border: Border.all(color: Theme.of(context).highlightColor, width: 1.5),
+                                color: Theme.of(context).colorScheme.background.withOpacity(0.5)
                               ),
                               child: IconButton(
-                                onPressed: state.clearInfoScreen,
+                                padding: const EdgeInsets.all(5),
+                                visualDensity: const VisualDensity(horizontal: -2.0, vertical: -1.5),
+                                onPressed: () {
+                                  if (tryCloseCurrentScreen()) state.clearInfoScreen();
+                                },
                                 icon: const Icon(Icons.close),
                               ),
                             ),
                           ],
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            )
-          )
+            ),
+          ),
         );
       },
     );
@@ -160,12 +227,22 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
   @override
   void initState() {
     _controller = TabController(length: widget.infoScreens.length, vsync: this);
+    if (widget.controller != null) {
+      _controller.animation!.addListener(() {
+        widget.controller?.nextOrCurrentIndex = nextOrCurrentIndex;
+        widget.controller?.index = _controller.index;
+      });
+      widget.controller?.addListener(() {
+        if (widget.controller!._index != _controller.index) _controller.index = widget.controller!._index;
+      });
+    }
     super.initState();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    widget.controller?.dispose();
     super.dispose();
   }
 }

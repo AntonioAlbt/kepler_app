@@ -1,28 +1,38 @@
 import 'package:enough_serialization/enough_serialization.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/state.dart';
 
 const prefsPrefKey = "user_preferences";
 
-final prefs = Preferences()
-  ..role = Role.unknown
-  ..darkTheme = true;
+final prefs = Preferences();
+
+bool? deviceInDarkMode;
 
 enum Role { teacher, student, parent, other, unknown }
+enum Pronoun { du, sie }
+enum AppTheme { system, dark, light }
 
 class Preferences extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
-  Role get role => Role.values.firstWhere((element) => element.name == attributes["role"], orElse: () => Role.unknown);
+  Role get role => Role.values.firstWhere((element) => element.name == (attributes["role"] ?? ""), orElse: () => Role.unknown);
   set role(Role role) {
     attributes["role"] = role.name;
     notifyListeners();
     save();
   }
 
-  bool get darkTheme => attributes["dark_theme"];
-  set darkTheme(bool dt) {
-    attributes["dark_theme"] = dt;
+  AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
+  set theme(AppTheme theme) {
+    attributes["theme"] = theme.name;
+    notifyListeners();
+    save();
+  }
+  bool get darkTheme => theme == AppTheme.dark || (theme == AppTheme.system && (deviceInDarkMode ?? true));
+
+  Pronoun get preferredPronoun => Pronoun.values.firstWhere((element) => element.name == (attributes["preferred_pronoun"] ?? ""), orElse: () => Pronoun.du);
+  set preferredPronoun(Pronoun pp) {
+    attributes["preferred_pronoun"] = pp.name;
     notifyListeners();
     save();
   }

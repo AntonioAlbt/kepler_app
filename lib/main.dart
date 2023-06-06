@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -170,7 +171,7 @@ final destinations = [
   )
 ];
 
-final appKey = GlobalKey();
+final appKey = GlobalKey<ScaffoldState>();
 
 class _KeplerAppState extends State<KeplerApp> {
   Future _load() async {
@@ -181,19 +182,20 @@ class _KeplerAppState extends State<KeplerApp> {
   }
 
   bool _loading = true;
+  InfoScreenDisplay? introductionDisplay;
 
   @override
   Widget build(BuildContext context) {
     final mainWidget = ChangeNotifierProvider(
       key: const Key("mainWidget"),
-      create: (context) => AppState(),
+      create: (context) => AppState()..setInfoScreen(introductionDisplay),
       child: Consumer<AppState>(
         builder: (context, state, __) {
           final index = state.selectedNavigationIndex;
           return WillPopScope(
             onWillPop: () async {
               if (state.infoScreen != null) {
-                if (infoScreenKey.currentState!.canCloseCurrentScreen()) state.clearInfoScreen();
+                if (infoScreenKey.currentState!.tryCloseCurrentScreen()) state.clearInfoScreen();
                 return false;
               }
               return true;
@@ -206,6 +208,10 @@ class _KeplerAppState extends State<KeplerApp> {
                     title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
                     scrolledUnderElevation: 5,
                     elevation: 5,
+                    actions: [IconButton(onPressed: () {
+                      final con = InfoScreenDisplayController();
+                      state.setInfoScreen(InfoScreenDisplay(infoScreens: introScreens(con), controller: con,));
+                    }, icon: const Icon(Icons.adb))],
                   ),
                   drawer: TheDrawer(
                     selectedIndex: index.join("."),
@@ -217,7 +223,10 @@ class _KeplerAppState extends State<KeplerApp> {
                   ),
                   body: tabs[index.first],
                 ),
-                if (state.infoScreen != null) state.infoScreen!
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  child: state.infoScreen,
+                )
               ],
             ),
           );
@@ -252,9 +261,42 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
+  final InfoScreenDisplayController _introController = InfoScreenDisplayController();
+  late final InfoScreenDisplay introduction;
+
+  List<InfoScreen> introScreens(InfoScreenDisplayController controller) => [
+    InfoScreen(
+      infoTitle: const Text("Willkommen in der Kepler-App!"),
+      infoText: WelcomeScreenMain(displayController: controller),
+      closeable: false,
+      infoImage: const Text("🎉", style: TextStyle(fontSize: 48)),
+    ),
+    InfoScreen(
+      infoTitle: const Text("LernSax-Anmeldung"),
+      infoText: LernSaxScreenMain(displayController: controller),
+      closeable: false,
+      infoImage: const Icon(Icons.laptop, size: 48),
+    ),
+  ];
+
   @override
   void initState() {
+    introduction = InfoScreenDisplay(
+      infoScreens: introScreens(_introController),
+      controller: _introController,
+    );
+
     _load();
+    if (internalState.introductionStep < introduction.infoScreens.length) {
+      internalState.introductionStep = 0;
+      introductionDisplay = introduction;
+    }
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    deviceInDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    super.didChangeDependencies();
   }
 }
