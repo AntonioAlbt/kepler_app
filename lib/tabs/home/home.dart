@@ -44,9 +44,13 @@ class _HomepageTabState extends State<HomepageTab> {
                 child: const Text("info screen test"),
               )
             ),
-            ElevatedButton(
-              onPressed: () => prefs.theme = (prefs.darkTheme) ? AppTheme.light : AppTheme.dark,
-              child: const Text("toggle dark theme"),
+            Consumer<Preferences>(
+              builder: (context, prefs, _) {
+                return ElevatedButton(
+                  onPressed: () => prefs.theme = (prefs.darkTheme) ? AppTheme.light : AppTheme.dark,
+                  child: const Text("toggle dark theme"),
+                );
+              }
             ),
           ],
         ),

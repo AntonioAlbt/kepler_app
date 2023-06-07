@@ -17,10 +17,6 @@ const securePrefs = FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
 
-
-final credentialStore = CredentialStore();
-final newsCache = NewsCache();
-
 class CredentialStore extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
   bool loaded = false;
@@ -120,8 +116,6 @@ class AppState extends ChangeNotifier {
 }
 
 const internalStatePrefsKey = "internal_state";
-
-final internalState = InternalState();
 
 class InternalState extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();

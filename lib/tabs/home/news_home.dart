@@ -19,7 +19,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
   Widget build(BuildContext context) {
     return Card(
       color: HSLColor.fromColor(keplerColorBlue)
-          .withLightness((prefs.darkTheme) ? .1 : .9)
+          .withLightness((Provider.of<Preferences>(context, listen: false).darkTheme) ? .1 : .9) // darkTheme shouldnt be able to be updated while the page is open
           .toColor(),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -41,9 +41,8 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
                 ),
               )),
             ),
-            AnimatedBuilder(
-              animation: newsCache,
-              builder: (context, child) => ScrollConfiguration(
+            Consumer<NewsCache>(
+              builder: (context, newsCache, _) => ScrollConfiguration(
                 behavior: const ScrollBehavior().copyWith(overscroll: false),
                 child: ListView.separated(
                   itemBuilder: (context, index) {

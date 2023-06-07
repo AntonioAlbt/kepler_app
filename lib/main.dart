@@ -23,11 +23,16 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+final _newsCache = NewsCache();
+final _internalState = InternalState();
+final _prefs = Preferences();
+final _credStore = CredentialStore();
+
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
-  if (sprefs.containsKey(newsCachePrefKey)) newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
-  if (await securePrefs.containsKey(key: credStorePrefKey)) credentialStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
-  if (sprefs.containsKey(internalStatePrefsKey)) internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
+  if (sprefs.containsKey(newsCachePrefKey)) _newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
+  if (await securePrefs.containsKey(key: credStorePrefKey)) _credStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
+  if (sprefs.containsKey(internalStatePrefsKey)) _internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
 
   Workmanager().initialize(
     taskCallbackDispatcher,
@@ -39,11 +44,11 @@ Future<void> loadAndPrepareApp() async {
     existingWorkPolicy: ExistingWorkPolicy.replace,
     initialDelay: const Duration(seconds: 5)
   );
-  if (newsCache.newsData.isNotEmpty) {
-    loadAllNewNews(newsCache.newsData.first.link).then((data) { if (data != null) newsCache.insertNewsData(0, data); });
+  if (_newsCache.newsData.isNotEmpty) {
+    loadAllNewNews(_newsCache.newsData.first.link).then((data) { if (data != null) _newsCache.insertNewsData(0, data); });
   } else {
     final data = await loadNews(0);
-    if (data != null) newsCache.addNewsData(data); 
+    if (data != null) _newsCache.addNewsData(data); 
   }
 
   initializeNotifications();
@@ -52,7 +57,7 @@ Future<void> loadAndPrepareApp() async {
 Future<void> prepareApp() async {
   sharedPreferences = await SharedPreferences.getInstance();
   final sprefs = sharedPreferences;
-  if (sprefs.containsKey(prefsPrefKey)) prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
+  if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
 }
 
 void main() {
@@ -72,9 +77,6 @@ class MyApp extends StatelessWidget {
 }
 
 T? cast<T>(x) => x is T ? x : null;
-
-final lernSaxIcon = Image.asset("assets/lernsax_icon.png", height: 24, width: 24, color: const Color.fromARGB(255, 162, 162, 162));
-final lernSaxIconColorful = Image.asset("assets/lernsax_icon.png", height: 24, width: 24);
 
 const tabs = [
   HomepageTab(),
@@ -135,14 +137,14 @@ final destinations = [
         icon: const Icon(Icons.groups_outlined),
         label: const Text("Lehrerplan"),
         selectedIcon: const Icon(Icons.groups),
-        isVisible: (context) => prefs.role == Role.teacher
+        isVisible: (context) => _prefs.role == Role.teacher
       ),
     ],
   ),
-  NavEntryData(
-    icon: lernSaxIcon,
-    label: const Text("LernSax"),
-    selectedIcon: lernSaxIconColorful,
+  const NavEntryData(
+    icon: Icon(Icons.laptop_outlined),
+    label: Text("LernSax"),
+    selectedIcon: Icon(Icons.laptop),
   ),
   const NavEntryData(
     icon: Icon(Icons.restaurant_outlined),
@@ -189,48 +191,60 @@ class _KeplerAppState extends State<KeplerApp> {
     final mainWidget = ChangeNotifierProvider(
       key: const Key("mainWidget"),
       create: (context) => AppState()..setInfoScreen(introductionDisplay),
-      child: Consumer<AppState>(
-        builder: (context, state, __) {
-          final index = state.selectedNavigationIndex;
-          return WillPopScope(
-            onWillPop: () async {
-              if (state.infoScreen != null) {
-                if (infoScreenKey.currentState!.tryCloseCurrentScreen()) state.clearInfoScreen();
-                return false;
-              }
-              return true;
-            },
-            child: Stack(
-              children: [
-                Scaffold(
-                  key: appKey,
-                  appBar: AppBar(
-                    title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
-                    scrolledUnderElevation: 5,
-                    elevation: 5,
-                    actions: [IconButton(onPressed: () {
-                      final con = InfoScreenDisplayController();
-                      state.setInfoScreen(InfoScreenDisplay(infoScreens: introScreens(con), controller: con,));
-                    }, icon: const Icon(Icons.adb))],
-                  ),
-                  drawer: TheDrawer(
-                    selectedIndex: index.join("."),
-                    onDestinationSelected: (val) {
-                      state.setNavIndex(val);
+      child: ChangeNotifierProvider(
+        create: (context) => _prefs,
+        child: ChangeNotifierProvider(
+          create: (context) => _internalState,
+          child: ChangeNotifierProvider(
+            create: (context) => _newsCache,
+            child: ChangeNotifierProvider(
+              create: (context) => _credStore,
+              child: Consumer<AppState>(
+                builder: (context, state, __) {
+                  final index = state.selectedNavigationIndex;
+                  return WillPopScope(
+                    onWillPop: () async {
+                      if (state.infoScreen != null) {
+                        if (infoScreenKey.currentState!.tryCloseCurrentScreen()) state.clearInfoScreen();
+                        return false;
+                      }
+                      return true;
                     },
-                    entries: destinations,
-                    dividers: const [5],
-                  ),
-                  body: tabs[index.first],
-                ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 100),
-                  child: state.infoScreen,
-                )
-              ],
+                    child: Stack(
+                      children: [
+                        Scaffold(
+                          key: appKey,
+                          appBar: AppBar(
+                            title: Text((index.first == 0) ? "Kepler-App" : cast<Text>(cast<NavEntryData>(destinations[index.first])?.label)?.data ?? "Kepler-App"),
+                            scrolledUnderElevation: 5,
+                            elevation: 5,
+                            actions: [IconButton(onPressed: () {
+                              final con = InfoScreenDisplayController();
+                              state.setInfoScreen(InfoScreenDisplay(infoScreens: introScreens(con), controller: con,));
+                            }, icon: const Icon(Icons.adb))],
+                          ),
+                          drawer: TheDrawer(
+                            selectedIndex: index.join("."),
+                            onDestinationSelected: (val) {
+                              state.setNavIndex(val);
+                            },
+                            entries: destinations,
+                            dividers: const [5],
+                          ),
+                          body: tabs[index.first],
+                        ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 100),
+                          child: state.infoScreen,
+                        )
+                      ],
+                    ),
+                  );
+                }
+              ),
             ),
-          );
-        }
+          ),
+        ),
       ),
     );
     const loadingWidget = Scaffold(
@@ -240,7 +254,7 @@ class _KeplerAppState extends State<KeplerApp> {
       ),
     );
     return AnimatedBuilder(
-      animation: prefs,
+      animation: _prefs,
       builder: (context, home) {
         return MaterialApp(
           title: "",
@@ -249,7 +263,7 @@ class _KeplerAppState extends State<KeplerApp> {
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
               seedColor: keplerColorBlue,
-              brightness: (prefs.darkTheme) ? Brightness.dark : Brightness.light
+              brightness: (_prefs.darkTheme) ? Brightness.dark : Brightness.light
             ),
           ),
         );
@@ -274,7 +288,7 @@ class _KeplerAppState extends State<KeplerApp> {
     InfoScreen(
       infoTitle: const Text("LernSax-Anmeldung"),
       infoText: LernSaxScreenMain(displayController: controller),
-      closeable: false,
+      closeable: true, // false,
       infoImage: const Icon(Icons.laptop, size: 48),
     ),
   ];
@@ -287,8 +301,8 @@ class _KeplerAppState extends State<KeplerApp> {
     );
 
     _load();
-    if (internalState.introductionStep < introduction.infoScreens.length) {
-      internalState.introductionStep = 0;
+    if (_internalState.introductionStep < introduction.infoScreens.length) {
+      _internalState.introductionStep = 0;
       introductionDisplay = introduction;
     }
     super.initState();

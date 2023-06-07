@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
-
-bool get mitSie => prefs.preferredPronoun == Pronoun.sie;
+import 'package:provider/provider.dart';
 
 class WelcomeScreenMain extends StatefulWidget {
   final InfoScreenDisplayController displayController;
@@ -17,15 +16,16 @@ class WelcomeScreenMain extends StatefulWidget {
 class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: prefs,
-      builder: (context, _) {
+    return Consumer<Preferences>(
+      builder: (context, prefs, _) {
+        final mitSie = prefs.preferredPronoun == Pronoun.sie;
         return Column(
           children: [
             Text("Als erstes werden wir ${mitSie ? "Ihnen" : "Dir"} ein paar Fragen stellen, um die App für ${mitSie ? "Sie" : "Dich"} anzupassen."),
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text("Wie ${mitSie ? "möchten Sie" : "möchtest Du"} angeredet werden?"),
                   Row(
@@ -45,6 +45,43 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
                       ),
                     ],
                   ),
+                  // const Text("Welches Aussehen soll die App verwenden?"),
+                  // Wrap(
+                  //   alignment: WrapAlignment.center,
+                  //   children: [
+                  //     Row(
+                  //       mainAxisSize: MainAxisSize.min,
+                  //       children: [
+                  //         RadioMenuButton(
+                  //           value: AppTheme.system,
+                  //           groupValue: prefs.theme,
+                  //           onChanged: (val) => prefs.theme = val!,
+                  //           child: Text("System (${deviceInDarkMode ?? true ? "Dunkel" : "Hell"})"),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //     Transform.translate(
+                  //       offset: const Offset(0, -5),
+                  //       child: Row(
+                  //         mainAxisSize: MainAxisSize.min,
+                  //         children: [
+                  //           RadioMenuButton(
+                  //             value: AppTheme.light,
+                  //             groupValue: prefs.theme,
+                  //             onChanged: (val) => prefs.theme = val!,
+                  //             child: const Text("Hell"),
+                  //           ),
+                  //           RadioMenuButton(
+                  //             value: AppTheme.dark,
+                  //             groupValue: prefs.theme,
+                  //             onChanged: (val) => prefs.theme = val!,
+                  //             child: const Text("Dunkel"),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   const Text("Dies kann später in den Einstellungen geändert werden.", style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -93,30 +130,33 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Text("Bitte ${mitSie ? "melden Sie sich" : "melde dich"} mit ${mitSie ? "Ihrem" : "deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${mitSie ? "Sie" : "du"} wirklich Teil unserer Schule ${mitSie ? "sind" : "bist"}."),
-        ),
-        TextField(
-          controller: _mailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            labelText: "LernSax-Email-Adresse",
-            errorText: _mailError,
+    return Selector<Preferences, bool>(
+      selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+      builder: (context, mitSie, _) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text("Bitte ${mitSie ? "melden Sie sich" : "melde Dich"} mit ${mitSie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${mitSie ? "Sie" : "Du"} wirklich Teil unserer Schule ${mitSie ? "sind" : "bist"}."),
           ),
-        ),
-        TextField(
-          controller: _pwController,
-          keyboardType: TextInputType.visiblePassword,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: "LernSax-Passwort",
-            errorText: _pwError,
+          TextField(
+            controller: _mailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: "LernSax-Email-Adresse",
+              errorText: _mailError,
+            ),
           ),
-        ),
-      ],
+          TextField(
+            controller: _pwController,
+            keyboardType: TextInputType.visiblePassword,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: "LernSax-Passwort",
+              errorText: _pwError,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

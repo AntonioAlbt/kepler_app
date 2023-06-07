@@ -9,6 +9,7 @@ import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
+import 'package:provider/provider.dart';
 
 extension StringExtension on String {
   String truncateTo(int maxLength) =>
@@ -30,10 +31,11 @@ class _NewsTabState extends State<NewsTab> {
   bool noMoreNews = false;
   bool loading = false;
 
-  late final ScrollController controller;
+  late final ScrollController _controller;
+  late final NewsCache _newsCache;
 
   Future _resetNews() {
-    newsCache.newsData.clear();
+    _newsCache.newsData.clear();
     setState(() {
       noMoreNews = false;
       lastNewsPage = 0;
@@ -43,16 +45,15 @@ class _NewsTabState extends State<NewsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: newsCache,
-      builder: (context, _) {
-        final loadedNews = newsCache.newsData.asMap().map((i, d) => MapEntry(i, NewsEntry(data: d, count: i))).values.toList()
+    return Consumer2<NewsCache, Preferences>(
+      builder: (context, newsCache, prefs, _) {
+        final loadedNews = newsCache.newsData.asMap().map((i, d) => MapEntry(i, NewsEntry(data: d, count: i, prefs: prefs,))).values.toList()
           ..sort((a, b) => b.data.createdDate.compareTo(a.data.createdDate));
         return Scaffold(
           body: LazyLoadScrollView(
             onEndOfPage: () => _loadMoreNews(),
             child: Scrollbar(
-              controller: controller,
+              controller: _controller,
               radius: const Radius.circular(4),
               thickness: 4.75,
               child: RefreshIndicator(
@@ -94,7 +95,7 @@ class _NewsTabState extends State<NewsTab> {
                       child: loadedNews[index - 1],
                     );
                   },
-                  controller: controller,
+                  controller: _controller,
                 ),
               ),
             ),
@@ -103,7 +104,7 @@ class _NewsTabState extends State<NewsTab> {
             opacity: opacity,
             duration: const Duration(milliseconds: 100),
             child: FloatingActionButton(
-              onPressed: () => controller.animateTo(1, duration: const Duration(milliseconds: 1000), curve: Curves.decelerate),
+              onPressed: () => _controller.animateTo(1, duration: const Duration(milliseconds: 1000), curve: Curves.decelerate),
               child: const Icon(Icons.arrow_upward),
             )
           ),
@@ -114,9 +115,9 @@ class _NewsTabState extends State<NewsTab> {
 
   Future _loadMoreNews() async {
     if (noMoreNews || loading) return;
-    if (newsCache.newsData.isNotEmpty) {
-      final newStartNews = await loadAllNewNews(newsCache.newsData.first.link);
-      if (newStartNews != null) newsCache.insertNewsData(0, newStartNews);
+    if (_newsCache.newsData.isNotEmpty) {
+      final newStartNews = await loadAllNewNews(_newsCache.newsData.first.link);
+      if (newStartNews != null) _newsCache.insertNewsData(0, newStartNews);
     }
     if (lastNewsPage > 50) {
       setState(() {
@@ -136,14 +137,14 @@ class _NewsTabState extends State<NewsTab> {
         loading = false;
       });
     } else {
-      newNewsData.removeWhere((e1) => newsCache.newsData.any((e2) => e1.link == e2.link));
+      newNewsData.removeWhere((e1) => _newsCache.newsData.any((e2) => e1.link == e2.link));
       while (newNewsData.length < 9 && lastNewsPage < 50) {
         lastNewsPage++;
         final moreData = await loadNews(lastNewsPage);
         if (moreData == null || moreData.isEmpty) break;
         newNewsData.addAll(moreData);
       }
-      newsCache.addNewsData(newNewsData);
+      _newsCache.addNewsData(newNewsData);
       lastNewsPage++;
       setState(() {
         loading = false;
@@ -154,26 +155,36 @@ class _NewsTabState extends State<NewsTab> {
   @override
   void initState() {
     super.initState();
-    controller = ScrollController();
-    if (!newsCache.loaded || newsCache.newsData.isEmpty) _loadMoreNews();
-    controller.addListener(() {
-      setState(() => opacity = (controller.hasClients && controller.offset >= 600) ? 1 : 0);
+    _controller = ScrollController();
+    _newsCache = Provider.of<NewsCache>(context, listen: false);
+    if (!_newsCache.loaded || _newsCache.newsData.isEmpty) _loadMoreNews();
+    _controller.addListener(() {
+      setState(() => opacity = (_controller.hasClients && _controller.offset >= 600) ? 1 : 0);
     }); // update opacity depending on scroll position
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _controller.dispose();
     super.dispose();
+  }
+
+  final _colors = [keplerColorOrange, keplerColorYellow];
+  Color getNEntryCol(int count, bool darkMode) {
+    return HSLColor.fromColor(_colors[count % _colors.length])
+        .withLightness((darkMode) ? .2 : .8)
+        .withSaturation((darkMode) ? .3 : .7)
+        .toColor();
   }
 }
 
 class NewsEntry extends StatelessWidget with SerializableObject {
   final NewsEntryData data;
   final int count;
+  final Preferences prefs;
   late final Color color;
 
-  NewsEntry({super.key, required this.data, this.count = 0}) {
+  NewsEntry({super.key, required this.data, this.count = 0, required this.prefs}) {
     final colors = [keplerColorOrange, keplerColorYellow];
     color = HSLColor.fromColor(colors[count % colors.length]).withLightness((prefs.darkTheme) ? .2 : .8).withSaturation((prefs.darkTheme) ? .3 : .7).toColor();
   }

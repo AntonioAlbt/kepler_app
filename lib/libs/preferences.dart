@@ -4,8 +4,6 @@ import 'package:kepler_app/libs/state.dart';
 
 const prefsPrefKey = "user_preferences";
 
-final prefs = Preferences();
-
 bool? deviceInDarkMode;
 
 enum Role { teacher, student, parent, other, unknown }
