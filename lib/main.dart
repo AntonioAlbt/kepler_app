@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
@@ -9,6 +10,7 @@ import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
+import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
@@ -175,12 +177,15 @@ final destinations = [
 
 final appKey = GlobalKey<ScaffoldState>();
 
+const _loadingAnimationDuration = 1000;
 class _KeplerAppState extends State<KeplerApp> {
   Future _load() async {
+    final t1 = DateTime.now();
     await loadAndPrepareApp();
-    setState(() {
-      _loading = false;
-    });
+    final mdif = DateTime.now().difference(t1).inMilliseconds;
+    if (kDebugMode) print("Playing difference: $mdif");
+    if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
+    setState(() => _loading = false);
   }
 
   bool _loading = true;
@@ -250,7 +255,7 @@ class _KeplerAppState extends State<KeplerApp> {
     const loadingWidget = Scaffold(
       key: Key("loadingWidget"),
       body: Center(
-        child: CircularProgressIndicator(),
+        child: LoadingScreen(),
       ),
     );
     return AnimatedBuilder(
@@ -269,7 +274,7 @@ class _KeplerAppState extends State<KeplerApp> {
         );
       },
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 200),
         child: (_loading) ? loadingWidget : mainWidget,
       ),
     );
