@@ -24,36 +24,40 @@ class InfoScreenState extends State<InfoScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.customScreen != null) return widget.customScreen!;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (widget.infoImage != null) Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: widget.infoImage!,
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (widget.infoImage != null) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: widget.infoImage!,
+            ),
+            if (widget.infoTitle != null) DefaultTextStyle(
+              style: Theme.of(context).textTheme.headlineSmall!,
+              textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: widget.infoTitle!,
+              ),
+            ),
+            if (widget.infoText != null) Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+              child: DefaultTextStyle(
+                style: Theme.of(context).textTheme.bodyLarge!,
+                textAlign: TextAlign.center,
+                child: widget.infoText!,
+              ),
+            ),
+            if (widget.infoText == null && widget.infoTitle == null && widget.infoImage == null) const Padding(
+              padding: EdgeInsets.all(8),
+              child: Text("Keine Daten."),
+            )
+          ],
         ),
-        if (widget.infoTitle != null) DefaultTextStyle(
-          style: Theme.of(context).textTheme.headlineSmall!,
-          textAlign: TextAlign.center,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: widget.infoTitle!,
-          ),
-        ),
-        if (widget.infoText != null) Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-          child: DefaultTextStyle(
-            style: Theme.of(context).textTheme.bodyLarge!,
-            textAlign: TextAlign.center,
-            child: widget.infoText!,
-          ),
-        ),
-        if (widget.infoText == null && widget.infoTitle == null && widget.infoImage == null) const Padding(
-          padding: EdgeInsets.all(8),
-          child: Text("Keine Daten."),
-        )
-      ],
+      ),
     );
   }
 }

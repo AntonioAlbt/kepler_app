@@ -293,8 +293,18 @@ class _KeplerAppState extends State<KeplerApp> {
     InfoScreen(
       infoTitle: const Text("LernSax-Anmeldung"),
       infoText: LernSaxScreenMain(displayController: controller),
-      closeable: true, // false,
+      closeable: false,
       infoImage: const Icon(Icons.laptop, size: 48),
+    ),
+    InfoScreen(
+      infoTitle: const Text("Stundenplan-Anmeldung"),
+      infoText: Consumer<CredentialStore>(
+        builder: (ctx, credStore, _) => Text(
+          "login: ${credStore.lernSaxLogin}\n\ntoken: ${credStore.lernSaxToken}",
+        ),
+      ),
+      closeable: true,
+      infoImage: const Icon(Icons.list_alt),
     ),
   ];
 

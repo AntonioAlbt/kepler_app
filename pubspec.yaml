@@ -74,6 +74,9 @@ dependencies:
   html_unescape: ^2.0.0
   webview_flutter: ^4.0.5
 
+  # libs for lernsax
+  crypto: ^3.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

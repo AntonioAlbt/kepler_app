@@ -24,6 +24,12 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     await securePrefs.write(key: credStorePrefKey, value: _serialize());
   }
 
+  String? get lernSaxLogin => attributes["lern_sax_login"];
+  set lernSaxLogin(String? login) {
+    attributes["lern_sax_login"] = login;
+    notifyListeners();
+    save();
+  }
   String get lernSaxToken => attributes["lern_sax_token"] ?? "";
   set lernSaxToken(String token) {
     attributes["lern_sax_token"] = token;
