@@ -104,7 +104,7 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
                           Padding(
                             padding: EdgeInsets.only(left: 8),
                             child: Icon(Icons.arrow_forward),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -221,7 +221,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: "Mit dem Fortfahren ${mitSie ? "stimmen Sie" : "stimmst du"} den ",
+                  text: "Mit dem Fortfahren ${mitSie ? "stimmen Sie" : "stimmst Du"} den ",
                 ),
                 TextSpan(
                   text: "Datenschutzbestimmungen",
@@ -264,8 +264,25 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
               showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text("${mitSie ? "Sind Sie" : "Bist du"} sicher?"),
-                  content: Text("Wenn ${mitSie ? "Sie sich" : "du dich"} nicht ${mitSie ? "anmelden, können Sie" : "anmeldest, kannst du"} auf die meisten Funktionen der App nicht zugreifen. Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. Wirklich ohne Anmeldung fortfahren?"),
+                  title: const Text("Nicht mit LernSax anmelden?"),
+                  content: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      children: [
+                        TextSpan(
+                          text: "Wenn ${mitSie ? "Sie sich" : "Du dich"} nicht ${mitSie ? "anmelden, können Sie" : "anmeldest, kannst Du"} auf die meisten Funktionen der App nicht zugreifen.",
+                        ),
+                        const TextSpan(
+                          text: " Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. ",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(text: "Wirklich ohne Anmeldung fortfahren? ${mitSie ? "Sie stimmen" : "Du stimmst"} damit der Datenschutzerklärung zu.")
+                      ],
+                    ),
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
@@ -308,7 +325,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
         return "Du bist kein Mitglied des JKGs.";
       case MOJKGResult.otherError:
       case MOJKGResult.invalidResponse:
-        return "";
+        return "Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.";
     }
   }
 
@@ -317,7 +334,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       return "Keine E-Mail-Adresse angegeben!";
     } else if (!_mailController.text.endsWith("@jkgc.lernsax.de") &&
         _triedToEnter) {
-      return "Ungültige E-Mail-Adresse!";
+      return "Ungültige LernSax-E-Mail-Adresse!";
     }
     return null;
   }
