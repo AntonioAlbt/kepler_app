@@ -99,6 +99,8 @@ class KeplerApp extends StatefulWidget {
   State<KeplerApp> createState() => _KeplerAppState();
 }
 
+// TODO: disable some when youre UserType.nobody (but allow to click to login!)
+// TODO: hide some when usertype doesnt fit, like Lehrerplan
 final destinations = [
   const NavEntryData(
     icon: Icon(Icons.home_outlined),
@@ -182,6 +184,7 @@ class _KeplerAppState extends State<KeplerApp> {
   Future _load() async {
     final t1 = DateTime.now();
     await loadAndPrepareApp();
+    // TODO: set UserType in appState accordingly, also update depending on updates to credential store
     final mdif = DateTime.now().difference(t1).inMilliseconds;
     if (kDebugMode) print("Playing difference: $mdif");
     if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
@@ -241,7 +244,7 @@ class _KeplerAppState extends State<KeplerApp> {
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 100),
                           child: state.infoScreen,
-                        )
+                        ),
                       ],
                     ),
                   );
@@ -280,32 +283,14 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
-  final InfoScreenDisplayController _introController = InfoScreenDisplayController();
+  final _introController = InfoScreenDisplayController();
   late final InfoScreenDisplay introduction;
 
   List<InfoScreen> introScreens(InfoScreenDisplayController controller) => [
-    InfoScreen(
-      infoTitle: const Text("Willkommen in der Kepler-App!"),
-      infoText: WelcomeScreenMain(displayController: controller),
-      closeable: false,
-      infoImage: const Text("🎉", style: TextStyle(fontSize: 48)),
-    ),
-    InfoScreen(
-      infoTitle: const Text("LernSax-Anmeldung"),
-      infoText: LernSaxScreenMain(displayController: controller),
-      closeable: false,
-      infoImage: const Icon(Icons.laptop, size: 48),
-    ),
-    InfoScreen(
-      infoTitle: const Text("Stundenplan-Anmeldung"),
-      infoText: Consumer<CredentialStore>(
-        builder: (ctx, credStore, _) => Text(
-          "login: ${credStore.lernSaxLogin}\n\ntoken: ${credStore.lernSaxToken}",
-        ),
-      ),
-      closeable: true,
-      infoImage: const Icon(Icons.list_alt),
-    ),
+    welcomeScreen(controller),
+    lernSaxLoginScreen(controller),
+    stuPlanLoginScreen(controller),
+    finishScreen(controller),
   ];
 
   @override

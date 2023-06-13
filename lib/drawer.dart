@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/state.dart';
+import 'package:provider/provider.dart';
 
 class NavEntryData {
   final Widget icon;
@@ -7,10 +9,11 @@ class NavEntryData {
   final Widget label;
   final List<NavEntryData>? children;
   final bool Function(BuildContext context)? isVisible;
+  final List<UserType>? visibleFor;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntryData({required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible});
+  const NavEntryData({required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor});
 }
 
 class NavEntry extends StatefulWidget {
@@ -131,7 +134,7 @@ class _TheDrawerState extends State<TheDrawer> {
     return out;
   }
 
-  Widget dataToEntry(NavEntryData entryData, int index, String selectedIndex, int layer, String parentIndex) {
+  Widget dataToEntry(NavEntryData entryData, int index, String selectedIndex, int layer, String parentIndex, UserType userType) {
     final selectionIndex = "${(parentIndex != '') ? '$parentIndex.' : ''}$index";
     // generate all possible selection indices for the parents of the current selection, check if this entry has one of them -> parent to a selected node gets parent selection mode
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
@@ -150,13 +153,14 @@ class _TheDrawerState extends State<TheDrawer> {
       },
       index: index,
       layer: layer,
-      children: entryData.children?.asMap().map((i, data) => MapEntry(i, ((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex) : null)).values.toList().where((element) => element != null).toList().cast(),
+      children: entryData.children?.asMap().map((i, data) => MapEntry(i, (((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) || ((data.visibleFor != null && data.visibleFor!.contains(userType)) || (data.visibleFor == null))) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex, userType) : null)).values.toList().where((element) => element != null).toList().cast(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, i, widget.selectedIndex, 0, ""))).values.toList().cast<Widget>();
+    final userType = Provider.of<AppState>(context).userType;
+    final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, i, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(
       child: ListView(

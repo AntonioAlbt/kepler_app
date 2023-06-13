@@ -102,11 +102,15 @@ class NewsCache extends SerializableObject with ChangeNotifier {
   }
 }
 
+enum UserType { pupil, teacher, parent, nobody }
+
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
   List<int> selectedNavigationIndex = [0];
 
   InfoScreenDisplay? infoScreen;
+
+  UserType userType = UserType.nobody;
 
   void setNavIndex(String newNavIndex) {
     selectedNavigationIndex = newNavIndex.split(".").map((e) => int.parse(e)).toList();
@@ -119,6 +123,11 @@ class AppState extends ChangeNotifier {
   }
 
   void clearInfoScreen() => setInfoScreen(null);
+
+  void setUserType(UserType type) {
+    userType = type;
+    notifyListeners();
+  }
 }
 
 const internalStatePrefsKey = "internal_state";

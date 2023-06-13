@@ -9,6 +9,51 @@ import 'package:kepler_app/privacy_policy.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+welcomeScreen(InfoScreenDisplayController controller) => InfoScreen(
+  infoTitle: const Text("Willkommen in der Kepler-App!"),
+  infoText: WelcomeScreenMain(displayController: controller),
+  closeable: false,
+  infoImage: const Text("🎉", style: TextStyle(fontSize: 48)),
+);
+
+lernSaxLoginScreen(InfoScreenDisplayController controller) => InfoScreen(
+  infoTitle: const Text("LernSax-Anmeldung"),
+  infoText: LernSaxScreenMain(displayController: controller),
+  closeable: false,
+  infoImage: const Icon(Icons.laptop, size: 48),
+);
+
+stuPlanLoginScreen(InfoScreenDisplayController controller) => InfoScreen(
+  infoTitle: const Text("Stundenplan-Anmeldung"),
+  infoText: StuPlanScreenMain(displayController: controller),
+  closeable: false,
+  infoImage: const Icon(Icons.list_alt),
+);
+
+finishScreen(InfoScreenDisplayController controller) => InfoScreen(
+  infoImage: const Icon(Icons.check_box),
+  infoTitle: const Text("Danke und willkommen!"),
+  infoText: Selector<Preferences, bool>(
+    selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+    builder: (context, mitSie, _) {
+      return Column(
+        children: [
+          Text("Vielen Dank für ${mitSie ? "Ihre" : "Deine"} Anmeldung. ${mitSie ? "Sie können" : "Du kannst"} jetzt auf alle Funktionen der App, wie den Studenplan oder die Kepler-News zugreifen."),
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              return ElevatedButton(
+                onPressed: () => state.clearInfoScreen(),
+                child: const Text("Schließen"),
+              );
+            }
+          ),
+        ],
+      );
+    }
+  ),
+  closeable: true,
+);
+
 class WelcomeScreenMain extends StatefulWidget {
   final InfoScreenDisplayController displayController;
 
@@ -275,7 +320,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                         const TextSpan(
                           text: " Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. ",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -366,5 +411,21 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     _mailController.dispose();
     _pwController.dispose();
     super.dispose();
+  }
+}
+
+class StuPlanScreenMain extends StatefulWidget {
+  final InfoScreenDisplayController displayController;
+
+  const StuPlanScreenMain({super.key, required this.displayController});
+
+  @override
+  State<StuPlanScreenMain> createState() => _StuPlanScreenMainState();
+}
+
+class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
