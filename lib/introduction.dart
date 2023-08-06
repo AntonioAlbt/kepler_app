@@ -38,7 +38,7 @@ finishScreen(InfoScreenDisplayController controller) => InfoScreen(
     builder: (context, mitSie, _) {
       return Column(
         children: [
-          Text("Vielen Dank für ${mitSie ? "Ihre" : "Deine"} Anmeldung. ${mitSie ? "Sie können" : "Du kannst"} jetzt auf alle Funktionen der App, wie den Studenplan oder die Kepler-News zugreifen."),
+          Text("Vielen Dank für ${mitSie ? "Ihre" : "Deine"} Anmeldung. ${mitSie ? "Sie können" : "Du kannst"} jetzt auf alle Funktionen der App, wie den Stundenplan oder die Kepler-News zugreifen."),
           Consumer<AppState>(
             builder: (context, state, _) {
               return ElevatedButton(
@@ -164,6 +164,19 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
   }
 }
 
+snack(String text, {required bool error}) => SnackBar(
+  content: Consumer<Preferences>(
+    builder: (context, prefs, _) => Text(
+      text,
+      style: (error)
+          ? TextStyle(
+              color: (prefs.darkTheme) ? Colors.red[400] : Colors.red[600],
+            )
+          : null,
+    ),
+  ),
+);
+
 class LernSaxScreenMain extends StatefulWidget {
   final InfoScreenDisplayController displayController;
 
@@ -188,11 +201,11 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     const TextStyle link = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
     return Selector<Preferences, bool>(
       selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-      builder: (context, mitSie, _) => Column(
+      builder: (context, sie, _) => Column(
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: Text("Bitte ${mitSie ? "melden Sie sich" : "melde Dich"} mit ${mitSie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${mitSie ? "Sie" : "Du"} wirklich Teil unserer Schule ${mitSie ? "sind" : "bist"}."),
+            child: Text("Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}."),
           ),
           TextField(
             controller: _mailController,
@@ -224,19 +237,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 final mail = _mailController.text;
                 final pw = _pwController.text;
                 FocusScope.of(context).unfocus();
-                snack(String text, {required bool error}) => SnackBar(
-                  content: Consumer<Preferences>(
-                    builder: (context, prefs, _) => Text(
-                      text,
-                      style: (error) ? TextStyle(
-                        color: (prefs.darkTheme)
-                              ? Colors.red[400]
-                              : Colors.red[600],
-                      ) : null,
-                    ),
-                  ),
-                );
-                runLogin(mail, pw).then((error) {
+                runLogin(mail, pw, sie).then((error) {
                   final msgr = ScaffoldMessenger.of(context);
                   msgr.clearSnackBars();
                   if (error == null) {
@@ -250,7 +251,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                       });
                     } catch (_) {
                       msgr.clearSnackBars();
-                      msgr.showSnackBar(snack("Fehler beim Verbinden der App. Bitte ${mitSie ? "versuchen Sie" : "versuche"} es später erneut.", error: true));
+                      msgr.showSnackBar(snack("Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true));
                     }
                   } else {
                     msgr.showSnackBar(snack(error, error: true));
@@ -266,7 +267,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: "Mit dem Fortfahren ${mitSie ? "stimmen Sie" : "stimmst Du"} den ",
+                  text: "Mit dem Fortfahren ${sie ? "stimmen Sie" : "stimmst Du"} den ",
                 ),
                 TextSpan(
                   text: "Datenschutzbestimmungen",
@@ -315,7 +316,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                       style: Theme.of(context).textTheme.bodyMedium,
                       children: [
                         TextSpan(
-                          text: "Wenn ${mitSie ? "Sie sich" : "Du dich"} nicht ${mitSie ? "anmelden, können Sie" : "anmeldest, kannst Du"} auf die meisten Funktionen der App nicht zugreifen.",
+                          text: "Wenn ${sie ? "Sie sich" : "Du dich"} nicht ${sie ? "anmelden, können Sie" : "anmeldest, kannst Du"} auf die meisten Funktionen der App nicht zugreifen.",
                         ),
                         const TextSpan(
                           text: " Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. ",
@@ -324,7 +325,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        TextSpan(text: "Wirklich ohne Anmeldung fortfahren? ${mitSie ? "Sie stimmen" : "Du stimmst"} damit der Datenschutzerklärung zu.")
+                        TextSpan(text: "Wirklich ohne Anmeldung fortfahren? ${sie ? "Sie stimmen" : "Du stimmst"} damit der Datenschutzerklärung zu.")
                       ],
                     ),
                   ),
@@ -357,36 +358,36 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     );
   }
 
-  Future<String?> runLogin(String mail, String pw) async {
+  Future<String?> runLogin(String mail, String pw, bool sie) async {
     setState(() => _loading = true);
     final check = await isMemberOfJKG(mail, pw);
     setState(() => _loading = false);
     switch (check) {
       case MOJKGResult.invalidLogin:
-        return "Ungültige Anmeldedaten. Bitte überprüfe deine Eingabe.";
+        return "Ungültige Anmeldedaten. Bitte ${sie ? "überprüfen Sie Ihre" : "überprüfe Deine"} Eingabe.";
       case MOJKGResult.allGood:
         return null;
       case MOJKGResult.noJKGMember:
-        return "Du bist kein Mitglied des JKGs.";
+        return "${sie ? "Sie sind" : "Du bist"} kein Mitglied des JKGs.";
       case MOJKGResult.otherError:
       case MOJKGResult.invalidResponse:
-        return "Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.";
+        return "Es ist ein Fehler aufgetreten. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
     }
   }
 
   String? checkMail() {
     if (_mailController.text.trim() == "" && _triedToEnter) {
-      return "Keine E-Mail-Adresse angegeben!";
+      return "Keine E-Mail-Adresse angegeben.";
     } else if (!_mailController.text.endsWith("@jkgc.lernsax.de") &&
         _triedToEnter) {
-      return "Ungültige LernSax-E-Mail-Adresse!";
+      return "Ungültige LernSax-E-Mail-Adresse.";
     }
     return null;
   }
 
   String? checkPW() {
     if (_pwController.text.trim() == "" && _triedToEnter) {
-      return "Kein Passwort angegeben!";
+      return "Kein Passwort angegeben.";
     }
     return null;
   }
@@ -424,8 +425,87 @@ class StuPlanScreenMain extends StatefulWidget {
 }
 
 class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
+  late TextEditingController _userController;
+  String? _userErr;
+  late TextEditingController _pwController;
+  String? _pwErr;
+
+  bool _triedToEnter = false;
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Consumer<AppState>(
+      builder: (context, state, _) => Selector<Preferences, bool>(
+        selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+        builder: (context, sie, _) => Column(
+          children: [
+            Text("Bitte ${sie ? "geben Sie" : "gebe"} die Anmeldedaten für ${sie ? "Ihren" : "Deinen"} Stundenplan auf plan.kepler-chemnitz.de ein."),
+            if (state.userType == UserType.parent) Text("Da ${sie ? "Sie" : "Du"} ein Elternteil ${sie ? "sind" : "bist"}, sollten dies die Anmeldedaten des Schülerstundenplanes sein."),
+            const Padding(padding: EdgeInsets.all(4)),
+            TextField(
+              controller: _userController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: "Benutzername",
+                errorText: _userErr,
+              ),
+            ),
+            TextField(
+              controller: _pwController,
+              keyboardType: TextInputType.visiblePassword,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Passwort",
+                errorText: _pwErr,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 16),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _triedToEnter = true;
+                    _userErr = checkUser();
+                    _pwErr = checkPW();
+                  });
+                  if (_userErr != null || _pwErr != null) return;
+                  FocusScope.of(context).unfocus();
+                  handleLogin(_userController.text.trim(), _pwController.text);
+                },
+                child: const Text("Anmelden"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String? checkUser() => (_userController.text.trim() == "") ? "Benutzername erforderlich." : null;
+  String? checkPW() => (_pwController.text.trim() == "") ? "Passwort erforderlich." : null;
+
+  Future<void> handleLogin(String username, String password) async {
+    
+  }
+
+  @override
+  void initState() {
+    _userController = TextEditingController();
+    _userController.addListener(() {
+      if (_triedToEnter) setState(() => _userErr = checkUser());
+    });
+    _pwController = TextEditingController();
+    _pwController.addListener(() {
+      if (_triedToEnter) setState(() => _pwErr = checkPW());
+    });
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _userController.dispose();
+    _pwController.dispose();
+    super.dispose();
   }
 }

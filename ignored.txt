@@ -43,4 +43,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-.stfolder/
+/android/local.properties
+/android/.gradle
+
+#include /android/.gitignore
+#include /ios/.gitignore

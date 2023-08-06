@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -81,9 +82,8 @@ class InfoScreenDisplayController extends ChangeNotifier {
     if (val != old) notifyListeners();
   }
 
-  void next() {
-    index += 1;
-  }
+  void next() => index += 1;
+  void previous() => index -= 1;
 
   bool disposed = false;
   @override
@@ -152,6 +152,24 @@ class _InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTicker
                     controller: _controller,
                     physics: (!widget.scrollable) ? const NeverScrollableScrollPhysics() : null,
                     children: widget.infoScreens,
+                  ),
+                  if (kDebugMode) Align(
+                    alignment: Alignment.topRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FloatingActionButton.small(
+                          onPressed: () => state.infoScreen?.controller?.previous(),
+                          backgroundColor: Colors.red.shade800,
+                          child: const Icon(Icons.arrow_back),
+                        ),
+                        FloatingActionButton.small(
+                          onPressed: () => state.infoScreen?.controller?.next(),
+                          backgroundColor: Colors.red.shade800,
+                          child: const Icon(Icons.arrow_forward),
+                        ),
+                      ],
+                    ),
                   ),
                   KeyboardVisibilityBuilder(
                     builder: (context, keyboardHidden) {

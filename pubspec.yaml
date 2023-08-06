@@ -44,6 +44,7 @@ dependencies:
   intl: ^0.17.0
   device_info_plus: ^8.1.0
   flutter_keyboard_visibility: ^5.4.1
+  sentry_flutter: ^7.8.0
 
   # notification lib
   awesome_notifications: ^0.7.4+1
@@ -76,6 +77,9 @@ dependencies:
 
   # libs for lernsax
   crypto: ^3.0.3
+
+  # libs for stuplan
+  xml: ^6.3.0
 
 dev_dependencies:
   flutter_test:

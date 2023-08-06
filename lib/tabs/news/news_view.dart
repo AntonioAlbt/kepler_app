@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kepler_app/libs/preferences.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -23,7 +21,7 @@ class _NewsViewState extends State<NewsView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.newsTitle),
-        backgroundColor: (Provider.of<Preferences>(context, listen: false).darkTheme) ? Colors.blueGrey[800] : Colors.blue.shade100,
+        backgroundColor: (Theme.of(context).brightness == Brightness.dark) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -31,7 +29,7 @@ class _NewsViewState extends State<NewsView> {
               onPressed: () => launchUrl(widget.newsLink, mode: LaunchMode.externalApplication),
               child: const Text("Im Browser öffnen"),
             ),
-          )
+          ),
         ],
       ),
       body: WebViewWidget(controller: _controller),

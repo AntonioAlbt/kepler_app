@@ -6,19 +6,11 @@ const prefsPrefKey = "user_preferences";
 
 bool? deviceInDarkMode;
 
-enum Role { teacher, student, parent, other, unknown }
 enum Pronoun { du, sie }
 enum AppTheme { system, dark, light }
 
 class Preferences extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
-
-  Role get role => Role.values.firstWhere((element) => element.name == (attributes["role"] ?? ""), orElse: () => Role.unknown);
-  set role(Role role) {
-    attributes["role"] = role.name;
-    notifyListeners();
-    save();
-  }
 
   AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
   set theme(AppTheme theme) {

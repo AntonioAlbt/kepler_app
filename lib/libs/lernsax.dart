@@ -20,12 +20,13 @@ class LernSaxException implements Exception {
   String toString() => message;
 }
 
-Map<String, dynamic> call({required String method, Map<String, dynamic>? params, int? id}) => {
-  "jsonrpc": "2.0",
-  "method": method,
-  if (params != null) "params": params,
-  if (id != null) "id": id,
-};
+Map<String, dynamic> call({required String method, Map<String, dynamic>? params, int? id}) =>
+    {
+      "jsonrpc": "2.0",
+      "method": method,
+      if (params != null) "params": params,
+      if (id != null) "id": id,
+    };
 
 String sha1(String input) {
   final bytes = utf8.encode(input);
@@ -47,7 +48,7 @@ Future<Map<String, dynamic>> auth(String mail, String token, {int? id}) async {
         "hash": hash,
         "application": appID,
         "get_properties": [],
-        "is_online": false,
+        "is_online": 0,
       },
       id: id,
     );
@@ -71,35 +72,58 @@ DateTime _lastSessionUpdate = DateTime(1900);
 const _timeTilRefresh = Duration(minutes: 15);
 Future<String> session(String mail, String token) async {
   if (_lastSessionUpdate.difference(DateTime.now()) >= _timeTilRefresh) {
-    _currentSessionId = await newSession(mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
+    _currentSessionId = await newSession(
+        mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
     _lastSessionUpdate = DateTime.now();
   }
   return _currentSessionId;
 }
-Future<Map<String, dynamic>> useSession(String mail, String token) async
-  => call(method: "set_session", params: {"session_id": await session(mail, token)});
 
-Future<dynamic> api(List<Map<String, dynamic>> data) async
-  => await http.post(uri, headers: {
-    "content-type": "application/json"
-  }, body: jsonEncode(data),)
-  .then((res) => jsonDecode(res.body));
+Future<Map<String, dynamic>> useSession(String mail, String token) async =>
+    call(
+        method: "set_session",
+        params: {"session_id": await session(mail, token)});
+
+Future<dynamic> api(List<Map<String, dynamic>> data) async => await http
+    .post(
+      uri,
+      headers: {"content-type": "application/json"},
+      body: jsonEncode(data),
+    )
+    .then((res) => jsonDecode(res.body));
 
 const keplerBaseUser = "info@jkgc.lernsax.de";
-enum MOJKGResult { allGood, invalidLogin, noJKGMember, otherError, invalidResponse }
+
+enum MOJKGResult {
+  allGood,
+  invalidLogin,
+  noJKGMember,
+  otherError,
+  invalidResponse
+}
+
 Future<MOJKGResult> isMemberOfJKG(String mail, String password) async {
-  final res = await api([
-    call(
-      method: "login",
-      params: {
-        "login": mail,
-        "password": password,
-        "is_online": 0,
-      },
-      id: 1,
-    ),
-    call(method: "logout"),
-  ]);
+  late final dynamic res;
+  try {
+    res = await api([
+      call(
+        method: "login",
+        params: {
+          "login": mail,
+          "password": password,
+          "is_online": 0,
+        },
+        id: 1,
+      ),
+      call(method: "logout"),
+    ]);
+  } catch (_) {
+    return MOJKGResult.otherError;
+  }
+  return _processMemberResponse(res);
+}
+
+MOJKGResult _processMemberResponse(res) {
   try {
     final response = res[0]["result"];
     if (response["return"] == "FATAL") {
@@ -121,7 +145,9 @@ Future<MOJKGResult> isMemberOfJKG(String mail, String password) async {
 }
 
 Future<String> registerApp(String mail, String password) async {
-  final deviceModel = (Platform.isAndroid) ? (await DeviceInfoPlugin().androidInfo).model : (await DeviceInfoPlugin().iosInfo).model;
+  final deviceModel = (Platform.isAndroid)
+      ? (await DeviceInfoPlugin().androidInfo).model
+      : (await DeviceInfoPlugin().iosInfo).model;
   final res = await api([
     call(
       method: "login",
@@ -133,9 +159,7 @@ Future<String> registerApp(String mail, String password) async {
     ),
     call(
       method: "set_focus",
-      params: {
-        "object": "trusts"
-      },
+      params: {"object": "trusts"},
     ),
     call(
       method: "register_master",
@@ -150,4 +174,30 @@ Future<String> registerApp(String mail, String password) async {
   ]);
   final response = res[0]["result"];
   return response["trust"]["token"];
+}
+
+Future<bool?> confirmLernSaxCredentials(String login, String token) async {
+  try {
+    final res = await api([
+      await auth(login, token, id: 1),
+      call(method: "logout"),
+    ]);
+    final ret = res[0]["return"];
+    return ret == "OK";
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<MOJKGResult> checkMemberStatus(String login, String token) async {
+  late final dynamic res;
+  try {
+    res = await api([
+      await auth(login, token),
+      call(method: "logout"),
+    ]);
+  } catch (_) {
+    return MOJKGResult.otherError;
+  }
+  return _processMemberResponse(res);
 }

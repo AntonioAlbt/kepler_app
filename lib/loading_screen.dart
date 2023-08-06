@@ -8,9 +8,11 @@ class LoadingScreen extends StatefulWidget {
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-const _withBorder = false;
+const _withBorder = true;
 const _borderWidth = 2.0;
-class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateMixin {
+
+class _LoadingScreenState extends State<LoadingScreen>
+    with TickerProviderStateMixin {
   late final AnimationController _circle1AnimContr;
   late final AnimationController _circle2AnimContr;
   late final AnimationController _circle3AnimContr;
@@ -30,7 +32,8 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: keplerColorYellow,
-                  border: (_withBorder) ? Border.all(width: _borderWidth) : null,
+                  border:
+                      (_withBorder) ? Border.all(width: _borderWidth) : null,
                 ),
                 width: 200,
                 height: 200,
@@ -46,7 +49,8 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: keplerColorBlue,
-                  border: (_withBorder) ? Border.all(width: _borderWidth) : null,
+                  border:
+                      (_withBorder) ? Border.all(width: _borderWidth) : null,
                 ),
                 width: 115,
                 height: 115,
@@ -62,7 +66,8 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: keplerColorOrange,
-                  border: (_withBorder) ? Border.all(width: _borderWidth) : null,
+                  border:
+                      (_withBorder) ? Border.all(width: _borderWidth) : null,
                 ),
                 width: 140,
                 height: 140,
@@ -76,9 +81,12 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
 
   @override
   void initState() {
-    _circle1AnimContr = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
-    _circle2AnimContr = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
-    _circle3AnimContr = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _circle1AnimContr = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _circle2AnimContr = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
+    _circle3AnimContr = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
 
     _circle1AnimContr.addListener(() {
       if (_circle1AnimContr.isCompleted) _circle2AnimContr.forward();

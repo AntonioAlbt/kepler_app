@@ -134,7 +134,7 @@ class _TheDrawerState extends State<TheDrawer> {
     return out;
   }
 
-  Widget dataToEntry(NavEntryData entryData, int index, String selectedIndex, int layer, String parentIndex, UserType userType) {
+  Widget dataToEntry(NavEntryData entryData, int index, String selectedIndex, int layer, String parentIndex, UserType role) {
     final selectionIndex = "${(parentIndex != '') ? '$parentIndex.' : ''}$index";
     // generate all possible selection indices for the parents of the current selection, check if this entry has one of them -> parent to a selected node gets parent selection mode
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
@@ -153,13 +153,13 @@ class _TheDrawerState extends State<TheDrawer> {
       },
       index: index,
       layer: layer,
-      children: entryData.children?.asMap().map((i, data) => MapEntry(i, (((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) || ((data.visibleFor != null && data.visibleFor!.contains(userType)) || (data.visibleFor == null))) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex, userType) : null)).values.toList().where((element) => element != null).toList().cast(),
+      children: entryData.children?.asMap().map((i, data) => MapEntry(i, (((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) || ((data.visibleFor != null && data.visibleFor!.contains(role)) || (data.visibleFor == null))) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex, role) : null)).values.toList().where((element) => element != null).toList().cast(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final userType = Provider.of<AppState>(context).userType;
+    final userType = Provider.of<InternalState>(context).lastUserType ?? UserType.nobody;
     final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, i, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(
