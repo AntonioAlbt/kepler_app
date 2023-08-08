@@ -159,7 +159,7 @@ class _TheDrawerState extends State<TheDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final userType = Provider.of<InternalState>(context).lastUserType ?? UserType.nobody;
+    final userType = Provider.of<AppState>(context, listen: false).userType;
     final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, i, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(

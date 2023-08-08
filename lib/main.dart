@@ -32,15 +32,19 @@ final _newsCache = NewsCache();
 final _internalState = InternalState();
 final _prefs = Preferences();
 final _credStore = CredentialStore();
+final _appState = AppState();
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
-  if (sprefs.containsKey(newsCachePrefKey))
+  if (sprefs.containsKey(newsCachePrefKey)) {
     _newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
-  if (await securePrefs.containsKey(key: credStorePrefKey))
+  }
+  if (await securePrefs.containsKey(key: credStorePrefKey)) {
     _credStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
-  if (sprefs.containsKey(internalStatePrefsKey))
+  }
+  if (sprefs.containsKey(internalStatePrefsKey)) {
     _internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
+  }
 
   Workmanager().initialize(
     taskCallbackDispatcher,
@@ -196,21 +200,48 @@ final appKey = GlobalKey<ScaffoldState>();
 const _loadingAnimationDuration = 1000;
 
 class _KeplerAppState extends State<KeplerApp> {
+  UserType utype = UserType.nobody;
+
+  Future<UserType> calcUT() async {
+    if (_credStore.lernSaxToken != null) {
+      final check = await confirmLernSaxCredentials(_credStore.lernSaxLogin, _credStore.lernSaxToken!);
+      if (check == false) {
+        _credStore.lernSaxToken = null;
+      }
+      if (check == null) {
+        return _internalState.lastUserType ?? UserType.nobody;
+      } else if (_credStore.vpUser == null || _credStore.vpPassword == null) {
+        return UserType.nobody;
+      } else {
+        final ut = await determineUserType(_credStore.lernSaxLogin, _credStore.vpUser, _credStore.vpPassword);
+        if (ut == UserType.nobody) {
+          _credStore.vpUser = null;
+          _credStore.vpPassword = null;
+        }
+      }
+    }
+    return _internalState.lastUserType ?? UserType.nobody;
+  }
+
   Future _load() async {
     final t1 = DateTime.now();
     await loadAndPrepareApp();
-    UserType utype = UserType.nobody;
-    if (_credStore.lernSaxToken != null) {
-      final check = await confirmLernSaxCredentials(
-          _credStore.lernSaxLogin, _credStore.lernSaxToken!);
-      if (check == null) {
-        utype = _internalState.lastUserType ?? UserType.nobody;
-      } else {
-        utype = await determineUserType(
-            _credStore.lernSaxLogin, _credStore.vpUser, _credStore.vpPassword);
-      }
+    utype = await calcUT();
+    _internalState.lastUserType = utype;
+    // This seems unneccessary and makes the login process a lot more difficult to handle (also adds a lot of requests).
+    // _credStore.addListener(() {
+    //   calcUT().then((value) {
+    //     _appState.setUserType(value);
+    //     _internalState.lastUserType = value;
+    //   });
+    // });
+
+    if (!_internalState.introShown) {
+      introductionDisplay = InfoScreenDisplay(
+        infoScreens: introScreens,
+      );
     }
-    // TODO: set UserType in appState accordingly, also update depending on updates to credential store
+
     final mdif = DateTime.now().difference(t1).inMilliseconds;
     if (kDebugMode) print("Playing difference: $mdif");
     if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
@@ -222,12 +253,13 @@ class _KeplerAppState extends State<KeplerApp> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: update intro display state, hide it when necessary
     final mainWidget = MultiProvider(
       key: const Key("mainWidget"),
       providers: [
         ChangeNotifierProvider(
-          create: (_) => AppState(), //..setInfoScreen(introductionDisplay),
+          create: (_) => _appState
+            ..setInfoScreen(introductionDisplay)
+            ..setUserType(utype),
         ),
         ChangeNotifierProvider(
           create: (_) => _prefs,
@@ -247,7 +279,7 @@ class _KeplerAppState extends State<KeplerApp> {
         return WillPopScope(
           onWillPop: () async {
             if (state.infoScreen != null) {
-              if (infoScreenKey.currentState!.tryCloseCurrentScreen()) {
+              if (infoScreenState.tryCloseCurrentScreen()) {
                 state.clearInfoScreen();
               }
               return false;
@@ -269,14 +301,13 @@ class _KeplerAppState extends State<KeplerApp> {
                   elevation: 5,
                   actions: [
                     IconButton(
-                        onPressed: () {
-                          final con = InfoScreenDisplayController();
-                          state.setInfoScreen(InfoScreenDisplay(
-                            infoScreens: introScreens(con),
-                            controller: con,
-                          ));
-                        },
-                        icon: const Icon(Icons.adb))
+                      onPressed: () {
+                        state.setInfoScreen(InfoScreenDisplay(
+                          infoScreens: introScreens,
+                        ));
+                      },
+                      icon: const Icon(Icons.adb),
+                    ),
                   ],
                 ),
                 drawer: TheDrawer(
@@ -326,35 +357,15 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
-  final _introController = InfoScreenDisplayController();
-  late final InfoScreenDisplay introduction;
-
-  List<InfoScreen> introScreens(InfoScreenDisplayController controller) => [
-        welcomeScreen(controller),
-        lernSaxLoginScreen(controller),
-        stuPlanLoginScreen(controller),
-        finishScreen(controller),
-      ];
-
   @override
   void initState() {
-    introduction = InfoScreenDisplay(
-      infoScreens: introScreens(_introController),
-      controller: _introController,
-    );
-
     _load();
-    if (_internalState.introductionStep < introduction.infoScreens.length) {
-      _internalState.introductionStep = 0;
-      introductionDisplay = introduction;
-    }
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    deviceInDarkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+    deviceInDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
     super.didChangeDependencies();
   }
 }

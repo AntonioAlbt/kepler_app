@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
@@ -9,40 +10,59 @@ import 'package:kepler_app/privacy_policy.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-welcomeScreen(InfoScreenDisplayController controller) => InfoScreen(
-  infoTitle: const Text("Willkommen in der Kepler-App!"),
-  infoText: WelcomeScreenMain(displayController: controller),
+final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, finishScreen];
+
+const welcomeScreen = InfoScreen(
+  infoTitle: Text("Willkommen in der Kepler-App!"),
+  infoText: WelcomeScreenMain(),
   closeable: false,
-  infoImage: const Text("🎉", style: TextStyle(fontSize: 48)),
+  infoImage: Text("🎉", style: TextStyle(fontSize: 48)),
 );
 
-lernSaxLoginScreen(InfoScreenDisplayController controller) => InfoScreen(
-  infoTitle: const Text("LernSax-Anmeldung"),
-  infoText: LernSaxScreenMain(displayController: controller),
+const lernSaxLoginScreen = InfoScreen(
+  infoTitle: Text("LernSax-Anmeldung"),
+  infoText: LernSaxScreenMain(),
   closeable: false,
-  infoImage: const Icon(Icons.laptop, size: 48),
+  infoImage: Icon(Icons.laptop, size: 48),
 );
 
-stuPlanLoginScreen(InfoScreenDisplayController controller) => InfoScreen(
-  infoTitle: const Text("Stundenplan-Anmeldung"),
-  infoText: StuPlanScreenMain(displayController: controller),
+const stuPlanLoginScreen = InfoScreen(
+  infoTitle: Text("Stundenplan-Anmeldung"),
+  infoText: StuPlanScreenMain(),
   closeable: false,
-  infoImage: const Icon(Icons.list_alt),
+  infoImage: Icon(Icons.list_alt, size: 48),
 );
 
-finishScreen(InfoScreenDisplayController controller) => InfoScreen(
-  infoImage: const Icon(Icons.check_box),
+final finishScreen = InfoScreen(
+  infoImage: const Icon(Icons.check_box, size: 48),
   infoTitle: const Text("Danke und willkommen!"),
   infoText: Selector<Preferences, bool>(
     selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-    builder: (context, mitSie, _) {
+    builder: (context, sie, _) {
       return Column(
         children: [
-          Text("Vielen Dank für ${mitSie ? "Ihre" : "Deine"} Anmeldung. ${mitSie ? "Sie können" : "Du kannst"} jetzt auf alle Funktionen der App, wie den Stundenplan oder die Kepler-News zugreifen."),
+          Text("Vielen Dank für ${sie ? "Ihre" : "Deine"} Anmeldung. ${sie ? "Sie können" : "Du kannst"} jetzt auf die App zugreifen."),
+          ((){
+            switch (Provider.of<AppState>(context, listen: false).userType) {
+              case UserType.nobody:
+                return const Text("Viel Spaß beim Ausprobieren!"); // we shouldn't even reach this case.
+              case UserType.parent:
+                return Text("Als Elternteil ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Schüler (und Eltern) und alle LernSax-Funktionen für ${sie ? "Sie" : "Dich"}.");
+              case UserType.teacher:
+                return Text("Als Lehrer ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Lehrer und Schüler und alle LernSax-Funktionen.");
+              case UserType.pupil:
+                return Text("Als Schüler ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Schüler und alle LernSax-Funktionen.");
+              default: // we absolutely should not reach this case! (maybe if someone adds new UserType-s)
+                return const Text("Aber irgendetwas ist schiefgelaufen... Ich schau mal schnell nach, ne?");
+            }
+          }()),
           Consumer<AppState>(
             builder: (context, state, _) {
               return ElevatedButton(
-                onPressed: () => state.clearInfoScreen(),
+                onPressed: () {
+                  Provider.of<InternalState>(context, listen: false).introShown = true;
+                  state.clearInfoScreen();
+                },
                 child: const Text("Schließen"),
               );
             }
@@ -51,13 +71,15 @@ finishScreen(InfoScreenDisplayController controller) => InfoScreen(
       );
     }
   ),
+  onTryClose: (_, context) {
+    Provider.of<InternalState>(context, listen: false).introShown = true;
+    return true;
+  },
   closeable: true,
 );
 
 class WelcomeScreenMain extends StatefulWidget {
-  final InfoScreenDisplayController displayController;
-
-  const WelcomeScreenMain({super.key, required this.displayController});
+  const WelcomeScreenMain({super.key});
 
   @override
   State<WelcomeScreenMain> createState() => _WelcomeScreenMainState();
@@ -140,7 +162,7 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        widget.displayController.next();
+                        infoScreenState.next();
                       },
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -178,9 +200,7 @@ snack(String text, {required bool error}) => SnackBar(
 );
 
 class LernSaxScreenMain extends StatefulWidget {
-  final InfoScreenDisplayController displayController;
-
-  const LernSaxScreenMain({super.key, required this.displayController});
+  const LernSaxScreenMain({super.key});
 
   @override
   State<LernSaxScreenMain> createState() => _LernSaxScreenMainState();
@@ -246,8 +266,11 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                         final credStore = Provider.of<CredentialStore>(context, listen: false);
                         credStore.lernSaxLogin = mail;
                         credStore.lernSaxToken = token;
+                        if (parentTypeEndings.any((element) => mail.split("@")[0].endsWith(".$element"))) {
+                          Provider.of<AppState>(context, listen: false).setUserType(UserType.parent);
+                        }
                         msgr.showSnackBar(snack("Erfolgreich eingeloggt und verbunden.", error: false));
-                        widget.displayController.next();
+                        infoScreenState.next();
                       });
                     } catch (_) {
                       msgr.clearSnackBars();
@@ -265,6 +288,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
             textAlign: TextAlign.center,
             textScaleFactor: 1,
             text: TextSpan(
+              style: DefaultTextStyle.of(context).style,
               children: [
                 TextSpan(
                   text: "Mit dem Fortfahren ${sie ? "stimmen Sie" : "stimmst Du"} den ",
@@ -378,9 +402,9 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
   String? checkMail() {
     if (_mailController.text.trim() == "" && _triedToEnter) {
       return "Keine E-Mail-Adresse angegeben.";
-    } else if (!_mailController.text.endsWith("@jkgc.lernsax.de") &&
-        _triedToEnter) {
-      return "Ungültige LernSax-E-Mail-Adresse.";
+    } else if (_triedToEnter) {
+      RegExp regex = RegExp(r"^[a-z]*(?:.(?:" + parentTypeEndings.join("|") + r"))?@jkgc\.lernsax\.de$", multiLine: true, caseSensitive: false);
+      if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
     }
     return null;
   }
@@ -415,10 +439,11 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
   }
 }
 
+/* TODO: skip this screen in favor of getting the data from some kinda LernSax groups for students and teachers for this app
+/ maybe one group, but take advantage of the fact that only teachers can download from Upload-only folders to save the teacher plan login data there
+/ or maybe be able to enable files for the institution and create a folder accessible for all logged in users, with one specifically for teachers */
 class StuPlanScreenMain extends StatefulWidget {
-  final InfoScreenDisplayController displayController;
-
-  const StuPlanScreenMain({super.key, required this.displayController});
+  const StuPlanScreenMain({super.key});
 
   @override
   State<StuPlanScreenMain> createState() => _StuPlanScreenMainState();
@@ -431,6 +456,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   String? _pwErr;
 
   bool _triedToEnter = false;
+  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -470,10 +496,36 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                   });
                   if (_userErr != null || _pwErr != null) return;
                   FocusScope.of(context).unfocus();
-                  handleLogin(_userController.text.trim(), _pwController.text);
+                  final username = _userController.text.trim();
+                  final password = _pwController.text;
+                  handleLogin(username, password, sie)
+                      .then((error) {
+                        final mgr = ScaffoldMessenger.of(context);
+                        if (error != null) {
+                          mgr.clearSnackBars();
+                          mgr.showSnackBar(snack(error, error: true));
+                        } else {
+                          final cs = Provider.of<CredentialStore>(context, listen: false);
+                          cs.vpUser = username;
+                          cs.vpPassword = password;
+                          determineUserType(cs.lernSaxLogin, username, password)
+                            .then((userType) {
+                              Provider.of<AppState>(context, listen: false).setUserType(userType);
+                              Provider.of<InternalState>(context, listen: false).lastUserType = userType;
+                              mgr.clearSnackBars();
+                              mgr.showSnackBar(snack("Erfolgreich angemeldet.", error: false));
+                              infoScreenState.next();
+                            });
+                        }
+                      });
                 },
                 child: const Text("Anmelden"),
               ),
+            ),
+            if (_loading) const LinearProgressIndicator(),
+            if (_loading) const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("Meldet an..."),
             ),
           ],
         ),
@@ -484,8 +536,23 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   String? checkUser() => (_userController.text.trim() == "") ? "Benutzername erforderlich." : null;
   String? checkPW() => (_pwController.text.trim() == "") ? "Passwort erforderlich." : null;
 
-  Future<void> handleLogin(String username, String password) async {
-    
+  Future<String?> handleLogin(String username, String password, bool sie) async {
+    try {
+      setState(() => _loading = true);
+      final lres = await authRequest(lUrlMKlXmlUrl, username, password);
+      if (lres.statusCode == 401) { // if teacher auth failed, try again with pupil auth
+        final sres = await authRequest(sUrlMKlXmlUrl, username, password);
+        if (sres.statusCode == 401) return "Ungültige Anmeldedaten.";
+        if (sres.statusCode != 200) return "Fehler #SP${sres.statusCode}. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
+        return null;
+      }
+      if (lres.statusCode != 200) return "Fehler #LP${lres.statusCode}. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
+      return null;
+    } catch (_) {
+      return "Fehler bei der Verbindung zum Vertretungsplan. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override

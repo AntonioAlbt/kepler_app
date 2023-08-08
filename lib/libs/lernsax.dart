@@ -182,7 +182,7 @@ Future<bool?> confirmLernSaxCredentials(String login, String token) async {
       await auth(login, token, id: 1),
       call(method: "logout"),
     ]);
-    final ret = res[0]["return"];
+    final ret = res[0]["result"]["return"];
     return ret == "OK";
   } catch (_) {
     return null;

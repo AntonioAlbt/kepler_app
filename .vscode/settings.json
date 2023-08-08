@@ -1,5 +1,6 @@
 {
     "cmake.configureOnOpen": false,
     "discord.removeRemoteRepository": false,
-    "discord.removeLowerDetails": false
+    "discord.removeLowerDetails": false,
+    "editor.formatOnPaste": false
 }

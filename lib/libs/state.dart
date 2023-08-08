@@ -139,16 +139,16 @@ const internalStatePrefsKey = "internal_state";
 class InternalState extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
-  int get introductionStep => attributes["introduction_step"] ?? 0;
-  set introductionStep(int step) {
-    attributes["introduction_step"] = step;
+  UserType? get lastUserType => UserType.values.firstWhere((element) => element.name == attributes["last_user_type"], orElse: () => UserType.nobody);
+  set lastUserType(UserType? type) {
+    attributes["last_user_type"] = type?.name;
     notifyListeners();
     save();
   }
 
-  UserType? get lastUserType => attributes["last_user_type"];
-  set lastUserType(UserType? type) {
-    attributes["last_user_type"] = type;
+  bool get introShown => attributes["intro_shown"] ?? false;
+  set introShown(bool introShown) {
+    attributes["intro_shown"] = introShown;
     notifyListeners();
     save();
   }
@@ -176,10 +176,9 @@ final parentTypeEndings = [
 ];
 
 /// This function assumes that the provided logins are valid and were checked beforehand and that the user has an internet connection.
-Future<UserType> determineUserType(
-    String? lernSaxLogin, String? vpUser, String? vpPassword) async {
+Future<UserType> determineUserType(String? lernSaxLogin, String? vpUser, String? vpPassword) async {
   if (lernSaxLogin == null) return UserType.nobody;
-  if (parentTypeEndings.any((element) => lernSaxLogin.endsWith(".$element"))) return UserType.parent;
+  if (parentTypeEndings.any((element) => lernSaxLogin.split("@")[0].endsWith(".$element"))) return UserType.parent;
   final lres = await authRequest(lUrlMKlXmlUrl, vpUser!, vpPassword!);
   if (lres.statusCode != 401) return UserType.teacher;
   final sres = await authRequest(sUrlMKlXmlUrl, vpUser, vpPassword);

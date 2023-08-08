@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 const baseUrl = "https://plan.kepler-chemnitz.de/stuplanindiware";
 const sUrlD = "$baseUrl/VplanonlineS";
 const sUrlM = "$baseUrl/VmobilS";
-const lUrlD = "$baseUrl/VplanonlineS";
-const lUrlM = "$baseUrl/VplanonlineS";
+const lUrlD = "$baseUrl/VplanonlineL";
+const lUrlM = "$baseUrl/VmobilL";
 
 final sUrlMKlXmlUrl = Uri.parse("$sUrlM/mobdaten/Klassen.xml");
 final lUrlMKlXmlUrl = Uri.parse("$lUrlM/mobdaten/Lehrer.xml");
