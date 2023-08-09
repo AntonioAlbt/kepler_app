@@ -258,7 +258,7 @@ class _KeplerAppState extends State<KeplerApp> {
       providers: [
         ChangeNotifierProvider(
           create: (_) => _appState
-            ..setInfoScreen(introductionDisplay)
+            ..setInfoScreen(introductionDisplay) // TODO: show "sign in again" screens to user if creds are invalid
             ..setUserType(utype),
         ),
         ChangeNotifierProvider(

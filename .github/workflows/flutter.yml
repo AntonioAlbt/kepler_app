@@ -30,8 +30,15 @@ jobs:
           java-version: '11'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.10.2'
+          flutter-version: '3.10.6'
       - run: flutter pub get
+      - run: |
+          cp lib/libs/sentry_dsn.example.dart lib/libs/sentry_dsn.dart
+          sed -i "s|https://_@_.ingest.sentry.io/_|$SENTRY_DSN|g" lib/libs/sentry_dsn.dart
+          if [ -n "$SENTRY_DSN" ]; then sed -i "s|false|true|g" lib/libs/sentry_dsn.dart; fi
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        name: Setup Sentry with secrets
       - run: flutter analyze
       - run: flutter build apk --debug
       - run: flutter build apk --release

@@ -23,11 +23,8 @@ Future<XmlDocument> _fetch(Uri url, String user, String password) async {
   return xml;
 }
 
+// ignore: unused_element
 Future<XmlDocument> _getKlassenXML(String user, String password) async {
   final xml = await _fetch(sUrlMKlXmlUrl, user, password);
   return xml;
-}
-
-void main() async {
-  print((await _fetch(sUrlMKlXmlUrl, "jkgschueler", "jkgplan15")).toXmlString());
 }

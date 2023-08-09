@@ -188,16 +188,3 @@ Future<bool?> confirmLernSaxCredentials(String login, String token) async {
     return null;
   }
 }
-
-Future<MOJKGResult> checkMemberStatus(String login, String token) async {
-  late final dynamic res;
-  try {
-    res = await api([
-      await auth(login, token),
-      call(method: "logout"),
-    ]);
-  } catch (_) {
-    return MOJKGResult.otherError;
-  }
-  return _processMemberResponse(res);
-}

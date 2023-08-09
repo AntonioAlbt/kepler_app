@@ -394,6 +394,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       case MOJKGResult.noJKGMember:
         return "${sie ? "Sie sind" : "Du bist"} kein Mitglied des JKGs.";
       case MOJKGResult.otherError:
+        return "Fehler bei der Verbindung mit den LernSax-Servern.";
       case MOJKGResult.invalidResponse:
         return "Es ist ein Fehler aufgetreten. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
     }
