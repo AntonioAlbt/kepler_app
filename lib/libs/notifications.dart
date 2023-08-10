@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:notification_permissions/notification_permissions.dart';
 import 'package:provider/provider.dart';
 
@@ -38,8 +39,8 @@ Future<void> _receiveActions(ReceivedAction receivedAction) async {
       log("clicked news notification, but the context was null");
       return;
     }
-    log("clicked news notification, now setting the nav index to 1");
-    Provider.of<AppState>(context, listen: false).setNavIndex("1");
+    log("clicked news notification, now setting the nav index to ${PageIDs.news}");
+    Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [PageIDs.news];
   }
 }
 

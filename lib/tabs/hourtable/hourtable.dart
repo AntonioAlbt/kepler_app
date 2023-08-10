@@ -9,14 +9,12 @@ class HourtableTab extends StatefulWidget {
   State<HourtableTab> createState() => _HourtableTabState();
 }
 
-enum HTNavState { overview, yourPlan, classPlan, allReplaces, freeRooms }
-
 class _HourtableTabState extends State<HourtableTab> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, state, w) {
-        final navState = HTNavState.values[state.selectedNavigationIndex.last + (state.selectedNavigationIndex.length > 1 ? 1 : -2)];
+        final navState = state.selectedNavPageIDs.last;
         return Center(
           child: Text("Ausgewählt: $navState"),
         );

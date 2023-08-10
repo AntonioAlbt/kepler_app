@@ -4,6 +4,7 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:provider/provider.dart';
 
 class NavEntryData {
+  final String id;
   final Widget icon;
   final Widget? selectedIcon;
   final Widget label;
@@ -12,24 +13,25 @@ class NavEntryData {
   final List<UserType>? visibleFor;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
+  bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
 
-  const NavEntryData({required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor});
+  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor});
 }
 
 class NavEntry extends StatefulWidget {
+  final String id;
   final Widget icon;
   final Widget? selectedIcon;
   final Widget label;
   final bool selected;
   final bool parentOfSelected;
-  final int index;
   final int layer;
   final void Function() onSelect;
   final List<NavEntry>? children;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntry({super.key, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.index, required this.parentOfSelected, required this.layer, this.children});
+  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children});
 
   @override
   State<NavEntry> createState() => _NavEntryState();
@@ -122,7 +124,7 @@ class TheDrawer extends StatefulWidget {
 class _TheDrawerState extends State<TheDrawer> {
   List<String> getParentSelectionIndices(String selectedIndex) {
     final out = <String>[];
-    final split = selectedIndex.split(".").map((e) => int.parse(e)).toList();
+    final split = selectedIndex.split(".").toList();
     for (var i = 0; i < split.length; i++) {
       var currentParentStr = "";
       for (var j = 0; j <= i; j++) {
@@ -134,12 +136,13 @@ class _TheDrawerState extends State<TheDrawer> {
     return out;
   }
 
-  Widget dataToEntry(NavEntryData entryData, int index, String selectedIndex, int layer, String parentIndex, UserType role) {
-    final selectionIndex = "${(parentIndex != '') ? '$parentIndex.' : ''}$index";
+  Widget dataToEntry(NavEntryData entryData, String selectedIndex, int layer, String parentIndex, UserType role) {
+    final selectionIndex = "${(parentIndex != '') ? '$parentIndex.' : ''}${entryData.id}";
     // generate all possible selection indices for the parents of the current selection, check if this entry has one of them -> parent to a selected node gets parent selection mode
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
     final selected = selectionIndex == selectedIndex;
     return NavEntry(
+      id: entryData.id,
       icon: entryData.icon,
       selectedIcon: entryData.selectedIcon,
       label: entryData.label,
@@ -151,16 +154,23 @@ class _TheDrawerState extends State<TheDrawer> {
           Navigator.pop(context);
         }
       },
-      index: index,
       layer: layer,
-      children: entryData.children?.asMap().map((i, data) => MapEntry(i, (((data.isVisible != null && data.isVisible!(context)) || (data.isVisible == null)) || ((data.visibleFor != null && data.visibleFor!.contains(role)) || (data.visibleFor == null))) ? dataToEntry(data, i, selectedIndex, layer + 1, selectionIndex, role) : null)).values.toList().where((element) => element != null).toList().cast(),
+      children: entryData.children
+          ?.map((data) => (data.shouldBeVisible(
+                  context, Provider.of<AppState>(context).userType))
+              ? dataToEntry(
+                  data, selectedIndex, layer + 1, selectionIndex, role)
+              : null,
+          ).where((element) => element != null)
+          .toList()
+          .cast(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final userType = Provider.of<AppState>(context, listen: false).userType;
-    final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, i, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
+    final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(
       child: ListView(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:provider/provider.dart';
 
@@ -76,7 +77,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
                           ],
                         ),
                         onTap: () {
-                          Provider.of<AppState>(context, listen: false).setNavIndex("1");
+                          Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [PageIDs.news];
                         },
                         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                       );

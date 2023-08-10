@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -25,12 +26,12 @@ class _HomepageTabState extends State<HomepageTab> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
-                child: HomeNewsWidget()
+                child: HomeNewsWidget(),
               ),
-              Consumer<AppState>(
+              if (kDebugMode) Consumer<AppState>(
                 builder: (context, value, child) => ElevatedButton(
-                  onPressed: () => value.setInfoScreen(
-                    InfoScreenDisplay(
+                  onPressed: () {
+                    value.infoScreen = InfoScreenDisplay(
                       infoScreens: [
                         const InfoScreen(infoText: Text("hi"), infoTitle: Text("Info. - not closeable"), closeable: false,),
                         InfoScreen(closeable: true, infoText: const Text("das ist eine Info."), infoTitle: const Text("Digga, bitte geb uns mal dein Geld.\nWir brauchen das wirklich dringend."), onTryClose: (index, _) {
@@ -40,12 +41,12 @@ class _HomepageTabState extends State<HomepageTab> {
                         InfoScreen(closeable: true, customScreen: Container(color: Colors.cyan.shade400),)
                       ],
                       scrollable: true,
-                    ),
-                  ),
+                    );
+                  },
                   child: const Text("info screen test"),
                 )
               ),
-              Consumer<Preferences>(
+              if (kDebugMode) Consumer<Preferences>(
                 builder: (context, prefs, _) {
                   return ElevatedButton(
                     onPressed: () => prefs.theme = (prefs.darkTheme) ? AppTheme.light : AppTheme.dark,

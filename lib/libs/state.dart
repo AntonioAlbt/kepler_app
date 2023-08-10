@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -109,29 +110,29 @@ enum UserType { pupil, teacher, parent, nobody }
 
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
-  List<int> selectedNavigationIndex = [0];
-
-  InfoScreenDisplay? infoScreen;
-
-  UserType userType = UserType.nobody;
-
-  void setNavIndex(String newNavIndex) {
-    selectedNavigationIndex =
-        newNavIndex.split(".").map((e) => int.parse(e)).toList();
+  /// last ID is for "topmost" (currently visible) page
+  List<String> _selectedNavPageIDs = [PageIDs.home];
+  List<String> get selectedNavPageIDs => _selectedNavPageIDs;
+  set selectedNavPageIDs(List<String> newSNPID) {
+    _selectedNavPageIDs = newSNPID;
     notifyListeners();
   }
 
-  void setInfoScreen(InfoScreenDisplay? newInfoScreen) {
-    infoScreen = newInfoScreen;
+  InfoScreenDisplay? _infoScreen;
+  InfoScreenDisplay? get infoScreen => _infoScreen;
+  set infoScreen(InfoScreenDisplay? isd) {
+    _infoScreen = isd;
     notifyListeners();
   }
 
-  void clearInfoScreen() => setInfoScreen(null);
-
-  void setUserType(UserType type) {
-    userType = type;
+  UserType _userType = UserType.nobody;
+  UserType get userType => _userType;
+  set userType(UserType ut) {
+    _userType = ut;
     notifyListeners();
   }
+
+  void clearInfoScreen() => infoScreen = null;
 }
 
 const internalStatePrefsKey = "internal_state";

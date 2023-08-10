@@ -267,7 +267,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                         credStore.lernSaxLogin = mail;
                         credStore.lernSaxToken = token;
                         if (parentTypeEndings.any((element) => mail.split("@")[0].endsWith(".$element"))) {
-                          Provider.of<AppState>(context, listen: false).setUserType(UserType.parent);
+                          Provider.of<AppState>(context, listen: false).userType = UserType.parent;
                         }
                         msgr.showSnackBar(snack("Erfolgreich eingeloggt und verbunden.", error: false));
                         infoScreenState.next();
@@ -511,7 +511,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                           cs.vpPassword = password;
                           determineUserType(cs.lernSaxLogin, username, password)
                             .then((userType) {
-                              Provider.of<AppState>(context, listen: false).setUserType(userType);
+                              Provider.of<AppState>(context, listen: false).userType = userType;
                               Provider.of<InternalState>(context, listen: false).lastUserType = userType;
                               mgr.clearSnackBars();
                               mgr.showSnackBar(snack("Erfolgreich angemeldet.", error: false));

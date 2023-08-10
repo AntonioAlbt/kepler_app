@@ -13,16 +13,8 @@ import 'package:kepler_app/libs/sentry_dsn.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/loading_screen.dart';
-import 'package:kepler_app/tabs/about.dart';
-import 'package:kepler_app/tabs/feedback.dart';
-import 'package:kepler_app/tabs/ffjkg.dart';
-import 'package:kepler_app/tabs/home/home.dart';
-import 'package:kepler_app/tabs/hourtable/hourtable.dart';
-import 'package:kepler_app/tabs/lernsax.dart';
-import 'package:kepler_app/tabs/meals.dart';
-import 'package:kepler_app/tabs/news/news.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
-import 'package:kepler_app/tabs/settings.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -103,97 +95,12 @@ class MyApp extends StatelessWidget {
 
 T? cast<T>(x) => x is T ? x : null;
 
-const tabs = [
-  HomepageTab(),
-  NewsTab(),
-  HourtableTab(),
-  LernSaxTab(),
-  MealOrderingTab(),
-  FFJKGTab(),
-  SettingsTab(),
-  FeedbackTab(),
-  AboutTab()
-];
-
 class KeplerApp extends StatefulWidget {
   const KeplerApp({super.key});
 
   @override
   State<KeplerApp> createState() => _KeplerAppState();
 }
-
-// TODO: disable some when youre UserType.nobody (but allow to click to login!)
-// TODO: hide some when usertype doesnt fit, like Lehrerplan
-final destinations = [
-  const NavEntryData(
-    icon: Icon(Icons.home_outlined),
-    label: Text("Startseite"),
-    selectedIcon: Icon(Icons.home),
-  ),
-  const NavEntryData(
-      icon: Icon(Icons.newspaper_outlined),
-      label: Text("Kepler-News"),
-      selectedIcon: Icon(Icons.newspaper)),
-  NavEntryData(
-    icon: const Icon(Icons.school_outlined),
-    label: const Text("Vertretungsplan"),
-    selectedIcon: const Icon(Icons.school),
-    children: [
-      const NavEntryData(
-          icon: Icon(Icons.list_alt_outlined),
-          label: Text("Dein Vertretungsplan"),
-          selectedIcon: Icon(Icons.list_alt)),
-      const NavEntryData(
-          icon: Icon(Icons.groups_outlined),
-          label: Text("Klassenplan"),
-          selectedIcon: Icon(Icons.groups)),
-      const NavEntryData(
-          icon: Icon(Icons.list_outlined),
-          label: Text("Alle Vertretungen"),
-          selectedIcon: Icon(Icons.list)),
-      const NavEntryData(
-          icon: Icon(Icons.door_back_door_outlined),
-          label: Text("Freie Zimmer"),
-          selectedIcon: Icon(Icons.door_back_door)),
-      NavEntryData(
-        icon: const Icon(Icons.groups_outlined),
-        label: const Text("Lehrerplan"),
-        selectedIcon: const Icon(Icons.groups), // TODO: fix visibility check
-        isVisible: (ctx) => true,
-      ),
-    ],
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.laptop_outlined),
-    label: Text("LernSax"),
-    selectedIcon: Icon(Icons.laptop),
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.restaurant_outlined),
-    label: Text("Essensbestellung"),
-    selectedIcon: Icon(Icons.restaurant),
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.diversity_1_outlined),
-    label: Text("Förderverein (FFJKG)"),
-    selectedIcon: Icon(Icons.diversity_1),
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.settings_outlined),
-    label: Text("Einstellungen"),
-    selectedIcon: Icon(Icons.settings),
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.message_outlined),
-    label: Text("Feedback & Kontakt"),
-    selectedIcon: Icon(Icons.message),
-  ),
-  const NavEntryData(
-    icon: Icon(Icons.info_outlined),
-    label: Text("Über diese App"),
-    selectedIcon: Icon(Icons.info),
-  )
-];
 
 final appKey = GlobalKey<ScaffoldState>();
 
@@ -258,8 +165,8 @@ class _KeplerAppState extends State<KeplerApp> {
       providers: [
         ChangeNotifierProvider(
           create: (_) => _appState
-            ..setInfoScreen(introductionDisplay) // TODO: show "sign in again" screens to user if creds are invalid
-            ..setUserType(utype),
+            ..infoScreen = introductionDisplay // TODO: show "sign in again" screens to user if creds are invalid
+            ..userType = utype,
         ),
         ChangeNotifierProvider(
           create: (_) => _prefs,
@@ -275,7 +182,7 @@ class _KeplerAppState extends State<KeplerApp> {
         ),
       ],
       child: Consumer<AppState>(builder: (context, state, __) {
-        final index = state.selectedNavigationIndex;
+        final index = state.selectedNavPageIDs;
         return WillPopScope(
           onWillPop: () async {
             if (state.infoScreen != null) {
@@ -291,9 +198,9 @@ class _KeplerAppState extends State<KeplerApp> {
               Scaffold(
                 key: appKey,
                 appBar: AppBar(
-                  title: Text((index.first == 0)
+                  title: Text((index.first == PageIDs.home)
                       ? "Kepler-App"
-                      : cast<Text>(cast<NavEntryData>(destinations[index.first])
+                      : cast<Text>(cast<NavEntryData>(destinations.where((element) => element.id == index.last))
                                   ?.label)
                               ?.data ??
                           "Kepler-App"),
@@ -302,9 +209,9 @@ class _KeplerAppState extends State<KeplerApp> {
                   actions: [
                     IconButton(
                       onPressed: () {
-                        state.setInfoScreen(InfoScreenDisplay(
+                        state.infoScreen = InfoScreenDisplay(
                           infoScreens: introScreens,
-                        ));
+                        );
                       },
                       icon: const Icon(Icons.adb),
                     ),
@@ -313,7 +220,7 @@ class _KeplerAppState extends State<KeplerApp> {
                 drawer: TheDrawer(
                   selectedIndex: index.join("."),
                   onDestinationSelected: (val) {
-                    state.setNavIndex(val);
+                    state.selectedNavPageIDs = val.split(".");
                   },
                   entries: destinations,
                   dividers: const [5],
