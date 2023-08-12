@@ -66,7 +66,7 @@ class _NewsTabState extends State<NewsTab> {
                         title: Transform.translate(
                           offset: const Offset(0, 5),
                           child: const Text(
-                            "Tippe auf die Nachrichten, um sie anzusehen.",
+                            "Nachrichten antippen, um sie anzusehen.",
                             style: TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 15

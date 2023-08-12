@@ -14,6 +14,7 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -25,10 +26,13 @@ final _internalState = InternalState();
 final _prefs = Preferences();
 final _credStore = CredentialStore();
 final _appState = AppState();
+final _stuPlanData = StuPlanData();
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
+  // TODO? seperate all data files into actual JSON files, not sp keys?
   if (sprefs.containsKey(newsCachePrefKey)) {
+    // TODO: save news cache as a JSON in the cache dir of the OS
     _newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
   }
   if (await securePrefs.containsKey(key: credStorePrefKey)) {
@@ -36,6 +40,10 @@ Future<void> loadAndPrepareApp() async {
   }
   if (sprefs.containsKey(internalStatePrefsKey)) {
     _internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
+  }
+  if (sprefs.containsKey(stuPlanDataPrefsKey)) {
+    // TODO: also save to extra file bc it will get BEEEEG
+    _stuPlanData.loadFromJson(sprefs.getString(stuPlanDataPrefsKey)!);
   }
 
   Workmanager().initialize(
@@ -179,6 +187,9 @@ class _KeplerAppState extends State<KeplerApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => _credStore,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => _stuPlanData,
         ),
       ],
       child: Consumer<AppState>(builder: (context, state, __) {
