@@ -3,27 +3,17 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:provider/provider.dart';
 
-bool doWhatItTakesToGoBackToHome(BuildContext ctx) {
-  final state = Provider.of<AppState>(ctx, listen: false);
-  if (state.selectedNavPageIDs.length == 1) Navigator.pop(ctx); // close drawer if still open -> "Vertretung" clicked, not any of the sub items
-  state.selectedNavPageIDs = [PageIDs.home];
-  state.infoScreen = null;
-  return true;
-}
-
 InfoScreenDisplay stuPlanPupilIntroScreens() => InfoScreenDisplay(
-  infoScreens: [
+  infoScreens: const [
     InfoScreen(
-      infoTitle: const Text("Klassenauswahl"),
-      infoText: const ClassSelectScreen(),
+      infoTitle: Text("Klassenauswahl"),
+      infoText: ClassSelectScreen(),
       closeable: true,
-      onTryClose: (i, ctx) => doWhatItTakesToGoBackToHome(ctx),
     ),
-    const InfoScreen(
+    InfoScreen(
       infoTitle: Text("Fachwahl"),
       infoText: SubjectSelectScreen(),
       closeable: false,
@@ -71,20 +61,6 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
               child: ElevatedButton(
                 onPressed: () => infoScreenState.next(),
                 child: const Text("Weiter zur Fachwahl"),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: ElevatedButton(
-                style: (Theme.of(context).brightness == Brightness.light) ? ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade200,
-                  foregroundColor: Colors.orange.shade900,
-                ) : ElevatedButton.styleFrom(
-                  backgroundColor:  HSLColor.fromColor(Colors.orange.shade900).withLightness(.25).toColor(),
-                  foregroundColor: Colors.orange.shade100,
-                ),
-                onPressed: () => doWhatItTakesToGoBackToHome(context),
-                child: const Text("Zurück zur Startseite"),
               ),
             ),
           ],

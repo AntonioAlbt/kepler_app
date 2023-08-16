@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/drawer.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/about.dart';
@@ -11,7 +12,9 @@ import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // all IDs should be constants
 class PageIDs {
@@ -35,8 +38,10 @@ class StuPlanPageIDs {
 
 class LernSaxPageIDs {
   static const main = "lsmain";
+  static const files = "files";
   static const notifications = "notifications";
   static const tasks = "tasks";
+  static const openInBrowser = "inbrowser";
   /* TODO: others */
 }
 
@@ -74,6 +79,7 @@ final destinations = [
     icon: const Icon(Icons.school_outlined),
     label: const Text("Vertretungsplan"),
     selectedIcon: const Icon(Icons.school),
+    onTryOpen: stuPlanOnTryOpenCallback,
     children: [
       NavEntryData(
         id: StuPlanPageIDs.yours,
@@ -111,11 +117,38 @@ final destinations = [
       ),
     ],
   ),
-  const NavEntryData(
+  NavEntryData(
     id: LernSaxPageIDs.main,
-    icon: Icon(Icons.laptop_outlined),
-    label: Text("LernSax"),
-    selectedIcon: Icon(Icons.laptop),
+    icon: const Icon(Icons.laptop_outlined),
+    label: const Text("LernSax"),
+    selectedIcon: const Icon(Icons.laptop),
+    children: [
+      NavEntryData(
+        id: LernSaxPageIDs.openInBrowser,
+        icon: const Icon(MdiIcons.web),
+        label: const Text("Im Browser öffnen"),
+        externalLink: true,
+        onTryOpen: (context) {
+          final creds = Provider.of<CredentialStore>(context, listen: false);
+          if (creds.lernSaxToken == null) return false;
+          getUserLink(creds.lernSaxLogin, creds.lernSaxToken!).then((url) {
+            if (url == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Fehler beim Erstellen des Links."),
+                ),
+              );
+              return;
+            }
+            launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            );
+          });
+          return false;
+        },
+      ),
+    ],
   ),
   const NavEntryData(
     id: PageIDs.foodOrder,
@@ -148,7 +181,3 @@ final destinations = [
     selectedIcon: Icon(Icons.info),
   )
 ];
-
-final parentalData = (){
-
-}();

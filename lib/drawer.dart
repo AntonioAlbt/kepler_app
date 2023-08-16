@@ -11,11 +11,14 @@ class NavEntryData {
   final List<NavEntryData>? children;
   final bool Function(BuildContext context)? isVisible;
   final List<UserType>? visibleFor;
+  final bool? externalLink;
+  /// can also be used as "onTap", true or null means open new page, false means don't open new page
+  final bool Function(BuildContext context)? onTryOpen;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
   bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
 
-  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor});
+  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen});
 }
 
 class NavEntry extends StatefulWidget {
@@ -23,6 +26,8 @@ class NavEntry extends StatefulWidget {
   final Widget icon;
   final Widget? selectedIcon;
   final Widget label;
+  final bool? externalLink;
+  final bool Function(BuildContext context)? onTryOpen;
   final bool selected;
   final bool parentOfSelected;
   final int layer;
@@ -31,7 +36,7 @@ class NavEntry extends StatefulWidget {
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children});
+  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen});
 
   @override
   State<NavEntry> createState() => _NavEntryState();
@@ -73,14 +78,23 @@ class _NavEntryState extends State<NavEntry> {
                 title: DefaultTextStyle.merge(
                   style: TextStyle(
                     fontWeight: (widget.selected) ? FontWeight.bold : null,
-                    fontSize: 16
+                    fontSize: 16,
                   ),
-                  child: widget.label
+                  child: Row(
+                    children: [
+                      widget.label,
+                      if (widget.externalLink == true) const Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: Icon(Icons.open_in_new, size: 18),
+                      ),
+                    ],
+                  ),
                 ),
                 selected: widget.selected || widget.parentOfSelected,
                 selectedColor: color,
                 splashColor: (widget.selected || widget.parentOfSelected) ? color.withOpacity(0.5) : null,
                 onTap: () {
+                  if (widget.onTryOpen?.call(context) == false) return;
                   setState(() {
                     expanded = true;
                   });
@@ -146,6 +160,7 @@ class _TheDrawerState extends State<TheDrawer> {
       icon: entryData.icon,
       selectedIcon: entryData.selectedIcon,
       label: entryData.label,
+      externalLink: entryData.externalLink,
       parentOfSelected: parentOfSelected,
       selected: selected,
       onSelect: () {
@@ -154,6 +169,7 @@ class _TheDrawerState extends State<TheDrawer> {
           Navigator.pop(context);
         }
       },
+      onTryOpen: entryData.onTryOpen,
       layer: layer,
       children: entryData.children
           ?.map((data) => (data.shouldBeVisible(

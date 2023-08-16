@@ -2,6 +2,7 @@ import "dart:convert";
 import "dart:io";
 
 import "package:device_info_plus/device_info_plus.dart";
+import "package:flutter/foundation.dart";
 import "package:http/http.dart" as http;
 import 'package:crypto/crypto.dart' as crypto;
 
@@ -26,6 +27,7 @@ Map<String, dynamic> call({required String method, Map<String, dynamic>? params,
       "method": method,
       if (params != null) "params": params,
       if (id != null) "id": id,
+      // "id": 2 + Random.secure().nextInt(1000)
     };
 
 String sha1(String input) {
@@ -71,7 +73,7 @@ String _currentSessionId = "";
 DateTime _lastSessionUpdate = DateTime(1900);
 const _timeTilRefresh = Duration(minutes: 15);
 Future<String> session(String mail, String token) async {
-  if (_lastSessionUpdate.difference(DateTime.now()) >= _timeTilRefresh) {
+  if (_lastSessionUpdate.difference(DateTime.now()) >= _timeTilRefresh || true) {
     _currentSessionId = await newSession(
         mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
     _lastSessionUpdate = DateTime.now();
@@ -185,6 +187,27 @@ Future<bool?> confirmLernSaxCredentials(String login, String token) async {
     final ret = res[0]["result"]["return"];
     return ret == "OK";
   } catch (_) {
+    return null;
+  }
+}
+
+Future<String?> getUserLink(String login, String token) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      call(
+        method: "set_focus",
+        params: {"object": "trusts"},
+      ),
+      call(
+        id: 1,
+        method: "get_url_for_autologin",
+      ),
+    ]);
+    if (kDebugMode) print(res);
+    final url = res[0]["result"]["url"];
+    return url;
+  } catch (e) {
     return null;
   }
 }

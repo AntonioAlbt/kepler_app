@@ -39,13 +39,19 @@ class _HourtableTabState extends State<HourtableTab> {
       // because you can't update the state while this.build() is consuming it,
       // we wait for after the current render to update it (show a infoScreen)
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final state = Provider.of<AppState>(context, listen: false);
-        final stdata = Provider.of<StuPlanData>(context, listen: false);
-        if (stdata.selectedClassName != null && stdata.selectedCourseIDs.isNotEmpty) return;
-        state.infoScreen ??= (state.userType != UserType.teacher)
-            ? stuPlanPupilIntroScreens()
-            : stuPlanTeacherIntroScreens();
       });
     }
   }
+}
+
+// returns true if all data is given and the stuplan page should be shown
+// and false if the intro screens have to be shown
+bool stuPlanOnTryOpenCallback(BuildContext context) {
+  final state = Provider.of<AppState>(context, listen: false);
+  final stdata = Provider.of<StuPlanData>(context, listen: false);
+  if (stdata.selectedClassName != null && stdata.selectedCourseIDs.isNotEmpty) return true;
+  state.infoScreen ??= (state.userType != UserType.teacher)
+      ? stuPlanPupilIntroScreens()
+      : stuPlanTeacherIntroScreens();
+  return false;
 }
