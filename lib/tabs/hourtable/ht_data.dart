@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
+import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:xml/xml.dart';
 
 const stuPlanDataPrefsKey = "stuplandata";
 
@@ -99,4 +103,69 @@ class VPCSubjectS extends SerializableObject {
     attributes["subject_id"] = subject.subjectID;
   }
   VPCSubjectS.empty();
+}
+
+const stuplanpath = "/stuplans";
+
+class IndiwareDataManager {
+  static final fnTimeFormat = DateFormat("yyyy-mm-dd");
+
+  static Future<VPKlData?> getCachedKlDataForDate(DateTime date) async {
+    final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml");
+    if (xml == null) return null;
+    return xmlToKlData(XmlDocument.parse(xml));
+  }
+  static Future<VPLeData?> getCachedLeDataForDate(DateTime date) async {
+    final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml");
+    if (xml == null) return null;
+    return xmlToLeData(XmlDocument.parse(xml));
+  }
+
+  static Future<void> _setCachedKlDataForDate(DateTime date, XmlDocument data) async {
+    await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml", data.toXmlString());
+  }
+  static Future<void> _setCachedLeDataForDate(DateTime date, XmlDocument data) async {
+    await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml", data.toXmlString());
+  }
+
+  static Future<VPKlData?> getKlDataForDate(
+      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = await getCachedKlDataForDate(date);
+      if (cached != null) return cached;
+    }
+    final real = await getKlXMLForDate(username, password, date);
+    if (real == null) return null;
+    await _setCachedKlDataForDate(date, real);
+    return xmlToKlData(real);
+  }
+  static Future<VPLeData?> getLeDataForDate(
+      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = await getCachedLeDataForDate(date);
+      if (cached != null) return cached;
+    }
+    final real = await getLeXMLForDate(username, password, date);
+    if (real == null) return null;
+    await _setCachedLeDataForDate(date, real);
+    return xmlToLeData(real);
+  }
+
+  // now following: setup methods
+
+  static Future<void> createDataDirIfNecessary() async {
+    final dir = Directory("${await appDataDirPath}$stuplanpath");
+    if (await dir.exists()) return;
+    await dir.create(recursive: true);
+  }
+
+  static Future<void> removeOldCacheFiles() async {
+    final dir = Directory("${await appDataDirPath}$stuplanpath");
+    final thresholdDate = DateTime.now().subtract(const Duration(days: 3));
+    for (final file in (await dir.list().toList())) {
+      final fn = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
+      final date = fnTimeFormat.parse(fn);
+      if (date.isBefore(thresholdDate)) await file.delete();
+    }
+  }
 }

@@ -211,3 +211,6 @@ Future<String?> getUserLink(String login, String token) async {
     return null;
   }
 }
+
+// TODO: test and fix this. auth with token doesn't seem to work?
+// actually creating/registering the token does, though.

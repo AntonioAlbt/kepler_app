@@ -89,7 +89,7 @@ class VPHolidays {
   const VPHolidays({required this.holidayDateStrings});
   @override
   String toString() {
-    return 'VPHolidays(holidayDates: ${holidayDates.map((e) => filenameFormat.format(e))})';
+    return 'VPHolidays(holidayDates: ${holidayDates.map((e) => indiwareFilenameFormat.format(e))})';
   }
 }
 
@@ -233,13 +233,13 @@ Future<XmlDocument> _getLehrerXML(String user, String password) async {
   return xml!;
 }
 
-final filenameFormat = DateFormat("yyyyMMdd");
+final indiwareFilenameFormat = DateFormat("yyyyMMdd");
 
-Future<XmlDocument?> _getKlXMLForDate(String user, String password, DateTime date)
-  => _fetch(Uri.parse("$sUrlM/mobdaten/PlanKl${filenameFormat.format(date)}.xml"), user, password);
+Future<XmlDocument?> getKlXMLForDate(String user, String password, DateTime date)
+  => _fetch(Uri.parse("$sUrlM/mobdaten/PlanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
-Future<XmlDocument?> _getLeXMLForDate(String user, String password, DateTime date)
-  => _fetch(Uri.parse("$lUrlM/mobdaten/PlanLe${filenameFormat.format(date)}.xml"), user, password);
+Future<XmlDocument?> getLeXMLForDate(String user, String password, DateTime date)
+  => _fetch(Uri.parse("$lUrlM/mobdaten/PlanLe${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
 VPHeader _parseHeader(XmlElement kopf) => VPHeader(
   lastUpdated: kopf.getElement("zeitstempel")!.innerText,
@@ -281,7 +281,7 @@ List<VPTeacherLesson> _parseLessons(XmlElement pl, {bool? asPupilLessons}) =>
 List<String> _parseAdditionalInfo(XmlElement zusatzInfo) =>
   zusatzInfo.childElements.map((e) => e.innerText).toList();
 
-VPKlData _xmlToKlData(XmlDocument klData) {
+VPKlData xmlToKlData(XmlDocument klData) {
   final xml = klData.rootElement;
   final classes = xml.getElement("Klassen")!.childElements.toList();
   return VPKlData(
@@ -309,7 +309,7 @@ VPKlData _xmlToKlData(XmlDocument klData) {
   );
 }
 
-VPLeData _xmlToLeData(XmlDocument leData) {
+VPLeData xmlToLeData(XmlDocument leData) {
   final xml = leData.rootElement;
   final teacher = xml.getElement("Klassen")!.childElements.toList();
   return VPLeData(
@@ -335,19 +335,19 @@ VPLeData _xmlToLeData(XmlDocument leData) {
 // multiple elements in the code above were inspired by or copied from ChatGPT: https://chat.openai.com/share/fbf40d1c-5c5f-4b9f-98fd-bf73e7273f6f
 
 Future<VPKlData> getKlassenXml(String username, String password) async =>
-  _xmlToKlData(await _getKlassenXML(username, password));
+  xmlToKlData(await _getKlassenXML(username, password));
 
 Future<VPKlData?> getStuPlanDataForDate(String username, String password, DateTime date) async {
-  final xml = await _getKlXMLForDate(username, password, date);
+  final xml = await getKlXMLForDate(username, password, date);
   if (xml == null) return null;
-  return _xmlToKlData(xml);
+  return xmlToKlData(xml);
 }
 
 Future<VPLeData> getLehrerXml(String username, String password) async =>
-  _xmlToLeData(await _getLehrerXML(username, password));
+  xmlToLeData(await _getLehrerXML(username, password));
 
 Future<VPLeData?> getLehPlanDataForDate(String username, String password, DateTime date) async {
-  final xml = await _getLeXMLForDate(username, password, date);
+  final xml = await getLeXMLForDate(username, password, date);
   if (xml == null) return null;
-  return _xmlToLeData(xml);
+  return xmlToLeData(xml);
 }

@@ -3,6 +3,7 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:provider/provider.dart';
 
@@ -113,7 +114,11 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
             Padding(
               padding: const EdgeInsets.all(8),
               child: ElevatedButton(
-                onPressed: () => Provider.of<AppState>(context, listen: false).clearInfoScreen(),
+                onPressed: () {
+                  final state = Provider.of<AppState>(context, listen: false);
+                  state.clearInfoScreen();
+                  state.selectedNavPageIDs = [StuPlanPageIDs.main];
+                },
                 child: const Text("Zum Stundenplan"),
               ),
             ),

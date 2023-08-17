@@ -66,12 +66,14 @@ Future<void> loadAndPrepareApp() async {
   }
 
   initializeNotifications();
+  await IndiwareDataManager.removeOldCacheFiles();
 }
 
 Future<void> prepareApp() async {
   sharedPreferences = await SharedPreferences.getInstance();
   final sprefs = sharedPreferences;
   if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
+  await IndiwareDataManager.createDataDirIfNecessary();
 }
 
 void main() async {
