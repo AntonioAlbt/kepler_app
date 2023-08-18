@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/drawer.dart';
+import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
+import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
@@ -62,11 +66,21 @@ const tabs = {
 
 // all ids should be lowercase letters only, and definitely not include "." (the dot)
 final destinations = [
-  const NavEntryData(
+  NavEntryData(
     id: PageIDs.home,
-    icon: Icon(Icons.home_outlined),
-    label: Text("Startseite"),
-    selectedIcon: Icon(Icons.home),
+    icon: const Icon(Icons.home_outlined),
+    label: const Text("Startseite"),
+    selectedIcon: const Icon(Icons.home),
+    navbarActions: [
+      IconButton(
+        onPressed: () {
+          Provider.of<AppState>(globalScaffoldState.context, listen: false).infoScreen = InfoScreenDisplay(
+            infoScreens: introScreens,
+          );
+        },
+        icon: const Icon(Icons.adb),
+      ),
+    ],
   ),
   const NavEntryData(
     id: PageIDs.news,
@@ -91,6 +105,9 @@ final destinations = [
           builder: (ctx, sie, _) => Text("${sie ? "Ihr" : "Dein"} Stundenplan"),
         ),
         selectedIcon: const Icon(Icons.list_alt),
+        navbarActions: [
+          const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
+        ],
       ),
       const NavEntryData(
         id: StuPlanPageIDs.classPlans,
@@ -183,3 +200,19 @@ final destinations = [
     selectedIcon: Icon(Icons.info),
   )
 ];
+final flattenedDestinations = (){
+  recurseAdd(List<NavEntryData> list, NavEntryData toAdd) {
+    list.add(toAdd);
+    toAdd.children?.forEach((element) => recurseAdd(list, element));
+  }
+  final list = <NavEntryData>[];
+  for (final dest in destinations) {
+    recurseAdd(list, dest);
+  }
+  return list;
+}();
+
+NavEntryData currentlySelectedNavEntry(BuildContext context) {
+  final id = Provider.of<AppState>(context).selectedNavPageIDs.last;
+  return flattenedDestinations.firstWhere((element) => element.id == id);
+}

@@ -212,24 +212,11 @@ class _KeplerAppState extends State<KeplerApp> {
               Scaffold(
                 key: globalScaffoldKey,
                 appBar: AppBar(
-                  title: Text((index.first == PageIDs.home)
-                      ? "Kepler-App"
-                      : cast<Text>(cast<NavEntryData>(destinations.where((element) => element.id == index.last))
-                                  ?.label)
-                              ?.data ??
-                          "Kepler-App"),
+                  title: (index.first == PageIDs.home) ? const Text("Kepler-App")
+                    : currentlySelectedNavEntry(context).label,
                   scrolledUnderElevation: 5,
                   elevation: 5,
-                  actions: [
-                    IconButton(
-                      onPressed: () {
-                        state.infoScreen = InfoScreenDisplay(
-                          infoScreens: introScreens,
-                        );
-                      },
-                      icon: const Icon(Icons.adb),
-                    ),
-                  ],
+                  actions: currentlySelectedNavEntry(context).navbarActions,
                 ),
                 drawer: TheDrawer(
                   selectedIndex: index.join("."),

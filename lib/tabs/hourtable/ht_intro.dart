@@ -186,14 +186,37 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(8),
-              child: ElevatedButton(
-                onPressed: () {
-                  final state = Provider.of<AppState>(context, listen: false);
-                  state.clearInfoScreen();
-                  if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
-                  state.selectedNavPageIDs = [StuPlanPageIDs.main];
-                },
-                child: const Text("Zum Stundenplan"),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      infoScreenState.previous();
+                    },
+                    child: const Text("Zurück"),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final state = Provider.of<AppState>(context, listen: false);
+                        state.clearInfoScreen();
+                        if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+                        state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("Zum Stundenplan"),
+                          Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: Icon(Icons.arrow_forward),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

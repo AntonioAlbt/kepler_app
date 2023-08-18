@@ -16,8 +16,6 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     objectCreators["selected_courses"] = (_) => <String>[];
     objectCreators["available_classes"] = (_) => <String>[];
     objectCreators["selected_course_ids"] = (_) => <int>[];
-    transformers["available_subjects"] = (data) =>
-      data is String ? _jsonDataStrToMap(data) : jsonEncode(data);
   }
 
   Map<String, List<VPCSubjectS>> _jsonDataStrToMap(String json) {
@@ -74,9 +72,9 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     save();
   }
 
-  Map<String, List<VPCSubjectS>> get availableSubjects => attributes["available_subjects"] ?? {};
+  Map<String, List<VPCSubjectS>> get availableSubjects => _jsonDataStrToMap(attributes["available_subjects"] ?? "");
   set availableSubjects(Map<String, List<VPCSubjectS>> ac) {
-    attributes["available_subjects"] = ac;
+    attributes["available_subjects"] = jsonEncode(ac);
     notifyListeners();
     save();
   }
@@ -91,6 +89,8 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   }
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
+    // _serializer.deserialize("{}", this);
+    // save();
     _serializer.deserialize(json, this);
     loaded = true;
   }
@@ -118,6 +118,13 @@ class VPCSubjectS extends SerializableObject {
     attributes["subject_id"] = subject.subjectID;
   }
   VPCSubjectS.empty();
+
+  Map<String, dynamic> toJson() => {
+    "teacher_code": teacherCode,
+    "subject_code": subjectCode,
+    "add_desc": additionalDescr,
+    "subject_id": subjectID,
+  };
 }
 
 // bool wrapper for pass-by-reference

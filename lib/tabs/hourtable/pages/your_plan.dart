@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
+import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:provider/provider.dart';
 
 const bool showSTDebugStuff = kDebugMode;
@@ -175,7 +177,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 color: Theme.of(context).colorScheme.background,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
+                    color: hasDarkTheme(context) ? Colors.black45 : Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
                     offset: const Offset(0, 3),
@@ -212,7 +214,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 color: Theme.of(context).colorScheme.background,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.24),
+                    color: hasDarkTheme(context) ? Colors.black26 : Colors.grey.withOpacity(0.24),
                     spreadRadius: 5,
                     blurRadius: 7,
                     offset: const Offset(0, 3),
@@ -375,4 +377,11 @@ class LessonDisplay extends StatelessWidget {
       ),
     );
   }
+}
+
+void yourStuPlanEditAction() {
+  final state = Provider.of<AppState>(globalScaffoldKey.currentContext!, listen: false);
+  state.infoScreen ??= (state.userType != UserType.teacher)
+      ? stuPlanPupilIntroScreens()
+      : stuPlanTeacherIntroScreens();
 }

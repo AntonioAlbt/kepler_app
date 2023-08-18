@@ -17,11 +17,12 @@ class NavEntryData {
   /// can also be used as "onTap" for expand arrow, true or null means expand children list, false means don't
   final bool Function(BuildContext context)? onTryExpand;
   final List<String>? redirectTo;
+  final List<Widget>? navbarActions;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
   bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
 
-  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo});
+  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo, this.navbarActions});
 }
 
 class NavEntry extends StatefulWidget {
