@@ -48,9 +48,17 @@ class _HomepageTabState extends State<HomepageTab> {
               ),
               if (kDebugMode) Consumer<Preferences>(
                 builder: (context, prefs, _) {
-                  return ElevatedButton(
-                    onPressed: () => prefs.theme = (prefs.darkTheme) ? AppTheme.light : AppTheme.dark,
-                    child: const Text("toggle dark theme"),
+                  return Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => prefs.theme = (prefs.darkTheme) ? AppTheme.light : AppTheme.dark,
+                        child: const Text("toggle dark theme"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => prefs.theme = AppTheme.system,
+                        child: const Text("reset theme to system"),
+                      ),
+                    ],
                   );
                 }
               ),

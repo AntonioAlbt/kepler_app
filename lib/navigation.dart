@@ -80,6 +80,8 @@ final destinations = [
     label: const Text("Vertretungsplan"),
     selectedIcon: const Icon(Icons.school),
     onTryOpen: stuPlanOnTryOpenCallback,
+    onTryExpand: stuPlanOnTryOpenCallback,
+    redirectTo: [StuPlanPageIDs.main, StuPlanPageIDs.yours],
     children: [
       NavEntryData(
         id: StuPlanPageIDs.yours,

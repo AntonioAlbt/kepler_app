@@ -51,13 +51,13 @@ class VPKlData {
 class VPLeData {
   final VPHeader header; // "Kopf"
   final VPHolidays holidays; // "FreieTage"
-  final List<VPTeacher> classes; // "Klassen"
+  final List<VPTeacher> teacher; // "Klassen"
   final List<String> additionalInfo; // "ZusatzInfo" -> "ZiZeile" values
 
-  const VPLeData({required this.header, required this.holidays, required this.classes, required this.additionalInfo});
+  const VPLeData({required this.header, required this.holidays, required this.teacher, required this.additionalInfo});
   @override
   String toString() {
-    return 'VPLeData(header: $header, holidays: $holidays, classes: $classes, additionalInfo: $additionalInfo)';
+    return 'VPLeData(header: $header, holidays: $holidays, teacher: $teacher, additionalInfo: $additionalInfo)';
   }
 }
 
@@ -157,6 +157,10 @@ class VPLesson { // "<Std>"
   final bool roomChanged; // "Ra.RaAe == RaGeaendert"
   final int? subjectID; // "Nr"
   final String infoText; // "If"
+  
+  // additional access method for better clarity in the code
+  String get teachingClassName => teacherCode;
+  bool get teachingClassChanged => teacherChanged;
 
   const VPLesson({required this.schoolHour, required this.startTime, required this.endTime, required this.subjectCode, required this.subjectChanged, required this.teacherCode, required this.teacherChanged, required this.roomNr, required this.roomChanged, required this.subjectID, required this.infoText});
   @override
@@ -165,26 +169,11 @@ class VPLesson { // "<Std>"
   }
 }
 
-class VPTeacherLesson extends VPLesson {
-  // the fields just get reused, so for teacher lessons we map them to make it easier to understand in the code
-  String get teachingClassName => teacherCode;
-  bool get teachingClassChanged => teacherChanged;
-
-  final bool? useNormalToString;
-
-  const VPTeacherLesson({required super.schoolHour, required super.startTime, required super.endTime, required super.subjectCode, required super.subjectChanged, required super.teacherCode, required super.teacherChanged, required super.roomNr, required super.roomChanged, required super.subjectID, required super.infoText, this.useNormalToString});
-  @override
-  String toString() {
-    if (useNormalToString == true) return super.toString();
-    return 'VPTeacherLesson(teachingClassName: $teachingClassName, teachingClassChanged: $teachingClassChanged, ${super.toString()})';
-  }
-}
-
 class VPTeacher {
   final String teacherCode;
   // other field: "Hash" - seems to always be empty
   final List<VPHourBlock> hourBlocks; // "KlStunden"
-  final List<VPTeacherLesson> lessons; // "Pl"
+  final List<VPLesson> lessons; // "Pl"
   final List<VPTeacherSupervision> supervisions; // "Aufsichten"
 
   const VPTeacher({required this.teacherCode, required this.hourBlocks, required this.lessons, required this.supervisions});
@@ -212,7 +201,8 @@ class VPTeacherSupervision { // "<Aufsicht>"
 
 Future<http.Response> authRequest(Uri url, String user, String password) async
   => http.get(url, headers: {
-    "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}"
+    "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}",
+    "User-Agent": "KeplerApp/0.1 (info: a.albert@gamer153.dev)"
   });
 
 Future<XmlDocument?> _fetch(Uri url, String user, String password) async {
@@ -261,9 +251,8 @@ List<VPHourBlock> _parseHourBlocks(XmlElement klStunden) =>
 HMTime? _timeOrNull(String? time) => (time == null || time == "") ? null : HMTime.fromTimeString(time);
 int? _intOrNull(String? nr) => (nr == null || nr == "") ? null : int.parse(nr);
 
-/// only for teacher lessons because the types are essentially the same
-List<VPTeacherLesson> _parseLessons(XmlElement pl, {bool? asPupilLessons}) =>
-  pl.childElements.map((std) => VPTeacherLesson(
+List<VPLesson> _parseLessons(XmlElement pl) =>
+  pl.childElements.map((std) => VPLesson(
     schoolHour: int.parse(std.getElement("St")!.innerText),
     startTime: _timeOrNull(std.getElement("Beginn")?.innerText),
     endTime: _timeOrNull(std.getElement("Ende")?.innerText),
@@ -275,7 +264,6 @@ List<VPTeacherLesson> _parseLessons(XmlElement pl, {bool? asPupilLessons}) =>
     roomChanged: std.getElement("Ra")!.getAttribute("RaAe") == "RaGeaendert",
     subjectID: _intOrNull(std.getElement("Nr")?.innerText),
     infoText: std.getElement("If")?.innerText ?? "",
-    useNormalToString: asPupilLessons,
   )).toList();
 
 List<String> _parseAdditionalInfo(XmlElement zusatzInfo) =>
@@ -303,7 +291,7 @@ VPKlData xmlToKlData(XmlDocument klData) {
           subjectID: int.parse(e2.innerText),
         ),
       ).toList(),
-      lessons: _parseLessons(e.getElement("Pl")!, asPupilLessons: true),
+      lessons: _parseLessons(e.getElement("Pl")!),
     )).toList(),
     additionalInfo: _parseAdditionalInfo(xml.getElement("ZusatzInfo") ?? XmlElement(XmlName("nah"))),
   );
@@ -315,7 +303,7 @@ VPLeData xmlToLeData(XmlDocument leData) {
   return VPLeData(
     header: _parseHeader(xml.getElement("Kopf")!),
     holidays: _parseHolidays(xml.getElement("FreieTage")!),
-    classes: teacher.map((e) => VPTeacher(
+    teacher: teacher.map((e) => VPTeacher(
       teacherCode: e.getElement("Kurz")!.innerText,
       hourBlocks: _parseHourBlocks(e.getElement("KlStunden")!),
       lessons: _parseLessons(e.getElement("Pl")!),

@@ -14,11 +14,14 @@ class NavEntryData {
   final bool? externalLink;
   /// can also be used as "onTap", true or null means open new page, false means don't open new page
   final bool Function(BuildContext context)? onTryOpen;
+  /// can also be used as "onTap" for expand arrow, true or null means expand children list, false means don't
+  final bool Function(BuildContext context)? onTryExpand;
+  final List<String>? redirectTo;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
   bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
 
-  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen});
+  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo});
 }
 
 class NavEntry extends StatefulWidget {
@@ -28,6 +31,7 @@ class NavEntry extends StatefulWidget {
   final Widget label;
   final bool? externalLink;
   final bool Function(BuildContext context)? onTryOpen;
+  final bool Function(BuildContext context)? onTryExpand;
   final bool selected;
   final bool parentOfSelected;
   final int layer;
@@ -36,7 +40,7 @@ class NavEntry extends StatefulWidget {
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen});
+  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen, this.onTryExpand});
 
   @override
   State<NavEntry> createState() => _NavEntryState();
@@ -69,9 +73,12 @@ class _NavEntryState extends State<NavEntry> {
                 trailing: widget.isParent ? Transform.translate(
                   offset: const Offset(7.5, 0),
                   child: IconButton(
-                    onPressed: () => setState(() {
-                      expanded = !expanded;
-                    }),
+                    onPressed: () {
+                      if (!expanded) {
+                        if (widget.onTryExpand?.call(context) == false) return;
+                      }
+                      setState(() => expanded = !expanded);
+                    },
                     icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
                   ),
                 ) : null,
@@ -164,12 +171,13 @@ class _TheDrawerState extends State<TheDrawer> {
       parentOfSelected: parentOfSelected,
       selected: selected,
       onSelect: () {
-        widget.onDestinationSelected(selectionIndex);
+        widget.onDestinationSelected(entryData.redirectTo?.join(".") ?? selectionIndex);
         if (!entryData.isParent) {
           Navigator.pop(context);
         }
       },
       onTryOpen: entryData.onTryOpen,
+      onTryExpand: entryData.onTryExpand,
       layer: layer,
       children: entryData.children
           ?.map((data) => (data.shouldBeVisible(

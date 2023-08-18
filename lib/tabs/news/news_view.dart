@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/state.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -21,7 +22,7 @@ class _NewsViewState extends State<NewsView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.newsTitle),
-        backgroundColor: (Theme.of(context).brightness == Brightness.dark) ? Colors.blueGrey[800] : Colors.blue.shade100,
+        backgroundColor: (hasDarkTheme(context)) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),

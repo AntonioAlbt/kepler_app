@@ -34,7 +34,7 @@ Future<bool> checkNotificationPermission() async {
 @pragma("vm:entry-point")
 Future<void> _receiveActions(ReceivedAction receivedAction) async {
   if (receivedAction.channelKey == newsNotificationKey) {
-    final context = appKey?.currentContext; // if appKey is in another thread, it might be null -> see analysis_options.yaml for ignoring the error
+    final context = globalScaffoldKey?.currentContext; // if appKey is in another thread, it might be null -> see analysis_options.yaml for ignoring the error
     if (context == null) {
       log("clicked news notification, but the context was null");
       return;

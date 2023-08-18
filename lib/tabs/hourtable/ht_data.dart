@@ -15,6 +15,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];
     objectCreators["available_classes"] = (_) => <String>[];
+    objectCreators["selected_course_ids"] = (_) => <int>[];
     transformers["available_subjects"] = (data) =>
       data is String ? _jsonDataStrToMap(data) : jsonEncode(data);
   }
@@ -54,6 +55,17 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     notifyListeners();
     save();
   }
+  void addSelectedCourse(int id) {
+    final l = selectedCourseIDs;
+    if (l.contains(id)) return;
+    l.add(id);
+    selectedCourseIDs = l;
+  }
+  void removeSelectedCourse(int id) {
+    final l = selectedCourseIDs;
+    l.remove(id);
+    selectedCourseIDs = l;
+  }
 
   List<String> get availableClasses => attributes["available_classes"] ?? [];
   set availableClasses(List<String> ac) {
@@ -68,6 +80,9 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     notifyListeners();
     save();
   }
+  List<VPCSubjectS>? get availableClassSubjects =>
+    ((selectedClassName == null) ? null : availableSubjects[selectedClassName])
+      ?.where((e) => e.teacherCode != "").toList();
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -105,10 +120,16 @@ class VPCSubjectS extends SerializableObject {
   VPCSubjectS.empty();
 }
 
+// bool wrapper for pass-by-reference
+class Bw {
+  bool? val;
+  Bw(this.val);
+}
+
 const stuplanpath = "/stuplans";
 
 class IndiwareDataManager {
-  static final fnTimeFormat = DateFormat("yyyy-mm-dd");
+  static final fnTimeFormat = DateFormat("yyyy-MM-dd");
 
   static Future<VPKlData?> getCachedKlDataForDate(DateTime date) async {
     final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml");
@@ -129,23 +150,27 @@ class IndiwareDataManager {
   }
 
   static Future<VPKlData?> getKlDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+      DateTime date, String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
     if (!forceRefresh) {
       final cached = await getCachedKlDataForDate(date);
+      fromCache?.val = true;
       if (cached != null) return cached;
     }
     final real = await getKlXMLForDate(username, password, date);
+    fromCache?.val = false;
     if (real == null) return null;
     await _setCachedKlDataForDate(date, real);
     return xmlToKlData(real);
   }
   static Future<VPLeData?> getLeDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+      DateTime date, String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
     if (!forceRefresh) {
       final cached = await getCachedLeDataForDate(date);
+      fromCache?.val = true;
       if (cached != null) return cached;
     }
     final real = await getLeXMLForDate(username, password, date);
+    fromCache?.val = false;
     if (real == null) return null;
     await _setCachedLeDataForDate(date, real);
     return xmlToLeData(real);
@@ -165,6 +190,7 @@ class IndiwareDataManager {
     for (final file in (await dir.list().toList())) {
       final fn = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
       final date = fnTimeFormat.parse(fn);
+      if (kDebugMode) print("found stuplan data xml with date ${fnTimeFormat.format(date)}, will be deleted: ${date.isBefore(thresholdDate)} - threshold: ${fnTimeFormat.format(thresholdDate)}");
       if (date.isBefore(thresholdDate)) await file.delete();
     }
   }

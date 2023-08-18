@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
-import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
@@ -20,7 +19,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
   Widget build(BuildContext context) {
     return Card(
       color: HSLColor.fromColor(keplerColorBlue)
-          .withLightness((Provider.of<Preferences>(context, listen: false).darkTheme) ? .1 : .9) // darkTheme shouldnt be able to be updated while the page is open
+          .withLightness(hasDarkTheme(context) ? .1 : .9)
           .toColor(),
       child: Padding(
         padding: const EdgeInsets.all(8.0),

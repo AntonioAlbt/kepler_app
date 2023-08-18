@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
-import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:provider/provider.dart';
 
@@ -159,6 +158,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                   KeyboardVisibilityBuilder(
                     builder: (context, keyboardHidden) {
                       if (keyboardHidden) return const SizedBox.shrink();
+                      final dark = hasDarkTheme(context);
                       return Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(
@@ -168,34 +168,29 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                               color: Theme.of(context).colorScheme.background.withOpacity(0.5),
                               borderRadius: const BorderRadius.all(Radius.circular(8))
                             ),
-                            child: Selector<Preferences, bool>(
-                              selector: (ctx, prefs) => prefs.darkTheme,
-                              builder: (context, dark, __) {
-                                return AnimatedBuilder(
-                                  animation: _controller.animation!,
-                                  builder: (context, _) => Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(
-                                      infoScreens.length,
-                                      (i) => GestureDetector(
-                                        // onTap: () => _controller.animateTo(i),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Container(
-                                            width: 10,
-                                            height: 10,
-                                            decoration: BoxDecoration(
-                                              color: (_controller.animation!.value.round() == i) ? Colors.grey[(dark) ? 200 : 800] : Colors.grey[(dark) ? 600 : 400],
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
+                            child: AnimatedBuilder(
+                              animation: _controller.animation!,
+                              builder: (context, _) => Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  infoScreens.length,
+                                  (i) => GestureDetector(
+                                    // onTap: () => _controller.animateTo(i),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: (_controller.animation!.value.round() == i) ? Colors.grey[(dark) ? 200 : 800] : Colors.grey[(dark) ? 600 : 400],
+                                          shape: BoxShape.circle,
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              }
+                                ),
+                              ),
                             ),
                           ),
                         ),

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:enough_serialization/enough_serialization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
@@ -11,6 +10,7 @@ import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 late final SharedPreferences sharedPreferences;
+bool hasDarkTheme(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
 
 const newsCachePrefKey = "news_cache";
 const credStorePrefKey = "cred_store";

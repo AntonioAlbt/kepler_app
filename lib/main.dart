@@ -112,7 +112,8 @@ class KeplerApp extends StatefulWidget {
   State<KeplerApp> createState() => _KeplerAppState();
 }
 
-final appKey = GlobalKey<ScaffoldState>();
+final globalScaffoldKey = GlobalKey<ScaffoldState>();
+ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
 
 const _loadingAnimationDuration = 1000;
 
@@ -209,7 +210,7 @@ class _KeplerAppState extends State<KeplerApp> {
           child: Stack(
             children: [
               Scaffold(
-                key: appKey,
+                key: globalScaffoldKey,
                 appBar: AppBar(
                   title: Text((index.first == PageIDs.home)
                       ? "Kepler-App"

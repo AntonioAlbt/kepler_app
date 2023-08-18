@@ -3,6 +3,11 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
+import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
+import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
+import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 
 class HourtableTab extends StatefulWidget {
@@ -31,15 +36,19 @@ class _HourtableTabState extends State<HourtableTab> {
             ],
           );
         }
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Text(stdata.selectedClassName ?? "un"),
-              TextButton(onPressed: () => stdata.selectedClassName = null, child: const Text("reset")),
-            ],
-          ),
-        );
+        final navPage = state.selectedNavPageIDs.last;
+        if (navPage == StuPlanPageIDs.yours) return const YourPlanPage();
+        if (navPage == StuPlanPageIDs.classPlans) return const ClassPlanPage();
+        if (navPage == StuPlanPageIDs.all) return const AllReplacesPage();
+        if (navPage == StuPlanPageIDs.freeRooms) return const FreeRoomsPage();
+        if (navPage == StuPlanPageIDs.teacherPlan) {
+          if (state.userType == UserType.teacher) {
+            return const TeacherPlanPage();
+          } else {
+            return const Text("Halt Stopp! Nur für Lehrer.");
+          }
+        }
+        return const Text("Unbekannter Plan gefordert. Bitte schließen und erneut probieren.");
       },
     );
   }
@@ -51,7 +60,7 @@ class _HourtableTabState extends State<HourtableTab> {
 }
 
 bool shouldShowStuPlanIntro(StuPlanData data) =>
-    data.selectedClassName == null && data.selectedCourseIDs.isEmpty;
+    data.selectedClassName == null || data.selectedCourseIDs.isEmpty;
 
 // returns true if all data is given and the stuplan page should be shown
 // and false if the intro screens have to be shown
