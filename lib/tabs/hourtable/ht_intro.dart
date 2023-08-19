@@ -34,6 +34,15 @@ class ClassSelectScreen extends StatefulWidget {
   State<ClassSelectScreen> createState() => _ClassSelectScreenState();
 }
 
+DropdownMenuItem<String> classNameToDropdownItem(String className)
+  => DropdownMenuItem(
+      value: className,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 32),
+        child: Text(className.contains("-") ? "Klasse $className" : "Jahrgang $className"),
+      ),
+    );
+
 class _ClassSelectScreenState extends State<ClassSelectScreen> {
   bool _loading = true;
 
@@ -50,13 +59,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
               child: CircularProgressIndicator(),
             ) else DropdownButton(
               items: stdata.availableClasses
-                  .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 32),
-                          child: Text(e.contains("-") ? "Klasse $e" : "Jahrgang $e"),
-                        ),
-                      ))
+                  .map((e) => classNameToDropdownItem(e))
                   .toList(),
               value: stdata.selectedClassName ?? stdata.availableClasses.first,
               onChanged: (value) => stdata.selectedClassName = value,

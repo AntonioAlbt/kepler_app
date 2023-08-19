@@ -11,6 +11,7 @@ import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
+import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
@@ -107,6 +108,7 @@ final destinations = [
         selectedIcon: const Icon(Icons.list_alt),
         navbarActions: [
           const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
+          const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
       const NavEntryData(
@@ -114,6 +116,9 @@ final destinations = [
         icon: Icon(Icons.groups_outlined),
         label: Text("Klassenpläne"),
         selectedIcon: Icon(Icons.groups),
+        navbarActions: [
+          IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
       const NavEntryData(
         id: StuPlanPageIDs.all,

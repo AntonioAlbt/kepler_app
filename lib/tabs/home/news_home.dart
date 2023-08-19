@@ -18,9 +18,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: HSLColor.fromColor(keplerColorBlue)
-          .withLightness(hasDarkTheme(context) ? .1 : .9)
-          .toColor(),
+      color: colorWithLightness(keplerColorBlue, hasDarkTheme(context) ? .1 : .9),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

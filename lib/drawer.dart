@@ -52,7 +52,7 @@ class _NavEntryState extends State<NavEntry> {
 
   @override
   Widget build(BuildContext context) {
-    final color = (widget.parentOfSelected) ? HSLColor.fromColor(keplerColorBlue).withLightness(1/3).toColor() : keplerColorBlue;
+    final color = (widget.parentOfSelected) ? colorWithLightness(keplerColorBlue, 1/3) : keplerColorBlue;
     return Padding(
       padding: (widget.layer == 0) ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5) : const EdgeInsets.only(top: 6),
       child: AnimatedSize(
