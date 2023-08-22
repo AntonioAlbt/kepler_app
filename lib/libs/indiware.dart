@@ -51,13 +51,13 @@ class VPKlData {
 class VPLeData {
   final VPHeader header; // "Kopf"
   final VPHolidays holidays; // "FreieTage"
-  final List<VPTeacher> teacher; // "Klassen"
+  final List<VPTeacher> teachers; // "Klassen"
   final List<String> additionalInfo; // "ZusatzInfo" -> "ZiZeile" values
 
-  const VPLeData({required this.header, required this.holidays, required this.teacher, required this.additionalInfo});
+  const VPLeData({required this.header, required this.holidays, required this.teachers, required this.additionalInfo});
   @override
   String toString() {
-    return 'VPLeData(header: $header, holidays: $holidays, teacher: $teacher, additionalInfo: $additionalInfo)';
+    return 'VPLeData(header: $header, holidays: $holidays, teacher: $teachers, additionalInfo: $additionalInfo)';
   }
 }
 
@@ -159,7 +159,9 @@ class VPLesson { // "<Std>"
   final String infoText; // "If"
   
   // additional access method for better clarity in the code
+  /// -> teacherCode
   String get teachingClassName => teacherCode;
+  /// -> teacherChanged
   bool get teachingClassChanged => teacherChanged;
 
   const VPLesson({required this.schoolHour, required this.startTime, required this.endTime, required this.subjectCode, required this.subjectChanged, required this.teacherCode, required this.teacherChanged, required this.roomNr, required this.roomChanged, required this.subjectID, required this.infoText});
@@ -303,7 +305,7 @@ VPLeData xmlToLeData(XmlDocument leData) {
   return VPLeData(
     header: _parseHeader(xml.getElement("Kopf")!),
     holidays: _parseHolidays(xml.getElement("FreieTage")!),
-    teacher: teacher.map((e) => VPTeacher(
+    teachers: teacher.map((e) => VPTeacher(
       teacherCode: e.getElement("Kurz")!.innerText,
       hourBlocks: _parseHourBlocks(e.getElement("KlStunden")!),
       lessons: _parseLessons(e.getElement("Pl")!),

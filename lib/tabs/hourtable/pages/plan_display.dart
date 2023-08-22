@@ -12,7 +12,8 @@ class StuPlanDisplay extends StatefulWidget {
   final String className;
   final bool respectIgnoredSubjects;
   final bool showInfo;
-  const StuPlanDisplay({super.key, required this.className, this.respectIgnoredSubjects = true, this.showInfo = true});
+  final bool allReplacesMode;
+  const StuPlanDisplay({super.key, required this.className, this.respectIgnoredSubjects = true, this.showInfo = true, this.allReplacesMode = false});
 
   @override
   State<StuPlanDisplay> createState() => StuPlanDisplayState();
@@ -148,6 +149,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             className: widget.className,
             respectIgnored: widget.respectIgnoredSubjects,
             showInfo: widget.showInfo,
+            allReplacesMode: widget.allReplacesMode,
           ),
         ),
       ],
@@ -172,7 +174,8 @@ class StuPlanDayDisplay extends StatefulWidget {
   final bool respectIgnored;
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
-  const StuPlanDayDisplay({super.key, required this.date, required this.className, this.respectIgnored = true, this.controller, this.showInfo = true});
+  final bool allReplacesMode;
+  const StuPlanDayDisplay({super.key, required this.date, required this.className, this.respectIgnored = true, this.controller, this.showInfo = true, this.allReplacesMode = false});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -181,10 +184,57 @@ class StuPlanDayDisplay extends StatefulWidget {
 class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   bool _loading = true;
   List<VPLesson>? lessons;
+  Map<String, List<VPLesson>>? classLessons;
   String? lastUpdated;
   List<String>? additionalInfo;
   List<VPTeacherSupervision>? supervisions;
   Bw fromCache = Bw(null);
+
+  List<Widget> _buildAllReplacesLessonList() {
+    // final currentClass = Provider.of<StuPlanData>(context).selectedClassName;
+    final children = <Widget>[];
+    if (classLessons == null) return [];
+    classLessons!.forEach((clName, lessons) {
+      if (lessons.isEmpty) return;
+      final cl2 = <Widget>[];
+      cl2.add(Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          clName,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ));
+      for (var i = 0; i < lessons.length; i++) {
+        cl2.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: LessonDisplay(lessons[i], (i > 0) ? lessons[i - 1].schoolHour : null),
+        ));
+        if (i != lessons.length - 1) {
+          cl2.add(const Divider());
+        } else {
+          cl2.add(const Padding(padding: EdgeInsets.all(2),));
+        }
+      }
+      // children.add(ExpansionTile(
+      //   title: Text(
+      //     clName,
+      //     style: const TextStyle(
+      //       fontSize: 20,
+      //       height: 0,
+      //     ),
+      //   ),
+      //   initiallyExpanded: clName == currentClass,
+      //   tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+      //   childrenPadding: const EdgeInsets.all(8),
+      //   children: cl2,
+      // ));
+      children.addAll(cl2);
+    });
+    return children;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,11 +256,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           flex: 3,
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              width: double.infinity,
+            child: (widget.allReplacesMode) ?
+            Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: (lessons != null) ? Border.all(color: hasDarkTheme(context) ? keplerColorBlue : colorWithLightness(keplerColorBlue, .4), width: 3) : null,
                 color: Theme.of(context).colorScheme.background,
                 boxShadow: [
                   BoxShadow(
@@ -221,22 +270,15 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   )
                 ],
               ),
-              child: (){
-                if (lessons == null) {
-                  return const Center(
-                    child: Text("Keine Daten verfügbar."),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: ListView.separated(
-                    itemCount: lessons!.length,
-                    itemBuilder: (context, index) => LessonDisplay(lessons![index], index > 0 ? lessons!.elementAtOrNull(index - 1)?.schoolHour : null, widget.className),
-                    separatorBuilder: (context, index) => const Divider(height: 24),
-                  ),
-                );
-              }()
-            ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListView(
+                  shrinkWrap: true,
+                  children: _buildAllReplacesLessonList(),
+                ),
+              ),
+            )
+            : LessonListContainer(lessons),
           ),
         ),
         if (additionalInfo != null && widget.showInfo) Flexible(
@@ -306,11 +348,21 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         forceRefresh: forceRefresh,
       );
       lastUpdated = klData?.header.lastUpdated;
-      lessons = klData?.classes.cast<VPClass?>()
+      if (widget.allReplacesMode) {
+        classLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
+            cl.className,
+            cl.lessons.where((le) =>
+                le.subjectChanged ||
+                le.teacherChanged ||
+                le.roomChanged ||
+                le.infoText != "").toList()));
+      } else {
+        lessons = klData?.classes.cast<VPClass?>()
           .firstWhere((cl) => cl?.className == widget.className,
               orElse: () => null)?.lessons;
-      if (widget.respectIgnored) {
-        lessons = lessons?.where((element) => stdata.selectedCourseIDs.contains(element.subjectID)).toList();
+        if (widget.respectIgnored) {
+          lessons = lessons?.where((element) => stdata.selectedCourseIDs.contains(element.subjectID)).toList();
+        }
       }
       additionalInfo = klData?.additionalInfo;
     } else if (user == UserType.teacher) {
@@ -322,12 +374,25 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         forceRefresh: forceRefresh,
       );
       lastUpdated = leData?.header.lastUpdated;
-      final teacher = leData
-          ?.teacher.cast<VPTeacher?>()
+      if (widget.allReplacesMode) {
+        lessons = leData?.teachers
+            .map((e) => e.lessons)
+            .fold<List<VPLesson>>(
+                [], (previousValue, element) => previousValue..addAll(element))
+            .where((element) =>
+                element.roomChanged ||
+                element.teachingClassChanged ||
+                element.subjectChanged ||
+                element.infoText != "")
+            .toList();
+      } else {
+        final teacher = leData
+          ?.teachers.cast<VPTeacher?>()
           .firstWhere((cl) => cl?.teacherCode == stdata.selectedTeacherName!,
               orElse: () => null);
-      lessons = teacher?.lessons;
-      supervisions = teacher?.supervisions;
+        lessons = teacher?.lessons;
+        supervisions = teacher?.supervisions;
+      }
       additionalInfo = leData?.additionalInfo;
     }
     lessons?.sort((l1, l2) {
@@ -339,11 +404,53 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   }
 }
 
+class LessonListContainer extends StatelessWidget {
+  final List<VPLesson>? lessons;
+  const LessonListContainer(this.lessons, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: (lessons != null) ? Border.all(color: hasDarkTheme(context) ? keplerColorBlue : colorWithLightness(keplerColorBlue, .4), width: 3) : null,
+        color: Theme.of(context).colorScheme.background,
+        boxShadow: [
+          BoxShadow(
+            color: hasDarkTheme(context) ? Colors.black45 : Colors.grey.withOpacity(0.5),
+            spreadRadius: 5,
+            blurRadius: 7,
+            offset: const Offset(0, 3),
+          )
+        ],
+      ),
+      child: (){
+        if (lessons == null) {
+          return const Center(
+            child: Text(
+              "Keine Daten verfügbar.",
+              style: TextStyle(fontSize: 18),
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: ListView.separated(
+            itemCount: lessons!.length,
+            itemBuilder: (context, index) => LessonDisplay(lessons![index], index > 0 ? lessons!.elementAtOrNull(index - 1)?.schoolHour : null),
+            separatorBuilder: (context, index) => const Divider(height: 24),
+          ),
+        );
+      }()
+    );
+  }
+}
+
 class LessonDisplay extends StatelessWidget {
   final VPLesson lesson;
   final int? previousLessonHour;
-  final String className;
-  const LessonDisplay(this.lesson, this.previousLessonHour, this.className, {super.key});
+  const LessonDisplay(this.lesson, this.previousLessonHour, {super.key});
 
   @override
   Widget build(BuildContext context) {
