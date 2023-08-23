@@ -45,7 +45,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
 
 
   void forceRefreshData() {
-    _ctr.triggerRefresh();
+    IndiwareDataManager.clearCachedData().then((_) => _ctr.triggerRefresh());
   }
 
 

@@ -156,6 +156,18 @@ class IndiwareDataManager {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml", data.toXmlString());
   }
 
+  static Future<void> clearCachedData() async {
+    final dir = Directory("${await appDataDirPath}$stuplanpath");
+    for (var file in (await dir.list().toList())) {
+      final name = file.path.split("/").last;
+      if (name.endsWith(".xml") && name.startsWith("20")) {
+        // this will fail when we're in year 21xx
+        // but that's a problem for future robot me
+        await file.delete();
+      }
+    }
+  }
+
   static Future<VPKlData?> getKlDataForDate(
       DateTime date, String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
     if (!forceRefresh) {
