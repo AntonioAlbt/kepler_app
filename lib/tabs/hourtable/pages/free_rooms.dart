@@ -69,6 +69,10 @@ class FreeRoomsPage extends StatelessWidget {
   }
 }
 
+void freeRoomRefreshAction() {
+  freeRoomDisplayKey.currentState?.forceRefreshData();
+}
+
 Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType?, List<String>>> freeRoomsList, int hour) {
   return AlertDialog(
     title: Text("Freie Räume in Stunde $hour"),
@@ -77,9 +81,9 @@ Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType
       children: freeRoomsList.map(
         (data) => SizedBox(
           width: double.infinity,
-          child: RichText(
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style.copyWith(fontSize: 16),
+          child: Text.rich(
+            TextSpan(
+              style: const TextStyle(fontSize: 16),
               children: [
                 TextSpan(
                   text: data.key?.toString() ?? "Allgemein",

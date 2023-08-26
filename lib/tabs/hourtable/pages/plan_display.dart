@@ -6,7 +6,8 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
-import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart' show showSTDebugStuff;
+import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
+    show generateLessonInfoDialog, showSTDebugStuff;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -17,14 +18,23 @@ class StuPlanDisplay extends StatefulWidget {
   final bool allReplacesMode;
   final bool freeRoomsMode;
   final List<String>? allRooms;
-  const StuPlanDisplay({super.key, required this.className, this.respectIgnoredSubjects = true, this.showInfo = true, this.allReplacesMode = false, this.freeRoomsMode = false, this.allRooms});
+  const StuPlanDisplay(
+      {super.key,
+      required this.className,
+      this.respectIgnoredSubjects = true,
+      this.showInfo = true,
+      this.allReplacesMode = false,
+      this.freeRoomsMode = false,
+      this.allRooms});
 
   @override
   State<StuPlanDisplay> createState() => StuPlanDisplayState();
 }
 
-bool isWeekend(DateTime day) => day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
-bool isOrSoonWeekend(DateTime day) => isWeekend(day) || isWeekend(day.add(const Duration(days: 1)));
+bool isWeekend(DateTime day) =>
+    day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
+bool isOrSoonWeekend(DateTime day) =>
+    isWeekend(day) || isWeekend(day.add(const Duration(days: 1)));
 DateTime findNextMonday(DateTime day) {
   var nm = day;
   while (nm.weekday != DateTime.monday) {
@@ -32,7 +42,9 @@ DateTime findNextMonday(DateTime day) {
   }
   return nm;
 }
-bool isOrPrevWeekend(DateTime day) => isWeekend(day) || isWeekend(day.subtract(const Duration(days: 1)));
+
+bool isOrPrevWeekend(DateTime day) =>
+    isWeekend(day) || isWeekend(day.subtract(const Duration(days: 1)));
 DateTime findPrevFriday(DateTime day) {
   var nm = day;
   while (nm.weekday != DateTime.friday) {
@@ -47,11 +59,9 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
 
-
   void forceRefreshData() {
     IndiwareDataManager.clearCachedData().then((_) => _ctr.triggerRefresh());
   }
-
 
   DateTime _getStartDate() {
     final today = DateTime.now();
@@ -80,13 +90,16 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
           children: [
             IconButton.outlined(
               icon: const Icon(Icons.arrow_back),
-              onPressed: (currentDate.isAfter(startDate)) ? () => setState(() {
-                if (isOrPrevWeekend(currentDate)) {
-                  currentDate = findPrevFriday(currentDate);
-                } else {
-                  currentDate = currentDate.subtract(const Duration(days: 1));
-                }
-              }) : null,
+              onPressed: (currentDate.isAfter(startDate))
+                  ? () => setState(() {
+                        if (isOrPrevWeekend(currentDate)) {
+                          currentDate = findPrevFriday(currentDate);
+                        } else {
+                          currentDate =
+                              currentDate.subtract(const Duration(days: 1));
+                        }
+                      })
+                  : null,
             ),
             // IconButton(
             //   icon: const Icon(Icons.fast_rewind),
@@ -108,22 +121,25 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                   ),
                   // because the max difference is 9 days (e.g. Sat -> Mon+1)
                   // only the day needs to be checked for "today"
-                  if (currentDate.day == DateTime.now().day) Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: hasDarkTheme(context) ? colorWithLightness(keplerColorOrange, .15) : colorWithLightness(keplerColorOrange, .8),
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          "heute",
-                          style: TextStyle(height: 0),
+                  if (currentDate.day == DateTime.now().day)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: hasDarkTheme(context)
+                              ? colorWithLightness(keplerColorOrange, .15)
+                              : colorWithLightness(keplerColorOrange, .8),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text(
+                            "heute",
+                            style: TextStyle(height: 0),
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -135,13 +151,17 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             // ),
             IconButton.outlined(
               icon: const Icon(Icons.arrow_forward),
-              onPressed: (currentDate.isBefore(startDate.add(const Duration(days: 3)))) ? () => setState(() {
-                if (isOrSoonWeekend(currentDate)) {
-                  currentDate = findNextMonday(currentDate);
-                } else {
-                  currentDate = currentDate.add(const Duration(days: 1));
-                }
-              }) : null,
+              onPressed:
+                  (currentDate.isBefore(startDate.add(const Duration(days: 3))))
+                      ? () => setState(() {
+                            if (isOrSoonWeekend(currentDate)) {
+                              currentDate = findNextMonday(currentDate);
+                            } else {
+                              currentDate =
+                                  currentDate.add(const Duration(days: 1));
+                            }
+                          })
+                      : null,
             ),
           ],
         ),
@@ -149,7 +169,9 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
           child: StuPlanDayDisplay(
             controller: _ctr,
             date: currentDate,
-            key: ValueKey(currentDate.hashCode + widget.className.hashCode + widget.respectIgnoredSubjects.hashCode),
+            key: ValueKey(currentDate.hashCode +
+                widget.className.hashCode +
+                widget.respectIgnoredSubjects.hashCode),
             className: widget.className,
             respectIgnored: widget.respectIgnoredSubjects,
             showInfo: widget.showInfo,
@@ -183,7 +205,16 @@ class StuPlanDayDisplay extends StatefulWidget {
   final bool allReplacesMode;
   final bool freeRoomsMode;
   final List<String>? allRooms;
-  const StuPlanDayDisplay({super.key, required this.date, required this.className, this.respectIgnored = true, this.controller, this.showInfo = true, this.allReplacesMode = false, this.freeRoomsMode = false, this.allRooms});
+  const StuPlanDayDisplay(
+      {super.key,
+      required this.date,
+      required this.className,
+      this.respectIgnored = true,
+      this.controller,
+      this.showInfo = true,
+      this.allReplacesMode = false,
+      this.freeRoomsMode = false,
+      this.allRooms});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -224,12 +255,15 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       for (var i = 0; i < lessons.length; i++) {
         cl2.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          child: LessonDisplay(lessons[i], (i > 0) ? lessons[i - 1].schoolHour : null),
+          child: LessonDisplay(
+              lessons[i], (i > 0) ? lessons[i - 1].schoolHour : null),
         ));
         if (i != lessons.length - 1) {
           cl2.add(const Divider());
         } else {
-          cl2.add(const Padding(padding: EdgeInsets.all(2),));
+          cl2.add(const Padding(
+            padding: EdgeInsets.all(2),
+          ));
         }
       }
       // children.add(ExpansionTile(
@@ -251,25 +285,35 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   }
 
   IconData roomTypeIcon(RoomType? type) => switch (type) {
-    RoomType.art => MdiIcons.palette,
-    RoomType.compSci => MdiIcons.desktopClassic,
-    RoomType.music => MdiIcons.music,
-    RoomType.specialist => Icons.science,
-    RoomType.sports => MdiIcons.handball,
-    RoomType.technic => MdiIcons.hammerScrewdriver,
-    null => MdiIcons.school,
-  };
+        RoomType.art => MdiIcons.palette,
+        RoomType.compSci => MdiIcons.desktopClassic,
+        RoomType.music => MdiIcons.music,
+        RoomType.specialist => Icons.science,
+        RoomType.sports => MdiIcons.handball,
+        RoomType.technic => MdiIcons.hammerScrewdriver,
+        null => MdiIcons.school,
+      };
 
   List<Widget> _buildFreeRoomList() {
     final occupiedRooms = <int, List<String>>{
-      1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []
+      1: [],
+      2: [],
+      3: [],
+      4: [],
+      5: [],
+      6: [],
+      7: [],
+      8: [],
+      9: []
     };
     if (lessons == null) return [];
     for (final lesson in lessons!) {
       occupiedRooms[lesson.schoolHour]!.add(lesson.roomNr);
     }
-    final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(hour, allKeplerRooms.where((room) => !occupied.contains(room)).toList()));
-    final freeRoomsWithTypePerHour = (){
+    final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(
+        hour,
+        allKeplerRooms.where((room) => !occupied.contains(room)).toList()));
+    final freeRoomsWithTypePerHour = () {
       final map = <int, Map<RoomType?, List<String>>>{};
       freeRoomsPerHour.forEach((hour, rooms) {
         if (!map.containsKey(hour)) map[hour] = {};
@@ -284,14 +328,19 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     final children = <Widget>[];
     freeRoomsWithTypePerHour.forEach((hour, freeRooms) {
       final freeRoomsList = freeRooms.entries.toList();
-      freeRoomsList.sort((e1, e2) => (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
+      freeRoomsList.sort((e1, e2) =>
+          (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
       children.add(TextButton(
         style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.only(left: 8),
           foregroundColor: Colors.grey.shade700,
         ),
-        onPressed: () => showDialog(context: context, builder: (ctx) => generateFreeRoomsClickDialog(ctx, freeRoomsList, hour)),
+        onPressed: () => showDialog(
+            context: context,
+            builder: (ctx) =>
+                generateFreeRoomsClickDialog(ctx, freeRoomsList, hour)),
         child: ListTile(
           contentPadding: const EdgeInsets.all(0),
           title: Row(
@@ -307,20 +356,23 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               Flexible(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: freeRoomsList.map((e) => Flexible(
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          child: Icon(
-                            roomTypeIcon(e.key),
-                            color: Colors.grey,
-                          ),
-                        ),
-                        Flexible(child: Text(e.value.join(", "))),
-                      ],
-                    ),
-                  )).toList(),
+                  children: freeRoomsList
+                      .map((e) => Flexible(
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  child: Icon(
+                                    roomTypeIcon(e.key),
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Flexible(child: Text(e.value.join(", "))),
+                              ],
+                            ),
+                          ))
+                      .toList(),
                 ),
               ),
             ],
@@ -344,7 +396,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 color: keplerColorBlue,
               ),
             ),
-            Text("Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.className.contains("-") ? "Klasse" : "Jahrgang"} ${widget.className})...")
+            Text(
+                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.className.contains("-") ? "Klasse" : "Jahrgang"} ${widget.className})..."),
           ],
         ),
       );
@@ -352,63 +405,71 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return Column(
       children: [
         if (lastUpdated != null) Text("zuletzt geändert am $lastUpdated"),
-        if (showSTDebugStuff) Text("fetched ${fromCache.val == null ? "from somewhere?" : fromCache.val == true ? "from cache" : "from the internet"}"),
+        if (showSTDebugStuff)
+          Text(
+              "fetched ${fromCache.val == null ? "from somewhere?" : fromCache.val == true ? "from cache" : "from the internet"}"),
         Flexible(
           flex: 3,
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: (widget.allReplacesMode) ?
-            SPListContainer(
-              child: ListView(
-                shrinkWrap: true,
-                children: _buildAllReplacesLessonList(),
-              ),
-            )
-            : (widget.freeRoomsMode) ?
-            SPListContainer(
-              child: (){
-                final list = _buildFreeRoomList();
-                return ListView.separated(
-                  itemCount: list.length,
-                  shrinkWrap: true,
-                  itemBuilder: (ctx, i) => list[i],
-                  separatorBuilder: (ctx, i) => const Divider(),
-                );
-              }(),
-            )
-            : LessonListContainer(lessons),
+            child: (widget.allReplacesMode)
+                  ? SPListContainer(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: _buildAllReplacesLessonList(),
+                    ),
+                  )
+                : (widget.freeRoomsMode)
+                  ? SPListContainer(
+                      child: () {
+                        final list = _buildFreeRoomList();
+                        return ListView.separated(
+                          itemCount: list.length,
+                          shrinkWrap: true,
+                          itemBuilder: (ctx, i) => list[i],
+                          separatorBuilder: (ctx, i) => const Divider(),
+                        );
+                      }(),
+                    )
+                  : LessonListContainer(lessons, widget.className),
           ),
         ),
-        if (additionalInfo != null && (additionalInfo?.isEmpty == false) && widget.showInfo) Flexible(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                // border: Border.all(
-                //   color: Colors.grey.shade800
-                // ),
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).colorScheme.background,
-                boxShadow: [
-                  BoxShadow(
-                    color: hasDarkTheme(context) ? Colors.black26 : Colors.grey.withOpacity(0.24),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  )
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: additionalInfo?.length ?? 1,
-                  itemBuilder: (context, index) => Text(additionalInfo![index]),
+        if (additionalInfo != null &&
+            (additionalInfo?.isEmpty == false) &&
+            widget.showInfo)
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // border: Border.all(
+                  //   color: Colors.grey.shade800
+                  // ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.background,
+                  boxShadow: [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black26
+                          : Colors.grey.withOpacity(0.24),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: additionalInfo?.length ?? 1,
+                    itemBuilder: (context, index) =>
+                        Text(additionalInfo![index]),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -440,7 +501,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     if (widget.freeRoomsMode) {
       // free rooms ignores teacher mode
       // yes, the teacher stuplan access allows accessing room plans
-      // but idc lol - also why give  teachers don't deserve better free room 
+      // but idc lol - also why give  teachers don't deserve better free room
       final klData = await IndiwareDataManager.getKlDataForDate(
         widget.date,
         creds.vpUser!,
@@ -450,7 +511,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       );
       if (!mounted) return;
       lastUpdated = klData?.header.lastUpdated;
-      lessons = klData?.classes.map((e) => e.lessons).fold([], (prev, ls) => prev!..addAll(ls));
+      lessons = klData?.classes
+          .map((e) => e.lessons)
+          .fold([], (prev, ls) => prev!..addAll(ls));
     } else if (user == UserType.pupil || user == UserType.parent) {
       final klData = await IndiwareDataManager.getKlDataForDate(
         widget.date,
@@ -464,17 +527,24 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       if (widget.allReplacesMode) {
         changedClassLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
             cl.className,
-            cl.lessons.where((le) =>
-                le.subjectChanged ||
-                le.teacherChanged ||
-                le.roomChanged ||
-                le.infoText != "").toList()));
+            cl.lessons
+                .where((le) =>
+                    le.subjectChanged ||
+                    le.teacherChanged ||
+                    le.roomChanged ||
+                    le.infoText != "")
+                .toList()));
       } else {
-        lessons = klData?.classes.cast<VPClass?>()
-          .firstWhere((cl) => cl?.className == widget.className,
-              orElse: () => null)?.lessons;
+        lessons = klData?.classes
+            .cast<VPClass?>()
+            .firstWhere((cl) => cl?.className == widget.className,
+                orElse: () => null)
+            ?.lessons;
         if (widget.respectIgnored) {
-          lessons = lessons?.where((element) => stdata.selectedCourseIDs.contains(element.subjectID)).toList();
+          lessons = lessons
+              ?.where((element) =>
+                  stdata.selectedCourseIDs.contains(element.subjectID))
+              .toList();
         }
       }
       additionalInfo = klData?.additionalInfo;
@@ -500,10 +570,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 element.infoText != "")
             .toList();
       } else {
-        final teacher = leData
-          ?.teachers.cast<VPTeacher?>()
-          .firstWhere((cl) => cl?.teacherCode == stdata.selectedTeacherName!,
-              orElse: () => null);
+        final teacher = leData?.teachers.cast<VPTeacher?>().firstWhere(
+            (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
+            orElse: () => null);
         lessons = teacher?.lessons;
         supervisions = teacher?.supervisions;
       }
@@ -529,11 +598,19 @@ class SPListContainer extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: (blueBorder) ? Border.all(color: hasDarkTheme(context) ? keplerColorBlue : colorWithLightness(keplerColorBlue, .4), width: 3) : null,
+        border: (blueBorder)
+            ? Border.all(
+                color: hasDarkTheme(context)
+                    ? keplerColorBlue
+                    : colorWithLightness(keplerColorBlue, .4),
+                width: 3)
+            : null,
         color: Theme.of(context).colorScheme.background,
         boxShadow: [
           BoxShadow(
-            color: hasDarkTheme(context) ? Colors.black45 : Colors.grey.withOpacity(0.5),
+            color: hasDarkTheme(context)
+                ? Colors.black45
+                : Colors.grey.withOpacity(0.5),
             spreadRadius: 5,
             blurRadius: 7,
             offset: const Offset(0, 3),
@@ -550,38 +627,51 @@ class SPListContainer extends StatelessWidget {
 
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
-  const LessonListContainer(this.lessons, {super.key});
+  final String className;
+  const LessonListContainer(this.lessons, this.className, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return SPListContainer(
-      blueBorder: lessons != null,
-      child: (){
-        if (lessons == null) {
-          return const Center(
-            child: Text(
-              "Keine Daten verfügbar.",
-              style: TextStyle(fontSize: 18),
+        blueBorder: lessons != null,
+        child: () {
+          if (lessons == null) {
+            return const Center(
+              child: Text(
+                "Keine Daten verfügbar.",
+                style: TextStyle(fontSize: 18),
+              ),
+            );
+          }
+          final stdata = Provider.of<StuPlanData>(context);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ListView.separated(
+              itemCount: lessons!.length,
+              itemBuilder: (context, index) => LessonDisplay(
+                lessons![index],
+                index > 0
+                    ? lessons!.elementAtOrNull(index - 1)?.schoolHour
+                    : null,
+                subject: stdata.availableSubjects[className]!
+                    .cast<VPCSubjectS?>()
+                    .firstWhere(
+                        (s) => s!.subjectID == lessons![index].subjectID),
+              ),
+              separatorBuilder: (context, index) => const Divider(height: 24),
             ),
           );
-        }
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: ListView.separated(
-            itemCount: lessons!.length,
-            itemBuilder: (context, index) => LessonDisplay(lessons![index], index > 0 ? lessons!.elementAtOrNull(index - 1)?.schoolHour : null),
-            separatorBuilder: (context, index) => const Divider(height: 24),
-          ),
-        );
-      }()
-    );
+        }());
   }
 }
 
 class LessonDisplay extends StatelessWidget {
   final VPLesson lesson;
   final int? previousLessonHour;
-  const LessonDisplay(this.lesson, this.previousLessonHour, {super.key});
+  final bool showInfoDialog;
+  final VPCSubjectS? subject;
+  const LessonDisplay(this.lesson, this.previousLessonHour,
+      {super.key, this.showInfoDialog = true, this.subject});
 
   @override
   Widget build(BuildContext context) {
@@ -590,72 +680,85 @@ class LessonDisplay extends StatelessWidget {
         fontSize: 18,
         height: 0,
       ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              SizedBox(
-                width: 25,
-                child: (previousLessonHour != lesson.schoolHour) ? Text("${lesson.schoolHour}. ") : const SizedBox.shrink(),
-              ),
-              Text(
-                lesson.subjectCode,
-                style: TextStyle(
-                  color: (lesson.subjectChanged) ? Colors.red : null,
-                  fontWeight: (lesson.subjectChanged) ? FontWeight.bold : FontWeight.w500,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: (showInfoDialog)
+            ? () => showDialog(
+                context: context,
+                builder: (dialogCtx) =>
+                    generateLessonInfoDialog(dialogCtx, lesson, subject))
+            : null,
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SizedBox(
+                  width: 25,
+                  child: (previousLessonHour != lesson.schoolHour)
+                      ? Text("${lesson.schoolHour}. ")
+                      : const SizedBox.shrink(),
                 ),
-              ),
-              if (lesson.teacherCode != "")
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text(
-                    lesson.teacherCode,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: (lesson.teacherChanged) ? FontWeight.bold : null,
-                      color: (lesson.teacherChanged) ? Colors.red : null,
+                Text(
+                  lesson.subjectCode,
+                  style: TextStyle(
+                    color: (lesson.subjectChanged) ? Colors.red : null,
+                    fontWeight: (lesson.subjectChanged)
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                  ),
+                ),
+                if (lesson.teacherCode != "")
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      lesson.teacherCode,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        fontWeight:
+                            (lesson.teacherChanged) ? FontWeight.bold : null,
+                        color: (lesson.teacherChanged) ? Colors.red : null,
+                      ),
                     ),
                   ),
-                ),
-              const Spacer(),
-              Text(lesson.roomNr),
-            ],
-          ),
-          // if (lesson.subjectChanged || lesson.teacherChanged) Consumer<StuPlanData>(
-          //   builder: (context, stdata, child) {
-          //     final originalSubj = stdata.availableSubjects[className]!.cast<VPCSubjectS?>().firstWhere((s) => s!.subjectID == lesson.subjectID);
-          //     if (originalSubj == null || lesson.infoText.toLowerCase().startsWith(originalSubj.subjectCode.toLowerCase())) return const SizedBox.shrink();
-          //     return DefaultTextStyle.merge(
-          //       style: const TextStyle(
-          //         fontSize: 15,
-          //       ),
-          //       child: Row(
-          //         children: [
-          //           const SizedBox(width: 25),
-          //           const Text("statt"),
-          //           if (lesson.subjectChanged) Text(" ${originalSubj.subjectCode}"),
-          //           if (lesson.teacherChanged) Text(" bei ${originalSubj.teacherCode}"),
-          //         ],
-          //       ),
-          //     );
-          //   },
-          // ),
-          if (lesson.infoText != "") Row(
-            children: [
-              const SizedBox(width: 25),
-              Flexible(
-                child: Text(
-                  lesson.infoText,
-                  style: const TextStyle(
-                    fontSize: 15
+                const Spacer(),
+                Text(lesson.roomNr),
+              ],
+            ),
+            // if (lesson.subjectChanged || lesson.teacherChanged) Consumer<StuPlanData>(
+            //   builder: (context, stdata, child) {
+            //     final originalSubj = stdata.availableSubjects[className]!.cast<VPCSubjectS?>().firstWhere((s) => s!.subjectID == lesson.subjectID);
+            //     if (originalSubj == null || lesson.infoText.toLowerCase().startsWith(originalSubj.subjectCode.toLowerCase())) return const SizedBox.shrink();
+            //     return DefaultTextStyle.merge(
+            //       style: const TextStyle(
+            //         fontSize: 15,
+            //       ),
+            //       child: Row(
+            //         children: [
+            //           const SizedBox(width: 25),
+            //           const Text("statt"),
+            //           if (lesson.subjectChanged) Text(" ${originalSubj.subjectCode}"),
+            //           if (lesson.teacherChanged) Text(" bei ${originalSubj.teacherCode}"),
+            //         ],
+            //       ),
+            //     );
+            //   },
+            // ),
+            if (lesson.infoText != "")
+              Row(
+                children: [
+                  const SizedBox(width: 25),
+                  Flexible(
+                    child: Text(
+                      lesson.infoText,
+                      style: const TextStyle(fontSize: 15),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

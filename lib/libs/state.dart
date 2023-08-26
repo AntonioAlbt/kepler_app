@@ -181,8 +181,8 @@ Future<UserType> determineUserType(String? lernSaxLogin, String? vpUser, String?
   if (lernSaxLogin == null) return UserType.nobody;
   if (parentTypeEndings.any((element) => lernSaxLogin.split("@")[0].endsWith(".$element"))) return UserType.parent;
   final lres = await authRequest(lUrlMLeXmlUrl, vpUser!, vpPassword!);
-  if (lres.statusCode != 401) return UserType.teacher;
+  if (lres!.statusCode != 401) return UserType.teacher;
   final sres = await authRequest(sUrlMKlXmlUrl, vpUser, vpPassword);
-  if (sres.statusCode != 401) return UserType.pupil;
+  if (sres!.statusCode != 401) return UserType.pupil;
   return UserType.nobody;
 }

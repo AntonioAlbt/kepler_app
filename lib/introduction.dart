@@ -541,9 +541,10 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
     try {
       setState(() => _loading = true);
       final lres = await authRequest(lUrlMLeXmlUrl, username, password);
-      if (lres.statusCode == 401) { // if teacher auth failed, try again with pupil auth
+      // if null, throw -> to catch block
+      if (lres!.statusCode == 401) { // if teacher auth failed, try again with pupil auth
         final sres = await authRequest(sUrlMKlXmlUrl, username, password);
-        if (sres.statusCode == 401) return "Ungültige Anmeldedaten.";
+        if (sres!.statusCode == 401) return "Ungültige Anmeldedaten.";
         if (sres.statusCode != 200) return "Fehler #SP${sres.statusCode}. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
         return null;
       }

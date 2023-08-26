@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
 const bool showSTDebugStuff = kDebugMode;
@@ -49,4 +51,117 @@ void yourStuPlanEditAction() {
 
 void yourStuPlanRefreshAction() {
   yourPlanDisplayKey.currentState?.forceRefreshData();
+}
+
+Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject) {
+  return AlertDialog(
+    title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
+    content: DefaultTextStyle.merge(
+      style: const TextStyle(fontSize: 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (lesson.startTime != null && lesson.endTime != null) Flexible(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const WidgetSpan(child: Icon(Icons.access_time, color: Colors.grey)),
+                  const TextSpan(text: " "),
+                  TextSpan(text: "${lesson.startTime} bis ${lesson.endTime}"),
+                ],
+              ),
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(Icons.school, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: lesson.subjectCode),
+                    if (lesson.subjectChanged) const TextSpan(text: ", "),
+                    if (lesson.subjectChanged)
+                      const TextSpan(
+                        text: "geändert",
+                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                      ),
+                    if (lesson.subjectChanged && subject != null) TextSpan(
+                      text: " (sonst ${subject.subjectCode}${(subject.additionalDescr != null) ? " (${subject.additionalDescr})" : ""})"
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: (lesson.teacherCode == "") ? "---" : lesson.teacherCode),
+                    if (lesson.teacherChanged) const TextSpan(text: ", "),
+                    if (lesson.teacherChanged)
+                      const TextSpan(
+                        text: "geändert",
+                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                      ),
+                    if (lesson.teacherChanged && subject != null) TextSpan(
+                      text: " (sonst ${subject.teacherCode})"
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.door, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: (lesson.roomNr == "") ? "---" : lesson.roomNr),
+                    if (lesson.roomChanged) const TextSpan(text: ", "),
+                    if (lesson.roomChanged)
+                      const TextSpan(
+                        text: "geändert",
+                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (lesson.infoText != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: lesson.infoText),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text("Schließen"),
+      ),
+    ],
+  );
 }

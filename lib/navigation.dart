@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
@@ -11,7 +12,9 @@ import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
+import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
@@ -73,7 +76,7 @@ final destinations = [
     label: const Text("Startseite"),
     selectedIcon: const Icon(Icons.home),
     navbarActions: [
-      IconButton(
+      if (kDebugMode) IconButton(
         onPressed: () {
           Provider.of<AppState>(globalScaffoldState.context, listen: false).infoScreen = InfoScreenDisplay(
             infoScreens: introScreens,
@@ -125,12 +128,18 @@ final destinations = [
         icon: Icon(Icons.list_outlined),
         label: Text("Alle Vertretungen"),
         selectedIcon: Icon(Icons.list),
+        navbarActions: [
+          IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
       const NavEntryData(
         id: StuPlanPageIDs.freeRooms,
         icon: Icon(Icons.door_back_door_outlined),
         label: Text("Freie Zimmer"),
         selectedIcon: Icon(Icons.door_back_door),
+        navbarActions: [
+          IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
       const NavEntryData(
         id: StuPlanPageIDs.teacherPlan,

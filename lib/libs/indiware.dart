@@ -31,7 +31,7 @@ class HMTime {
   
   @override
   String toString() {
-    return '$hour:$minute';
+    return '${hour.toString().padLeft(2, "0")}:${minute.toString().padLeft(2, "0")}';
   }
 }
 
@@ -201,14 +201,21 @@ class VPTeacherSupervision { // "<Aufsicht>"
   }
 }
 
-Future<http.Response> authRequest(Uri url, String user, String password) async
-  => http.get(url, headers: {
-    "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}",
-    "User-Agent": "KeplerApp/0.1 (info: a.albert@gamer153.dev)"
-  });
+/// no connection => null
+Future<http.Response?> authRequest(Uri url, String user, String password) async {
+  try {
+    return await http.get(url, headers: {
+      "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}",
+      "User-Agent": "KeplerApp/0.1 (info: a.albert@gamer153.dev)"
+    }).timeout(const Duration(seconds: 5));
+  } catch (_) {
+    return null;
+  }
+}
 
 Future<XmlDocument?> _fetch(Uri url, String user, String password) async {
   final res = await authRequest(url, user, password);
+  if (res == null) return null; // TODO: communicate that there was no internet
   if (res.statusCode == 401) throw StateError("authentication failed");
   if (res.statusCode == 404) return null;
   final xml = XmlDocument.parse(utf8.decode(res.bodyBytes));
