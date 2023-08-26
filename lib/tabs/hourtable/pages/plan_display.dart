@@ -5,7 +5,9 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart' show showSTDebugStuff;
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
 class StuPlanDisplay extends StatefulWidget {
@@ -13,7 +15,9 @@ class StuPlanDisplay extends StatefulWidget {
   final bool respectIgnoredSubjects;
   final bool showInfo;
   final bool allReplacesMode;
-  const StuPlanDisplay({super.key, required this.className, this.respectIgnoredSubjects = true, this.showInfo = true, this.allReplacesMode = false});
+  final bool freeRoomsMode;
+  final List<String>? allRooms;
+  const StuPlanDisplay({super.key, required this.className, this.respectIgnoredSubjects = true, this.showInfo = true, this.allReplacesMode = false, this.freeRoomsMode = false, this.allRooms});
 
   @override
   State<StuPlanDisplay> createState() => StuPlanDisplayState();
@@ -131,7 +135,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             // ),
             IconButton.outlined(
               icon: const Icon(Icons.arrow_forward),
-              onPressed: (currentDate.isBefore(startDate.add(const Duration(days: 6)))) ? () => setState(() {
+              onPressed: (currentDate.isBefore(startDate.add(const Duration(days: 3)))) ? () => setState(() {
                 if (isOrSoonWeekend(currentDate)) {
                   currentDate = findNextMonday(currentDate);
                 } else {
@@ -150,6 +154,8 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             respectIgnored: widget.respectIgnoredSubjects,
             showInfo: widget.showInfo,
             allReplacesMode: widget.allReplacesMode,
+            freeRoomsMode: widget.freeRoomsMode,
+            allRooms: widget.allRooms,
           ),
         ),
       ],
@@ -175,7 +181,9 @@ class StuPlanDayDisplay extends StatefulWidget {
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
   final bool allReplacesMode;
-  const StuPlanDayDisplay({super.key, required this.date, required this.className, this.respectIgnored = true, this.controller, this.showInfo = true, this.allReplacesMode = false});
+  final bool freeRoomsMode;
+  final List<String>? allRooms;
+  const StuPlanDayDisplay({super.key, required this.date, required this.className, this.respectIgnored = true, this.controller, this.showInfo = true, this.allReplacesMode = false, this.freeRoomsMode = false, this.allRooms});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -183,18 +191,24 @@ class StuPlanDayDisplay extends StatefulWidget {
 
 class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   bool _loading = true;
+  /// gets selected lessons loaded when no special mode selected, if `freeRoomsMode` gets loaded all lessons for all classes, otherwise is null
   List<VPLesson>? lessons;
-  Map<String, List<VPLesson>>? classLessons;
+  /// only gets loaded with changed class lessons if `allReplacesMode`
+  Map<String, List<VPLesson>>? changedClassLessons;
+  /// gets loaded whatever mode is active
   String? lastUpdated;
+  /// gets loaded when no special mode is selected
   List<String>? additionalInfo;
-  List<VPTeacherSupervision>? supervisions;
+  /// gets loaded if the user is a teacher and no special mode is selected
+  List<VPTeacherSupervision>? supervisions; // TODO: display teacher supervisions!
+  /// is always updated when something is loaded
   Bw fromCache = Bw(null);
 
   List<Widget> _buildAllReplacesLessonList() {
     // final currentClass = Provider.of<StuPlanData>(context).selectedClassName;
     final children = <Widget>[];
-    if (classLessons == null) return [];
-    classLessons!.forEach((clName, lessons) {
+    if (changedClassLessons == null) return [];
+    changedClassLessons!.forEach((clName, lessons) {
       if (lessons.isEmpty) return;
       final cl2 = <Widget>[];
       cl2.add(Padding(
@@ -236,13 +250,100 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return children;
   }
 
+  IconData roomTypeIcon(RoomType? type) => switch (type) {
+    RoomType.art => MdiIcons.palette,
+    RoomType.compSci => MdiIcons.desktopClassic,
+    RoomType.music => MdiIcons.music,
+    RoomType.specialist => Icons.science,
+    RoomType.sports => MdiIcons.handball,
+    RoomType.technic => MdiIcons.hammerScrewdriver,
+    null => MdiIcons.school,
+  };
+
+  List<Widget> _buildFreeRoomList() {
+    final occupiedRooms = <int, List<String>>{
+      1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []
+    };
+    if (lessons == null) return [];
+    for (final lesson in lessons!) {
+      occupiedRooms[lesson.schoolHour]!.add(lesson.roomNr);
+    }
+    final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(hour, allKeplerRooms.where((room) => !occupied.contains(room)).toList()));
+    final freeRoomsWithTypePerHour = (){
+      final map = <int, Map<RoomType?, List<String>>>{};
+      freeRoomsPerHour.forEach((hour, rooms) {
+        if (!map.containsKey(hour)) map[hour] = {};
+        for (final room in rooms) {
+          final type = specialRoomMap[room];
+          if (!map[hour]!.containsKey(type)) map[hour]![type] = [];
+          map[hour]![type]!.add(room);
+        }
+      });
+      return map;
+    }();
+    final children = <Widget>[];
+    freeRoomsWithTypePerHour.forEach((hour, freeRooms) {
+      final freeRoomsList = freeRooms.entries.toList();
+      freeRoomsList.sort((e1, e2) => (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
+      children.add(TextButton(
+        style: TextButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.only(left: 8),
+          foregroundColor: Colors.grey.shade700,
+        ),
+        onPressed: () => showDialog(context: context, builder: (ctx) => generateFreeRoomsClickDialog(ctx, freeRoomsList, hour)),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(0),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 25,
+                child: Text(
+                  "$hour.",
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: freeRoomsList.map((e) => Flexible(
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          child: Icon(
+                            roomTypeIcon(e.key),
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Flexible(child: Text(e.value.join(", "))),
+                      ],
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+    });
+    return children;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(
+                color: keplerColorBlue,
+              ),
+            ),
             Text("Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.className.contains("-") ? "Klasse" : "Jahrgang"} ${widget.className})...")
           ],
         ),
@@ -257,31 +358,28 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: (widget.allReplacesMode) ?
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).colorScheme.background,
-                boxShadow: [
-                  BoxShadow(
-                    color: hasDarkTheme(context) ? Colors.black45 : Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  )
-                ],
+            SPListContainer(
+              child: ListView(
+                shrinkWrap: true,
+                children: _buildAllReplacesLessonList(),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView(
+            )
+            : (widget.freeRoomsMode) ?
+            SPListContainer(
+              child: (){
+                final list = _buildFreeRoomList();
+                return ListView.separated(
+                  itemCount: list.length,
                   shrinkWrap: true,
-                  children: _buildAllReplacesLessonList(),
-                ),
-              ),
+                  itemBuilder: (ctx, i) => list[i],
+                  separatorBuilder: (ctx, i) => const Divider(),
+                );
+              }(),
             )
             : LessonListContainer(lessons),
           ),
         ),
-        if (additionalInfo != null && widget.showInfo) Flexible(
+        if (additionalInfo != null && (additionalInfo?.isEmpty == false) && widget.showInfo) Flexible(
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Container(
@@ -339,7 +437,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       );
       return;
     }
-    if (user == UserType.pupil || user == UserType.parent) {
+    if (widget.freeRoomsMode) {
+      // free rooms ignores teacher mode
+      // yes, the teacher stuplan access allows accessing room plans
+      // but idc lol - also why give  teachers don't deserve better free room 
       final klData = await IndiwareDataManager.getKlDataForDate(
         widget.date,
         creds.vpUser!,
@@ -347,9 +448,21 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
+      if (!mounted) return;
+      lastUpdated = klData?.header.lastUpdated;
+      lessons = klData?.classes.map((e) => e.lessons).fold([], (prev, ls) => prev!..addAll(ls));
+    } else if (user == UserType.pupil || user == UserType.parent) {
+      final klData = await IndiwareDataManager.getKlDataForDate(
+        widget.date,
+        creds.vpUser!,
+        creds.vpPassword!,
+        fromCache: fromCache,
+        forceRefresh: forceRefresh,
+      );
+      if (!mounted) return;
       lastUpdated = klData?.header.lastUpdated;
       if (widget.allReplacesMode) {
-        classLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
+        changedClassLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
             cl.className,
             cl.lessons.where((le) =>
                 le.subjectChanged ||
@@ -373,6 +486,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
+      if (!mounted) return;
       lastUpdated = leData?.header.lastUpdated;
       if (widget.allReplacesMode) {
         lessons = leData?.teachers
@@ -404,9 +518,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   }
 }
 
-class LessonListContainer extends StatelessWidget {
-  final List<VPLesson>? lessons;
-  const LessonListContainer(this.lessons, {super.key});
+class SPListContainer extends StatelessWidget {
+  final bool blueBorder;
+  final Widget? child;
+  const SPListContainer({super.key, this.blueBorder = false, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -414,7 +529,7 @@ class LessonListContainer extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: (lessons != null) ? Border.all(color: hasDarkTheme(context) ? keplerColorBlue : colorWithLightness(keplerColorBlue, .4), width: 3) : null,
+        border: (blueBorder) ? Border.all(color: hasDarkTheme(context) ? keplerColorBlue : colorWithLightness(keplerColorBlue, .4), width: 3) : null,
         color: Theme.of(context).colorScheme.background,
         boxShadow: [
           BoxShadow(
@@ -425,6 +540,22 @@ class LessonListContainer extends StatelessWidget {
           )
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+        child: child,
+      ),
+    );
+  }
+}
+
+class LessonListContainer extends StatelessWidget {
+  final List<VPLesson>? lessons;
+  const LessonListContainer(this.lessons, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SPListContainer(
+      blueBorder: lessons != null,
       child: (){
         if (lessons == null) {
           return const Center(
@@ -435,7 +566,7 @@ class LessonListContainer extends StatelessWidget {
           );
         }
         return Padding(
-          padding: const EdgeInsets.all(14.0),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: ListView.separated(
             itemCount: lessons!.length,
             itemBuilder: (context, index) => LessonDisplay(lessons![index], index > 0 ? lessons!.elementAtOrNull(index - 1)?.schoolHour : null),
