@@ -153,8 +153,10 @@ class _TheDrawerState extends State<TheDrawer> {
   final _controller = ScrollController();
 
   void redraw() async {
-    // await Future.delayed(const Duration(milliseconds: expandDuration + 2));
-    await _controller.animateTo(_controller.offset + .5, duration: const Duration(milliseconds: expandDuration + 5), curve: Curves.linear);
+    await Future.delayed(const Duration(milliseconds: expandDuration + 5));
+    // await _controller.animateTo(_controller.offset + .001, duration: const Duration(milliseconds: expandDuration + 5), curve: Curves.easeInBack);
+    // _controller.jumpTo(_controller.position - .5);
+    _controller.jumpTo(_controller.offset + .001);
     // await Future.delayed(const Duration(milliseconds: 50));
     // _controller.animateTo(_controller.offset - .5, duration: const Duration(milliseconds: 1), curve: Curves.linear);
   }
