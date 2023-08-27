@@ -656,7 +656,9 @@ class LessonListContainer extends StatelessWidget {
                 subject: stdata.availableSubjects[className]!
                     .cast<VPCSubjectS?>()
                     .firstWhere(
-                        (s) => s!.subjectID == lessons![index].subjectID),
+                      (s) => s!.subjectID == lessons![index].subjectID,
+                      orElse: () => null,
+                    ),
               ),
               separatorBuilder: (context, index) => const Divider(height: 24),
             ),

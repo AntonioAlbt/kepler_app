@@ -47,6 +47,9 @@ class NavEntry extends StatefulWidget {
   State<NavEntry> createState() => _NavEntryState();
 }
 
+const expandDuration = 200;
+const reverseExpandDuration = 100;
+
 class _NavEntryState extends State<NavEntry> {
   late bool expanded = widget.parentOfSelected || widget.selected;
 
@@ -58,8 +61,8 @@ class _NavEntryState extends State<NavEntry> {
       child: AnimatedSize(
         alignment: Alignment.topCenter,
         curve: Curves.easeInOut,
-        duration: const Duration(milliseconds: 200),
-        reverseDuration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: expandDuration),
+        reverseDuration: const Duration(milliseconds: reverseExpandDuration),
         child: Column(
           children: [
             Container(
@@ -79,6 +82,7 @@ class _NavEntryState extends State<NavEntry> {
                         if (widget.onTryExpand?.call(context) == false) return;
                       }
                       setState(() => expanded = !expanded);
+                      _drawerKey.currentState?.redraw();
                     },
                     icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
                   ),
@@ -132,18 +136,29 @@ class _NavEntryState extends State<NavEntry> {
   }
 }
 
+final _drawerKey = GlobalKey<_TheDrawerState>();
+
 class TheDrawer extends StatefulWidget {
   final String selectedIndex;
   final void Function(String index) onDestinationSelected;
   final List<NavEntryData> entries;
   final List<int>? dividers;
-  const TheDrawer({super.key, required this.selectedIndex, required this.onDestinationSelected, required this.entries, this.dividers});
+  TheDrawer({required this.selectedIndex, required this.onDestinationSelected, required this.entries, this.dividers}) : super(key: _drawerKey);
 
   @override
   State<TheDrawer> createState() => _TheDrawerState();
 }
 
 class _TheDrawerState extends State<TheDrawer> {
+  final _controller = ScrollController();
+
+  void redraw() async {
+    // await Future.delayed(const Duration(milliseconds: expandDuration + 2));
+    await _controller.animateTo(_controller.offset + .5, duration: const Duration(milliseconds: expandDuration + 5), curve: Curves.linear);
+    // await Future.delayed(const Duration(milliseconds: 50));
+    // _controller.animateTo(_controller.offset - .5, duration: const Duration(milliseconds: 1), curve: Curves.linear);
+  }
+
   List<String> getParentSelectionIndices(String selectedIndex) {
     final out = <String>[];
     final split = selectedIndex.split(".").toList();
@@ -199,6 +214,7 @@ class _TheDrawerState extends State<TheDrawer> {
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(
       child: ListView(
+        controller: _controller,
         shrinkWrap: true,
         scrollDirection: Axis.vertical,
         children: [
