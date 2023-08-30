@@ -13,7 +13,7 @@ import 'package:provider/provider.dart';
 
 class StuPlanDisplay extends StatefulWidget {
   final String className;
-  final bool respectIgnoredSubjects;
+  final bool classPlanMode;
   final bool showInfo;
   final bool allReplacesMode;
   final bool freeRoomsMode;
@@ -21,7 +21,7 @@ class StuPlanDisplay extends StatefulWidget {
   const StuPlanDisplay(
       {super.key,
       required this.className,
-      this.respectIgnoredSubjects = true,
+      this.classPlanMode = false,
       this.showInfo = true,
       this.allReplacesMode = false,
       this.freeRoomsMode = false,
@@ -171,9 +171,9 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             date: currentDate,
             key: ValueKey(currentDate.hashCode +
                 widget.className.hashCode +
-                widget.respectIgnoredSubjects.hashCode),
+                widget.classPlanMode.hashCode),
             className: widget.className,
-            respectIgnored: widget.respectIgnoredSubjects,
+            classPlanMode: widget.classPlanMode,
             showInfo: widget.showInfo,
             allReplacesMode: widget.allReplacesMode,
             freeRoomsMode: widget.freeRoomsMode,
@@ -199,19 +199,21 @@ class StuPlanDayDisplayController {
 class StuPlanDayDisplay extends StatefulWidget {
   final DateTime date;
   final String className;
-  final bool respectIgnored;
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
+  final bool showSupervisions;
   final bool allReplacesMode;
   final bool freeRoomsMode;
+  final bool classPlanMode;
   final List<String>? allRooms;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
       required this.className,
-      this.respectIgnored = true,
+      this.classPlanMode = false,
       this.controller,
       this.showInfo = true,
+      this.showSupervisions = true,
       this.allReplacesMode = false,
       this.freeRoomsMode = false,
       this.allRooms});
@@ -434,10 +436,59 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   : LessonListContainer(lessons, widget.className),
           ),
         ),
+        if (supervisions != null && (supervisions?.isEmpty == false) && widget.showSupervisions)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 100),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // border: Border.all(
+                  //   color: Colors.grey.shade800
+                  // ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.background,
+                  boxShadow: [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black26
+                          : Colors.grey.withOpacity(0.24),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ListView.builder(
+                    itemCount: supervisions!.length + 1,
+                    itemBuilder: (ctx, i) {
+                      if (i == 0) return const Text("Aufsichten", style: TextStyle(decoration: TextDecoration.underline));
+                      final superv = supervisions![i - 1];
+                      return Row(
+                        children: [
+                          if (superv.cancelled) const Text("Abgesagt!", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text("${superv.beforeSchoolHour}."),
+                          ),
+                          Text(superv.location),
+                          Text(" um ${superv.time} (${superv.timeDesc})"),
+                          if (superv.infoText != null) Text(" - ${superv.infoText}"),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
         if (additionalInfo != null &&
             (additionalInfo?.isEmpty == false) &&
             widget.showInfo)
-          Flexible(
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .2),
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Container(
@@ -498,30 +549,33 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       );
       return;
     }
-    if (widget.freeRoomsMode) {
-      // free rooms ignores teacher mode
-      // yes, the teacher stuplan access allows accessing room plans
-      // but idc lol - also why give  teachers don't deserve better free room
-      final klData = await IndiwareDataManager.getKlDataForDate(
+    getKlData() => IndiwareDataManager.getKlDataForDate(
         widget.date,
         creds.vpUser!,
         creds.vpPassword!,
         fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
+    if (widget.classPlanMode) {
+      final klData = await getKlData();
+      if (!mounted) return;
+      lastUpdated = klData?.header.lastUpdated;
+      lessons = lessons
+        ?.where((element) =>
+            stdata.selectedCourseIDs.contains(element.subjectID))
+        .toList();
+    } else if (widget.freeRoomsMode) {
+      // free rooms ignores teacher mode
+      // yes, the teacher stuplan access allows accessing room plans
+      // but idc lol - also why give  teachers don't deserve better free room
+      final klData = await getKlData();
       if (!mounted) return;
       lastUpdated = klData?.header.lastUpdated;
       lessons = klData?.classes
           .map((e) => e.lessons)
           .fold([], (prev, ls) => prev!..addAll(ls));
     } else if (user == UserType.pupil || user == UserType.parent) {
-      final klData = await IndiwareDataManager.getKlDataForDate(
-        widget.date,
-        creds.vpUser!,
-        creds.vpPassword!,
-        fromCache: fromCache,
-        forceRefresh: forceRefresh,
-      );
+      final klData = await getKlData();
       if (!mounted) return;
       lastUpdated = klData?.header.lastUpdated;
       if (widget.allReplacesMode) {
@@ -540,12 +594,6 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .firstWhere((cl) => cl?.className == widget.className,
                 orElse: () => null)
             ?.lessons;
-        if (widget.respectIgnored) {
-          lessons = lessons
-              ?.where((element) =>
-                  stdata.selectedCourseIDs.contains(element.subjectID))
-              .toList();
-        }
       }
       additionalInfo = klData?.additionalInfo;
     } else if (user == UserType.teacher) {
@@ -653,8 +701,8 @@ class LessonListContainer extends StatelessWidget {
                 index > 0
                     ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                     : null,
-                subject: stdata.availableSubjects[className]!
-                    .cast<VPCSubjectS?>()
+                subject: stdata.availableSubjects[className]
+                    ?.cast<VPCSubjectS?>()
                     .firstWhere(
                       (s) => s!.subjectID == lessons![index].subjectID,
                       orElse: () => null,

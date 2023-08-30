@@ -22,7 +22,7 @@ class _HourtableTabState extends State<HourtableTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, StuPlanData>(
       builder: (context, state, stdata, _) {
-        if (shouldShowStuPlanIntro(stdata)) {
+        if (shouldShowStuPlanIntro(stdata, state.userType == UserType.teacher)) {
           return Column(
             children: [
               const Text("Es fehlen Daten. Bitte jetzt im Einführungsbildschirm ausfüllen."),
@@ -59,15 +59,15 @@ class _HourtableTabState extends State<HourtableTab> {
   }
 }
 
-bool shouldShowStuPlanIntro(StuPlanData data) =>
-    data.selectedClassName == null || data.selectedCourseIDs.isEmpty;
+bool shouldShowStuPlanIntro(StuPlanData data, bool teacher) =>
+    teacher ? (data.selectedTeacherName == null) : (data.selectedClassName == null || data.selectedCourseIDs.isEmpty);
 
 // returns true if all data is given and the stuplan page should be shown
 // and false if the intro screens have to be shown
 bool stuPlanOnTryOpenCallback(BuildContext context) {
   final state = Provider.of<AppState>(context, listen: false);
   final stdata = Provider.of<StuPlanData>(context, listen: false);
-  if (!shouldShowStuPlanIntro(stdata)) return true;
+  if (!shouldShowStuPlanIntro(stdata, state.userType == UserType.teacher)) return true;
   state.infoScreen ??= (state.userType != UserType.teacher)
       ? stuPlanPupilIntroScreens()
       : stuPlanTeacherIntroScreens();

@@ -16,6 +16,8 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     objectCreators["selected_courses"] = (_) => <String>[];
     objectCreators["available_classes"] = (_) => <String>[];
     objectCreators["selected_course_ids"] = (_) => <int>[];
+
+    objectCreators["available_teachers"] = (_) => <String>[];
   }
 
   Map<String, List<VPCSubjectS>> _jsonDataStrToMap(String json) {
@@ -42,10 +44,6 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     notifyListeners();
     save();
   }
-
-  // for better clarity
-  String? get selectedTeacherName => selectedClassName;
-  set selectedTeacherName(String? val) => selectedClassName = val;
 
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
   set selectedCourseIDs(List<int> sc) {
@@ -81,6 +79,19 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   List<VPCSubjectS>? get availableClassSubjects =>
     ((selectedClassName == null) ? null : availableSubjects[selectedClassName])
       ?.where((e) => e.teacherCode != "").toList();
+  
+  String? get selectedTeacherName => attributes["selected_teacher_name"];
+  set selectedTeacherName(String? tn) {
+    attributes["selected_teacher_name"] = tn;
+    notifyListeners();
+    save();
+  }
+  List<String> get availableTeachers => attributes["available_teachers"] ?? [];
+  set availableTeachers(List<String> at) {
+    attributes["available_teachers"] = at;
+    notifyListeners();
+    save();
+  }
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -101,6 +112,10 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
       val[element.className] = element.subjects.map((c) => VPCSubjectS(c)).toList();
       return val;
     });
+  }
+
+  void loadDataFromLeData(VPLeData data) {
+    availableTeachers = data.teachers.map((e) => e.teacherCode).toList();
   }
 }
 

@@ -275,8 +275,8 @@ List<VPLesson> _parseLessons(XmlElement pl) =>
     infoText: std.getElement("If")?.innerText ?? "",
   )).toList();
 
-List<String> _parseAdditionalInfo(XmlElement zusatzInfo) =>
-  zusatzInfo.childElements.map((e) => e.innerText).toList();
+List<String> _parseAdditionalInfo(XmlElement? zusatzInfo) =>
+  zusatzInfo?.childElements.map((e) => e.innerText).toList() ?? [];
 
 VPKlData xmlToKlData(XmlDocument klData) {
   final xml = klData.rootElement;
@@ -325,7 +325,7 @@ VPLeData xmlToLeData(XmlDocument leData) {
         infoText: e2.getElement("AuInfo")?.innerText,
       )).toList(),
     )).toList(),
-    additionalInfo: _parseAdditionalInfo(xml.getElement("ZusatzInfo")!),
+    additionalInfo: _parseAdditionalInfo(xml.getElement("ZusatzInfo")),
   );
 }
 

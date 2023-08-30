@@ -28,48 +28,61 @@ InfoScreenDisplay stuPlanPupilIntroScreens() => InfoScreenDisplay(
 );
 
 class ClassSelectScreen extends StatefulWidget {
-  const ClassSelectScreen({super.key});
+  final bool teacherMode;
+  const ClassSelectScreen({super.key, this.teacherMode = false});
 
   @override
   State<ClassSelectScreen> createState() => _ClassSelectScreenState();
 }
 
-DropdownMenuItem<String> classNameToDropdownItem(String className)
+DropdownMenuItem<String> classNameToDropdownItem(String className, bool teacher)
   => DropdownMenuItem(
       value: className,
       child: Padding(
         padding: const EdgeInsets.only(right: 32),
-        child: Text(className.contains("-") ? "Klasse $className" : "Jahrgang $className"),
+        child: Text(teacher ? className : className.contains("-") ? "Klasse $className" : "Jahrgang $className"),
       ),
     );
 
 class _ClassSelectScreenState extends State<ClassSelectScreen> {
   bool _loading = true;
+  String? _error;
 
   @override
   Widget build(BuildContext context) {
+    final userType = Provider.of<AppState>(context, listen: false).userType;
     return Selector<Preferences, bool>(
       selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
       builder: (context, sie, _) => Consumer<StuPlanData>(
         builder: (context, stdata, _) => Column(
           children: [
-            Text("Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus."),
+            if (userType == UserType.pupil) Text("Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus.")
+            else if (userType == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} die Klasse ${sie ? "Ihres" : "Deines"} Kindes für den Stundenplan aus.")
+            else if (userType == UserType.teacher) Text("Bitte ${sie ? "wählen Sie Ihr" : "wähle Dein"} Lehrerkürzel aus."),
             if (_loading) const Padding(
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(),
+            ) else if (_error != null) Column(
+              children: [
+                Text(_error!, style: const TextStyle(color: Colors.red)),
+                ElevatedButton(
+                  onPressed: _loadData,
+                  child: const Text("Erneut versuchen"),
+                ),
+              ],
             ) else DropdownButton(
-              items: stdata.availableClasses
-                  .map((e) => classNameToDropdownItem(e))
+              items: (widget.teacherMode ? stdata.availableTeachers : stdata.availableClasses)
+                  .map((e) => classNameToDropdownItem(e, widget.teacherMode))
                   .toList(),
-              value: stdata.selectedClassName ?? stdata.availableClasses.first,
-              onChanged: (value) => stdata.selectedClassName = value,
+              value: widget.teacherMode ? (stdata.selectedTeacherName ?? stdata.availableTeachers.first) : (stdata.selectedClassName ?? stdata.availableClasses.first),
+              onChanged: (value) => (widget.teacherMode) ? stdata.selectedTeacherName = value : stdata.selectedClassName = value,
               iconSize: 24,
             ),
             Padding(
               padding: const EdgeInsets.all(8),
               child: ElevatedButton(
-                onPressed: () => infoScreenState.next(),
-                child: const Text("Weiter zur Fachwahl"),
+                onPressed: () => (widget.teacherMode) ? Provider.of<AppState>(context, listen: false).clearInfoScreen() : infoScreenState.next(),
+                child: (widget.teacherMode) ? const Text("Zum Stundenplan") : const Text("Weiter zur Fachwahl"),
               ),
             ),
           ],
@@ -80,22 +93,45 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
 
   @override
   void initState() {
+    _loadData();
+    super.initState();
+  }
+
+  Future<void> _loadData() async {
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    setState(() => _loading = true);
-    getKlassenXml(creds.vpUser!, creds.vpPassword!).then(
-      (value) {
-        final spdata = Provider.of<StuPlanData>(context, listen: false);
-        spdata.loadDataFromKlData(value);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final spdata = Provider.of<StuPlanData>(context, listen: false);
+    try {
+      spdata.loadDataFromKlData(await getKlassenXml(creds.vpUser!, creds.vpPassword!));
+      spdata.selectedClassName ??= spdata.availableClasses.first;
+      setState(() => _loading = false);
+    } catch (_) {
+      setState(() {
+        _loading = false;
+        _error = "Fehler bei der Abfrage der Klassen. Ist Internet vorhanden?";
+      });
+    }
+    if (widget.teacherMode) {
+      try {
+        spdata.loadDataFromLeData(await getLehrerXml(creds.vpUser!, creds.vpPassword!));
         spdata.selectedClassName ??= spdata.availableClasses.first;
         setState(() => _loading = false);
-      },
-    );
-    super.initState();
+      } catch (_) {
+        setState(() {
+          _loading = false;
+          _error = "Fehler bei der Abfrage der Lehrer. Ist Internet vorhanden?";
+        });
+      }
+    }
   }
 }
 
 class SubjectSelectScreen extends StatefulWidget {
-  const SubjectSelectScreen({super.key});
+  final bool teacherMode;
+  const SubjectSelectScreen({super.key, this.teacherMode = false});
 
   @override
   State<SubjectSelectScreen> createState() => _SubjectSelectScreenState();
@@ -112,8 +148,9 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
       builder: (context, sie, _) => Consumer<StuPlanData>(
         builder: (context, stdata, _) => Column(
           children: [
-            if (user == UserType.pupil) Text("Bitte ${sie ? "wählen Sie" : "wähle"} alle Fächer und AGs, die ${sie ? "Sie belegen" : "Du hast bzw. belegst"}, aus."),
-            if (user == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} alle Fächer und AGs, die ${sie ? "Ihr" : "Dein"} Kind belegt."),
+            if (user == UserType.pupil) Text("Bitte ${sie ? "wählen Sie" : "wähle"} alle Fächer und AGs, die ${sie ? "Sie belegen" : "Du hast bzw. belegst"}, aus.")
+            else if (user == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} alle Fächer und AGs, die ${sie ? "Ihr" : "Dein"} Kind belegt.")
+            else if (user == UserType.teacher) Text("Bitte ${sie ? "wählen Sie" : "wähle"} alle Fächer und AGs, ${sie ? "Ihnen" : "Dir"} angezeigt werden sollen."),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -247,7 +284,15 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
 }
 
 InfoScreenDisplay stuPlanTeacherIntroScreens() => InfoScreenDisplay(
-  infoScreens: const [
-    InfoScreen(infoText: Text("is being implemented"), closeable: true,)
+  infoScreens: [
+    InfoScreen(
+      infoTitle: const Text("Lehrerauswahl"),
+      infoText: const ClassSelectScreen(teacherMode: true),
+      onTryClose: (_, context) {
+        if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+        return true;
+      },
+      closeable: true,
+    ),
   ],
 );

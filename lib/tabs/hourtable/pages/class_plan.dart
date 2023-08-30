@@ -29,7 +29,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               bottom: PreferredSize(
                 preferredSize: const Size(100, 50),
                 child: DropdownButton<String>(
-                  items: stdata.availableClasses.map((e) => classNameToDropdownItem(e)).toList(),
+                  items: stdata.availableClasses.map((e) => classNameToDropdownItem(e, false)).toList(),
                   onChanged: (val) => setState(() => selectedClass = val!),
                   value: selectedClass,
                 ),
@@ -42,7 +42,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               child: StuPlanDisplay(
                 key: classPlanDisplayKey,
                 className: selectedClass,
-                respectIgnoredSubjects: false,
+                classPlanMode: true, // TODO: fix class plans!
                 showInfo: false,
               ),
             ),
