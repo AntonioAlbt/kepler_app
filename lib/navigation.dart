@@ -15,6 +15,7 @@ import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
@@ -115,6 +116,16 @@ final destinations = [
         ],
       ),
       const NavEntryData(
+        id: StuPlanPageIDs.teacherPlan,
+        icon: Icon(MdiIcons.humanMaleBoard),
+        label: Text("Lehrerpläne"),
+        selectedIcon: Icon(MdiIcons.humanMaleBoard),
+        visibleFor: [UserType.teacher],
+        navbarActions: [
+          IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+      ),
+      const NavEntryData(
         id: StuPlanPageIDs.classPlans,
         icon: Icon(Icons.groups_outlined),
         label: Text("Klassenpläne"),
@@ -140,13 +151,6 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
         ],
-      ),
-      const NavEntryData(
-        id: StuPlanPageIDs.teacherPlan,
-        icon: Icon(Icons.groups_outlined),
-        label: Text("Lehrerpläne"),
-        selectedIcon: Icon(Icons.groups),
-        visibleFor: [UserType.teacher],
       ),
     ],
   ),

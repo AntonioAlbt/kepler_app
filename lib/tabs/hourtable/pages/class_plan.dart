@@ -42,7 +42,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               child: StuPlanDisplay(
                 key: classPlanDisplayKey,
                 className: selectedClass,
-                classPlanMode: true, // TODO: fix class plans!
+                mode: SPDisplayMode.classPlan,
                 showInfo: false,
               ),
             ),

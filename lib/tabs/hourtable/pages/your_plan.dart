@@ -27,6 +27,7 @@ class YourPlanPage extends StatelessWidget {
             child: StuPlanDisplay(
               key: yourPlanDisplayKey,
               className: stdata.selectedClassName!,
+              mode: SPDisplayMode.yourPlan,
             ),
           ),
         ),

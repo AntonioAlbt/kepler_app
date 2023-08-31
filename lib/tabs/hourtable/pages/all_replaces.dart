@@ -13,7 +13,7 @@ class AllReplacesPage extends StatelessWidget {
       child: StuPlanDisplay(
         key: allReplacesDisplayKey,
         className: "5 bis 12",
-        allReplacesMode: true,
+        mode: SPDisplayMode.allReplaces,
         showInfo: false,
       ),
     );

@@ -11,20 +11,18 @@ import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
+enum SPDisplayMode { yourPlan, classPlan, allReplaces, freeRooms, teacherPlan, roomPlan }
+
 class StuPlanDisplay extends StatefulWidget {
   final String className;
-  final bool classPlanMode;
+  final SPDisplayMode mode;
   final bool showInfo;
-  final bool allReplacesMode;
-  final bool freeRoomsMode;
   final List<String>? allRooms;
   const StuPlanDisplay(
       {super.key,
       required this.className,
-      this.classPlanMode = false,
+      required this.mode,
       this.showInfo = true,
-      this.allReplacesMode = false,
-      this.freeRoomsMode = false,
       this.allRooms});
 
   @override
@@ -171,12 +169,10 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             date: currentDate,
             key: ValueKey(currentDate.hashCode +
                 widget.className.hashCode +
-                widget.classPlanMode.hashCode),
+                widget.mode.hashCode),
             className: widget.className,
-            classPlanMode: widget.classPlanMode,
+            mode: widget.mode,
             showInfo: widget.showInfo,
-            allReplacesMode: widget.allReplacesMode,
-            freeRoomsMode: widget.freeRoomsMode,
             allRooms: widget.allRooms,
           ),
         ),
@@ -202,20 +198,16 @@ class StuPlanDayDisplay extends StatefulWidget {
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
   final bool showSupervisions;
-  final bool allReplacesMode;
-  final bool freeRoomsMode;
-  final bool classPlanMode;
+  final SPDisplayMode mode;
   final List<String>? allRooms;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
       required this.className,
-      this.classPlanMode = false,
+      required this.mode,
       this.controller,
       this.showInfo = true,
       this.showSupervisions = true,
-      this.allReplacesMode = false,
-      this.freeRoomsMode = false,
       this.allRooms});
 
   @override
@@ -233,7 +225,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   /// gets loaded when no special mode is selected
   List<String>? additionalInfo;
   /// gets loaded if the user is a teacher and no special mode is selected
-  List<VPTeacherSupervision>? supervisions; // TODO: display teacher supervisions!
+  List<VPTeacherSupervision>? supervisions;
   /// is always updated when something is loaded
   Bw fromCache = Bw(null);
 
@@ -414,14 +406,14 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           flex: 3,
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: (widget.allReplacesMode)
+            child: (widget.mode == SPDisplayMode.allReplaces)
                   ? SPListContainer(
                     child: ListView(
                       shrinkWrap: true,
                       children: _buildAllReplacesLessonList(),
                     ),
                   )
-                : (widget.freeRoomsMode)
+                : (widget.mode == SPDisplayMode.freeRooms)
                   ? SPListContainer(
                       child: () {
                         final list = _buildFreeRoomList();
@@ -556,75 +548,100 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
-    if (widget.classPlanMode) {
-      final klData = await getKlData();
-      if (!mounted) return;
-      lastUpdated = klData?.header.lastUpdated;
-      lessons = lessons
-        ?.where((element) =>
-            stdata.selectedCourseIDs.contains(element.subjectID))
-        .toList();
-    } else if (widget.freeRoomsMode) {
-      // free rooms ignores teacher mode
-      // yes, the teacher stuplan access allows accessing room plans
-      // but idc lol - also why give  teachers don't deserve better free room
-      final klData = await getKlData();
-      if (!mounted) return;
-      lastUpdated = klData?.header.lastUpdated;
-      lessons = klData?.classes
-          .map((e) => e.lessons)
-          .fold([], (prev, ls) => prev!..addAll(ls));
-    } else if (user == UserType.pupil || user == UserType.parent) {
-      final klData = await getKlData();
-      if (!mounted) return;
-      lastUpdated = klData?.header.lastUpdated;
-      if (widget.allReplacesMode) {
-        changedClassLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
-            cl.className,
-            cl.lessons
-                .where((le) =>
-                    le.subjectChanged ||
-                    le.teacherChanged ||
-                    le.roomChanged ||
-                    le.infoText != "")
-                .toList()));
-      } else {
-        lessons = klData?.classes
-            .cast<VPClass?>()
-            .firstWhere((cl) => cl?.className == widget.className,
-                orElse: () => null)
-            ?.lessons;
-      }
-      additionalInfo = klData?.additionalInfo;
-    } else if (user == UserType.teacher) {
-      final leData = await IndiwareDataManager.getLeDataForDate(
+    getLeData() => IndiwareDataManager.getLeDataForDate(
         widget.date,
         creds.vpUser!,
         creds.vpPassword!,
         fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
-      if (!mounted) return;
-      lastUpdated = leData?.header.lastUpdated;
-      if (widget.allReplacesMode) {
-        lessons = leData?.teachers
+    switch (widget.mode) {
+      case SPDisplayMode.yourPlan:
+        if (user == UserType.pupil || user == UserType.parent) {
+          final data = await getKlData();
+          if (!mounted) return;
+          lessons = data?.classes
+              .cast<VPClass?>()
+              .firstWhere((cl) => cl?.className == widget.className,
+                  orElse: () => null)
+              ?.lessons
+              .where((element) => stdata.selectedCourseIDs.contains(element.subjectID))
+              .toList();
+        } else if (user == UserType.teacher) {
+          final data = await getLeData();
+          if (!mounted) return;
+          final teacher = data?.teachers.cast<VPTeacher?>().firstWhere(
+              (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
+              orElse: () => null);
+          lessons = teacher?.lessons;
+          supervisions = teacher?.supervisions;
+        }
+        break;
+      case SPDisplayMode.allReplaces:
+        if (user == UserType.pupil || user == UserType.parent) {
+          final klData = await getKlData();
+          if (!mounted) return;
+          lastUpdated = klData?.header.lastUpdated;
+          changedClassLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
+              cl.className,
+              cl.lessons
+                  .where((le) =>
+                      le.subjectChanged ||
+                      le.teacherChanged ||
+                      le.roomChanged ||
+                      le.infoText != "")
+                  .toList()));
+          additionalInfo = klData?.additionalInfo;
+        } else if (user == UserType.teacher) {
+          final leData = await getLeData();
+          if (!mounted) return;
+          lastUpdated = leData?.header.lastUpdated;
+          changedClassLessons = leData?.teachers.asMap().map((_, cl) => MapEntry(
+              cl.teacherCode,
+              cl.lessons
+                  .where((le) =>
+                      le.subjectChanged ||
+                      le.teacherChanged ||
+                      le.roomChanged ||
+                      le.infoText != "")
+                  .toList()));
+          additionalInfo = leData?.additionalInfo;
+        }
+        break;
+      case SPDisplayMode.classPlan:
+        final klData = await getKlData();
+        if (!mounted) return;
+        lastUpdated = klData?.header.lastUpdated;
+        lessons = klData?.classes
+            .cast<VPClass?>()
+            .firstWhere((cl) => cl?.className == widget.className,
+                orElse: () => null)
+            ?.lessons;
+        additionalInfo = klData?.additionalInfo;
+        break;
+      case SPDisplayMode.freeRooms:
+        // free rooms ignores teacher mode
+        // yes, the teacher stuplan access allows accessing room plans
+        // but idc lol - also teachers don't deserve better free room
+        final klData = await getKlData();
+        if (!mounted) return;
+        lastUpdated = klData?.header.lastUpdated;
+        lessons = klData?.classes
             .map((e) => e.lessons)
-            .fold<List<VPLesson>>(
-                [], (previousValue, element) => previousValue..addAll(element))
-            .where((element) =>
-                element.roomChanged ||
-                element.teachingClassChanged ||
-                element.subjectChanged ||
-                element.infoText != "")
-            .toList();
-      } else {
-        final teacher = leData?.teachers.cast<VPTeacher?>().firstWhere(
-            (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
-            orElse: () => null);
-        lessons = teacher?.lessons;
-        supervisions = teacher?.supervisions;
-      }
-      additionalInfo = leData?.additionalInfo;
+            .fold([], (prev, ls) => prev!..addAll(ls));
+        break;
+      case SPDisplayMode.roomPlan:
+        break;
+      case SPDisplayMode.teacherPlan:
+        final leData = await getLeData();
+        if (!mounted) return;
+        lastUpdated = leData?.header.lastUpdated;
+        lessons = leData?.teachers.cast<VPTeacher?>()
+          .firstWhere((le) => le?.teacherCode == widget.className, orElse: () => null)
+          ?.lessons;
+        additionalInfo = leData?.additionalInfo;
+        break;
+      default:
     }
     lessons?.sort((l1, l2) {
       final t1 = l1.schoolHour.compareTo(l2.schoolHour);
@@ -687,6 +704,14 @@ class LessonListContainer extends StatelessWidget {
             return const Center(
               child: Text(
                 "Keine Daten verfügbar.",
+                style: TextStyle(fontSize: 18),
+              ),
+            );
+          }
+          if (lessons!.isEmpty) {
+            return const Center(
+              child: Text(
+                "Heute kein Unterricht.",
                 style: TextStyle(fontSize: 18),
               ),
             );
@@ -773,28 +798,15 @@ class LessonDisplay extends StatelessWidget {
                     ),
                   ),
                 const Spacer(),
-                Text(lesson.roomNr),
+                Text(
+                  lesson.roomNr,
+                  style: TextStyle(
+                    color: (lesson.roomChanged) ? Colors.red : null,
+                    fontWeight: (lesson.roomChanged) ? FontWeight.bold : FontWeight.w500,
+                  ),
+                ),
               ],
             ),
-            // if (lesson.subjectChanged || lesson.teacherChanged) Consumer<StuPlanData>(
-            //   builder: (context, stdata, child) {
-            //     final originalSubj = stdata.availableSubjects[className]!.cast<VPCSubjectS?>().firstWhere((s) => s!.subjectID == lesson.subjectID);
-            //     if (originalSubj == null || lesson.infoText.toLowerCase().startsWith(originalSubj.subjectCode.toLowerCase())) return const SizedBox.shrink();
-            //     return DefaultTextStyle.merge(
-            //       style: const TextStyle(
-            //         fontSize: 15,
-            //       ),
-            //       child: Row(
-            //         children: [
-            //           const SizedBox(width: 25),
-            //           const Text("statt"),
-            //           if (lesson.subjectChanged) Text(" ${originalSubj.subjectCode}"),
-            //           if (lesson.teacherChanged) Text(" bei ${originalSubj.teacherCode}"),
-            //         ],
-            //       ),
-            //     );
-            //   },
-            // ),
             if (lesson.infoText != "")
               Row(
                 children: [
