@@ -12,7 +12,7 @@ class AllReplacesPage extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: StuPlanDisplay(
         key: allReplacesDisplayKey,
-        className: "5 bis 12",
+        selected: "5 bis 12",
         mode: SPDisplayMode.allReplaces,
         showInfo: false,
       ),

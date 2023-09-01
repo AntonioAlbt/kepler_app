@@ -163,6 +163,11 @@ class IndiwareDataManager {
     if (xml == null) return null;
     return xmlToLeData(XmlDocument.parse(xml));
   }
+  static Future<VPKlData?> getCachedKlassenXmlData() async {
+    final xml = await readFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml");
+    if (xml == null) return null;
+    return xmlToKlData(XmlDocument.parse(xml));
+  }
 
   static Future<void> _setCachedKlDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml", data.toXmlString());
@@ -170,12 +175,15 @@ class IndiwareDataManager {
   static Future<void> _setCachedLeDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml", data.toXmlString());
   }
+  static Future<void> _setKlassenXmlData(XmlDocument data) async {
+    await writeFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml", data.toXmlString());
+  }
 
   static Future<void> clearCachedData() async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     for (var file in (await dir.list().toList())) {
       final name = file.path.split("/").last;
-      if (name.endsWith(".xml") && name.startsWith("20")) {
+      if (name.endsWith(".xml")) {
         // this will fail when we're in year 21xx
         // but that's a problem for future robot me
         await file.delete();
@@ -208,6 +216,19 @@ class IndiwareDataManager {
     if (real == null) return null;
     await _setCachedLeDataForDate(date, real);
     return xmlToLeData(real);
+  }
+  static Future<VPKlData?> getKlassenXmlData(
+      String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
+    if (!forceRefresh) {
+      final cached = await getCachedKlassenXmlData();
+      fromCache?.val = true;
+      if (cached != null) return cached;
+    }
+    final real = await getKlassenXML(username, password);
+    fromCache?.val = false;
+    if (real == null) return null;
+    await _setKlassenXmlData(real);
+    return xmlToKlData(real);
   }
 
   // now following: setup methods

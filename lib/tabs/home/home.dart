@@ -6,6 +6,7 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/home/news_home.dart';
+import 'package:kepler_app/tabs/home/stuplan_home.dart';
 import 'package:provider/provider.dart';
 
 class HomepageTab extends StatefulWidget {
@@ -27,6 +28,10 @@ class _HomepageTabState extends State<HomepageTab> {
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: HomeNewsWidget(),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: HomeStuPlanWidget(),
               ),
               if (kDebugMode) Consumer<AppState>(
                 builder: (context, value, child) => ElevatedButton(

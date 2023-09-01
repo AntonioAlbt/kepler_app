@@ -15,6 +15,7 @@ import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/pages/room_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax.dart';
@@ -43,6 +44,7 @@ class StuPlanPageIDs {
   static const all = "all";
   static const freeRooms = "freeRooms";
   static const teacherPlan = "teacherPlan";
+  static const roomPlans = "roomPlan";
 }
 
 class LernSaxPageIDs {
@@ -150,6 +152,15 @@ final destinations = [
         selectedIcon: Icon(Icons.door_back_door),
         navbarActions: [
           IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+      ),
+      const NavEntryData(
+        id: StuPlanPageIDs.roomPlans,
+        icon: Icon(MdiIcons.doorClosed),
+        label: Text("Raumpläne"),
+        selectedIcon: Icon(MdiIcons.doorOpen),
+        navbarActions: [
+          IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
     ],

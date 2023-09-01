@@ -4,11 +4,11 @@ import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 /// all of this is subject to change because of building "updates"
 final allKeplerRooms = [
   "K08", "K10",
-  ...rooms("0", 4, 13, [6, 7]), "TH",
+  ...rooms("0", 4, 13, [6, 7]),
   ...rooms("1", 8, 16, [12, 14]),
   ...rooms("2", 1, 16, [6, 7, 12, 14]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
-  "Jb1", "Jb2",
+  "TH", "Jb1", "Jb2",
 ];
 enum RoomType {
   compSci, technic, sports, specialist, music, art;
@@ -63,7 +63,7 @@ class FreeRoomsPage extends StatelessWidget {
       child: StuPlanDisplay(
         key: freeRoomDisplayKey,
         mode: SPDisplayMode.freeRooms,
-        className: '',
+        selected: '',
       ),
     );
   }

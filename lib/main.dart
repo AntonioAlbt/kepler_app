@@ -217,7 +217,7 @@ class _KeplerAppState extends State<KeplerApp> {
                   scrolledUnderElevation: 5,
                   elevation: 5,
                   // this is so the two appbars in that page seem like theyre one
-                  shadowColor: (state.selectedNavPageIDs.last == StuPlanPageIDs.classPlans) ? const Color(0x0529323b) : null,
+                  shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
                   actions: currentlySelectedNavEntry(context).navbarActions,
                 ),
                 drawer: TheDrawer(

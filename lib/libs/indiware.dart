@@ -222,14 +222,14 @@ Future<XmlDocument?> _fetch(Uri url, String user, String password) async {
   return xml;
 }
 
-Future<XmlDocument> _getKlassenXML(String user, String password) async {
+Future<XmlDocument?> getKlassenXML(String user, String password) async {
   final xml = await _fetch(sUrlMKlXmlUrl, user, password);
-  return xml!;
+  return xml;
 }
 
-Future<XmlDocument> _getLehrerXML(String user, String password) async {
+Future<XmlDocument?> getLehrerXML(String user, String password) async {
   final xml = await _fetch(lUrlMLeXmlUrl, user, password);
-  return xml!;
+  return xml;
 }
 
 final indiwareFilenameFormat = DateFormat("yyyyMMdd");
@@ -331,8 +331,11 @@ VPLeData xmlToLeData(XmlDocument leData) {
 
 // multiple elements in the code above were inspired by or copied from ChatGPT: https://chat.openai.com/share/fbf40d1c-5c5f-4b9f-98fd-bf73e7273f6f
 
-Future<VPKlData> getKlassenXml(String username, String password) async =>
-  xmlToKlData(await _getKlassenXML(username, password));
+Future<VPKlData?> getKlassenXmlKlData(String username, String password) async {
+  final xml = await getKlassenXML(username, password);
+  if (xml == null) return null;
+  return xmlToKlData(xml);
+}
 
 Future<VPKlData?> getStuPlanDataForDate(String username, String password, DateTime date) async {
   final xml = await getKlXMLForDate(username, password, date);
@@ -340,8 +343,11 @@ Future<VPKlData?> getStuPlanDataForDate(String username, String password, DateTi
   return xmlToKlData(xml);
 }
 
-Future<VPLeData> getLehrerXml(String username, String password) async =>
-  xmlToLeData(await _getLehrerXML(username, password));
+Future<VPLeData?> getLehrerXmlLeData(String username, String password) async {
+  final xml = await getLehrerXML(username, password);
+  if (xml == null) return null;
+  return xmlToLeData(xml);
+}
 
 Future<VPLeData?> getLehPlanDataForDate(String username, String password, DateTime date) async {
   final xml = await getLeXMLForDate(username, password, date);

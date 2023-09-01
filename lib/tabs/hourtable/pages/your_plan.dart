@@ -26,7 +26,7 @@ class YourPlanPage extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: StuPlanDisplay(
               key: yourPlanDisplayKey,
-              className: stdata.selectedClassName!,
+              selected: stdata.selectedClassName!,
               mode: SPDisplayMode.yourPlan,
             ),
           ),

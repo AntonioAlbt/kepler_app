@@ -41,7 +41,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               padding: const EdgeInsets.all(8.0),
               child: StuPlanDisplay(
                 key: classPlanDisplayKey,
-                className: selectedClass,
+                selected: selectedClass,
                 mode: SPDisplayMode.classPlan,
                 showInfo: false,
               ),

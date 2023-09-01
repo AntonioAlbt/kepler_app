@@ -39,7 +39,7 @@ class _TeacherPlanPageState extends State<TeacherPlanPage> {
               padding: const EdgeInsets.all(8.0),
               child: StuPlanDisplay(
                 key: teacherPlanDisplayKey,
-                className: selectedTeacher,
+                selected: selectedTeacher,
                 mode: SPDisplayMode.teacherPlan,
                 showInfo: false,
               ),

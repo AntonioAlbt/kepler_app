@@ -6,6 +6,7 @@ import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/pages/room_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,7 @@ class _HourtableTabState extends State<HourtableTab> {
             return const Text("Halt Stopp! Nur für Lehrer.");
           }
         }
+        if (navPage == StuPlanPageIDs.roomPlans) return const RoomPlanPage();
         return const Text("Unbekannter Plan gefordert. Bitte schließen und erneut probieren.");
       },
     );

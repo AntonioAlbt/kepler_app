@@ -81,7 +81,16 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
             Padding(
               padding: const EdgeInsets.all(8),
               child: ElevatedButton(
-                onPressed: () => (widget.teacherMode) ? Provider.of<AppState>(context, listen: false).clearInfoScreen() : infoScreenState.next(),
+                onPressed: () {
+                  if (widget.teacherMode) {
+                    final state = Provider.of<AppState>(context, listen: false);
+                    state.clearInfoScreen();
+                    if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+                    state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+                  } else {
+                    infoScreenState.next();
+                  }
+                },
                 child: (widget.teacherMode) ? const Text("Zum Stundenplan") : const Text("Weiter zur Fachwahl"),
               ),
             ),
@@ -105,7 +114,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     });
     final spdata = Provider.of<StuPlanData>(context, listen: false);
     try {
-      spdata.loadDataFromKlData(await getKlassenXml(creds.vpUser!, creds.vpPassword!));
+      spdata.loadDataFromKlData((await getKlassenXmlKlData(creds.vpUser!, creds.vpPassword!))!);
       spdata.selectedClassName ??= spdata.availableClasses.first;
       setState(() => _loading = false);
     } catch (_) {
@@ -116,7 +125,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     }
     if (widget.teacherMode) {
       try {
-        spdata.loadDataFromLeData(await getLehrerXml(creds.vpUser!, creds.vpPassword!));
+        spdata.loadDataFromLeData((await getLehrerXmlLeData(creds.vpUser!, creds.vpPassword!))!);
         spdata.selectedClassName ??= spdata.availableClasses.first;
         setState(() => _loading = false);
       } catch (_) {

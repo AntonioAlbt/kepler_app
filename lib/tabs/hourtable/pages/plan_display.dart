@@ -14,13 +14,14 @@ import 'package:provider/provider.dart';
 enum SPDisplayMode { yourPlan, classPlan, allReplaces, freeRooms, teacherPlan, roomPlan }
 
 class StuPlanDisplay extends StatefulWidget {
-  final String className;
+  /// whatever could be selected, like the class or teacher or room
+  final String selected;
   final SPDisplayMode mode;
   final bool showInfo;
   final List<String>? allRooms;
   const StuPlanDisplay(
       {super.key,
-      required this.className,
+      required this.selected,
       required this.mode,
       this.showInfo = true,
       this.allRooms});
@@ -168,9 +169,9 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             controller: _ctr,
             date: currentDate,
             key: ValueKey(currentDate.hashCode +
-                widget.className.hashCode +
+                widget.selected.hashCode +
                 widget.mode.hashCode),
-            className: widget.className,
+            selected: widget.selected,
             mode: widget.mode,
             showInfo: widget.showInfo,
             allRooms: widget.allRooms,
@@ -194,7 +195,7 @@ class StuPlanDayDisplayController {
 
 class StuPlanDayDisplay extends StatefulWidget {
   final DateTime date;
-  final String className;
+  final String selected;
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
   final bool showSupervisions;
@@ -203,7 +204,7 @@ class StuPlanDayDisplay extends StatefulWidget {
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
-      required this.className,
+      required this.selected,
       required this.mode,
       this.controller,
       this.showInfo = true,
@@ -391,7 +392,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ),
             ),
             Text(
-                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.className.contains("-") ? "Klasse" : "Jahrgang"} ${widget.className})..."),
+                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.selected.contains("-") ? "Klasse" : "Jahrgang"} ${widget.selected})..."),
           ],
         ),
       );
@@ -425,7 +426,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         );
                       }(),
                     )
-                  : LessonListContainer(lessons, widget.className),
+                  : LessonListContainer(lessons, widget.selected),
           ),
         ),
         if (supervisions != null && (supervisions?.isEmpty == false) && widget.showSupervisions)
@@ -527,6 +528,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   }
 
   Future<void> _loadData({required bool forceRefresh}) async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final state = Provider.of<AppState>(context, listen: false);
     final user = state.userType;
@@ -560,9 +562,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         if (user == UserType.pupil || user == UserType.parent) {
           final data = await getKlData();
           if (!mounted) return;
+          lastUpdated = data?.header.lastUpdated;
           lessons = data?.classes
               .cast<VPClass?>()
-              .firstWhere((cl) => cl?.className == widget.className,
+              .firstWhere((cl) => cl?.className == widget.selected,
                   orElse: () => null)
               ?.lessons
               .where((element) => stdata.selectedCourseIDs.contains(element.subjectID))
@@ -570,6 +573,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         } else if (user == UserType.teacher) {
           final data = await getLeData();
           if (!mounted) return;
+          lastUpdated = data?.header.lastUpdated;
           final teacher = data?.teachers.cast<VPTeacher?>().firstWhere(
               (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
               orElse: () => null);
@@ -614,7 +618,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         lastUpdated = klData?.header.lastUpdated;
         lessons = klData?.classes
             .cast<VPClass?>()
-            .firstWhere((cl) => cl?.className == widget.className,
+            .firstWhere((cl) => cl?.className == widget.selected,
                 orElse: () => null)
             ?.lessons;
         additionalInfo = klData?.additionalInfo;
@@ -631,13 +635,20 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .fold([], (prev, ls) => prev!..addAll(ls));
         break;
       case SPDisplayMode.roomPlan:
+        final klData = await getKlData();
+        if (!mounted) return;
+        lastUpdated = klData?.header.lastUpdated;
+        lessons = klData?.classes
+            .map((e) => e.lessons)
+            .fold<List<VPLesson>>([], (prev, ls) => prev..addAll(ls))
+            .where((l) => l.roomNr == widget.selected).toList();
         break;
       case SPDisplayMode.teacherPlan:
         final leData = await getLeData();
         if (!mounted) return;
         lastUpdated = leData?.header.lastUpdated;
         lessons = leData?.teachers.cast<VPTeacher?>()
-          .firstWhere((le) => le?.teacherCode == widget.className, orElse: () => null)
+          .firstWhere((le) => le?.teacherCode == widget.selected, orElse: () => null)
           ?.lessons;
         additionalInfo = leData?.additionalInfo;
         break;
@@ -655,7 +666,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
 class SPListContainer extends StatelessWidget {
   final bool blueBorder;
   final Widget? child;
-  const SPListContainer({super.key, this.blueBorder = false, this.child});
+  final EdgeInsets? padding;
+  final bool shadow;
+  final Color? color;
+  const SPListContainer({super.key, this.blueBorder = false, this.padding, this.shadow = true, this.child, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -670,8 +684,8 @@ class SPListContainer extends StatelessWidget {
                     : colorWithLightness(keplerColorBlue, .4),
                 width: 3)
             : null,
-        color: Theme.of(context).colorScheme.background,
-        boxShadow: [
+        color: color ?? Theme.of(context).colorScheme.background,
+        boxShadow: (shadow) ? [
           BoxShadow(
             color: hasDarkTheme(context)
                 ? Colors.black45
@@ -680,10 +694,10 @@ class SPListContainer extends StatelessWidget {
             blurRadius: 7,
             offset: const Offset(0, 3),
           )
-        ],
+        ] : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+        padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
         child: child,
       ),
     );
