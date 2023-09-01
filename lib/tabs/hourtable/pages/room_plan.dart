@@ -31,7 +31,10 @@ class RoomPlanPageState extends State<RoomPlanPage> {
                 preferredSize: const Size(100, 50),
                 child: DropdownButton<String>(
                   items: allKeplerRooms.map((e) => classNameToDropdownItem(e, true)).toList(),
-                  onChanged: (val) => setState(() => selectedRoom = val!),
+                  onChanged: (val) {
+                    setState(() => selectedRoom = val!);
+                    Provider.of<InternalState>(context, listen: false).lastSelectedRoomPlan = val!;
+                  },
                   value: selectedRoom,
                 ),
               ),
@@ -65,7 +68,8 @@ class RoomPlanPageState extends State<RoomPlanPage> {
   void initState() {
     // the StuPlanData should have data here because the user already went through
     // the class and subject select screen, which loads it
-    selectedRoom = allKeplerRooms.first;
+    final lastSelected = Provider.of<InternalState>(context, listen: false).lastSelectedRoomPlan;
+    selectedRoom = (allKeplerRooms.contains(lastSelected) && lastSelected != null) ? lastSelected : allKeplerRooms.first;
     super.initState();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
@@ -28,7 +29,10 @@ class _TeacherPlanPageState extends State<TeacherPlanPage> {
                 preferredSize: const Size(100, 50),
                 child: DropdownButton<String>(
                   items: stdata.availableTeachers.map((e) => classNameToDropdownItem(e, true)).toList(),
-                  onChanged: (val) => setState(() => selectedTeacher = val!),
+                  onChanged: (val) {
+                    setState(() => selectedTeacher = val!);
+                    Provider.of<InternalState>(context, listen: false).lastSelectedTeacherPlan = val!;
+                  },
                   value: selectedTeacher,
                 ),
               ),
@@ -54,7 +58,9 @@ class _TeacherPlanPageState extends State<TeacherPlanPage> {
   void initState() {
     // the StuPlanData should have data here because the user already went through
     // the class and subject select screen, which loads it
-    selectedTeacher = Provider.of<StuPlanData>(context, listen: false).availableTeachers.first;
+    final available = Provider.of<StuPlanData>(context, listen: false).availableTeachers;
+    final lastSelected = Provider.of<InternalState>(context, listen: false).lastSelectedTeacherPlan;
+    selectedTeacher = (available.contains(lastSelected) && lastSelected != null) ? lastSelected : available.first;
     super.initState();
   }
 }

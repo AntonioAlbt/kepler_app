@@ -164,7 +164,13 @@ class IndiwareDataManager {
     return xmlToLeData(XmlDocument.parse(xml));
   }
   static Future<VPKlData?> getCachedKlassenXmlData() async {
-    final xml = await readFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml");
+    final f = File("${await appDataDirPath}$stuplanpath/Klassen-kl.xml");
+    // force-refresh Klassen.xml every 30 days
+    if ((await f.lastModified()).difference(DateTime.now()).inDays > 30) {
+      await f.delete();
+      return null;
+    }
+    final xml = await readFile(f.path);
     if (xml == null) return null;
     return xmlToKlData(XmlDocument.parse(xml));
   }

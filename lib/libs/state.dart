@@ -154,6 +154,25 @@ class InternalState extends SerializableObject with ChangeNotifier {
     save();
   }
 
+  String? get lastSelectedClassPlan => attributes["lscp"];
+  set lastSelectedClassPlan(String? val) {
+    attributes["lscp"] = val;
+    notifyListeners();
+    save();
+  }
+  String? get lastSelectedRoomPlan => attributes["lsrp"];
+  set lastSelectedRoomPlan(String? val) {
+    attributes["lsrp"] = val;
+    notifyListeners();
+    save();
+  }
+  String? get lastSelectedTeacherPlan => attributes["lstp"];
+  set lastSelectedTeacherPlan(String? val) {
+    attributes["lstp"] = val;
+    notifyListeners();
+    save();
+  }
+
   bool loaded = false;
 
   save() async {
