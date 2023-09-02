@@ -1,4 +1,5 @@
 import "dart:convert";
+import "dart:developer";
 import "dart:io";
 
 import "package:device_info_plus/device_info_plus.dart";
@@ -95,7 +96,7 @@ Future<dynamic> api(List<Map<String, dynamic>> data) async => await http
       headers: {"content-type": "application/json"},
       body: jsonEncode(data),
     )
-    .then((res) => jsonDecode(res.body));
+    .then((res) => jsonDecode(utf8.decode(res.bodyBytes)));
 
 const keplerBaseUser = "info@jkgc.lernsax.de";
 
@@ -194,7 +195,7 @@ Future<bool?> confirmLernSaxCredentials(String login, String token) async {
   }
 }
 
-Future<String?> getUserLink(String login, String token) async {
+Future<String?> getSingleUseLoginLink(String login, String token) async {
   try {
     final res = await api([
       await useSession(login, token),
@@ -211,6 +212,69 @@ Future<String?> getUserLink(String login, String token) async {
     final url = res[0]["result"]["url"];
     return url;
   } catch (e) {
+    return null;
+  }
+}
+
+class LSNotification {
+  final String id;
+  final DateTime date;
+  final String messageTypeId;
+  final String message;
+  final String? data;
+  final String fromUserLogin; // may be empty
+  final String fromUserName; // may be empty
+  final String fromGroupLogin; // may be empty
+  final String fromGroupName; // may be empty
+  final bool unread;
+
+  const LSNotification({required this.id, required this.date, required this.messageTypeId, required this.message, this.data, required this.fromUserLogin, required this.fromUserName, required this.fromGroupLogin, required this.fromGroupName, required this.unread});
+
+  @override
+  String toString() {
+    return 'LSNotification('
+        'id: $id, '
+        'date: $date, '
+        'messageTypeId: $messageTypeId, '
+        'message: $message, '
+        'data: $data, '
+        'fromUserLogin: $fromUserLogin, '
+        'fromUserName: $fromUserName, '
+        'fromGroupLogin: $fromGroupLogin, '
+        'fromGroupName: $fromGroupName, '
+        'unread: $unread'
+        ')';
+  }
+}
+
+Future<List<LSNotification>?> getNotifications(String login, String token) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      call(
+        method: "set_focus",
+        params: {"object": "messages"},
+      ),
+      call(
+        id: 1,
+        method: "get_messages",
+      ),
+    ]);
+    // if (kDebugMode) print(res);
+    final messages = (res[0]["result"]["messages"] as List<dynamic>).cast<Map<String, dynamic>>();
+    return messages.map((data) => LSNotification(
+      id: data["id"],
+      date: DateTime.fromMillisecondsSinceEpoch(int.parse(data["date"])),
+      messageTypeId: data["message"],
+      message: data["message_hr"],
+      fromUserLogin: data["from_user"]["login"],
+      fromUserName: data["from_user"]["name_hr"],
+      fromGroupLogin: data["from_group"]["login"],
+      fromGroupName: data["from_group"]["name_hr"],
+      unread: data["unread"] == 1,
+    )).toList();
+  } catch (e) {
+    if (kDebugMode) log("", error: e);
     return null;
   }
 }

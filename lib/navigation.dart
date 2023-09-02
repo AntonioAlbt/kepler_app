@@ -18,7 +18,7 @@ import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/room_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
-import 'package:kepler_app/tabs/lernsax.dart';
+import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
@@ -171,6 +171,17 @@ final destinations = [
     label: const Text("LernSax"),
     selectedIcon: const Icon(Icons.laptop),
     children: [
+      const NavEntryData(
+        id: LernSaxPageIDs.notifications,
+        icon: Icon(Icons.notifications_none),
+        selectedIcon: Icon(Icons.notifications),
+        label: Text("Benachrichtigungen"),
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.tasks,
+        icon: Icon(Icons.task_alt),
+        label: Text("Aufgaben"),
+      ),
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
         icon: const Icon(MdiIcons.web),
@@ -179,9 +190,9 @@ final destinations = [
         onTryOpen: (context) {
           final creds = Provider.of<CredentialStore>(context, listen: false);
           if (creds.lernSaxToken == null) return false;
-          getUserLink(creds.lernSaxLogin, creds.lernSaxToken!).then((url) {
+          getSingleUseLoginLink(creds.lernSaxLogin, creds.lernSaxToken!).then((url) {
             if (url == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
                 const SnackBar(
                   content: Text("Fehler beim Erstellen des Links."),
                 ),
