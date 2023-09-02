@@ -1,0 +1,4 @@
+storePassword=<storepassword>
+keyPassword=<keypassword>
+keyAlias=<keyalias>
+storeFile=<filepath>

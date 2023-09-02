@@ -38,7 +38,21 @@ jobs:
           if [ -n "$SENTRY_DSN" ]; then sed -i "s|false|true|g" lib/libs/sentry_dsn.dart; fi
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        name: Setup Sentry with secrets
+        name: Setup Sentry
+      - run: |
+          cp android/app/signing/key.properties.example android/app/signing/key.properties
+          sed -i "s|<storepassword>|$STPW|g" android/app/signing/key.properties
+          sed -i "s|<keypassword>|$KPW|g" android/app/signing/key.properties
+          sed -i "s|<keyalias>|$KA|g" android/app/signing/key.properties
+          sed -i "s|<filepath>|$FP|g" android/app/signing/key.properties
+          printf "$STDATA" | base64 -d > android/app/$FP
+        env:
+          STDATA: ${{ secrets.KEYSTORE_CONTENT_BASE64 }}
+          STPW: ${{ secrets.KEYSTORE_PASSWORD }}
+          KPW: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          KA: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          FP: "signing/keystore.jks"
+        name: Setup APK signing
       - run: flutter analyze
       - run: flutter build apk --debug
       - run: flutter build apk --release
