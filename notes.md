@@ -27,6 +27,9 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - wird von allen Widgets unterstützt
   - im News-Browser umsetzen?
 - Kepler-Farbpalette sollte mehr verwendet werden
+- Design ist nicht allzu interessant, dafür sehr modern:
+  - mehr Farben verwenden! -> "unterhaltsamer" anzuschauen
+  - weniger runde Kanden? andere Formen?
 
 ### Navigationssystem
 
@@ -40,6 +43,8 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 - Lösung:
   - also eigenes System dafür entwickelt, erlaubt komplette Bearbeitbarkeit (siehe [`drawer.dart`](https://github.com/Gamer153/kepler_app/blob/main/lib/drawer.dart))
   - Design ähnlich wie Mat3 NavDrawers, aber kompakter und mit Möglichkeit für `children`
+  - erlaubt jetzt auch verschiedene Aktionen in der Navigationsleiste pro Page
+  - auch Überprüfungsfunktionen, ob Öffnen/Aufklappen möglich ist -> für StuPlan Erst-Datenerfassung
 
 ### Essensplan
 
@@ -66,17 +71,48 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 
 ### Kepler-Stundenplan
 
+- Datenabfrage:
+  - eigene Schnittstelle plus Modelle für Indiware-API geschrieben: [`indiware.dart`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/libs/indiware.dart)
+  - zusätzlich Management von Caching für alle Daten -> `IndiwareDataManager` aus [`ht_data.dart`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart)
+  - alles wird gecached, Daten älter als 3 Tage werden beim Start gelöscht
+  - `Klassen.xml` (Plan-Datei, die nur für allgemeine Infos genutzt wird) wird nach 30 Tagen erneuert ([`Änderungszeitpunkt vor mehr als 30 Tagen`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart#L169))
 - Anmeldedaten werden bei Anmeldung übergeben
-- Schülerplan:
-  - Klassen-/Kursauswahl, die auf Hauptseite anzuzeigen sind
-  - Freie Zimmer, aber diesmal in gut (shots fired to StuPlanLive xD)
-  - Klassenpläne, alle Vertretungen
-  - vielleicht noch Daten zu abwesenden Lehrern?
-- Lehrerplan:
-  - keine Klassen-/Kurswahl, da jeder Lehrer eigenen Plan hat
-  - auch Zugriff auf freie Zimmer
-  - zusätzlich zu Klassenplänen noch Lehrerpläne
-- wie Navigation zwischen Tagen?
+  - aktuell zweimal anmelden nötig, sollen stattdessen direkt von Lernsax abgefragt werden
+- Abfrage von Klasse/Lehrer und Kursen (bei Klasse):
+  - je nach Benutzertyp (Lehrer oder Schüler/Eltern)
+  - beim ersten Öffnen (Nichtvorhandensein von ausgewählten Daten)
+  - InfoScreen mit Abfrage von Klasse/Lehrer
+  - bei Schüler/Eltern: Abfrage der Kurse der Klasse -> zur Filterung der Anzeige
+- "Dein/Ihr Stundenplan":
+  - auf Basis der ausgewählten Daten Anzeige der Unterrichtsstunden
+  - nicht anpassbar -> zeigt immer Daten von `plan.kepler-chemnitz.de` an (wie alle Datenansichten)
+- Lehrerpläne (nur für Lehrer angezeigt):
+  - verwendet Indiware-Daten für Lehrer
+  - wie Klassenpläne, nur für alle Lehrer
+- Klassenpläne:
+  - wie eigener Stundenplan, nur für beliebige Klasse (ignoriert ausgewählte Kurse)
+  - speichert zuletzt ausgewählte Klasse (auch für Lehrer- und Raumpläne)
+- Alle Vertretungen:
+  - ähnlich wie Anzeige an TV in Schule
+  - zeigt nur `VPLesson`s mit Änderungen oder Infos
+- Freie Räume:
+  - durch Fokussierung auf JKG gut umsetzbar -> Liste von Raum-Codes hardcoded (muss halt nach dem Gebäudeupdate aktualisiert werden)
+  - erlaubt bessere Bestimmung der freien Räume
+  - erlaubt Kategorisierung und schönere + übersichtlichere Anzeige der Räume für den Benutzer (später konfigurierbar)
+- Raumpläne:
+  - aus Raumliste und Unterrichtsdaten abgeleitet
+  - dadurch nicht 100 % zuverlässig
+  - gerade für Räume mit seperater Liste für Verwendung (z.B. Aula) nicht anwendbar -> werden nicht mit angezeigt
+- Anzeige:
+  - allgemeine Biblothek mit Widgets für Stundenplan-Darstellung, mithilfe der Datenmodelle von `indiware.dart`
+  - Extra-Infos per Dialog beim Antippen eines Eintrages
+    - hat mir persönlich gefehlt
+    - zeigt, wenn möglich, über `VPSubject.subjectID` mehr Infos zum Fach + Lehrer, bei dem in der entsprechenden Stunde eigentlich Unterricht gewesen wäre, an
+    - kurze, knappe Übersicht über die Daten zu einer Unterrichtsstunde im Vertretungsplan
+  - gleiche Basis sorgt für gleiches, einheitliches Design zum Tagauswählen und zur Darstellung der Stunden für alle Daten
+- alle Daten werden nur aus Schüler- bzw. Lehrerplandaten abgeleitet -> können teilweise unzuverlässig sein, aber dadurch keine extra Komplexität durch Abfragen von anderen Daten
+- damit können auch Schüler auf Raumpläne (und theoretisch auch einfache Lehrerpläne \[tatsächliche Implementierung ausstehend?\]) zugreifen
+- Fach bei "Aufgaben auf LernSax erledigen" automatisch als ausgefallen markieren (wenn `Lehrer == ""`)? -> scheint immer zu passen
 
 ### Daten-Speicherung
 
@@ -85,7 +121,7 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - da *keine neuen Server* benötigt werden sollen -> keine neue Datenspeicherung
   - Anmeldedaten werden nur lokal in der App gespeichert
 - Anmeldedaten sollen bei jedem Start der App überprüft werden
-- Stundenplan-Auth-Daten für Schüler sind vorgespeichert, aber sollen änderbar sein
+- Stundenplan-Auth-Daten für Schüler sollen von Lernsax abgefragt werden
 - Rolle bestimmen:
   - Anmeldungsablauf:
     1. Mit LernSax anmelden
@@ -95,9 +131,10 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
     5. Wenn Daten Zugriff auf Lehrerplan geben: **Lehrer**
     6. Wenn Daten Zugriff auf Schülerplan geben: **Schüler**
   - damit werden Rollen bestimmt
+  - -> könnte durch automatische Abfrage von LernSax durch evtl. Lehrergruppe (wenn Mitglied = Lehrer) und allgemeine Institution mit Datei mit Indiware-Auth-Daten vereinfacht werden
   - Problem: Stundenplan-Anmeldedaten werden nicht ungültig
   - Lösung: da LernSax-Anmeldung auch überprüft wird, werden diese dann zur Überprüfung verwendet
-- wenn kein Internet: Rolle als verifiziert ansehen, aber zur Änderung ist Internet nötig
+- wenn kein Internet: Rolle als verifiziert ansehen, aber zur Änderung (und zum ersten Login) ist Internet nötig
 
 ### LernSax
 
@@ -122,23 +159,39 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 
 - aus jedem wichtigen Tab wird ein "Widget" zur Startseite hinzugefügt
 - Reihenfolge und Sichtbarkeit soll anpassbar sein
+- spezielles Widget für Stundenplan:
+  - zeigt nur aktuelle Vertretungen für heutigen Tag (Info bei Wochenende)
+  - mit "Link" zu eigentlichem Stundenplan
 
 ### FFJKG
 
 - Unterstützung eigentlich garantiert, Absprache bei Stammtisch
-- Bereitstellung eines Macs?
+- Bereitstellung eines Macs zu teuer -> iPhone vielleicht über Schule erhältlich, Mac wird virtuell simuliert
+  - Problem: Verbindung von iPhone?
+- Modus für zukünftige Eltern (-> ohne LernSax-Login) muss noch verbessert werden
 
 ### Einstellungen
 
 - Dark Mode kommt als Einstellung
+- Logins ändern
+- Stundenplanzeugs ändern? (vielleicht auch als Navbar-Aktion)
+- Ideen für Einstellungen:
+  - Farbschema ändern
+  - blauen Rahmen für Stundenplan anpassbar, vielleicht als Gradient
+  - eigenen Hintergrund für App/Stundenplan-Views
+  - Elemente der Navigation versteckbar machen
+  - Reihenfolge + Sichtbarkeit der Widgets auf dem Home-Screen anpassbar machen
 
 ### Benarichtigungen
 
 - für News:
   - bevorzugt hätte ich Firebase-Push-Notifications verwendet - aber: das erfordert Integration mit WordPress (und erfordert Firebase-Projekt -> Datenschutz-Frage)
   - `Workmanager` zum Erstellen eines Tasks verwenden
+    - iOS-Kompatibilität fragwürdig!
   - damit wird alle 2 Stunden auf neue News überprüft
   - falls neue News verfügbar: Benachrichtigung wird gesendet (siehe [`sendNotification`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/tasks.dart#L57-L65) in `tasks.dart`, verwendet API von [`notifications.dart`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/notifications.dart))
+    - Benachrichtigungen scheinen aktuell iOS gar nicht zu unterstützen
+    - erfordern extra Berechtigungen auf Android 13+ -> werden aktuell nicht angefragt
 
 ### realistische? Erwartungen
 
