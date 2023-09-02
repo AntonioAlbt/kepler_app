@@ -38,19 +38,17 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     return map;
   }
 
-  String? get selectedClassName => attributes["selected_class_name"];
-  set selectedClassName(String? cn) {
-    attributes["selected_class_name"] = cn;
+  void _setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
     notifyListeners();
     save();
   }
 
+  String? get selectedClassName => attributes["selected_class_name"];
+  set selectedClassName(String? cn) => _setSaveNotify("selected_class_name", cn);
+
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
-  set selectedCourseIDs(List<int> sc) {
-    attributes["selected_course_ids"] = sc;
-    notifyListeners();
-    save();
-  }
+  set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);
   void addSelectedCourse(int id) {
     final l = selectedCourseIDs;
     if (l.contains(id)) return;
@@ -64,34 +62,18 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   }
 
   List<String> get availableClasses => attributes["available_classes"] ?? [];
-  set availableClasses(List<String> ac) {
-    attributes["available_classes"] = ac;
-    notifyListeners();
-    save();
-  }
+  set availableClasses(List<String> ac) => _setSaveNotify("available_classes", ac);
 
   Map<String, List<VPCSubjectS>> get availableSubjects => _jsonDataStrToMap(attributes["available_subjects"] ?? "");
-  set availableSubjects(Map<String, List<VPCSubjectS>> ac) {
-    attributes["available_subjects"] = jsonEncode(ac);
-    notifyListeners();
-    save();
-  }
+  set availableSubjects(Map<String, List<VPCSubjectS>> ac) => _setSaveNotify("available_subjects", jsonEncode(ac));
   List<VPCSubjectS>? get availableClassSubjects =>
     ((selectedClassName == null) ? null : availableSubjects[selectedClassName])
       ?.where((e) => e.teacherCode != "").toList();
   
   String? get selectedTeacherName => attributes["selected_teacher_name"];
-  set selectedTeacherName(String? tn) {
-    attributes["selected_teacher_name"] = tn;
-    notifyListeners();
-    save();
-  }
+  set selectedTeacherName(String? tn) => _setSaveNotify("selected_teacher_name", tn);
   List<String> get availableTeachers => attributes["available_teachers"] ?? [];
-  set availableTeachers(List<String> at) {
-    attributes["available_teachers"] = at;
-    notifyListeners();
-    save();
-  }
+  set availableTeachers(List<String> at) => _setSaveNotify("available_teachers", at);
 
   final _serializer = Serializer();
   bool loaded = false;

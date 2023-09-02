@@ -54,7 +54,7 @@ void yourStuPlanRefreshAction() {
   yourPlanDisplayKey.currentState?.forceRefreshData();
 }
 
-Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject) {
+Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace) {
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
     content: DefaultTextStyle.merge(
@@ -83,14 +83,14 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                   children: [
                     const WidgetSpan(child: Icon(Icons.school, color: Colors.grey)),
                     const TextSpan(text: " "),
-                    TextSpan(text: lesson.subjectCode),
+                    TextSpan(text: lesson.subjectCode.replaceFirst(classNameToReplace ?? "funny joke.", "")),
                     if (lesson.subjectChanged) const TextSpan(text: ", "),
                     if (lesson.subjectChanged)
                       const TextSpan(
                         text: "geändert",
                         style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
                       ),
-                    if (lesson.subjectChanged && subject != null) TextSpan(
+                    if (lesson.subjectChanged && subject != null && subject.subjectCode != lesson.subjectCode) TextSpan(
                       text: " (sonst ${subject.subjectCode}${(subject.additionalDescr != null) ? " (${subject.additionalDescr})" : ""})"
                     ),
                   ],
@@ -113,7 +113,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                         text: "geändert",
                         style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
                       ),
-                    if (lesson.teacherChanged && subject != null) TextSpan(
+                    if (lesson.teacherChanged && subject != null && subject.teacherCode != lesson.teacherCode) TextSpan(
                       text: " (sonst ${subject.teacherCode})"
                     ),
                   ],
@@ -129,7 +129,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                   children: [
                     const WidgetSpan(child: Icon(MdiIcons.door, color: Colors.grey)),
                     const TextSpan(text: " "),
-                    TextSpan(text: (lesson.roomNr == "") ? "---" : lesson.roomNr),
+                    TextSpan(text: (lesson.roomCode == "") ? "---" : lesson.roomCode),
                     if (lesson.roomChanged) const TextSpan(text: ", "),
                     if (lesson.roomChanged)
                       const TextSpan(

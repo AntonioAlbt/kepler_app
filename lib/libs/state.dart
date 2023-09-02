@@ -25,33 +25,23 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     await securePrefs.write(key: credStorePrefKey, value: _serialize());
   }
 
-  String get lernSaxLogin => attributes["lern_sax_login"] ?? "";
-  set lernSaxLogin(String login) {
-    attributes["lern_sax_login"] = login;
+  void _setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
     notifyListeners();
     save();
   }
+
+  String get lernSaxLogin => attributes["lern_sax_login"] ?? "";
+  set lernSaxLogin(String login) => _setSaveNotify("lern_sax_login", login);
 
   String? get lernSaxToken => attributes["lern_sax_token"];
-  set lernSaxToken(String? token) {
-    attributes["lern_sax_token"] = token;
-    notifyListeners();
-    save();
-  }
+  set lernSaxToken(String? token) => _setSaveNotify("lern_sax_token", token);
 
   String? get vpUser => attributes["vp_user"];
-  set vpUser(String? user) {
-    attributes["vp_user"] = user;
-    notifyListeners();
-    save();
-  }
+  set vpUser(String? user) => _setSaveNotify("vp_user", user);
 
   String? get vpPassword => attributes["vp_password"];
-  set vpPassword(String? password) {
-    attributes["vp_password"] = password;
-    notifyListeners();
-    save();
-  }
+  set vpPassword(String? password) => _setSaveNotify("vp_password", password);
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
@@ -76,12 +66,14 @@ class NewsCache extends SerializableObject with ChangeNotifier {
     sharedPreferences.setString(newsCachePrefKey, _serialize());
   }
 
-  List<NewsEntryData> get newsData => attributes["news_data"] ?? [];
-  set newsData(List<NewsEntryData> val) {
-    attributes["news_data"] = val;
+  void _setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
     notifyListeners();
     save();
   }
+
+  List<NewsEntryData> get newsData => attributes["news_data"] ?? [];
+  set newsData(List<NewsEntryData> val) => _setSaveNotify("news_data", val);
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
@@ -140,38 +132,24 @@ const internalStatePrefsKey = "internal_state";
 class InternalState extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
-  UserType? get lastUserType => UserType.values.firstWhere((element) => element.name == attributes["last_user_type"], orElse: () => UserType.nobody);
-  set lastUserType(UserType? type) {
-    attributes["last_user_type"] = type?.name;
+  void _setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
     notifyListeners();
     save();
   }
+
+  UserType? get lastUserType => UserType.values.firstWhere((element) => element.name == attributes["last_user_type"], orElse: () => UserType.nobody);
+  set lastUserType(UserType? type) => _setSaveNotify("last_user_type", type?.name);
 
   bool get introShown => attributes["intro_shown"] ?? false;
-  set introShown(bool introShown) {
-    attributes["intro_shown"] = introShown;
-    notifyListeners();
-    save();
-  }
+  set introShown(bool introShown) => _setSaveNotify("intro_shown", introShown);
 
   String? get lastSelectedClassPlan => attributes["lscp"];
-  set lastSelectedClassPlan(String? val) {
-    attributes["lscp"] = val;
-    notifyListeners();
-    save();
-  }
+  set lastSelectedClassPlan(String? val) => _setSaveNotify("lscp", val);
   String? get lastSelectedRoomPlan => attributes["lsrp"];
-  set lastSelectedRoomPlan(String? val) {
-    attributes["lsrp"] = val;
-    notifyListeners();
-    save();
-  }
+  set lastSelectedRoomPlan(String? val) => _setSaveNotify("lsrp", val);
   String? get lastSelectedTeacherPlan => attributes["lstp"];
-  set lastSelectedTeacherPlan(String? val) {
-    attributes["lstp"] = val;
-    notifyListeners();
-    save();
-  }
+  set lastSelectedTeacherPlan(String? val) => _setSaveNotify("lstp", val);
 
   bool loaded = false;
 

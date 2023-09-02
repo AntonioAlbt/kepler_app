@@ -12,20 +12,24 @@ enum AppTheme { system, dark, light }
 class Preferences extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
-  AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
-  set theme(AppTheme theme) {
-    attributes["theme"] = theme.name;
+  void setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
     notifyListeners();
     save();
   }
+
+  AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
+  set theme(AppTheme theme) => setSaveNotify("theme", theme.name);
   bool get darkTheme => theme == AppTheme.dark || (theme == AppTheme.system && (deviceInDarkMode ?? true));
 
   Pronoun get preferredPronoun => Pronoun.values.firstWhere((element) => element.name == (attributes["preferred_pronoun"] ?? ""), orElse: () => Pronoun.du);
-  set preferredPronoun(Pronoun pp) {
-    attributes["preferred_pronoun"] = pp.name;
-    notifyListeners();
-    save();
-  }
+  set preferredPronoun(Pronoun pp) => setSaveNotify("preferred_pronoun", pp.name);
+
+  bool get considerLernSaxTasksAsCancellation => attributes["consider_ls_tasks_as_cl"] ?? true;
+  set considerLernSaxTasksAsCancellation(bool val) => setSaveNotify("consider_ls_tasks_as_cl", val);
+  
+  bool get showLernSaxCancelledLessonsInRoomPlan => attributes["show_ls_cl_irp"] ?? true;
+  set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
   bool loaded = false;
 

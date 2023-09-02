@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -231,9 +232,11 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   Bw fromCache = Bw(null);
 
   List<Widget> _buildAllReplacesLessonList() {
-    // final currentClass = Provider.of<StuPlanData>(context).selectedClassName;
+    // final currentClass = Provider.of<StuPlanData>(context, listen: false).selectedClassName;
     final children = <Widget>[];
     if (changedClassLessons == null) return [];
+    final stdata = Provider.of<StuPlanData>(context, listen: false);
+    final consider = Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation;
     changedClassLessons!.forEach((clName, lessons) {
       if (lessons.isEmpty) return;
       final cl2 = <Widget>[];
@@ -251,7 +254,16 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         cl2.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           child: LessonDisplay(
-              lessons[i], (i > 0) ? lessons[i - 1].schoolHour : null),
+              considerLernSaxCancellationForLesson(lessons[i], consider),
+              (i > 0) ? lessons[i - 1].schoolHour : null,
+              classNameToReplace: clName,
+              subject: stdata.availableSubjects[clName]
+                ?.cast<VPCSubjectS?>()
+                .firstWhere(
+                  (s) => s!.subjectID == lessons[i].subjectID,
+                  orElse: () => null,
+                ),
+            ),
         ));
         if (i != lessons.length - 1) {
           cl2.add(const Divider());
@@ -303,7 +315,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     };
     if (lessons == null) return [];
     for (final lesson in lessons!) {
-      occupiedRooms[lesson.schoolHour]!.add(lesson.roomNr);
+      occupiedRooms[lesson.schoolHour]!.add(lesson.roomCode);
     }
     final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(
         hour,
@@ -638,10 +650,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         final klData = await getKlData();
         if (!mounted) return;
         lastUpdated = klData?.header.lastUpdated;
+        final prefs = Provider.of<Preferences>(context, listen: false);
         lessons = klData?.classes
-            .map((e) => e.lessons)
-            .fold<List<VPLesson>>([], (prev, ls) => prev..addAll(ls))
-            .where((l) => l.roomNr == widget.selected).toList();
+            .fold<List<VPLesson>>([], (prev, ls) => prev..addAll(ls.lessons.map((e) => e.copyWith(infoText: "${ls.className.contains("-") ? "Klasse" : "Jahrgang"} ${ls.className}${e.infoText == "" ? "" : "\n"}${e.infoText}"))))
+            .where((l) => l.roomCode == widget.selected)
+            .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCode != l.roomCode) ? false : true) : true)
+            .toList();
         break;
       case SPDisplayMode.teacherPlan:
         final leData = await getLeData();
@@ -730,13 +744,13 @@ class LessonListContainer extends StatelessWidget {
               ),
             );
           }
-          final stdata = Provider.of<StuPlanData>(context);
+          final stdata = Provider.of<StuPlanData>(context, listen: false);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ListView.separated(
               itemCount: lessons!.length,
               itemBuilder: (context, index) => LessonDisplay(
-                lessons![index],
+                considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
                 index > 0
                     ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                     : null,
@@ -746,6 +760,7 @@ class LessonListContainer extends StatelessWidget {
                       (s) => s!.subjectID == lessons![index].subjectID,
                       orElse: () => null,
                     ),
+                classNameToReplace: className,
               ),
               separatorBuilder: (context, index) => const Divider(height: 24),
             ),
@@ -759,8 +774,9 @@ class LessonDisplay extends StatelessWidget {
   final int? previousLessonHour;
   final bool showInfoDialog;
   final VPCSubjectS? subject;
+  final String? classNameToReplace;
   const LessonDisplay(this.lesson, this.previousLessonHour,
-      {super.key, this.showInfoDialog = true, this.subject});
+      {super.key, this.showInfoDialog = true, this.subject, this.classNameToReplace});
 
   @override
   Widget build(BuildContext context) {
@@ -774,8 +790,7 @@ class LessonDisplay extends StatelessWidget {
         onTap: (showInfoDialog)
             ? () => showDialog(
                 context: context,
-                builder: (dialogCtx) =>
-                    generateLessonInfoDialog(dialogCtx, lesson, subject))
+                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace))
             : null,
         child: Column(
           children: [
@@ -789,7 +804,7 @@ class LessonDisplay extends StatelessWidget {
                       : const SizedBox.shrink(),
                 ),
                 Text(
-                  lesson.subjectCode,
+                  lesson.subjectCode.replaceFirst(classNameToReplace ?? "funny joke.", ""),
                   style: TextStyle(
                     color: (lesson.subjectChanged) ? Colors.red : null,
                     fontWeight: (lesson.subjectChanged)
@@ -813,7 +828,7 @@ class LessonDisplay extends StatelessWidget {
                   ),
                 const Spacer(),
                 Text(
-                  lesson.roomNr,
+                  lesson.roomCode,
                   style: TextStyle(
                     color: (lesson.roomChanged) ? Colors.red : null,
                     fontWeight: (lesson.roomChanged) ? FontWeight.bold : FontWeight.w500,
