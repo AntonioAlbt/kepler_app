@@ -54,8 +54,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                 ),
               ),
             ),
-            if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
+            if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
+              height: 200,
               child: ScrollConfiguration(
                 behavior: const ScrollBehavior().copyWith(overscroll: false),
                 child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
@@ -67,8 +67,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       return const Text("Fehler beim Laden der Daten.");
                     }
                     final data = datasn.data;
-                    if (datasn.connectionState != ConnectionState.done) return const CircularProgressIndicator();
                     return SPWidgetList(
+                      stillLoading: datasn.connectionState != ConnectionState.done,
                       lessons: data?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
                         ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "").toList(),
                       onRefresh: () => setState(() => forceRefresh = true),
@@ -83,8 +83,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       return const Text("Fehler beim Laden der Daten.");
                     }
                     final data = datasn.data;
-                    if (datasn.connectionState != ConnectionState.done) return const CircularProgressIndicator();
                     return SPWidgetList(
+                      stillLoading: datasn.connectionState != ConnectionState.done,
                       lessons: data?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
                         .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
                       onRefresh: () => setState(() => forceRefresh = true),
@@ -114,7 +114,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
 class SPWidgetList extends StatelessWidget {
   final List<VPLesson>? lessons;
   final VoidCallback? onRefresh;
-  const SPWidgetList({super.key, required this.lessons, this.onRefresh});
+  final bool stillLoading;
+  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -126,13 +127,21 @@ class SPWidgetList extends StatelessWidget {
         padding: EdgeInsets.zero,
         blueBorder: false,
         child: () {
-          final d = DateTime.now();
           Widget? child;
-          if (d.weekday == 6 || d.weekday == 7) {
+          if (evrydayIsSaturday()) {
             child = const Expanded(
               child: Center(
                 child: Text(
                   "Heute ist Wochenende! 😃",
+                  style: TextStyle(fontSize: 17),
+                ),
+              ),
+            );
+          } else if (stillLoading) {
+            child = const Expanded(
+              child: Center(
+                child: Text(
+                  "Lädt Vertretungen...",
                   style: TextStyle(fontSize: 17),
                 ),
               ),
@@ -185,8 +194,8 @@ class SPWidgetList extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      if (evrydayIsSaturday()) IconButton(
-                        onPressed: onRefresh,
+                      IconButton(
+                        onPressed: (evrydayIsSaturday()) ? null : onRefresh,
                         icon: const Icon(Icons.refresh, size: 20),
                         style: IconButton.styleFrom(padding: EdgeInsets.zero, visualDensity: const VisualDensity(horizontal: -4, vertical: -4)),
                       ),
