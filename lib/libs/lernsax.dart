@@ -7,6 +7,7 @@ import "package:flutter/foundation.dart";
 import "package:http/http.dart" as http;
 import 'package:crypto/crypto.dart' as crypto;
 import "package:intl/intl.dart";
+import "package:kepler_app/tabs/lernsax/ls_data.dart";
 
 const url = "https://www.lernsax.de/jsonrpc.php";
 final uri = Uri.parse(url);
@@ -216,38 +217,7 @@ Future<String?> getSingleUseLoginLink(String login, String token) async {
   }
 }
 
-class LSNotification {
-  final String id;
-  final DateTime date;
-  final String messageTypeId;
-  final String message;
-  final String? data;
-  final String fromUserLogin; // may be empty
-  final String fromUserName; // may be empty
-  final String fromGroupLogin; // may be empty
-  final String fromGroupName; // may be empty
-  final bool unread;
-
-  const LSNotification({required this.id, required this.date, required this.messageTypeId, required this.message, this.data, required this.fromUserLogin, required this.fromUserName, required this.fromGroupLogin, required this.fromGroupName, required this.unread});
-
-  @override
-  String toString() {
-    return 'LSNotification('
-        'id: $id, '
-        'date: $date, '
-        'messageTypeId: $messageTypeId, '
-        'message: $message, '
-        'data: $data, '
-        'fromUserLogin: $fromUserLogin, '
-        'fromUserName: $fromUserName, '
-        'fromGroupLogin: $fromGroupLogin, '
-        'fromGroupName: $fromGroupName, '
-        'unread: $unread'
-        ')';
-  }
-}
-
-Future<List<LSNotification>?> getNotifications(String login, String token) async {
+Future<List<LSNotification>?> getNotifications(String login, String token, {String? startId}) async {
   try {
     final res = await api([
       await useSession(login, token),
@@ -258,13 +228,17 @@ Future<List<LSNotification>?> getNotifications(String login, String token) async
       call(
         id: 1,
         method: "get_messages",
+        params: {
+          if (startId != null) "start_id": startId,
+        }
       ),
     ]);
     // if (kDebugMode) print(res);
     final messages = (res[0]["result"]["messages"] as List<dynamic>).cast<Map<String, dynamic>>();
+    if (startId != null) messages.removeAt(0);
     return messages.map((data) => LSNotification(
       id: data["id"],
-      date: DateTime.fromMillisecondsSinceEpoch(int.parse(data["date"])),
+      date: DateTime.fromMillisecondsSinceEpoch(int.parse(data["date"]) * 1000),
       messageTypeId: data["message"],
       message: data["message_hr"],
       fromUserLogin: data["from_user"]["login"],
@@ -272,6 +246,8 @@ Future<List<LSNotification>?> getNotifications(String login, String token) async
       fromGroupLogin: data["from_group"]["login"],
       fromGroupName: data["from_group"]["name_hr"],
       unread: data["unread"] == 1,
+      object: data["object"],
+      data: data["data"],
     )).toList();
   } catch (e) {
     if (kDebugMode) log("", error: e);

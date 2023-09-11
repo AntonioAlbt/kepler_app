@@ -70,7 +70,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                     return SPWidgetList(
                       stillLoading: datasn.connectionState != ConnectionState.done,
                       lessons: data?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
-                        ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "").toList(),
+                        ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
+                        .where((e) => stdata.selectedCourseIDs.contains(e.subjectID)).toList(),
                       onRefresh: () => setState(() => forceRefresh = true),
                     );
                   },

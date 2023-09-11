@@ -16,6 +16,7 @@ import 'package:kepler_app/libs/filesystem.dart' as fs;
 import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
+import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -28,6 +29,7 @@ final _prefs = Preferences();
 final _credStore = CredentialStore();
 final _appState = AppState();
 final _stuPlanData = StuPlanData();
+final _lernSaxData = LernSaxData();
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
@@ -44,6 +46,10 @@ Future<void> loadAndPrepareApp() async {
   if (await fs.fileExists(await stuPlanDataFilePath)) {
     final data = await fs.readFile(await stuPlanDataFilePath);
     if (data != null) _stuPlanData.loadFromJson(data);
+  }
+  if (await fs.fileExists(await lernSaxDataFilePath)) {
+    final data = await fs.readFile(await lernSaxDataFilePath);
+    if (data != null) _lernSaxData.loadFromJson(data);
   }
 
   Workmanager().initialize(
@@ -193,6 +199,9 @@ class _KeplerAppState extends State<KeplerApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => _stuPlanData,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => _lernSaxData,
         ),
       ],
       child: Consumer<AppState>(builder: (context, state, __) {
