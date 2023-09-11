@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:enough_serialization/enough_serialization.dart';
@@ -6,11 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
-import 'package:kepler_app/libs/state.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:xml/xml.dart';
 
 const stuPlanDataPrefsKey = "stuplandata";
 
+Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];
@@ -77,14 +80,20 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   final _serializer = Serializer();
   bool loaded = false;
-  save() async {
-    sharedPreferences.setString(stuPlanDataPrefsKey, _serialize());
+  final Lock _fileLock = Lock();
+  Future<void> save() async {
+    if (_fileLock.locked) log("The file lock for StuPlanData (file: cache/$stuPlanDataPrefsKey-data.json) is still locked!!! This means waiting...");
+    _fileLock.synchronized(() async => await writeFile(await stuPlanDataFilePath, _serialize()));
   }
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
-    // _serializer.deserialize("{}", this);
-    // save();
-    _serializer.deserialize(json, this);
+    try {
+      _serializer.deserialize(json, this);
+    } catch (e, s) {
+      log("Error while decoding json for StuPlanData from file:", error: e, stackTrace: s);
+      Sentry.captureException(e, stackTrace: s);
+      return;
+    }
     loaded = true;
   }
 

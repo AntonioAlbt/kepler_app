@@ -12,6 +12,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/sentry_dsn.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
+import 'package:kepler_app/libs/filesystem.dart' as fs;
 import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -30,10 +31,9 @@ final _stuPlanData = StuPlanData();
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
-  // TODO? seperate all data files into actual JSON files, not sp keys?
-  if (sprefs.containsKey(newsCachePrefKey)) {
-    // TODO: save news cache as a JSON in the cache dir of the OS
-    _newsCache.loadFromJson(sprefs.getString(newsCachePrefKey)!);
+  if (await fs.fileExists(await newsCacheDataFilePath)) {
+    final data = await fs.readFile(await newsCacheDataFilePath);
+    if (data != null) _newsCache.loadFromJson(data);
   }
   if (await securePrefs.containsKey(key: credStorePrefKey)) {
     _credStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
@@ -41,9 +41,9 @@ Future<void> loadAndPrepareApp() async {
   if (sprefs.containsKey(internalStatePrefsKey)) {
     _internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
   }
-  if (sprefs.containsKey(stuPlanDataPrefsKey)) {
-    // TODO: also save to extra file bc it will get BEEEEG
-    _stuPlanData.loadFromJson(sprefs.getString(stuPlanDataPrefsKey)!);
+  if (await fs.fileExists(await stuPlanDataFilePath)) {
+    final data = await fs.readFile(await stuPlanDataFilePath);
+    if (data != null) _stuPlanData.loadFromJson(data);
   }
 
   Workmanager().initialize(

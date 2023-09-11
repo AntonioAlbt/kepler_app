@@ -1,13 +1,17 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:synchronized/synchronized.dart';
 
 late final SharedPreferences sharedPreferences;
 bool hasDarkTheme(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
@@ -50,6 +54,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   }
 }
 
+Future<String> get newsCacheDataFilePath async => "${await cacheDirPath}/$newsCachePrefKey-data.json";
 class NewsCache extends SerializableObject with ChangeNotifier {
   NewsCache() {
     objectCreators["news_data"] = (map) => <NewsEntryData>[];
@@ -62,8 +67,10 @@ class NewsCache extends SerializableObject with ChangeNotifier {
 
   final _serializer = Serializer();
   bool loaded = false;
-  save() async {
-    sharedPreferences.setString(newsCachePrefKey, _serialize());
+  final Lock _fileLock = Lock();
+  Future<void> save() async {
+    if (_fileLock.locked) log("The file lock for NewsCache (file: cache/$newsCachePrefKey-data.json) is still locked!!! This means waiting...");
+    _fileLock.synchronized(() async => await writeFile(await newsCacheDataFilePath, _serialize()));
   }
 
   void _setSaveNotify(String key, dynamic data) {
@@ -77,7 +84,13 @@ class NewsCache extends SerializableObject with ChangeNotifier {
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
-    _serializer.deserialize(json, this);
+    try {
+      _serializer.deserialize(json, this);
+    } catch (e, s) {
+      log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
+      Sentry.captureException(e, stackTrace: s);
+      return;
+    }
     loaded = true;
   }
 

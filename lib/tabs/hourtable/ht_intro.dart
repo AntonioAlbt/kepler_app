@@ -53,16 +53,17 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     final userType = Provider.of<AppState>(context, listen: false).userType;
     return Selector<Preferences, bool>(
       selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-      builder: (context, sie, _) => Consumer<StuPlanData>(
-        builder: (context, stdata, _) => Column(
-          children: [
-            if (userType == UserType.pupil) Text("Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus.")
-            else if (userType == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} die Klasse ${sie ? "Ihres" : "Deines"} Kindes für den Stundenplan aus.")
-            else if (userType == UserType.teacher) Text("Bitte ${sie ? "wählen Sie Ihr" : "wähle Dein"} Lehrerkürzel aus."),
-            if (_loading) const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ) else if (_error != null) Column(
+      builder: (context, sie, _) => Column(
+        children: [
+          if (userType == UserType.pupil) Text("Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus.")
+          else if (userType == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} die Klasse ${sie ? "Ihres" : "Deines"} Kindes für den Stundenplan aus.")
+          else if (userType == UserType.teacher) Text("Bitte ${sie ? "wählen Sie Ihr" : "wähle Dein"} Lehrerkürzel aus."),
+          if (_loading) const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(),
+          ) else if (_error != null) Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
               children: [
                 Text(_error!, style: const TextStyle(color: Colors.red)),
                 ElevatedButton(
@@ -70,7 +71,9 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
                   child: const Text("Erneut versuchen"),
                 ),
               ],
-            ) else DropdownButton(
+            ),
+          ) else Consumer<StuPlanData>(
+            builder: (context, stdata, _) => DropdownButton(
               items: (widget.teacherMode ? stdata.availableTeachers : stdata.availableClasses)
                   .map((e) => classNameToDropdownItem(e, widget.teacherMode))
                   .toList(),
@@ -78,24 +81,24 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
               onChanged: (value) => (widget.teacherMode) ? stdata.selectedTeacherName = value : stdata.selectedClassName = value,
               iconSize: 24,
             ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: ElevatedButton(
-                onPressed: () {
-                  if (widget.teacherMode) {
-                    final state = Provider.of<AppState>(context, listen: false);
-                    state.clearInfoScreen();
-                    if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
-                    state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
-                  } else {
-                    infoScreenState.next();
-                  }
-                },
-                child: (widget.teacherMode) ? const Text("Zum Stundenplan") : const Text("Weiter zur Fachwahl"),
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: ElevatedButton(
+              onPressed: () {
+                if (widget.teacherMode) {
+                  final state = Provider.of<AppState>(context, listen: false);
+                  state.clearInfoScreen();
+                  if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+                  state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+                } else {
+                  infoScreenState.next();
+                }
+              },
+              child: (widget.teacherMode) ? const Text("Zum Stundenplan") : const Text("Weiter zur Fachwahl"),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -126,7 +129,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     if (widget.teacherMode) {
       try {
         spdata.loadDataFromLeData((await getLehrerXmlLeData(creds.vpUser!, creds.vpPassword!))!);
-        spdata.selectedClassName ??= spdata.availableClasses.first;
+        spdata.selectedTeacherName ??= spdata.availableTeachers.first;
         setState(() => _loading = false);
       } catch (_) {
         setState(() {

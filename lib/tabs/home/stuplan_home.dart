@@ -92,17 +92,20 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                   },
                 ) : const Text("Nicht angemeldet."),
               ),
-            ) else Column(
-              children: [
-                Text("${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht geöffnet. Jetzt einrichten?"),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: ElevatedButton(
-                    onPressed: () => stuPlanOnTryOpenCallback(context),
-                    child: const Text("Einrichten"),
+            ) else Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Text("${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht geöffnet. Jetzt einrichten?"),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: ElevatedButton(
+                      onPressed: () => stuPlanOnTryOpenCallback(context),
+                      child: const Text("Einrichten"),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

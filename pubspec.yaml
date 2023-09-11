@@ -60,6 +60,7 @@ dependencies:
   shared_preferences: ^2.0.17
   enough_serialization: ^1.4.0
   flutter_secure_storage: ^8.0.0
+  synchronized: ^3.1.0 # saving data to files
 
   # libs for meal tab
   appcheck: ^1.0.6
