@@ -1,10 +1,10 @@
 import 'dart:math';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 const newsFetchTaskName = "fetch_news";
@@ -23,9 +23,9 @@ void taskCallbackDispatcher() {
 
 Future<void> runNewsFetchTask() async {
   final newsCache = NewsCache();
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.containsKey(newsCachePrefKey)) {
-    newsCache.loadFromJson(prefs.getString(newsCachePrefKey)!);
+  if (await fileExists(await newsCacheDataFilePath)) {
+    final data = await readFile(await newsCacheDataFilePath);
+    if (data != null) newsCache.loadFromJson(data);
   }
   if (!newsCache.loaded || newsCache.newsData.isEmpty) return;
   final canPostNotifications = await checkNotificationPermission();
@@ -47,7 +47,7 @@ Future<void> runNewsFetchTask() async {
   //       ..createdDate = DateTime.now()
   //       ..link = "https://kepler-chemnitz.de/allgemein/"
   //       ..title = "Landesseminar mit diesem Vlad"
-  //       ..summary = "der hat mir auch geholfen"
+  //       ..summary = "der hat mir auch geholfen - vielen Dank an Vlad von VLANT :D"
   //       ..writer = "Jeman D'Anderes"
   //   );
   // }
