@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -24,12 +26,13 @@ class _NewsViewState extends State<NewsView> {
         title: Text(widget.newsTitle),
         backgroundColor: (hasDarkTheme(context)) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ElevatedButton(
-              onPressed: () => launchUrl(widget.newsLink, mode: LaunchMode.externalApplication),
-              child: const Text("Im Browser öffnen"),
-            ),
+          IconButton(
+            icon: const Icon(MdiIcons.web),
+            onPressed: () => launchUrl(widget.newsLink, mode: LaunchMode.externalApplication),
+          ),
+          IconButton(
+            icon: const Icon(MdiIcons.shareVariant),
+            onPressed: () => Share.share(widget.newsLink.toString(), sharePositionOrigin: const Rect.fromLTRB(0, 0, 0, 0)),
           ),
         ],
       ),
