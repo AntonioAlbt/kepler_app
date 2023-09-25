@@ -53,6 +53,15 @@ DateTime findPrevFriday(DateTime day) {
   return nm;
 }
 
+bool shouldGoToNextPlanDay(BuildContext context) {
+  final today = DateTime.now();
+  final prefs = Provider.of<Preferences>(context, listen: false);
+  final todayNextPlanDay = prefs.timeToDefaultToNextPlanDay.toDateTime(today);
+  return !isWeekend(today)
+    && today.millisecondsSinceEpoch > todayNextPlanDay.millisecondsSinceEpoch
+    && !isWeekend(today.add(const Duration(days: 1)));
+}
+
 class StuPlanDisplayState extends State<StuPlanDisplay> {
   final format = DateFormat("EE, dd.MM.");
   late DateTime currentDate;
@@ -73,6 +82,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   void initState() {
     super.initState();
     currentDate = _getStartDate();
+    
+    if (shouldGoToNextPlanDay(context)) {
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
     startDate = _getStartDate();
   }
 
@@ -148,6 +162,25 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                           padding: EdgeInsets.all(8),
                           child: Text(
                             "heute",
+                            style: TextStyle(height: 0),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (currentDate.day == DateTime.now().day + 1)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: hasDarkTheme(context)
+                              ? colorWithLightness(Colors.green, .15)
+                              : colorWithLightness(Colors.green, .8),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text(
+                            "morgen",
                             style: TextStyle(height: 0),
                           ),
                         ),

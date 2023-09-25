@@ -1,5 +1,6 @@
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 
 const prefsPrefKey = "user_preferences";
@@ -30,6 +31,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   
   bool get showLernSaxCancelledLessonsInRoomPlan => attributes["show_ls_cl_irp"] ?? true;
   set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
+
+  HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(16, 00);
+  set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
   bool loaded = false;
 

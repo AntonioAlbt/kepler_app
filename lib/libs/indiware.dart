@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:enough_serialization/enough_serialization.dart';
 import 'package:intl/intl.dart';
 import 'package:xml/xml.dart';
 import 'package:http/http.dart' as http;
@@ -13,21 +14,30 @@ const lUrlM = "$baseUrl/VmobilL";
 final sUrlMKlXmlUrl = Uri.parse("$sUrlM/mobdaten/Klassen.xml");
 final lUrlMLeXmlUrl = Uri.parse("$lUrlM/mobdaten/Lehrer.xml");
 
-class HMTime {
-  final int hour;
-  final int minute;
+class HMTime extends SerializableObject {
+  int get hour => attributes["hour"];
+  set hour(int val) => attributes["hour"] = val;
 
-  DateTime toDateTime(DateTime? dayBase) => DateTime(0, 1, 1, hour, minute);
+  int get minute => attributes["minute"];
+  set minute(int val) => attributes["minute"] = val;
 
-  const HMTime(this.hour, this.minute);
+  DateTime toDateTime(DateTime? dayBase) =>
+      DateTime(dayBase?.year ?? 0, dayBase?.month ?? 1, dayBase?.day ?? 1, hour, minute);
 
-  HMTime.fromStrings(String hour, String minute) :
-    hour = int.parse(hour),
-    minute = int.parse(minute);
+  HMTime(int hour, int minute) {
+    this.hour = hour;
+    this.minute = minute;
+  }
+
+  HMTime.fromStrings(String hour, String minute) {
+    this.hour = int.parse(hour);
+    this.minute = int.parse(minute);
+  }
   
-  HMTime.fromTimeString(String timeString)
-      : hour = int.parse(timeString.split(':')[0]),
-        minute = int.parse(timeString.split(':')[1]);
+  HMTime.fromTimeString(String timeString) {
+    hour = int.parse(timeString.split(':')[0]);
+    minute = int.parse(timeString.split(':')[1]);
+  }
   
   @override
   String toString() {
