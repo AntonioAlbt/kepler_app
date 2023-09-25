@@ -7,8 +7,26 @@ const prefsPrefKey = "user_preferences";
 
 bool? deviceInDarkMode;
 
-enum Pronoun { du, sie }
-enum AppTheme { system, dark, light }
+enum Pronoun {
+  du,
+  sie;
+  @override
+  String toString() => {
+    Pronoun.du: "Mit Du anreden",
+    Pronoun.sie: "Mit Sie anreden",
+  }[this]!;
+}
+enum AppTheme {
+  system,
+  dark,
+  light;
+  @override
+  String toString() => {
+    AppTheme.system: "System",
+    AppTheme.dark: "Dunkel",
+    AppTheme.light: "Hell",
+  }[this]!;
+}
 
 class Preferences extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
@@ -46,5 +64,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
     loaded = true;
   }
 
-  Preferences();
+  Preferences() {
+    objectCreators["time_to_next_plan"] = (_) => HMTime(16, 0);
+  }
 }

@@ -171,11 +171,11 @@ class SPWidgetList extends StatelessWidget {
               ),
             );
           } else if (lessons!.isEmpty) {
-            child = const Expanded(
+            child = Expanded(
               child: Center(
                 child: Text(
-                  "Heute keine Vertretungen.",
-                  style: TextStyle(fontSize: 17),
+                  "${shouldGoToNextPlanDay(context) ? "Morgen" : "Heute"} keine Vertretungen.",
+                  style: const TextStyle(fontSize: 17),
                 ),
               ),
             );

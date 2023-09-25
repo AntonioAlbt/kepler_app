@@ -85,6 +85,10 @@ dependencies:
   # libs for stuplan
   xml: ^6.3.0
 
+  # libs for settings
+  settings_ui: ^2.0.2
+  select_dialog: ^2.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
