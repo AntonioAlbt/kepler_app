@@ -117,6 +117,7 @@ final destinations = [
           const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
           const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
       const NavEntryData(
         id: StuPlanPageIDs.teacherPlan,
@@ -127,6 +128,7 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
       const NavEntryData(
         id: StuPlanPageIDs.classPlans,
@@ -136,6 +138,7 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
       const NavEntryData(
         id: StuPlanPageIDs.all,
@@ -145,6 +148,7 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
       const NavEntryData(
         id: StuPlanPageIDs.freeRooms,
@@ -154,6 +158,7 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
       const NavEntryData(
         id: StuPlanPageIDs.roomPlans,
@@ -163,6 +168,7 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
+        onTryOpen: stuPlanShowInfoDialog,
       ),
     ],
   ),
@@ -191,23 +197,22 @@ final destinations = [
         icon: const Icon(MdiIcons.web),
         label: const Text("Im Browser öffnen"),
         externalLink: true,
-        onTryOpen: (context) {
+        onTryOpen: (context) async {
           final creds = Provider.of<CredentialStore>(context, listen: false);
           if (creds.lernSaxToken == null) return false;
-          getSingleUseLoginLink(creds.lernSaxLogin, creds.lernSaxToken!).then((url) {
-            if (url == null) {
-              ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
-                const SnackBar(
-                  content: Text("Fehler beim Erstellen des Links."),
-                ),
-              );
-              return;
-            }
-            launchUrl(
-              Uri.parse(url),
-              mode: LaunchMode.externalApplication,
+          final url = await getSingleUseLoginLink(creds.lernSaxLogin, creds.lernSaxToken!);
+          if (url == null) {
+            ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
+              const SnackBar(
+                content: Text("Fehler beim Erstellen des Links."),
+              ),
             );
-          });
+            return false;
+          }
+          launchUrl(
+            Uri.parse(url),
+            mode: LaunchMode.externalApplication,
+          );
           return false;
         },
       ),

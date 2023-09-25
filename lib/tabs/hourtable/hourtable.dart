@@ -66,10 +66,12 @@ bool shouldShowStuPlanIntro(StuPlanData data, bool teacher) =>
 
 // returns true if all data is given and the stuplan page should be shown
 // and false if the intro screens have to be shown
-bool stuPlanOnTryOpenCallback(BuildContext context) {
+Future<bool> stuPlanOnTryOpenCallback(BuildContext context) async {
   final state = Provider.of<AppState>(context, listen: false);
   final stdata = Provider.of<StuPlanData>(context, listen: false);
-  if (!shouldShowStuPlanIntro(stdata, state.userType == UserType.teacher)) return true;
+  if (!shouldShowStuPlanIntro(stdata, state.userType == UserType.teacher)) {
+    return true;
+  }
   state.infoScreen ??= (state.userType != UserType.teacher)
       ? stuPlanPupilIntroScreens()
       : stuPlanTeacherIntroScreens();

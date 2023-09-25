@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -13,9 +15,9 @@ class NavEntryData {
   final List<UserType>? visibleFor;
   final bool? externalLink;
   /// can also be used as "onTap", true or null means open new page, false means don't open new page
-  final bool Function(BuildContext context)? onTryOpen;
+  final Future<bool> Function(BuildContext context)? onTryOpen;
   /// can also be used as "onTap" for expand arrow, true or null means expand children list, false means don't
-  final bool Function(BuildContext context)? onTryExpand;
+  final Future<bool> Function(BuildContext context)? onTryExpand;
   final List<String>? redirectTo;
   final List<Widget>? navbarActions;
 
@@ -31,8 +33,8 @@ class NavEntry extends StatefulWidget {
   final Widget? selectedIcon;
   final Widget label;
   final bool? externalLink;
-  final bool Function(BuildContext context)? onTryOpen;
-  final bool Function(BuildContext context)? onTryExpand;
+  final Future<bool> Function(BuildContext context)? onTryOpen;
+  final Future<bool> Function(BuildContext context)? onTryExpand;
   final bool selected;
   final bool parentOfSelected;
   final int layer;
@@ -79,7 +81,15 @@ class _NavEntryState extends State<NavEntry> {
                   child: IconButton(
                     onPressed: () {
                       if (!expanded) {
-                        if (widget.onTryExpand?.call(context) == false) return;
+                        final val = widget.onTryExpand?.call(context);
+                        if (val != null) {
+                          val.then((value) {
+                            if (!value) return;
+                            setState(() => expanded = !expanded);
+                            _drawerKey.currentState?.redraw();
+                          });
+                          return;
+                        }
                       }
                       setState(() => expanded = !expanded);
                       _drawerKey.currentState?.redraw();
@@ -106,7 +116,17 @@ class _NavEntryState extends State<NavEntry> {
                 selectedColor: color,
                 splashColor: (widget.selected || widget.parentOfSelected) ? color.withOpacity(0.5) : null,
                 onTap: () {
-                  if (widget.onTryOpen?.call(context) == false) return;
+                  final val = widget.onTryOpen?.call(context);
+                  if (val != null) {
+                    val.then((value) {
+                      if (!value) return;
+                      setState(() {
+                        expanded = true;
+                      });
+                      widget.onSelect();
+                    });
+                    return;
+                  }
                   setState(() {
                     expanded = true;
                   });
