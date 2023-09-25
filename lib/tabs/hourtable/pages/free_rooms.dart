@@ -4,7 +4,7 @@ import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 /// all of this is subject to change because of building "updates"
 final allKeplerRooms = [
   "K08", "K10",
-  ...rooms("0", 4, 13, [6, 7]),
+  ...rooms("0", 4, 13, [5, 7]),
   ...rooms("1", 8, 16, [12, 14]),
   ...rooms("2", 1, 16, [6, 7, 12, 14]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),

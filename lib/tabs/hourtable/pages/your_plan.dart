@@ -129,7 +129,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                   children: [
                     const WidgetSpan(child: Icon(MdiIcons.door, color: Colors.grey)),
                     const TextSpan(text: " "),
-                    TextSpan(text: (lesson.roomCode == "") ? "---" : lesson.roomCode),
+                    TextSpan(text: (lesson.roomCodes.isEmpty) ? "---" : lesson.roomCodes.join(", ")),
                     if (lesson.roomChanged) const TextSpan(text: ", "),
                     if (lesson.roomChanged)
                       const TextSpan(

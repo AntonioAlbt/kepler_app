@@ -82,6 +82,26 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     super.setState(fn);
   }
 
+  bool canGoBack() => currentDate.isAfter(startDate);
+
+  void makeCurrentDateGoBack() {
+    if (isOrPrevWeekend(currentDate)) {
+      setState(() => currentDate = findPrevFriday(currentDate));
+    } else {
+      setState(() => currentDate = currentDate.subtract(const Duration(days: 1)));
+    }
+  }
+
+  bool canGoForward() => currentDate.isBefore(startDate.add(const Duration(days: 3)));
+
+  void makeCurrentDateGoForward() {
+    if (isOrSoonWeekend(currentDate)) {
+      setState(() => currentDate = findNextMonday(currentDate));
+    } else {
+      setState(() => currentDate = currentDate.add(const Duration(days: 1)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -90,15 +110,8 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
           children: [
             IconButton.outlined(
               icon: const Icon(Icons.arrow_back),
-              onPressed: (currentDate.isAfter(startDate))
-                  ? () => setState(() {
-                        if (isOrPrevWeekend(currentDate)) {
-                          currentDate = findPrevFriday(currentDate);
-                        } else {
-                          currentDate =
-                              currentDate.subtract(const Duration(days: 1));
-                        }
-                      })
+              onPressed: (canGoBack())
+                  ? () => makeCurrentDateGoBack()
                   : null,
             ),
             // IconButton(
@@ -152,15 +165,8 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             IconButton.outlined(
               icon: const Icon(Icons.arrow_forward),
               onPressed:
-                  (currentDate.isBefore(startDate.add(const Duration(days: 3))))
-                      ? () => setState(() {
-                            if (isOrSoonWeekend(currentDate)) {
-                              currentDate = findNextMonday(currentDate);
-                            } else {
-                              currentDate =
-                                  currentDate.add(const Duration(days: 1));
-                            }
-                          })
+                  (canGoForward())
+                      ? () => makeCurrentDateGoForward()
                       : null,
             ),
           ],
@@ -176,6 +182,8 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
             mode: widget.mode,
             showInfo: widget.showInfo,
             allRooms: widget.allRooms,
+            onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
+            onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
           ),
         ),
       ],
@@ -202,6 +210,8 @@ class StuPlanDayDisplay extends StatefulWidget {
   final bool showSupervisions;
   final SPDisplayMode mode;
   final List<String>? allRooms;
+  final void Function()? onSwipeLeft;
+  final void Function()? onSwipeRight;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
@@ -210,7 +220,9 @@ class StuPlanDayDisplay extends StatefulWidget {
       this.controller,
       this.showInfo = true,
       this.showSupervisions = true,
-      this.allRooms});
+      this.allRooms,
+      this.onSwipeLeft,
+      this.onSwipeRight});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -315,7 +327,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     };
     if (lessons == null) return [];
     for (final lesson in lessons!) {
-      occupiedRooms[lesson.schoolHour]!.add(lesson.roomCode);
+      occupiedRooms[lesson.schoolHour]!.addAll(lesson.roomCodes);
     }
     final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(
         hour,
@@ -421,6 +433,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             padding: const EdgeInsets.only(top: 8),
             child: (widget.mode == SPDisplayMode.allReplaces)
                   ? SPListContainer(
+                    onSwipeLeft: widget.onSwipeLeft,
+                    onSwipeRight: widget.onSwipeRight,
                     child: ListView(
                       shrinkWrap: true,
                       children: _buildAllReplacesLessonList(),
@@ -428,6 +442,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   )
                 : (widget.mode == SPDisplayMode.freeRooms)
                   ? SPListContainer(
+                      onSwipeLeft: widget.onSwipeLeft,
+                      onSwipeRight: widget.onSwipeRight,
                       child: () {
                         final list = _buildFreeRoomList();
                         return ListView.separated(
@@ -438,7 +454,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         );
                       }(),
                     )
-                  : LessonListContainer(lessons, widget.selected),
+                  : LessonListContainer(
+                    lessons,
+                    widget.selected,
+                    onSwipeLeft: widget.onSwipeLeft,
+                    onSwipeRight: widget.onSwipeRight,
+                  ),
           ),
         ),
         if (supervisions != null && (supervisions?.isEmpty == false) && widget.showSupervisions)
@@ -653,8 +674,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         final prefs = Provider.of<Preferences>(context, listen: false);
         lessons = klData?.classes
             .fold<List<VPLesson>>([], (prev, ls) => prev..addAll(ls.lessons.map((e) => e.copyWith(infoText: "${ls.className.contains("-") ? "Klasse" : "Jahrgang"} ${ls.className}${e.infoText == "" ? "" : "\n"}${e.infoText}"))))
-            .where((l) => l.roomCode == widget.selected)
-            .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCode != l.roomCode) ? false : true) : true)
+            .where((l) => l.roomCodes.contains(widget.selected))
+            .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCodes != l.roomCodes) ? false : true) : true)
             .toList();
         break;
       case SPDisplayMode.teacherPlan:
@@ -683,36 +704,45 @@ class SPListContainer extends StatelessWidget {
   final EdgeInsets? padding;
   final bool shadow;
   final Color? color;
-  const SPListContainer({super.key, this.blueBorder = false, this.padding, this.shadow = true, this.child, this.color});
+  final void Function()? onSwipeLeft;
+  final void Function()? onSwipeRight;
+  const SPListContainer({super.key, this.blueBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: (blueBorder)
-            ? Border.all(
-                color: hasDarkTheme(context)
-                    ? keplerColorBlue
-                    : colorWithLightness(keplerColorBlue, .4),
-                width: 3)
-            : null,
-        color: color ?? Theme.of(context).colorScheme.background,
-        boxShadow: (shadow) ? [
-          BoxShadow(
-            color: hasDarkTheme(context)
-                ? Colors.black45
-                : Colors.grey.withOpacity(0.5),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          )
-        ] : null,
-      ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
-        child: child,
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final d = details.primaryVelocity ?? 0;
+        if (d > 500) onSwipeRight?.call();
+        if (d < -500) onSwipeLeft?.call();
+      },
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: (blueBorder)
+              ? Border.all(
+                  color: hasDarkTheme(context)
+                      ? keplerColorBlue
+                      : colorWithLightness(keplerColorBlue, .4),
+                  width: 3)
+              : null,
+          color: color ?? Theme.of(context).colorScheme.background,
+          boxShadow: (shadow) ? [
+            BoxShadow(
+              color: hasDarkTheme(context)
+                  ? Colors.black45
+                  : Colors.grey.withOpacity(0.5),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: const Offset(0, 3),
+            )
+          ] : null,
+        ),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          child: child,
+        ),
       ),
     );
   }
@@ -721,11 +751,15 @@ class SPListContainer extends StatelessWidget {
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
   final String className;
-  const LessonListContainer(this.lessons, this.className, {super.key});
+  final void Function()? onSwipeLeft;
+  final void Function()? onSwipeRight;
+  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight});
 
   @override
   Widget build(BuildContext context) {
     return SPListContainer(
+        onSwipeLeft: onSwipeLeft,
+        onSwipeRight: onSwipeRight,
         blueBorder: lessons != null,
         child: () {
           if (lessons == null) {
@@ -828,7 +862,7 @@ class LessonDisplay extends StatelessWidget {
                   ),
                 const Spacer(),
                 Text(
-                  lesson.roomCode,
+                  lesson.roomCodes.join(", "),
                   style: TextStyle(
                     color: (lesson.roomChanged) ? Colors.red : null,
                     fontWeight: (lesson.roomChanged) ? FontWeight.bold : FontWeight.w500,

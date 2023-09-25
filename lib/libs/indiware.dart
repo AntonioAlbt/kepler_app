@@ -153,7 +153,7 @@ class VPLesson { // "<Std>"
   final bool subjectChanged; // "Fa.FaAe == FaGeaendert"
   final String teacherCode; // "Le" -> value
   final bool teacherChanged; // "Le.LeAe == LeGeaendert"
-  final String roomCode; // "Ra" -> value
+  final List<String> roomCodes; // "Ra" -> value
   final bool roomChanged; // "Ra.RaAe == RaGeaendert"
   final int? subjectID; // "Nr"
   final String infoText; // "If"
@@ -164,10 +164,10 @@ class VPLesson { // "<Std>"
   /// -> teacherChanged
   bool get teachingClassChanged => teacherChanged;
 
-  const VPLesson({required this.schoolHour, required this.startTime, required this.endTime, required this.subjectCode, required this.subjectChanged, required this.teacherCode, required this.teacherChanged, required this.roomCode, required this.roomChanged, required this.subjectID, required this.infoText});
+  const VPLesson({required this.schoolHour, required this.startTime, required this.endTime, required this.subjectCode, required this.subjectChanged, required this.teacherCode, required this.teacherChanged, required this.roomCodes, required this.roomChanged, required this.subjectID, required this.infoText});
   @override
   String toString() {
-    return 'VPLesson(schoolHour: $schoolHour, startTime: $startTime, endTime: $endTime, subjectCode: $subjectCode, subjectChanged: $subjectChanged, teacherCode: $teacherCode, teacherChanged: $teacherChanged, roomNr: $roomCode, roomChanged: $roomChanged, subjectID: $subjectID, infoText: $infoText)';
+    return 'VPLesson(schoolHour: $schoolHour, startTime: $startTime, endTime: $endTime, subjectCode: $subjectCode, subjectChanged: $subjectChanged, teacherCode: $teacherCode, teacherChanged: $teacherChanged, roomCodes: $roomCodes, roomChanged: $roomChanged, subjectID: $subjectID, infoText: $infoText)';
   }
 
   VPLesson copyWith({
@@ -178,7 +178,7 @@ class VPLesson { // "<Std>"
     bool? subjectChanged,
     String? teacherCode,
     bool? teacherChanged,
-    String? roomCode,
+    List<String>? roomCodes,
     bool? roomChanged,
     int? subjectID,
     String? infoText,
@@ -191,7 +191,7 @@ class VPLesson { // "<Std>"
       subjectChanged: subjectChanged ?? this.subjectChanged,
       teacherCode: teacherCode ?? this.teacherCode,
       teacherChanged: teacherChanged ?? this.teacherChanged,
-      roomCode: roomCode ?? this.roomCode,
+      roomCodes: roomCodes ?? this.roomCodes,
       roomChanged: roomChanged ?? this.roomChanged,
       subjectID: subjectID ?? this.subjectID,
       infoText: infoText ?? this.infoText,
@@ -205,7 +205,7 @@ VPLesson considerLernSaxCancellationForLesson(VPLesson lesson, bool considerIt, 
   if (!considerIt) return lesson;
   if (lesson.subjectChanged || lesson.teacherCode != "") return lesson; // this might mean that the tasks are actually meant to be done in school
   if (!lesson.infoText.contains(cancellationALaLernSax)) return lesson;
-  return lesson.copyWith(subjectCode: "---", subjectChanged: true, teacherCode: "", teacherChanged: true, roomCode: roomOverride, roomChanged: true, infoText: "für ${lesson.subjectCode}${lesson.teacherCode != "" ? " bei ${lesson.teacherCode}" : ""} ${lesson.infoText}");
+  return lesson.copyWith(subjectCode: "---", subjectChanged: true, teacherCode: "", teacherChanged: true, roomCodes: (roomOverride == "") ? [] : [roomOverride], roomChanged: true, infoText: "für ${lesson.subjectCode}${lesson.teacherCode != "" ? " bei ${lesson.teacherCode}" : ""} ${lesson.infoText}");
 }
 
 class VPTeacher {
@@ -306,7 +306,11 @@ List<VPLesson> _parseLessons(XmlElement pl) =>
     subjectChanged: std.getElement("Fa")!.getAttribute("FaAe") == "FaGeaendert",
     teacherCode: std.getElement("Le")!.innerText,
     teacherChanged: std.getElement("Le")!.getAttribute("LeAe") == "LeGeaendert",
-    roomCode: std.getElement("Ra")!.innerText,
+    roomCodes: (){
+      final txt = std.getElement("Ra")!.innerText.trim();
+      if (txt == "") return <String>[];
+      return txt.split(" ");
+    }(),
     roomChanged: std.getElement("Ra")!.getAttribute("RaAe") == "RaGeaendert",
     subjectID: _intOrNull(std.getElement("Nr")?.innerText),
     infoText: std.getElement("If")?.innerText ?? "",
