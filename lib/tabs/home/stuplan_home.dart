@@ -29,45 +29,44 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AppState>(context, listen: false).userType;
-    final creds = Provider.of<CredentialStore>(context, listen: false);
-    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
-    return Consumer<StuPlanData>(
-      builder: (context, stdata, _) => Card(
-        color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .2 : .8),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Card(
-                color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .05 : .85),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Text(
-                      "${shouldGoToNextPlanDay(context) ? "Morgige" : "Heutige"} Vertretungen",
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
+    return Consumer4<StuPlanData, AppState, CredentialStore, Preferences>(
+      builder: (context, stdata, state, creds, prefs, _) {
+        final sie = prefs.preferredPronoun == Pronoun.sie;
+        final user = state.userType;
+        return Card(
+          color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .2 : .8),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Card(
+                  color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .05 : .85),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      child: Text(
+                        "${shouldGoToNextPlanDay(context) ? "Morgige" : "Heutige"} Vertretungen",
+                        style: Theme.of(context).textTheme.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
-              height: 200,
-              child: ScrollConfiguration(
-                behavior: const ScrollBehavior().copyWith(overscroll: false),
-                child: (user == UserType.pupil || user == UserType.parent) ? Consumer<Preferences>(
-                  builder: (context, prefs, _) => FutureBuilder(
-                    future: IndiwareDataManager.getKlDataForDate(
+              if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
+                height: 200,
+                child: ScrollConfiguration( // TODO: propagate scroll event to upper scroll view if this view couldn't scroll
+                  behavior: const ScrollBehavior().copyWith(overscroll: false),
+                  child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
+                    future: (creds.vpPassword != null) ? IndiwareDataManager.getKlDataForDate(
                       shouldGoToNextPlanDay(context)
                           ? DateTime.now().add(const Duration(days: 1))
                           : DateTime.now(),
                       creds.vpUser!,
                       creds.vpPassword!,
                       forceRefresh: forceRefresh ?? false,
-                    ),
+                    ) : Future<VPKlData?>.error("welp"),
                     initialData: null,
                     builder: (context, datasn) {
                       forceRefresh = false;
@@ -85,43 +84,43 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         onRefresh: () => setState(() => forceRefresh = true),
                       );
                     }
-                  ),
-                ) : (user == UserType.teacher) ? FutureBuilder(
-                  future: IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh ?? false),
-                  initialData: null,
-                  builder: (context, datasn) {
-                    forceRefresh = false;
-                    if (datasn.error != null) {
-                      return const Text("Fehler beim Laden der Daten.");
-                    }
-                    final data = datasn.data;
-                    return SPWidgetList(
-                      stillLoading: datasn.connectionState != ConnectionState.done,
-                      lessons: data?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
-                        .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
-                      onRefresh: () => setState(() => forceRefresh = true),
-                    );
-                  },
-                ) : const Text("Nicht angemeldet."),
-              ),
-            ) else Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Text("${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht geöffnet. Jetzt einrichten?"),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: ElevatedButton(
-                      onPressed: () => stuPlanOnTryOpenCallback(context),
-                      child: const Text("Einrichten"),
+                  ) : (user == UserType.teacher) ? FutureBuilder(
+                    future: IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh ?? false),
+                    initialData: null,
+                    builder: (context, datasn) {
+                      forceRefresh = false;
+                      if (datasn.error != null) {
+                        return const Text("Fehler beim Laden der Daten.");
+                      }
+                      final data = datasn.data;
+                      return SPWidgetList(
+                        stillLoading: datasn.connectionState != ConnectionState.done,
+                        lessons: data?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
+                          .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
+                        onRefresh: () => setState(() => forceRefresh = true),
+                      );
+                    },
+                  ) : const Text("Nicht angemeldet."),
+                ),
+              ) else Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    Text("${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht geöffnet. Jetzt einrichten?"),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: ElevatedButton(
+                        onPressed: () => stuPlanOnTryOpenCallback(context),
+                        child: const Text("Einrichten"),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

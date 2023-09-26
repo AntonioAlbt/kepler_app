@@ -181,6 +181,11 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - eigenen Hintergrund für App/Stundenplan-Views
   - Elemente der Navigation versteckbar machen
   - Reihenfolge + Sichtbarkeit der Widgets auf dem Home-Screen anpassbar machen
+  - Benachrichtigungs-Kontrolle (welche, für was)
+  - Special Effects / "Lustiges":
+    - Konfetti für Vertretungen in eigenem Plan / auf StuPlan-Widget
+    - Lustige Sounds beim Antippen von manchen Knöpfen
+    - Startup-Sound
 
 ### Benarichtigungen
 

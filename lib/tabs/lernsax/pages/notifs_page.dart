@@ -7,6 +7,8 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
+final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:MM:ss");
+
 final lsNotifPageKey = GlobalKey<LSNotificationPageState>();
 
 void lernSaxNotifsRefreshAction() {
@@ -66,7 +68,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
                           const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Text(DateFormat("dd.MM.yyyy HH:MM:ss").format(notif.date)),
+                            child: Text(lernSaxTimeFormat.format(notif.date)),
                           ),
                         ],
                       ),
@@ -181,9 +183,50 @@ class LSNotificationPageState extends State<LSNotificationPage> {
 Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif) {
   return AlertDialog(
     title: const Text("Infos zur Benachrichtigung"),
-    content: Text("Noch in Arbeit!!!\n$notif"), // TODO: literally to do
+    content: DefaultTextStyle.merge(
+      style: const TextStyle(fontSize: 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InfoDialogEntry(icon: Icons.numbers, text: "ID: ${notif.id}", paddingTop: EdgeInsets.zero),
+          InfoDialogEntry(icon: Icons.access_time_filled, text: lernSaxTimeFormat.format(notif.date)),
+          InfoDialogEntry(icon: Icons.info, text: notif.message),
+          if (notif.data != null) InfoDialogEntry(icon: MdiIcons.shape, text: notif.data!),
+          if (notif.hasUserData) InfoDialogEntry(icon: Icons.person, text: "${notif.fromUserName ?? "Kein Benutzer"}${notif.fromUserLogin != null && notif.fromUserName != notif.fromUserLogin ? " (E-Mail: ${notif.fromUserLogin})" : ""}"),
+          if (notif.hasGroupName) InfoDialogEntry(icon: Icons.group_sharp, text: "${notif.fromGroupName ?? "Keine Gruppe"}${notif.fromGroupLogin != null ? " (Login: ${notif.fromGroupLogin})" : ""}"),
+          // InfoDialogEntry(icon: Icons.check_box, text: notif.unread ? "Ungelesen" : "Gelesen"),
+          InfoDialogEntry(icon: Icons.abc, text: notif.messageTypeId)
+        ],
+      ),
+    ),
     actions: [
       TextButton(onPressed: () => Navigator.pop(context), child: const Text("Schließen"))
     ],
   );
+}
+
+class InfoDialogEntry extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final EdgeInsets? paddingTop;
+  const InfoDialogEntry({super.key, required this.icon, required this.text, this.paddingTop});
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Padding(
+      padding: paddingTop ?? const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          Flexible(child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(text, maxLines: 10),
+          )),
+        ],
+      ),
+    );
+    return Flexible(
+      child: child
+    );
+  }
 }
