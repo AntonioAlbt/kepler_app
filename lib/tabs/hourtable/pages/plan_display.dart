@@ -732,14 +732,14 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
 }
 
 class SPListContainer extends StatelessWidget {
-  final bool blueBorder;
+  final bool showBorder;
   final Widget? child;
   final EdgeInsets? padding;
   final bool shadow;
   final Color? color;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
-  const SPListContainer({super.key, this.blueBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight});
+  const SPListContainer({super.key, this.showBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight});
 
   @override
   Widget build(BuildContext context) {
@@ -753,7 +753,7 @@ class SPListContainer extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: (blueBorder)
+          border: (showBorder)
               ? Border.all(
                   color: hasDarkTheme(context)
                       ? keplerColorBlue
@@ -793,7 +793,7 @@ class LessonListContainer extends StatelessWidget {
     return SPListContainer(
         onSwipeLeft: onSwipeLeft,
         onSwipeRight: onSwipeRight,
-        blueBorder: lessons != null,
+        showBorder: lessons != null,
         child: () {
           if (lessons == null) {
             return const Center(

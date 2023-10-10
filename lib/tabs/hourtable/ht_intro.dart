@@ -44,6 +44,8 @@ DropdownMenuItem<String> classNameToDropdownItem(String className, bool teacher)
       ),
     );
 
+String? _previousSelectedClass;
+
 class _ClassSelectScreenState extends State<ClassSelectScreen> {
   bool _loading = true;
   String? _error;
@@ -107,6 +109,8 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
   void initState() {
     _loadData();
     super.initState();
+
+    _previousSelectedClass = Provider.of<StuPlanData>(context, listen: false).selectedClassName;
   }
 
   Future<void> _loadData() async {
@@ -283,8 +287,10 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
     _scctr = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final stdata = Provider.of<StuPlanData>(context, listen: false);
-      stdata.selectedCourseIDs = [];
-      stdata.selectedCourseIDs = stdata.availableClassSubjects!.map((e) => e.subjectID).toList();
+      if (stdata.selectedClassName != _previousSelectedClass) {
+        stdata.selectedCourseIDs = [];
+        stdata.selectedCourseIDs = stdata.availableClassSubjects!.map((e) => e.subjectID).toList();
+      }
     });
   }
 

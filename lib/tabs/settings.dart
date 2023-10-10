@@ -4,6 +4,8 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -14,12 +16,20 @@ class SettingsTab extends StatefulWidget {
   State<SettingsTab> createState() => _SettingsTabState();
 }
 
+final _startPageMap = {
+  PageIDs.home: "Startseite",
+  PageIDs.news: "Kepler-News",
+  StuPlanPageIDs.main: "Aktueller Stundenplan",
+  LernSaxPageIDs.main: "LernSax-Infos",
+};
+
 class _SettingsTabState extends State<SettingsTab> {
   @override
   Widget build(BuildContext context) {
     return Consumer<Preferences>(
       builder: (context, prefs, _) {
         final sie = prefs.preferredPronoun == Pronoun.sie;
+        final userType = Provider.of<AppState>(context, listen: false).userType;
         return SettingsList(
           sections: [
             SettingsSection(
@@ -27,8 +37,16 @@ class _SettingsTabState extends State<SettingsTab> {
               tiles: [
                 selectionSettingsTile(prefs.theme, AppTheme.values, "Farbmodus", (val) => prefs.theme = val),
                 selectionSettingsTile(prefs.preferredPronoun, Pronoun.values, "Bevorzugte Anrede", (val) => prefs.preferredPronoun = val),
+                selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key),
                 SettingsTile.navigation(
-                  title: const Text("Abmelden und neu anmelden"),
+                  title: const Text.rich(
+                    TextSpan(
+                      children: [
+                        WidgetSpan(child: Icon(Icons.warning_rounded, color: Colors.amber, size: 22)),
+                        TextSpan(text: " Abmelden und neu anmelden"),
+                      ],
+                    ),
+                  ),
                   description: const Text("Abmelden und nach Neustart der App neu mit LernSax anmelden"),
                   onPressed: (context) => showDialog(
                     context: context,
@@ -61,6 +79,11 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Stundenplan"),
               tiles: [
+                SettingsTile.navigation(
+                  title: Text(userType == UserType.teacher ? "Lehrer ändern" : "Klasse oder Belegung ändern"),
+                  description: Text("${sie ? "Ihre" : "Deine"} ${userType == UserType.teacher ? "Lehrer-Abkürzung" : "Klasse und/oder belegte Fächer ändern"} (für ${sie ? "Ihren" : "Deinen"} Stundenplan)"),
+                  onPressed: (_) => yourStuPlanEditAction(),
+                ),
                 SettingsTile.switchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation,
                   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,

@@ -61,6 +61,7 @@ void initializeNotifications() {
   );
 }
 
+// TODO: fix notification icon, fix/test on ios
 Future<bool> sendNotification(NotificationContent content, [List<NotificationActionButton>? actions]) {
   return AwesomeNotifications().createNotification(content: content, actionButtons: actions);
 }

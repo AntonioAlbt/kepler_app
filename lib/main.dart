@@ -183,7 +183,11 @@ class _KeplerAppState extends State<KeplerApp> {
         ChangeNotifierProvider(
           create: (_) => _appState
             ..infoScreen = introductionDisplay // TODO: show "sign in again" screens to user if creds are invalid
-            ..userType = utype,
+            ..userType = utype
+            ..selectedNavPageIDs = [
+              _prefs.startNavPage,
+              if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours,
+            ],
         ),
         ChangeNotifierProvider(
           create: (_) => _prefs,
@@ -218,26 +222,36 @@ class _KeplerAppState extends State<KeplerApp> {
           },
           child: Stack(
             children: [
-              Scaffold(
-                key: globalScaffoldKey,
-                appBar: AppBar(
-                  title: (index.first == PageIDs.home) ? const Text("Kepler-App")
-                    : currentlySelectedNavEntry(context).label,
-                  scrolledUnderElevation: 5,
-                  elevation: 5,
-                  // this is so the two appbars in that page seem like theyre one
-                  shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
-                  actions: currentlySelectedNavEntry(context).navbarActions,
+              WillPopScope(
+                onWillPop: () async {
+                  if (_appState.selectedNavPageIDs.last != _prefs.startNavPage) {
+                    _appState.selectedNavPageIDs = [_prefs.startNavPage];
+                    return false;
+                  } else {
+                    return true;
+                  }
+                },
+                child: Scaffold(
+                  key: globalScaffoldKey,
+                  appBar: AppBar(
+                    title: (index.first == PageIDs.home) ? const Text("Kepler-App")
+                      : currentlySelectedNavEntry(context).label,
+                    scrolledUnderElevation: 5,
+                    elevation: 5,
+                    // this is so the two appbars in that page seem like theyre one
+                    shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
+                    actions: currentlySelectedNavEntry(context).navbarActions,
+                  ),
+                  drawer: TheDrawer(
+                    selectedIndex: index.join("."),
+                    onDestinationSelected: (val) {
+                      state.selectedNavPageIDs = val.split(".");
+                    },
+                    entries: destinations,
+                    dividers: const [5],
+                  ),
+                  body: tabs[index.first],
                 ),
-                drawer: TheDrawer(
-                  selectedIndex: index.join("."),
-                  onDestinationSelected: (val) {
-                    state.selectedNavPageIDs = val.split(".");
-                  },
-                  entries: destinations,
-                  dividers: const [5],
-                ),
-                body: tabs[index.first],
               ),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 100),

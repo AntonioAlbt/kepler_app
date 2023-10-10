@@ -172,16 +172,17 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 
 ### Einstellungen
 
-- Dark Mode kommt als Einstellung
-- Logins ändern
-- Stundenplanzeugs ändern? (vielleicht auch als Navbar-Aktion)
+- Farbschema auswählbar (auch Systemschema)
+- Logins ändern (Problem: App muss neugestartet werden, damit Daten ordentlich geladen werden)
+- Stundenplanzeugs ändern (auch als Navbar-Aktion)
 - Ideen für Einstellungen:
-  - Farbschema ändern
+  - ~~Farbschema ändern~~ ✅
   - blauen Rahmen für Stundenplan anpassbar, vielleicht als Gradient
-  - eigenen Hintergrund für App/Stundenplan-Views
+  - ~~eigenen Hintergrund für App/Stundenplan-Views~~ (erstmal nicht, wäre sowieso kaum sichtbar)
   - Elemente der Navigation versteckbar machen
   - Reihenfolge + Sichtbarkeit der Widgets auf dem Home-Screen anpassbar machen
   - Benachrichtigungs-Kontrolle (welche, für was)
+  - anpassbares App-Icon (mit `dynamic_flutter_icon`?)
   - Special Effects / "Lustiges":
     - Konfetti für Vertretungen in eigenem Plan / auf StuPlan-Widget
     - Lustige Sounds beim Antippen von manchen Knöpfen
@@ -200,5 +201,6 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 
 ### realistische? Erwartungen
 
-- ich glaube halt einfach mal nicht, dass je ein Lehrer oder Elternteil die App verwenden wird
+- ich glaube halt einfach mal nicht, dass je ~~ein~~ zwei Lehrer oder Eltern die App verwenden werden
+  - Stats/Analytics dazu wären nice, aber wohl kaum datenschutztechnisch vertretbar (bzw. erfordert Hintergrundserver)
 - aber der Gedanke zählt xD

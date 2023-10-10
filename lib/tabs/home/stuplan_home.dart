@@ -139,7 +139,7 @@ class SPWidgetList extends StatelessWidget {
         color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
         shadow: false,
         padding: EdgeInsets.zero,
-        blueBorder: false,
+        showBorder: false,
         child: () {
           Widget? child;
           if (evrydayIsSaturday()) {
