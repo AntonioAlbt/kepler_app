@@ -469,10 +469,21 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   ? SPListContainer(
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: _buildAllReplacesLessonList(),
-                    ),
+                    child: () {
+                      final list = _buildAllReplacesLessonList();
+                      if (list.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "Keine Daten verfügbar.",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        );
+                      }
+                      return ListView(
+                        shrinkWrap: true,
+                        children: list,
+                      );
+                    }(),
                   )
                 : (widget.mode == SPDisplayMode.freeRooms)
                   ? SPListContainer(
@@ -480,6 +491,14 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       onSwipeRight: widget.onSwipeRight,
                       child: () {
                         final list = _buildFreeRoomList();
+                        if (list.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              "Keine Daten verfügbar.",
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          );
+                        }
                         return ListView.separated(
                           itemCount: list.length,
                           shrinkWrap: true,
