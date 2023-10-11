@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:math';
 
+import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
@@ -30,6 +32,8 @@ final _credStore = CredentialStore();
 final _appState = AppState();
 final _stuPlanData = StuPlanData();
 final _lernSaxData = LernSaxData();
+
+final ConfettiController globalConfettiController = ConfettiController();
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
@@ -253,6 +257,26 @@ class _KeplerAppState extends State<KeplerApp> {
                   body: tabs[index.first],
                 ),
               ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: globalConfettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  blastDirection: pi * 0.5,
+                  colors: const [
+                    Colors.red,
+                    Colors.orange,
+                    Colors.yellow,
+                    Colors.green,
+                    Colors.blue,
+                    Colors.purple,
+                  ],
+                  numberOfParticles: 2,
+                  emissionFrequency: 0.5,
+                  gravity: 0.7,
+                  shouldLoop: true,
+                ),
+              ),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 100),
                 child: state.infoScreen,
@@ -293,7 +317,16 @@ class _KeplerAppState extends State<KeplerApp> {
   @override
   void initState() {
     _load();
+    globalConfettiController.play();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    globalConfettiController
+      ..stop()
+      ..dispose();
+    super.dispose();
   }
 
   @override

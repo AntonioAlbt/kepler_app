@@ -84,6 +84,7 @@ dependencies:
 
   # libs for stuplan
   xml: ^6.3.0
+  confetti: ^0.7.0
 
   # libs for settings
   settings_ui: ^2.0.2

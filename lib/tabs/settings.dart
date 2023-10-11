@@ -283,7 +283,14 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
                 fontWeight: (widget.current == keplerColorBlue) ? FontWeight.bold : null,
               ),
             ),
-            trailing: Container(height: 24, width: 24, color: keplerColorBlue),
+            trailing: Container(
+              height: 24,
+              width: 24,
+              decoration: BoxDecoration(
+                color: keplerColorBlue,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
           ),
           ListTile(
             onTap: () {

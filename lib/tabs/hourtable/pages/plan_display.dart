@@ -4,6 +4,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
@@ -600,6 +601,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     final user = state.userType;
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final stdata = Provider.of<StuPlanData>(context, listen: false);
+    final prefs = Provider.of<Preferences>(context, listen: false);
     if (creds.vpUser == null || creds.vpPassword == null) {
       state.selectedNavPageIDs = [PageIDs.home];
       ScaffoldMessenger.of(context).showSnackBar(
@@ -645,6 +647,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               orElse: () => null);
           lessons = teacher?.lessons;
           supervisions = teacher?.supervisions;
+        }
+        if (prefs.confettiEnabled && lessons?.any((lesson) => lesson.teacherCode == "---" || lesson.subjectCode == "---") == true) {
+          globalConfettiController.play();
         }
         break;
       case SPDisplayMode.allReplaces:
@@ -728,6 +733,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       return l1.subjectCode.compareTo(l2.subjectCode);
     });
     setState(() => _loading = false);
+  }
+
+  @override
+  void dispose() {
+    globalConfettiController.stop();
+    super.dispose();
   }
 }
 
