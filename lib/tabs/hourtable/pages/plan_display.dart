@@ -743,6 +743,11 @@ class SPListContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // actually listen to this
+    final prefs = Provider.of<Preferences>(context);
+    
+    // prefs.stuPlanDataAvailableBorderColor = Colors.yellow.shade800;
+    // prefs.stuPlanDataAvailableBorderGradientColor = Colors.green.shade800;
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         final d = details.primaryVelocity ?? 0;
@@ -753,28 +758,44 @@ class SPListContainer extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: (showBorder)
-              ? Border.all(
-                  color: hasDarkTheme(context)
-                      ? keplerColorBlue
-                      : colorWithLightness(keplerColorBlue, .4),
-                  width: 3)
-              : null,
-          color: color ?? Theme.of(context).colorScheme.background,
-          boxShadow: (shadow) ? [
-            BoxShadow(
-              color: hasDarkTheme(context)
-                  ? Colors.black45
-                  : Colors.grey.withOpacity(0.5),
-              spreadRadius: 5,
-              blurRadius: 7,
-              offset: const Offset(0, 3),
+          gradient: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ?
+            LinearGradient(
+              colors: [prefs.stuPlanDataAvailableBorderColor!, prefs.stuPlanDataAvailableBorderGradientColor!],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             )
-          ] : null,
+          : null,
         ),
         child: Padding(
-          padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
-          child: child,
+          padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? const EdgeInsets.all(3) : EdgeInsets.zero,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor == null)
+                  ? Border.all(
+                      color: hasDarkTheme(context)
+                          ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
+                          : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
+                      width: 3)
+                  : null,
+              color: color ?? Theme.of(context).colorScheme.background,
+              boxShadow: (shadow) ? [
+                BoxShadow(
+                  color: hasDarkTheme(context)
+                      ? Colors.black45
+                      : Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: const Offset(0, 3),
+                )
+              ] : null,
+            ),
+            child: Padding(
+              padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              child: child,
+            ),
+          ),
         ),
       ),
     );

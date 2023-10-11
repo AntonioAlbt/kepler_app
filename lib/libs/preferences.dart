@@ -58,11 +58,11 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
   Color? get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
-  set stuPlanDataAvailableBorderColor(Color? val) => setSaveNotify("sp_border_col", val != null ? [val.alpha, val.red, val.green, val.blue] : null);
+  set stuPlanDataAvailableBorderColor(Color? val) => setSaveNotify("sp_border_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
 
   /// if set, used with normal border color for a vertical gradient
   Color? get stuPlanDataAvailableBorderGradientColor => attributes.containsKey("sp_border_gradient_col") ? _color((attributes["sp_border_gradient_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
-  set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? [val.alpha, val.red, val.green, val.blue] : null);
+  set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
 
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);

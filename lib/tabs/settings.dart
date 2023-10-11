@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -112,6 +114,92 @@ class _SettingsTabState extends State<SettingsTab> {
                       prefs.timeToDefaultToNextPlanDay = HMTime(picked.hour, picked.minute);
                     }
                   }),
+                ),
+                SettingsTile.navigation(
+                  title: const Text("Rahmenfarbe für Stundenliste"),
+                  description: Text("Aktuelle Farbe: #${prefs.stuPlanDataAvailableBorderColor.toString().substring(9, 9+6)}"),
+                  onPressed: (context) => showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Farbe ändern"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            onTap: () {
+                              prefs.stuPlanDataAvailableBorderColor = keplerColorBlue;
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              "Kepler-Farbe: Blau",
+                              style: TextStyle(
+                                fontWeight: (prefs.stuPlanDataAvailableBorderColor == keplerColorBlue) ? FontWeight.bold : null,
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            onTap: () {
+                              prefs.stuPlanDataAvailableBorderColor = keplerColorOrange;
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              "Kepler-Farbe: Orange",
+                              style: TextStyle(
+                                fontWeight: (prefs.stuPlanDataAvailableBorderColor == keplerColorOrange) ? FontWeight.bold : null,
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            onTap: () {
+                              prefs.stuPlanDataAvailableBorderColor = keplerColorYellow;
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              "Kepler-Farbe: Gelb",
+                              style: TextStyle(
+                                fontWeight: (prefs.stuPlanDataAvailableBorderColor == keplerColorYellow) ? FontWeight.bold : null,
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context2) => AlertDialog(
+                                  title: const Text("Eigene Farbe auswählen"),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ColorPicker(
+                                        pickerColor: prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue,
+                                        onColorChanged: (col) => prefs.stuPlanDataAvailableBorderColor = col,
+                                        portraitOnly: true,
+                                        labelTypes: const [],
+                                        pickerAreaHeightPercent: 0.5,
+                                      ),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () {
+                                      Navigator.pop(context2);
+                                      Navigator.pop(context);
+                                    }, child: const Text("Fertig")),
+                                  ],
+                                ),
+                              );
+                            },
+                            title: Text(
+                              "Eigene Farbe",
+                              style: TextStyle(
+                                fontWeight: (![keplerColorBlue, keplerColorOrange, keplerColorYellow].contains(prefs.stuPlanDataAvailableBorderColor)) ? FontWeight.bold : null,
+                              ),
+                            ),
+                            subtitle: const Text("tippen, um zu ändern"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

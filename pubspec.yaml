@@ -88,6 +88,7 @@ dependencies:
   # libs for settings
   settings_ui: ^2.0.2
   select_dialog: ^2.0.1
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:
