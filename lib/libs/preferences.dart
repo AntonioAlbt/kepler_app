@@ -1,5 +1,6 @@
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -57,12 +58,15 @@ class Preferences extends SerializableObject with ChangeNotifier {
   HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(16, 00);
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
-  Color? get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
-  set stuPlanDataAvailableBorderColor(Color? val) => setSaveNotify("sp_border_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
+  Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : keplerColorBlue;
+  set stuPlanDataAvailableBorderColor(Color val) => setSaveNotify("sp_border_col", [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(","));
 
   /// if set, used with normal border color for a vertical gradient
-  Color? get stuPlanDataAvailableBorderGradientColor => attributes.containsKey("sp_border_gradient_col") ? _color((attributes["sp_border_gradient_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
+  Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _color((attributes["sp_border_gradient_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
   set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
+
+  double get stuPlanDataAvailableBorderWidth => attributes["sp_border_width"] ?? 3;
+  set stuPlanDataAvailableBorderWidth(double val) => setSaveNotify("sp_border_width", val);
 
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);
