@@ -317,7 +317,6 @@ class _KeplerAppState extends State<KeplerApp> {
   @override
   void initState() {
     _load();
-    globalConfettiController.play();
     super.initState();
   }
 
