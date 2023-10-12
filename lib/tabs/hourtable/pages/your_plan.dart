@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -58,21 +59,22 @@ const stuPlanInfoKey = "stu_plan_info";
 
 Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
   final internal = Provider.of<InternalState>(context, listen: false);
+  final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
   // internal.infosShown = internal.infosShown..clear();
   if (!internal.infosShown.contains(stuPlanInfoKey)) {
     const bold = TextStyle(fontWeight: FontWeight.bold);
     await showDialog(context: context, builder: (ctx) => AlertDialog(
       title: const Text("Info zum Vertretungsplan"),
-      content: const Text.rich(TextSpan(
-        style: TextStyle(fontSize: 16),
+      content: Text.rich(TextSpan(
+        style: const TextStyle(fontSize: 16),
         children: [
-          TextSpan(text: "Du kannst mehr Infos zu Stunden ansehen, "),
-          TextSpan(text: "indem du sie antippst", style: bold),
-          TextSpan(text: "!\n"),
-          TextSpan(text: "Außerdem kannst du auch durch "),
-          TextSpan(text: "Wischen nach rechts und links", style: bold),
-          TextSpan(text: " Tage wechseln.\n\n"),
-          TextSpan(text: "Diese Info wird nur einmalig angezeigt."),
+          TextSpan(text: "${sie ? "Sie können" : "Du kannst"} mehr Infos zu Stunden ansehen, "),
+          TextSpan(text: "indem ${sie ? "Sie diese antippen" : "Du sie antippst"}", style: bold),
+          const TextSpan(text: "!\n"),
+          TextSpan(text: "Außerdem ${sie ? "können Sie" : "kannst Du"} auch durch "),
+          const TextSpan(text: "Wischen nach rechts und links", style: bold),
+          const TextSpan(text: " Tage wechseln.\n\n"),
+          const TextSpan(text: "Diese Info wird nur einmalig angezeigt."),
         ],
       )),
       actions: [

@@ -34,6 +34,7 @@
 
     <queries>
         <package android:name="biz.dls_gmbh.guten.appetit" />
+        <package android:name="de.digionline.lernsax" />
     </queries>
 
     <uses-permission android:name="android.permission.INTERNET" />

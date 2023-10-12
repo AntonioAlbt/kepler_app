@@ -51,10 +51,12 @@ class StuPlanPageIDs {
 class LernSaxPageIDs {
   static const main = "lsmain";
   static const files = "files";
+  static const emails = "emails";
+  static const chats = "chats";
+  static const messageBoard = "messageBoard";
   static const notifications = "notifications";
   static const tasks = "tasks";
   static const openInBrowser = "inbrowser";
-  /* TODO: others */
 }
 
 const tabs = {
@@ -178,20 +180,6 @@ final destinations = [
     label: const Text("LernSax"),
     selectedIcon: const Icon(Icons.laptop),
     children: [
-      const NavEntryData(
-        id: LernSaxPageIDs.notifications,
-        icon: Icon(Icons.notifications_none),
-        selectedIcon: Icon(Icons.notifications),
-        label: Text("Benachrichtigungen"),
-        navbarActions: [
-          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
-        ]
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.tasks,
-        icon: Icon(Icons.task_alt),
-        label: Text("Aufgaben"),
-      ),
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
         icon: const Icon(MdiIcons.web),
@@ -215,6 +203,56 @@ final destinations = [
           );
           return false;
         },
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.notifications,
+        icon: Icon(Icons.notifications_none),
+        selectedIcon: Icon(Icons.notifications),
+        label: Text("Benachrichtigungen"),
+        navbarActions: [
+          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
+        ]
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.tasks,
+        icon: Icon(Icons.task_alt),
+        label: Text("Aufgaben"),
+        navbarActions: [
+          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
+        ]
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.files,
+        icon: Icon(Icons.folder_copy_outlined),
+        // selectedIcon: Icon(Icons.folder_copy),
+        label: Text("Dateien"),
+        externalLink: true,
+        onTryOpen: lernSaxOpenInOfficialApp,
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.emails,
+        icon: Icon(Icons.mail_outlined),
+        // selectedIcon: Icon(Icons.mail),
+        label: Text("E-Mails"),
+        externalLink: true,
+        onTryOpen: lernSaxOpenInOfficialApp,
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.messageBoard,
+        icon: Icon(MdiIcons.bulletinBoard),
+        // selectedIcon: Icon(MdiIcons.bulletinBoard),
+        label: Text("Nachrichten"),
+        navbarActions: [
+          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
+        ]
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.emails,
+        icon: Icon(Icons.chat_bubble_outline),
+        selectedIcon: Icon(Icons.chat_bubble),
+        label: Text("Messenger (Chats)"),
+        externalLink: true,
+        onTryOpen: lernSaxOpenInOfficialApp,
       ),
     ],
   ),

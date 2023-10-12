@@ -18,7 +18,7 @@ String appId() => (Platform.isIOS) ? appleAppId : androidAppId;
 class _MealOrderingTabState extends State<MealOrderingTab> {
   Future<bool> hasDLSApp() async {
     try {
-      await AppCheck.checkAvailability(appId());
+      await AppCheck.checkAvailability(androidAppId);
       return true;
     } catch (e) {
       return false;
@@ -52,7 +52,7 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
               ],
             ),
           ),
-          FutureBuilder(
+          (Platform.isAndroid) ? FutureBuilder( // for iOS, i'd need to check if the url scheme for the dls app exists, but there's no way for me to know the url scheme (if one even exists at all)
             builder: (context, snapshot) => ElevatedButton(
               onPressed: () {
                 final hasApp = snapshot.data;
@@ -60,11 +60,8 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
                 if (hasApp) {
                   AppCheck.launchApp(appId());
                 } else {
-                  launchUrl(Uri.parse(
-                    (Platform.isIOS) ? "https://apps.apple.com/de/app/id$appleAppId"
-                    : "market://details?id=$androidAppId"
-                  )).catchError((e) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Du scheinst keine App zum Herunterladen von Apps installiert zu haben.")));
+                  launchUrl(Uri.parse("market://details?id=$androidAppId")).catchError((e) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Keine App zum Installieren von Apps gefunden.")));
                     return true;
                   });
                 }
@@ -72,7 +69,19 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
               child: Text((snapshot.data == true) ? "\"Guten APPetit!\" öffnen" : "\"Guten APPetit!\" (DLS-App) installieren"),
             ),
             future: hasDLSApp(),
-          )
+          ) : ElevatedButton(
+            onPressed: () => launchUrl(Uri.parse("https://apps.apple.com/de/app/id$appleAppId")),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text("\"Guten APPetit!\" (DLS-App) im App Store")),
+                Flexible(child: Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Icon(Icons.open_in_new, size: 16),
+                ))
+              ],
+            ),
+          ),
         ]
       ),
     );

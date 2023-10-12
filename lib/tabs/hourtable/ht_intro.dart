@@ -87,7 +87,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
           Padding(
             padding: const EdgeInsets.all(8),
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: (_error == null) ? () {
                 if (widget.teacherMode) {
                   final state = Provider.of<AppState>(context, listen: false);
                   state.clearInfoScreen();
@@ -96,7 +96,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
                 } else {
                   infoScreenState.next();
                 }
-              },
+              } : null,
               child: (widget.teacherMode) ? const Text("Zum Stundenplan") : const Text("Weiter zur Fachwahl"),
             ),
           ),
