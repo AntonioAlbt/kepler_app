@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/notifications.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -31,6 +32,13 @@ const stuPlanLoginScreen = InfoScreen(
   infoText: StuPlanScreenMain(),
   closeable: false,
   infoImage: Icon(Icons.list_alt, size: 48),
+);
+
+const notificationInfoScreen = InfoScreen(
+  infoTitle: Text("Benachrichtigungen"),
+  infoText: NotifInfoScreenMain(),
+  closeable: false,
+  infoImage: Icon(Icons.notifications_active, size: 48),
 );
 
 final finishScreen = InfoScreen(
@@ -117,43 +125,6 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
                       ),
                     ],
                   ),
-                  // const Text("Welches Aussehen soll die App verwenden?"),
-                  // Wrap(
-                  //   alignment: WrapAlignment.center,
-                  //   children: [
-                  //     Row(
-                  //       mainAxisSize: MainAxisSize.min,
-                  //       children: [
-                  //         RadioMenuButton(
-                  //           value: AppTheme.system,
-                  //           groupValue: prefs.theme,
-                  //           onChanged: (val) => prefs.theme = val!,
-                  //           child: Text("System (${deviceInDarkMode ?? true ? "Dunkel" : "Hell"})"),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //     Transform.translate(
-                  //       offset: const Offset(0, -5),
-                  //       child: Row(
-                  //         mainAxisSize: MainAxisSize.min,
-                  //         children: [
-                  //           RadioMenuButton(
-                  //             value: AppTheme.light,
-                  //             groupValue: prefs.theme,
-                  //             onChanged: (val) => prefs.theme = val!,
-                  //             child: const Text("Hell"),
-                  //           ),
-                  //           RadioMenuButton(
-                  //             value: AppTheme.dark,
-                  //             groupValue: prefs.theme,
-                  //             onChanged: (val) => prefs.theme = val!,
-                  //             child: const Text("Dunkel"),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
                   const Text(
                     "Dies kann später in den Einstellungen geändert werden.",
                     style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
@@ -576,5 +547,21 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
     _userController.dispose();
     _pwController.dispose();
     super.dispose();
+  }
+}
+
+class NotifInfoScreenMain extends StatefulWidget {
+  const NotifInfoScreenMain({super.key});
+
+  @override
+  State<NotifInfoScreenMain> createState() => _NotifInfoScreenMainState();
+}
+
+class _NotifInfoScreenMainState extends State<NotifInfoScreenMain> {
+  List<String> selectedNotifications = [newsNotificationKey, stuPlanNotificationKey];
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

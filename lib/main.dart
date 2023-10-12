@@ -188,10 +188,17 @@ class _KeplerAppState extends State<KeplerApp> {
           create: (_) => _appState
             ..infoScreen = introductionDisplay // TODO: show "sign in again" screens to user if creds are invalid
             ..userType = utype
-            ..selectedNavPageIDs = [
-              _prefs.startNavPage,
-              if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours,
-            ],
+            ..selectedNavPageIDs = (){
+              final nowOpen = _internalState.nowOpenOnStartup;
+              _internalState.nowOpenOnStartup = null;
+              return (nowOpen != null) ? [
+                nowOpen,
+                if (nowOpen == StuPlanPageIDs.main) StuPlanPageIDs.yours,
+              ] : [
+                _prefs.startNavPage,
+                if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours,
+              ];
+            }(),
         ),
         ChangeNotifierProvider(
           create: (_) => _prefs,

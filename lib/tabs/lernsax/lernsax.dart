@@ -6,6 +6,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/lernsax/pages/msgboard_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
         final navPage = state.selectedNavPageIDs.last;
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
         if (navPage == LernSaxPageIDs.tasks) return const LSTasksPage();
+        if (navPage == LernSaxPageIDs.messageBoard) return const LSMsgBoardPage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
     );
