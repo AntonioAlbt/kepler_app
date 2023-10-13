@@ -20,6 +20,7 @@ import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
+import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
@@ -218,7 +219,7 @@ final destinations = [
         icon: Icon(Icons.task_alt),
         label: Text("Aufgaben"),
         navbarActions: [
-          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
+          IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
         ]
       ),
       const NavEntryData(

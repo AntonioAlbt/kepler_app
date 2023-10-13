@@ -14,6 +14,9 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   LernSaxData() {
     objectCreators["notifs"] = (_) => <LSNotification>[];
     objectCreators["notifs.value"] = (data) => data != null ? LSNotification.data(data) : null;
+
+    objectCreators["tasks"] = (_) => <LSTask>[];
+    objectCreators["tasks.value"] = (data) => data != null ? LSTask.data(data) : null;
   }
 
   void _setSaveNotify(String key, dynamic data) {
@@ -24,19 +27,29 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
 
   List<LSNotification> get notifications => (attributes["notifs"] as List<LSNotification>? ?? [])..sort((a, b) => b.date.compareTo(a.date));
   set notifications(List<LSNotification> val) => _setSaveNotify("notifs", val);
-  void addNotification(LSNotification notif, {bool sort = true}) {
-    final l = notifications;
-    if (l.contains(notif)) return;
-    l.add(notif);
-    if (sort) l.sort((a, b) => a.date.compareTo(b.date));
-    notifications = l;
-  }
+  // void addNotification(LSNotification notif, {bool sort = true}) {
+  //   final l = notifications;
+  //   if (l.contains(notif)) return;
+  //   l.add(notif);
+  //   if (sort) l.sort((a, b) => a.date.compareTo(b.date));
+  //   notifications = l;
+  // }
+
+  List<LSTask> get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  set tasks(List<LSTask> val) => _setSaveNotify("tasks", val);
+  // void addTask(LSTask task, {bool sort = true}) {
+  //   final l = tasks;
+  //   if (l.contains(task)) return;
+  //   l.add(task);
+  //   if (sort) l.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  //   tasks = l;
+  // }
 
   final _serializer = Serializer();
   bool loaded = false;
   final Lock _fileLock = Lock();
   Future<void> save() async {
-    if (_fileLock.locked) log("The file lock for StuPlanData (file: cache/$lernSaxDataPrefsKey-data.json) is still locked!!! This means waiting...");
+    if (_fileLock.locked) log("The file lock for LernSaxData (file: cache/$lernSaxDataPrefsKey-data.json) is still locked!!! This means waiting...");
     _fileLock.synchronized(() async => await writeFile(await lernSaxDataFilePath, _serialize()));
   }
   String _serialize() => _serializer.serialize(this);
@@ -131,6 +144,79 @@ class LSNotification extends SerializableObject {
         'fromGroupName: $fromGroupName, '
         'unread: $unread, '
         'object: $object'
+        ')';
+  }
+}
+
+class LSTask extends SerializableObject {
+  String get id => attributes["id"];
+  set id(String val) => attributes["id"] = val;
+
+  DateTime? get startDate => DateTime.parse(attributes["start_date"]);
+  set startDate(DateTime? val) => attributes["start_date"] = val?.toIso8601String();
+
+  DateTime? get dueDate => DateTime.parse(attributes["due_date"]);
+  set dueDate(DateTime? val) => attributes["due_date"] = val?.toIso8601String();
+
+  String? get classLogin => attributes["class_login"];
+  set classLogin(String? val) => attributes["class_login"] = val;
+
+  String get title => attributes["title"];
+  set title(String val) => attributes["title"] = val;
+
+  String get description => attributes["description"];
+  set description(String val) => attributes["description"] = val;
+
+  bool get completed => attributes["completed"];
+  set completed(bool val) => attributes["completed"] = val;
+
+  String get createdByLogin => attributes["created_login"];
+  set createdByLogin(String val) => attributes["created_login"] = val;
+
+  String get createdByName => attributes["created_name"];
+  set createdByName(String val) => attributes["created_name"] = val;
+
+  DateTime get createdAt => DateTime.parse(attributes["created_at"]);
+  set createdAt(DateTime val) => attributes["created_at"] = val.toIso8601String();
+
+  LSTask({
+    required String id,
+    required DateTime? startDate,
+    required DateTime? dueDate,
+    required String? classLogin,
+    required String title,
+    required String description,
+    required bool completed,
+    required String createdByLogin,
+    required String createdByName,
+    required DateTime createdAt,
+  }) {
+    this.id = id;
+    this.startDate = startDate;
+    this.dueDate = dueDate;
+    this.classLogin = classLogin;
+    this.title = title;
+    this.description = description;
+    this.completed = completed;
+    this.createdByLogin = createdByLogin;
+    this.createdByName = createdByName;
+    this.createdAt = createdAt;
+  }
+
+  LSTask.data(Map<String, dynamic> data) {
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  @override
+  String toString() {
+    return 'LSTask('
+        'id: $id, '
+        'startDate: $startDate, '
+        'dueDate: $dueDate, '
+        'classLogin: $classLogin, '
+        'title: $title, '
+        'description: $description, '
+        'completed: $completed'
         ')';
   }
 }

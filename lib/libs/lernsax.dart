@@ -254,3 +254,39 @@ Future<List<LSNotification>?> getNotifications(String login, String token, {Stri
     return null;
   }
 }
+
+Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin}) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      call(
+        method: "set_focus",
+        params: {
+          "object": "tasks",
+          if (classLogin != null) "login": classLogin,
+        },
+      ),
+      call(
+        id: 1,
+        method: "get_entries",
+      ),
+    ]);
+    // if (kDebugMode) print(res);
+    final messages = (res[0]["result"]["entries"] as List<dynamic>).cast<Map<String, dynamic>>();
+    return messages.map((data) => LSTask(
+      id: data["id"],
+      startDate: data["start_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["start_date"]) * 1000) : null,
+      dueDate: data["due_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["due_date"]) * 1000) : null,
+      title: data["title"],
+      description: data["description"],
+      completed: data["completed"] == 1,
+      classLogin: classLogin,
+      createdByLogin: data["created"]["user"]["login"],
+      createdByName: data["created"]["user"]["name_hr"],
+      createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
+    )).toList();
+  } catch (e) {
+    if (kDebugMode) log("", error: e);
+    return null;
+  }
+}

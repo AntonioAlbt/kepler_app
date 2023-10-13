@@ -27,7 +27,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
         if (creds.lernSaxToken == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
         final navPage = state.selectedNavPageIDs.last;
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
-        if (navPage == LernSaxPageIDs.tasks) return const LSTasksPage();
+        if (navPage == LernSaxPageIDs.tasks) return LSTasksPage();
         if (navPage == LernSaxPageIDs.messageBoard) return const LSMsgBoardPage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
