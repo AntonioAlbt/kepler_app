@@ -151,7 +151,7 @@ class _KeplerAppState extends State<KeplerApp> {
     return _internalState.lastUserType ?? UserType.nobody;
   }
 
-  Future _load() async {
+  Future<void> _load() async {
     final t1 = DateTime.now();
     await loadAndPrepareApp();
     utype = await calcUT();
@@ -168,6 +168,10 @@ class _KeplerAppState extends State<KeplerApp> {
       introductionDisplay = InfoScreenDisplay(
         infoScreens: introScreens,
       );
+    } else {
+      if (!await checkNotificationPermission()) {
+        await requestNotificationPermission();
+      }
     }
 
     final mdif = DateTime.now().difference(t1).inMilliseconds;

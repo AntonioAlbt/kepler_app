@@ -7,11 +7,12 @@ import 'package:kepler_app/libs/notifications.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/privacy_policy.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, finishScreen];
+final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
 
 const welcomeScreen = InfoScreen(
   infoTitle: Text("Willkommen in der Kepler-App!"),
@@ -562,6 +563,82 @@ class _NotifInfoScreenMainState extends State<NotifInfoScreenMain> {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Consumer<Preferences>(
+      builder: (context, prefs, _) {
+        final sie = prefs.preferredPronoun == Pronoun.sie;
+        return Column(
+          children: [
+            Text("Diese App kann ${sie ? "Ihnen" : "Dir"} Benachrichtigungen für bestimmte Dinge senden. Dafür benötigen wir ${sie ? "Ihre" : "Deine"} Zustimmung."),
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Für was ${sie ? "möchten Sie" : "möchtest Du"} benachrichtigt werden?"),
+                  ListView(
+                    shrinkWrap: true,
+                    children: [
+                      CheckboxListTile(
+                        value: prefs.enabledNotifs.contains(newsNotificationKey),
+                        title: const Text("Neue Kepler-News"),
+                        onChanged: (val) => val! ? prefs.addEnabledNotif(newsNotificationKey) : prefs.removeEnabledNotif(newsNotificationKey),
+                      ),
+                      CheckboxListTile(
+                        value: prefs.enabledNotifs.contains(stuPlanNotificationKey),
+                        title: const Text("Änderungen im Stundenplan"),
+                        onChanged: (val) => val! ? prefs.addEnabledNotif(stuPlanNotificationKey) : prefs.removeEnabledNotif(stuPlanNotificationKey),
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    "Dies kann auch in den Einstellungen geändert werden.",
+                    style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        checkNotificationPermission().then((hasAgreed) {
+                          if (!hasAgreed) {
+                            requestNotificationPermission().then((agreedNow) {
+                              if (agreedNow) {
+                                ScaffoldMessenger.of(globalScaffoldState.context).showSnackBar(snack("Danke für ${sie ? "Ihre" : "Deine"} Zustimmung.", error: false));
+                              } else {
+                                ScaffoldMessenger.of(globalScaffoldState.context).showSnackBar(snack("Leider ${sie ? "haben Sie" : "hast Du"} nicht zugestimmt. Wir werden keine Benachrichtigungen senden.", error: true));
+                              }
+                              infoScreenState.next();
+                            });
+                          } else {
+                            infoScreenState.next();
+                          }
+                        });
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("Abschließen"),
+                          Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: Icon(Icons.arrow_forward),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<Preferences>(context, listen: false).enabledNotifs = [newsNotificationKey, stuPlanNotificationKey];
+    });
+    super.initState();
   }
 }

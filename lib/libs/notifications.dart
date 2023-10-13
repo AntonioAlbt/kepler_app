@@ -1,13 +1,13 @@
 import 'dart:developer';
-import 'dart:io';
+// import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+// import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
-import 'package:notification_permissions/notification_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,19 +18,22 @@ const kAndroid13 = 33;
 const kIos9 = 9;
 
 Future<bool> requestNotificationPermission() async {
-  final result = await NotificationPermissions.requestNotificationPermissions();
+  log("started request");
+  final result = await Permission.notification.request();
+  log("successfully requested notification perm, status now $result");
   return result == PermissionStatus.granted;
 }
 
 Future<bool> checkNotificationPermission() async {
-  if (Platform.isAndroid) {
-    final aInfo = await DeviceInfoPlugin().androidInfo;
-    if (aInfo.version.sdkInt < kAndroid13) return true;
-  } else if (Platform.isIOS) {
-    final iInfo = await DeviceInfoPlugin().iosInfo;
-    if ((int.tryParse(iInfo.systemVersion?.split(".").first ?? "10") ?? 10) < kIos9) return true;
-  }
-  return await NotificationPermissions.getNotificationPermissionStatus() == PermissionStatus.granted;
+  // TODO: test if I can actually remove this, especially on iOS
+  // if (Platform.isAndroid) {
+  //   final aInfo = await DeviceInfoPlugin().androidInfo;
+  //   if (aInfo.version.sdkInt < kAndroid13) return true;
+  // } else if (Platform.isIOS) {
+  //   final iInfo = await DeviceInfoPlugin().iosInfo;
+  //   if ((int.tryParse(iInfo.systemVersion?.split(".").first ?? "10") ?? 10) < kIos9) return true;
+  // }
+  return await Permission.notification.isGranted;
 }
 
 // Dart doesn't support multi-threading like this, but the _receiveActions function is called from Android/iOS on another

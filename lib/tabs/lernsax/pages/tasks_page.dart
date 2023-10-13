@@ -43,7 +43,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
             ),
           );
         }
-        return ListView.separated(
+        return ListView.separated( // TODO: fix/improve tasks display
           shrinkWrap: true,
           itemCount: lsdata.tasks.length,
           itemBuilder: (context, i) {
@@ -57,7 +57,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                // TODO: onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)),
+                // onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)), // TODO: create generateLernSaxTaskInfoDialog
                 onPressed: () {},
                 child: Column(
                   children: [
