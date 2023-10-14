@@ -81,6 +81,7 @@ dependencies:
 
   # libs for lernsax
   crypto: ^3.0.3
+  flutter_html: ^3.0.0-beta.2
 
   # libs for stuplan
   xml: ^6.3.0

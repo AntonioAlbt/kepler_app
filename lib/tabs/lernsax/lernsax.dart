@@ -77,7 +77,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
       await AppCheck.launchApp(lernSaxMsgrAndroidPkg);
     } catch (_) {
       try {
-        launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg"));
+        await launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg"));
       } catch (_) {
         ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
           const SnackBar(content: Text("Keine App zum Installieren von Apps gefunden.")),

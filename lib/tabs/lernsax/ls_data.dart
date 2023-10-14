@@ -17,6 +17,9 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
 
     objectCreators["tasks"] = (_) => <LSTask>[];
     objectCreators["tasks.value"] = (data) => data != null ? LSTask.data(data) : null;
+
+    objectCreators["memberships"] = (_) => <LSMembership>[];
+    objectCreators["memberships.value"] = (data) => data != null ? LSMembership.data(data) : null;
   }
 
   void _setSaveNotify(String key, dynamic data) {
@@ -37,13 +40,16 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
 
   List<LSTask> get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   set tasks(List<LSTask> val) => _setSaveNotify("tasks", val);
-  // void addTask(LSTask task, {bool sort = true}) {
-  //   final l = tasks;
-  //   if (l.contains(task)) return;
-  //   l.add(task);
-  //   if (sort) l.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-  //   tasks = l;
-  // }
+  void addNewTasks(List<LSTask> newTasks, {bool sort = true}) {
+    final l = tasks;
+    final ids = l.map((e) => e.id);
+    l.addAll(newTasks.where((e) => !ids.contains(e.id)));
+    if (sort) l.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    tasks = l;
+  }
+
+  List<LSMembership>? get memberships => attributes["memberships"];
+  set memberships(List<LSMembership>? val) => _setSaveNotify("memberships", val);
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -218,5 +224,84 @@ class LSTask extends SerializableObject {
         'description: $description, '
         'completed: $completed'
         ')';
+  }
+}
+
+enum MembershipType {
+  institution, group, class_, unknown;
+  static MembershipType fromInt(int val) {
+    switch (val) {
+      case 16: return MembershipType.institution;
+      case 18: return MembershipType.group;
+      case 19: return MembershipType.class_;
+      default: return MembershipType.unknown;
+    }
+  }
+  int toInt() => {
+    MembershipType.institution: 16,
+    MembershipType.group: 18,
+    MembershipType.class_: 19,
+    MembershipType.unknown: -1,
+  }[this]!;
+}
+
+class LSMembership extends SerializableObject {
+  String get login => attributes["login"];
+  set login(String val) => attributes["login"] = val;
+
+  // from the api json response value with key "name_hr", which could actually mean name - human readable
+  // (see here: https://chat.openai.com/share/0191513f-d6ae-466f-acdc-df70e0b2c0bf)
+  String get name => attributes["name"];
+  set name(String val) => attributes["name"] = val;
+
+  MembershipType get type => MembershipType.fromInt(attributes["type"]);
+  set type(MembershipType val) => attributes["type"] = val.toInt();
+
+  List<String> get baseRights => attributes["base_rights"];
+  set baseRights(List<String> val) => attributes["base_rights"] = val;
+
+  List<String> get memberRights => attributes["member_rights"];
+  set memberRights(List<String> val) => attributes["member_rights"] = val;
+
+  List<String> get effectiveRights => attributes["effective_rights"];
+  set effectiveRights(List<String> val) => attributes["effective_rights"] = val;
+
+  LSMembership({
+    required String login,
+    required String name,
+    required List<String> baseRights,
+    required List<String> memberRights,
+    required List<String> effectiveRights,
+  }) {
+    this.login = login;
+    this.name = name;
+    this.baseRights = baseRights;
+    this.memberRights = memberRights;
+    this.effectiveRights = effectiveRights;
+
+    _setup();
+  }
+
+  LSMembership.data(Map<String, dynamic> data) {
+    _setup();
+
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  void _setup() {
+    objectCreators["base_rights"] = (_) => <String>[];
+    objectCreators["member_rights"] = (_) => <String>[];
+    objectCreators["effective_rights"] = (_) => <String>[];
+  }
+
+  @override
+  String toString() {
+    return 'LSMembership {'
+        '\n  login: $login,'
+        '\n  name: $name,'
+        '\n  baseRights: $baseRights,'
+        '\n  memberRights: $memberRights,'
+        '\n  effectiveRights: $effectiveRights'
+        '\n}';
   }
 }

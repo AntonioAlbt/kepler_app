@@ -78,7 +78,7 @@ DateTime _lastSessionUpdate = DateTime(1900);
 const _timeTilRefresh = Duration(minutes: 15);
 String durform(Duration dur) => "${dur.inMinutes.abs()}m${dur.inSeconds % 60}s";
 Future<String> session(String mail, String token) async {
-  if (kDebugMode) print("[LS-AuthDebug] -> current sesh: $_currentSessionId, last update: ${DateFormat.Hms().format(_lastSessionUpdate)}, time to update: ${durform(_lastSessionUpdate.difference(DateTime.now().subtract(_timeTilRefresh)))}, update now: ${_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh}");
+  if (kDebugMode) print("[LS-AuthDebug] current sesh: $_currentSessionId, last update: ${DateFormat.Hms().format(_lastSessionUpdate)}, time to update: ${durform(_lastSessionUpdate.difference(DateTime.now().subtract(_timeTilRefresh)))}, update now: ${_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh}");
   if (_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh) {
     _currentSessionId = await newSession(mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
     _lastSessionUpdate = DateTime.now();
@@ -86,6 +86,7 @@ Future<String> session(String mail, String token) async {
   return _currentSessionId;
 }
 
+// this never needs an ID, because the response from the API for set_session doesn't contain the login information
 Future<Map<String, dynamic>> useSession(String mail, String token) async =>
     call(
         method: "set_session",
@@ -249,8 +250,8 @@ Future<List<LSNotification>?> getNotifications(String login, String token, {Stri
       object: data["object"],
       data: data["data"],
     )).toList();
-  } catch (e) {
-    if (kDebugMode) log("", error: e);
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
     return null;
   }
 }
@@ -285,8 +286,33 @@ Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin})
       createdByName: data["created"]["user"]["name_hr"],
       createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
     )).toList();
-  } catch (e) {
-    if (kDebugMode) log("", error: e);
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<List<LSMembership>?> getGroupsAndClasses(String login, String token) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      call(method: "reload", id: 1, params: { "get_properties": ["member"] }),
+    ]);
+    if (res[0]["result"]["return"] != "OK") return null;
+    final memberList = res[0]["result"]["member"] as List<dynamic>;
+    final list = <LSMembership>[];
+    for (final m in memberList) {
+      list.add(LSMembership(
+        login: m["login"],
+        name: m["name_hr"],
+        baseRights: m["base_rights"]?.cast<String>() ?? [],
+        memberRights: m["member_rights"]?.cast<String>() ?? [],
+        effectiveRights: m["effective_rights"]?.cast<String>() ?? [],
+      ));
+    }
+    return list;
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
     return null;
   }
 }
