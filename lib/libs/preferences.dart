@@ -96,8 +96,8 @@ class Preferences extends SerializableObject with ChangeNotifier {
     enabledNotifs = enabledNotifs..remove(val);
   }
 
-  bool get stuPlanReloadOnOpenDaily => attributes["sp_rl_on_open_d"] ?? true;
-  set stuPlanReloadOnOpenDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
+  bool get reloadStuPlanAutoOnceDaily => attributes["sp_rl_on_open_d"] ?? true;
+  set reloadStuPlanAutoOnceDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
 
   bool loaded = false;
 

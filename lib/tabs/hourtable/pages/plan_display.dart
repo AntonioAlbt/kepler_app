@@ -63,6 +63,17 @@ bool shouldGoToNextPlanDay(BuildContext context) {
     && !isWeekend(today.add(const Duration(days: 1)));
 }
 
+// written by ChatGPT: https://chat.openai.com/share/49838517-03ac-4041-836b-b7cf1ef901a6
+bool isSameDay(DateTime dateTime1, DateTime dateTime2) {
+  return dateTime1.year == dateTime2.year &&
+      dateTime1.month == dateTime2.month &&
+      dateTime1.day == dateTime2.day;
+}
+
+bool shouldStuPlanAutoReload(BuildContext context)
+  => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&
+    !isSameDay((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
+
 class StuPlanDisplayState extends State<StuPlanDisplay> {
   final format = DateFormat("EE, dd.MM.");
   late DateTime currentDate;
@@ -74,9 +85,9 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     _ctr.triggerRefresh(forceOnline: true)?.then((val) {
       if (val) {
         IndiwareDataManager.clearCachedData(excludeDate: currentDate);
-        showSnackBar(text: "Stundenplan erfolgreich aktualisiert.");
+        showSnackBar(text: "Stundenplan erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
       } else {
-        showSnackBar(textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: false, clear: true);
+        showSnackBar(textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
         _ctr.triggerRefresh(forceOnline: false);
       }
     });
@@ -86,13 +97,6 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     final today = DateTime.now();
     if (isWeekend(today)) return findNextMonday(today);
     return today;
-  }
-
-  // written by ChatGPT: https://chat.openai.com/share/49838517-03ac-4041-836b-b7cf1ef901a6
-  bool isSameDay(DateTime dateTime1, DateTime dateTime2) {
-    return dateTime1.year == dateTime2.year &&
-        dateTime1.month == dateTime2.month &&
-        dateTime1.day == dateTime2.day;
   }
 
   @override
@@ -107,12 +111,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
 
     startDate = _getStartDate();
 
+    // has to be run in a post frame callback because Flutter otherwise tries to trigger a rebuild (but initState happens while building -> "already building" error) somewhere (in a child widget?)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final istate = Provider.of<InternalState>(context, listen: false);
-      // istate.lastStuPlanAutoReload = DateTime(1900);
-      if (Provider.of<Preferences>(context, listen: false).stuPlanReloadOnOpenDaily && !isSameDay((istate.lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now())) {
+      if (shouldStuPlanAutoReload(context)) {
         forceRefreshData();
-        istate.lastStuPlanAutoReload = DateTime.now();
+        Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = DateTime.now();
       }
     });
   }

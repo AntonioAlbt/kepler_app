@@ -87,6 +87,12 @@ class _SettingsTabState extends State<SettingsTab> {
                   onPressed: (_) => yourStuPlanEditAction(),
                 ),
                 SettingsTile.switchTile(
+                  initialValue: prefs.reloadStuPlanAutoOnceDaily,
+                  onToggle: (val) => prefs.reloadStuPlanAutoOnceDaily = val,
+                  title: const Text("Beim Öffnen automatisch aktualisieren"),
+                  description: const Text("passiert einmal täglich beim Öffnen des Stundenplanes"),
+                ),
+                SettingsTile.switchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation,
                   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
                   title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),

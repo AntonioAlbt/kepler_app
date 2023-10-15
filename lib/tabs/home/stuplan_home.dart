@@ -137,6 +137,29 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
       },
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // listening to changes (especially to AppState.userType) would seem to make sense here,
+    // but the user has to setup the stuplan anyway if they just completed the introduction
+    // so they will have to reload the state anyway
+    final prefs = Provider.of<Preferences>(context, listen: false);
+    final state = Provider.of<AppState>(context, listen: false);
+    // also check here, because it's shown on the home page
+    if (
+      !shouldShowStuPlanIntro(Provider.of<StuPlanData>(context, listen: false), state.userType == UserType.teacher) &&
+      prefs.reloadStuPlanAutoOnceDaily
+    ) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (shouldStuPlanAutoReload(context)) {
+          setState(() => forceRefresh = true);
+          Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = DateTime.now();
+        }
+      });
+    }
+  }
 }
 
 class SPWidgetList extends StatelessWidget {
