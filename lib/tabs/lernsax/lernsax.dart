@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:appcheck/appcheck.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/lernsax/pages/msgboard_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
@@ -79,9 +79,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
       try {
         await launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg"));
       } catch (_) {
-        ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
-          const SnackBar(content: Text("Keine App zum Installieren von Apps gefunden.")),
-        );
+        showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", error: true);
       }
     }
   } else if (Platform.isIOS) {

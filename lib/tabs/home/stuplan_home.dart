@@ -66,15 +66,15 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       creds.vpUser!,
                       creds.vpPassword!,
                       forceRefresh: forceRefresh ?? false,
-                    ) : Future<VPKlData?>.error("welp"),
+                    ) : Future<(VPKlData?, bool)>.error("welp"),
                     initialData: null,
                     builder: (context, datasn) {
                       forceRefresh = false;
                       if (datasn.error != null) {
                         return const Text("Fehler beim Laden der Daten.");
                       }
-                      final data = datasn.data;
-                      final lessons = data?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
+                      final dataP = datasn.data;
+                      final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
                         ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
                         .where((e) => stdata.selectedCourseIDs.contains(e.subjectID)).toList();
                       final considerIt = prefs.considerLernSaxTasksAsCancellation;
@@ -82,6 +82,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         stillLoading: datasn.connectionState != ConnectionState.done,
                         lessons: lessons?.map((lesson) => considerLernSaxCancellationForLesson(lesson, considerIt)).toList(),
                         onRefresh: () => setState(() => forceRefresh = true),
+                        isOnline: dataP?.$2 ?? false,
                       );
                     }
                   ) : (user == UserType.teacher) ? FutureBuilder(
@@ -95,26 +96,39 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       final data = datasn.data;
                       return SPWidgetList(
                         stillLoading: datasn.connectionState != ConnectionState.done,
-                        lessons: data?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
+                        lessons: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
                           .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
                         onRefresh: () => setState(() => forceRefresh = true),
+                        isOnline: data?.$2 ?? false,
                       );
                     },
                   ) : const Text("Nicht angemeldet."),
                 ),
               ) else Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Text("${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht geöffnet. Jetzt einrichten?"),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: ElevatedButton(
-                        onPressed: () => stuPlanOnTryOpenCallback(context),
-                        child: const Text("Einrichten"),
-                      ),
+                padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
+                child: SPListContainer(
+                  color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+                  shadow: false,
+                  padding: EdgeInsets.zero,
+                  showBorder: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(
+                          "${sie ? "Sie haben" : "Du hast"} den Stundenplan noch nicht eingerichtet.",
+                          textAlign: TextAlign.center,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: ElevatedButton(
+                            onPressed: () => stuPlanOnTryOpenCallback(context),
+                            child: const Text("Jetzt einrichten"),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -129,7 +143,8 @@ class SPWidgetList extends StatelessWidget {
   final List<VPLesson>? lessons;
   final VoidCallback? onRefresh;
   final bool stillLoading;
-  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false});
+  final bool isOnline;
+  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false, this.isOnline = false});
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +157,7 @@ class SPWidgetList extends StatelessWidget {
         showBorder: false,
         child: () {
           Widget? child;
-          if (evrydayIsSaturday()) {
+          if (evrydayIsSaturday() && !shouldGoToNextPlanDay(context)) {
             child = const Expanded(
               child: Center(
                 child: Text(
@@ -161,11 +176,11 @@ class SPWidgetList extends StatelessWidget {
               ),
             );
           } else if (lessons == null) {
-            child = const Expanded(
+            child = Expanded(
               child: Center(
                 child: Text(
-                  "Keine Daten verfügbar.",
-                  style: TextStyle(fontSize: 17),
+                  isOnline ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
+                  style: const TextStyle(fontSize: 17),
                 ),
               ),
             );
@@ -209,7 +224,7 @@ class SPWidgetList extends StatelessWidget {
                       ),
                       const Spacer(),
                       IconButton(
-                        onPressed: (evrydayIsSaturday()) ? null : onRefresh,
+                        onPressed: (evrydayIsSaturday() && !shouldGoToNextPlanDay(context)) ? null : onRefresh,
                         icon: const Icon(Icons.refresh, size: 20),
                         style: IconButton.styleFrom(padding: EdgeInsets.zero, visualDensity: const VisualDensity(horizontal: -4, vertical: -4)),
                       ),
@@ -224,6 +239,7 @@ class SPWidgetList extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4, left: 12, right: 12, bottom: 8),
                     child: ListView.separated(
+                      primary: false,
                       itemCount: lessons!.length,
                       itemBuilder: (context, index) => LessonDisplay(
                         lessons![index],

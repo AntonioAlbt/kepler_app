@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -102,14 +101,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final classes = await lernsax.getGroupsAndClasses(creds.lernSaxLogin, creds.lernSaxToken!);
     if (classes == null) {
-      ScaffoldMessenger.of(globalScaffoldKey.currentContext!)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Selector<Preferences, bool>(
-          selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-          builder: (context, sie, _) {
-            return Text("Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Klassen/Gruppen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?");
-          }
-        )));
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Klassen/Gruppen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       setState(() => _loadingClasses = false);
     } else {
       lsdata.memberships = classes;
@@ -323,24 +315,10 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       }
 
       if (failed.isNotEmpty) {
-        ScaffoldMessenger.of(globalScaffoldKey.currentContext!)
-          ..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Selector<Preferences, bool>(
-            selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-            builder: (context, sie, _) {
-              return Text("Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben aus den Klassen/Gruppen: ${failed.join(", ")}. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.");
-            }
-          )));
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben aus den Klassen/Gruppen: ${failed.join(", ")}. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
       }
       if (data.isEmpty) {
-        ScaffoldMessenger.of(globalScaffoldKey.currentContext!)
-          ..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Selector<Preferences, bool>(
-            selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-            builder: (context, sie, _) {
-              return Text("Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?");
-            }
-          )));
+        showSnackBar(textGen: (sie) =>  "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       } else {
         connected = true;
         lsdata.addNewTasks(data);
@@ -348,14 +326,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
     } else {
       final data = await lernsax.getTasks(creds.lernSaxLogin, creds.lernSaxToken!, classLogin: widget.selectedClass);
       if (data == null) {
-        ScaffoldMessenger.of(globalScaffoldKey.currentContext!)
-          ..clearSnackBars()
-          ..showSnackBar(SnackBar(content: Selector<Preferences, bool>(
-            selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-            builder: (context, sie, _) {
-              return Text("Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?");
-            }
-          )));
+        showSnackBar(textGen: (sie) =>  "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       } else {
         lsdata.addNewTasks(data);
         connected = true;

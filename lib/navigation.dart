@@ -5,6 +5,7 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/about.dart';
@@ -191,11 +192,7 @@ final destinations = [
           if (creds.lernSaxToken == null) return false;
           final url = await getSingleUseLoginLink(creds.lernSaxLogin, creds.lernSaxToken!);
           if (url == null) {
-            ScaffoldMessenger.of(globalScaffoldKey.currentContext!).showSnackBar(
-              const SnackBar(
-                content: Text("Fehler beim Erstellen des Links."),
-              ),
-            );
+            showSnackBar(text: "Fehler beim Erstellen des Links.", error: true);
             return false;
           }
           launchUrl(

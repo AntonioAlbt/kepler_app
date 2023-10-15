@@ -133,12 +133,6 @@ class VPCSubjectS extends SerializableObject {
   };
 }
 
-// bool wrapper for pass-by-reference
-class Bw {
-  bool? val;
-  Bw(this.val);
-}
-
 const stuplanpath = "/stuplans";
 
 class IndiwareDataManager {
@@ -176,56 +170,54 @@ class IndiwareDataManager {
     await writeFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml", data.toXmlString());
   }
 
-  static Future<void> clearCachedData() async {
+  static Future<void> clearCachedData({ DateTime? excludeDate }) async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     for (var file in (await dir.list().toList())) {
       final name = file.path.split("/").last;
       if (name.endsWith(".xml")) {
         // this will fail when we're in year 21xx
         // but that's a problem for future robot me
-        await file.delete();
+        // - actually, it won't be (anymore?). why did i write this???
+        if (excludeDate != null && !name.contains(fnTimeFormat.format(excludeDate))) await file.delete();
       }
     }
   }
 
-  static Future<VPKlData?> getKlDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
+  /// returns (data, isOnline)
+  static Future<(VPKlData?, bool)> getKlDataForDate(
+      DateTime date, String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedKlDataForDate(date);
-      fromCache?.val = true;
-      if (cached != null) return cached;
+      if (cached != null) return (cached, false);
     }
-    final real = await getKlXMLForDate(username, password, date);
-    fromCache?.val = false;
-    if (real == null) return null;
+    final (real, online) = await getKlXMLForDate(username, password, date);
+    if (real == null) return (null, online);
     await _setCachedKlDataForDate(date, real);
-    return xmlToKlData(real);
+    return (xmlToKlData(real), online);
   }
-  static Future<VPLeData?> getLeDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
+  /// returns (data, isOnline)
+  static Future<(VPLeData?, bool)> getLeDataForDate(
+      DateTime date, String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedLeDataForDate(date);
-      fromCache?.val = true;
-      if (cached != null) return cached;
+      if (cached != null) return (cached, false);
     }
-    final real = await getLeXMLForDate(username, password, date);
-    fromCache?.val = false;
-    if (real == null) return null;
+    final (real, online) = await getLeXMLForDate(username, password, date);
+    if (real == null) return (null, online);
     await _setCachedLeDataForDate(date, real);
-    return xmlToLeData(real);
+    return (xmlToLeData(real), online);
   }
-  static Future<VPKlData?> getKlassenXmlData(
-      String username, String password, {bool forceRefresh = false, Bw? fromCache}) async {
+  /// returns (data, isOnline)
+  static Future<(VPKlData?, bool)> getKlassenXmlData(
+      String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedKlassenXmlData();
-      fromCache?.val = true;
-      if (cached != null) return cached;
+      if (cached != null) return (cached, false);
     }
-    final real = await getKlassenXML(username, password);
-    fromCache?.val = false;
-    if (real == null) return null;
+    final (real, online) = await getKlassenXML(username, password);
+    if (real == null) return (null, online);
     await _setKlassenXmlData(real);
-    return xmlToKlData(real);
+    return (xmlToKlData(real), online);
   }
 
   // now following: setup methods
@@ -240,8 +232,8 @@ class IndiwareDataManager {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     final thresholdDate = DateTime.now().subtract(const Duration(days: 3));
     for (final file in (await dir.list().toList())) {
-      final fn = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
-      final date = fnTimeFormat.parse(fn);
+      final fnDateStr = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
+      final date = fnTimeFormat.parse(fnDateStr);
       if (kDebugMode) print("found stuplan data xml with date ${fnTimeFormat.format(date)}, will be deleted: ${date.isBefore(thresholdDate)} - threshold: ${fnTimeFormat.format(thresholdDate)}");
       if (date.isBefore(thresholdDate)) await file.delete();
     }

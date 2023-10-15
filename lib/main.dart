@@ -240,7 +240,7 @@ class _KeplerAppState extends State<KeplerApp> {
               WillPopScope(
                 onWillPop: () async {
                   if (_appState.selectedNavPageIDs.last != _prefs.startNavPage) {
-                    _appState.selectedNavPageIDs = [_prefs.startNavPage];
+                    _appState.selectedNavPageIDs = [_prefs.startNavPage, if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours];
                     return false;
                   } else {
                     return true;
@@ -307,14 +307,14 @@ class _KeplerAppState extends State<KeplerApp> {
       animation: _prefs,
       builder: (context, home) {
         return MaterialApp(
-          title: "",
+          title: "Kepler-App",
           home: home,
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
-                seedColor: keplerColorBlue,
-                brightness:
-                    (_prefs.darkTheme) ? Brightness.dark : Brightness.light),
+              seedColor: keplerColorBlue,
+              brightness: (_prefs.darkTheme) ? Brightness.dark : Brightness.light,
+            ),
           ),
         );
       },

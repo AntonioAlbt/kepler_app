@@ -6,8 +6,8 @@ import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/privacy_policy.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -158,19 +158,6 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
   }
 }
 
-snack(String text, {required bool error}) => SnackBar(
-  content: Consumer<Preferences>(
-    builder: (context, prefs, _) => Text(
-      text,
-      style: (error)
-          ? TextStyle(
-              color: (prefs.darkTheme) ? Colors.red[400] : Colors.red[600],
-            )
-          : null,
-    ),
-  ),
-);
-
 class LernSaxScreenMain extends StatefulWidget {
   const LernSaxScreenMain({super.key});
 
@@ -230,8 +217,6 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 final pw = _pwController.text;
                 FocusScope.of(context).unfocus();
                 runLogin(mail, pw, sie).then((error) {
-                  final msgr = ScaffoldMessenger.of(context);
-                  msgr.clearSnackBars();
                   if (error == null) {
                     try {
                       registerApp(mail, pw).then((token) {
@@ -241,15 +226,14 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                         if (parentTypeEndings.any((element) => mail.split("@")[0].endsWith(".$element"))) {
                           Provider.of<AppState>(context, listen: false).userType = UserType.parent;
                         }
-                        msgr.showSnackBar(snack("Erfolgreich eingeloggt und verbunden.", error: false));
+                        showSnackBar(text: "Erfolgreich eingeloggt und verbunden.", clear: true);
                         infoScreenState.next();
                       });
                     } catch (_) {
-                      msgr.clearSnackBars();
-                      msgr.showSnackBar(snack("Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true));
+                      showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
                     }
                   } else {
-                    msgr.showSnackBar(snack(error, error: true));
+                    showSnackBar(text: error, error: true);
                   }
                 });
               },
@@ -473,10 +457,8 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                   final password = _pwController.text;
                   handleLogin(username, password, sie)
                       .then((error) {
-                        final mgr = ScaffoldMessenger.of(context);
                         if (error != null) {
-                          mgr.clearSnackBars();
-                          mgr.showSnackBar(snack(error, error: true));
+                          showSnackBar(text: error, error: true, clear: true);
                         } else {
                           final cs = Provider.of<CredentialStore>(context, listen: false);
                           cs.vpUser = username;
@@ -485,8 +467,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                             .then((userType) {
                               Provider.of<AppState>(context, listen: false).userType = userType;
                               Provider.of<InternalState>(context, listen: false).lastUserType = userType;
-                              mgr.clearSnackBars();
-                              mgr.showSnackBar(snack("Erfolgreich angemeldet.", error: false));
+                              showSnackBar(text: "Erfolgreich angemeldet.", clear: true);
                               infoScreenState.next();
                             });
                         }
@@ -602,9 +583,9 @@ class _NotifInfoScreenMainState extends State<NotifInfoScreenMain> {
                           if (!hasAgreed) {
                             requestNotificationPermission().then((agreedNow) {
                               if (agreedNow) {
-                                ScaffoldMessenger.of(globalScaffoldState.context).showSnackBar(snack("Danke für ${sie ? "Ihre" : "Deine"} Zustimmung.", error: false));
+                                showSnackBar(text: "Danke für ${sie ? "Ihre" : "Deine"} Zustimmung.", error: false);
                               } else {
-                                ScaffoldMessenger.of(globalScaffoldState.context).showSnackBar(snack("Leider ${sie ? "haben Sie" : "hast Du"} nicht zugestimmt. Wir werden keine Benachrichtigungen senden.", error: true));
+                                showSnackBar(text: "Leider ${sie ? "haben Sie" : "hast Du"} nicht zugestimmt. Wir werden keine Benachrichtigungen senden.", error: true);
                               }
                               infoScreenState.next();
                             });

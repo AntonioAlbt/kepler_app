@@ -183,6 +183,9 @@ class InternalState extends SerializableObject with ChangeNotifier {
   String? get nowOpenOnStartup => attributes["open_on_startup"];
   set nowOpenOnStartup(String? val) => _setSaveNotify("open_on_startup", val);
 
+  DateTime? get lastStuPlanAutoReload => (attributes.containsKey("last_sp_auto_rl") && attributes["last_sp_auto_rl"] != null) ? DateTime.parse(attributes["last_sp_auto_rl"]) : null;
+  set lastStuPlanAutoReload(DateTime? val) => _setSaveNotify("last_sp_auto_rl", val?.toIso8601String());
+
   bool loaded = false;
 
   save() async {

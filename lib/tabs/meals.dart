@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:appcheck/appcheck.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MealOrderingTab extends StatefulWidget {
@@ -61,7 +62,7 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
                   AppCheck.launchApp(appId());
                 } else {
                   launchUrl(Uri.parse("market://details?id=$androidAppId")).catchError((e) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Keine App zum Installieren von Apps gefunden.")));
+                    showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", clear: true, error: true);
                     return true;
                   });
                 }

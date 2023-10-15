@@ -7,6 +7,7 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 InfoScreenDisplay stuPlanPupilIntroScreens() => InfoScreenDisplay(
   infoScreens: [
@@ -121,24 +122,40 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     });
     final spdata = Provider.of<StuPlanData>(context, listen: false);
     try {
-      spdata.loadDataFromKlData((await getKlassenXmlKlData(creds.vpUser!, creds.vpPassword!))!);
+      final (data, online) = await getKlassenXmlKlData(creds.vpUser!, creds.vpPassword!);
+      if (data == null && !online) {
+        setState(() {
+          _loading = false;
+          _error = "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+        });
+      }
+      spdata.loadDataFromKlData(data!);
       spdata.selectedClassName ??= spdata.availableClasses.first;
       setState(() => _loading = false);
-    } catch (_) {
+    } catch (e, s) {
+      Sentry.captureException(e, stackTrace: s);
       setState(() {
         _loading = false;
-        _error = "Fehler bei der Abfrage der Klassen. Ist Internet vorhanden?";
+        _error = "Fehler bei der Abfrage der Klassen. Bitte später erneut probieren.";
       });
     }
     if (widget.teacherMode) {
       try {
-        spdata.loadDataFromLeData((await getLehrerXmlLeData(creds.vpUser!, creds.vpPassword!))!);
+        final (data, online) = await getLehrerXmlLeData(creds.vpUser!, creds.vpPassword!);
+        if (data == null && !online) {
+          setState(() {
+            _loading = false;
+            _error = "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+          });
+        }
+        spdata.loadDataFromLeData(data!);
         spdata.selectedTeacherName ??= spdata.availableTeachers.first;
         setState(() => _loading = false);
-      } catch (_) {
+      } catch (e, s) {
+        Sentry.captureException(e, stackTrace: s);
         setState(() {
           _loading = false;
-          _error = "Fehler bei der Abfrage der Lehrer. Ist Internet vorhanden?";
+          _error = "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren.";
         });
       }
     }

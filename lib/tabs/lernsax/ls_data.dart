@@ -158,10 +158,12 @@ class LSTask extends SerializableObject {
   String get id => attributes["id"];
   set id(String val) => attributes["id"] = val;
 
-  DateTime? get startDate => DateTime.parse(attributes["start_date"]);
+  // containsKey will always be true if ... != null is true, but the code is more readable this way imo
+  // (and the performance also doesn't matter)
+  DateTime? get startDate => (attributes.containsKey("start_date") && attributes["start_date"] != null) ? DateTime.parse(attributes["start_date"]) : null;
   set startDate(DateTime? val) => attributes["start_date"] = val?.toIso8601String();
 
-  DateTime? get dueDate => DateTime.parse(attributes["due_date"]);
+  DateTime? get dueDate => (attributes.containsKey("due_date") && attributes["due_date"] != null) ? DateTime.parse(attributes["due_date"]) : null;
   set dueDate(DateTime? val) => attributes["due_date"] = val?.toIso8601String();
 
   String? get classLogin => attributes["class_login"];

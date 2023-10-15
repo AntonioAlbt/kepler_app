@@ -85,6 +85,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);
 
+  // TODO: add in settings, respect when sending notifications
   List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
   void addEnabledNotif(String val) {
@@ -94,6 +95,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   void removeEnabledNotif(String val) {
     enabledNotifs = enabledNotifs..remove(val);
   }
+
+  bool get stuPlanReloadOnOpenDaily => attributes["sp_rl_on_open_d"] ?? true;
+  set stuPlanReloadOnOpenDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
 
   bool loaded = false;
 

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
@@ -58,8 +59,7 @@ bool shouldGoToNextPlanDay(BuildContext context) {
   final today = DateTime.now();
   final prefs = Provider.of<Preferences>(context, listen: false);
   final todayNextPlanDay = prefs.timeToDefaultToNextPlanDay.toDateTime(today);
-  return !isWeekend(today)
-    && today.millisecondsSinceEpoch > todayNextPlanDay.millisecondsSinceEpoch
+  return today.millisecondsSinceEpoch > todayNextPlanDay.millisecondsSinceEpoch
     && !isWeekend(today.add(const Duration(days: 1)));
 }
 
@@ -70,7 +70,16 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   final _ctr = StuPlanDayDisplayController();
 
   void forceRefreshData() {
-    IndiwareDataManager.clearCachedData().then((_) => _ctr.triggerRefresh());
+    // only clear the cache if loading the new data succeeded (if connected to indiware)
+    _ctr.triggerRefresh(forceOnline: true)?.then((val) {
+      if (val) {
+        IndiwareDataManager.clearCachedData(excludeDate: currentDate);
+        showSnackBar(text: "Stundenplan erfolgreich aktualisiert.");
+      } else {
+        showSnackBar(textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: false, clear: true);
+        _ctr.triggerRefresh(forceOnline: false);
+      }
+    });
   }
 
   DateTime _getStartDate() {
@@ -79,22 +88,33 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     return today;
   }
 
+  // written by ChatGPT: https://chat.openai.com/share/49838517-03ac-4041-836b-b7cf1ef901a6
+  bool isSameDay(DateTime dateTime1, DateTime dateTime2) {
+    return dateTime1.year == dateTime2.year &&
+        dateTime1.month == dateTime2.month &&
+        dateTime1.day == dateTime2.day;
+  }
+
   @override
   void initState() {
     super.initState();
     currentDate = _getStartDate();
     
-    if (shouldGoToNextPlanDay(context)) {
+    // currentDate on sundays is already the monday because shouldGoToNextPlanDay also works on sundays
+    if (shouldGoToNextPlanDay(context) && DateTime.now().weekday != DateTime.sunday) {
       currentDate = currentDate.add(const Duration(days: 1));
     }
 
     startDate = _getStartDate();
-  }
 
-  @override
-  void setState(VoidCallback fn) {
-    _ctr.clearRefreshListeners();
-    super.setState(fn);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final istate = Provider.of<InternalState>(context, listen: false);
+      // istate.lastStuPlanAutoReload = DateTime(1900);
+      if (Provider.of<Preferences>(context, listen: false).stuPlanReloadOnOpenDaily && !isSameDay((istate.lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now())) {
+        forceRefreshData();
+        istate.lastStuPlanAutoReload = DateTime.now();
+      }
+    });
   }
 
   bool canGoBack() => currentDate.isAfter(startDate);
@@ -226,12 +246,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
 }
 
 class StuPlanDayDisplayController {
-  final List<VoidCallback> onRefreshListeners = [];
+  Future<bool> Function(bool forceOnline)? onRefreshListener;
 
-  void addRefreshListener(VoidCallback func) => onRefreshListeners.add(func);
-  void clearRefreshListeners() => onRefreshListeners.clear();
-  // ignore: avoid_function_literals_in_foreach_calls
-  void triggerRefresh() => onRefreshListeners.forEach((func) => func());
+  void setRefreshListener(Future<bool> Function(bool forceOnline) func) => onRefreshListener = func;
+  void clearRefreshListener() => onRefreshListener = null;
+  Future<bool>? triggerRefresh({ required bool forceOnline }) => onRefreshListener?.call(forceOnline);
 
   StuPlanDayDisplayController();
 }
@@ -275,7 +294,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   /// gets loaded if the user is a teacher and no special mode is selected
   List<VPTeacherSupervision>? supervisions;
   /// is always updated when something is loaded
-  Bw fromCache = Bw(null);
+  bool? isOnline;
 
   List<Widget> _buildAllReplacesLessonList() {
     // final currentClass = Provider.of<StuPlanData>(context, listen: false).selectedClassName;
@@ -459,8 +478,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       children: [
         if (lastUpdated != null) Text("zuletzt geändert am $lastUpdated"),
         if (showSTDebugStuff)
-          Text(
-              "fetched ${fromCache.val == null ? "from somewhere?" : fromCache.val == true ? "from cache" : "from the internet"}"),
+          Text("fetched ${isOnline == null ? "from somewhere?" : isOnline == false ? "from cache" : "from the internet"}"),
         Flexible(
           flex: 3,
           child: Padding(
@@ -472,10 +490,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     child: () {
                       final list = _buildAllReplacesLessonList();
                       if (list.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Text(
-                            "Keine Daten verfügbar.",
-                            style: TextStyle(fontSize: 18),
+                            isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
+                            style: const TextStyle(fontSize: 18),
                           ),
                         );
                       }
@@ -492,10 +510,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       child: () {
                         final list = _buildFreeRoomList();
                         if (list.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
-                              "Keine Daten verfügbar.",
-                              style: TextStyle(fontSize: 18),
+                              isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
+                              style: const TextStyle(fontSize: 18),
                             ),
                           );
                         }
@@ -512,6 +530,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     widget.selected,
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
+                    isOnline: isOnline,
                   ),
           ),
         ),
@@ -606,15 +625,13 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
 
   @override
   void initState() {
-    _loadData(forceRefresh: false);
-    widget.controller?.addRefreshListener(() {
-      _loadData(forceRefresh: true);
-    });
+    loadData(forceRefresh: false);
+    widget.controller?.setRefreshListener((force) => loadData(forceRefresh: force));
     super.initState();
   }
 
-  Future<void> _loadData({required bool forceRefresh}) async {
-    if (!mounted) return;
+  Future<bool> loadData({required bool forceRefresh}) async {
+    if (!mounted) return false;
     setState(() => _loading = true);
     final state = Provider.of<AppState>(context, listen: false);
     final user = state.userType;
@@ -623,32 +640,28 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     final prefs = Provider.of<Preferences>(context, listen: false);
     if (creds.vpUser == null || creds.vpPassword == null) {
       state.selectedNavPageIDs = [PageIDs.home];
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Fehler bei der Datenabfrage. Bitte erneut anmelden."),
-        ),
-      );
-      return;
+      showSnackBar(text: "Fehler bei der Datenabfrage. Bitte erneut anmelden.", error: true);
+      return false;
     }
     getKlData() => IndiwareDataManager.getKlDataForDate(
         widget.date,
         creds.vpUser!,
         creds.vpPassword!,
-        fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
     getLeData() => IndiwareDataManager.getLeDataForDate(
         widget.date,
         creds.vpUser!,
         creds.vpPassword!,
-        fromCache: fromCache,
         forceRefresh: forceRefresh,
       );
+
     switch (widget.mode) {
       case SPDisplayMode.yourPlan:
         if (user == UserType.pupil || user == UserType.parent) {
-          final data = await getKlData();
-          if (!mounted) return;
+          final (data, online) = await getKlData();
+          if (!mounted) return false;
+          isOnline = online;
           lastUpdated = data?.header.lastUpdated;
           lessons = data?.classes
               .cast<VPClass?>()
@@ -657,24 +670,31 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ?.lessons
               .where((element) => stdata.selectedCourseIDs.contains(element.subjectID))
               .toList();
+          additionalInfo = data?.additionalInfo;
         } else if (user == UserType.teacher) {
-          final data = await getLeData();
-          if (!mounted) return;
+          final (data, online) = await getLeData();
+          if (!mounted) return false;
+          isOnline = online;
           lastUpdated = data?.header.lastUpdated;
           final teacher = data?.teachers.cast<VPTeacher?>().firstWhere(
               (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
               orElse: () => null);
           lessons = teacher?.lessons;
           supervisions = teacher?.supervisions;
+          additionalInfo = data?.additionalInfo;
         }
-        if (prefs.confettiEnabled && lessons?.any((lesson) => lesson.teacherCode == "---" || lesson.subjectCode == "---") == true) {
+        if (
+          prefs.confettiEnabled &&
+          lessons?.any((lesson) => lesson.teacherCode == "---" || considerLernSaxCancellationForLesson(lesson, prefs.considerLernSaxTasksAsCancellation).subjectCode == "---") == true
+        ) {
           globalConfettiController.play();
         }
         break;
       case SPDisplayMode.allReplaces:
         if (user == UserType.pupil || user == UserType.parent) {
-          final klData = await getKlData();
-          if (!mounted) return;
+          final (klData, online) = await getKlData();
+          if (!mounted) return false;
+          isOnline = online;
           lastUpdated = klData?.header.lastUpdated;
           changedClassLessons = klData?.classes.asMap().map((_, cl) => MapEntry(
               cl.className,
@@ -687,8 +707,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   .toList()));
           additionalInfo = klData?.additionalInfo;
         } else if (user == UserType.teacher) {
-          final leData = await getLeData();
-          if (!mounted) return;
+          final (leData, online) = await getLeData();
+          if (!mounted) return false;
+          isOnline = online;
           lastUpdated = leData?.header.lastUpdated;
           changedClassLessons = leData?.teachers.asMap().map((_, cl) => MapEntry(
               cl.teacherCode,
@@ -703,8 +724,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         }
         break;
       case SPDisplayMode.classPlan:
-        final klData = await getKlData();
-        if (!mounted) return;
+        final (klData, online) = await getKlData();
+        if (!mounted) return false;
+        isOnline = online;
         lastUpdated = klData?.header.lastUpdated;
         lessons = klData?.classes
             .cast<VPClass?>()
@@ -716,17 +738,19 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       case SPDisplayMode.freeRooms:
         // free rooms ignores teacher mode
         // yes, the teacher stuplan access allows accessing room plans
-        // but idc lol - also teachers don't deserve better free room
-        final klData = await getKlData();
-        if (!mounted) return;
+        // but idc lol - also teachers don't deserve better free room plans
+        final (klData, online) = await getKlData();
+        if (!mounted) return false;
+        isOnline = online;
         lastUpdated = klData?.header.lastUpdated;
         lessons = klData?.classes
             .map((e) => e.lessons)
             .fold([], (prev, ls) => prev!..addAll(ls));
         break;
       case SPDisplayMode.roomPlan:
-        final klData = await getKlData();
-        if (!mounted) return;
+        final (klData, online) = await getKlData();
+        if (!mounted) return false;
+        isOnline = online;
         lastUpdated = klData?.header.lastUpdated;
         final prefs = Provider.of<Preferences>(context, listen: false);
         lessons = klData?.classes
@@ -736,8 +760,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .toList();
         break;
       case SPDisplayMode.teacherPlan:
-        final leData = await getLeData();
-        if (!mounted) return;
+        final (leData, online) = await getLeData();
+        if (!mounted) return false;
+        isOnline = online;
         lastUpdated = leData?.header.lastUpdated;
         lessons = leData?.teachers.cast<VPTeacher?>()
           .firstWhere((le) => le?.teacherCode == widget.selected, orElse: () => null)
@@ -752,6 +777,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       return l1.subjectCode.compareTo(l2.subjectCode);
     });
     setState(() => _loading = false);
+    return isOnline ?? false;
   }
 
   @override
@@ -838,7 +864,8 @@ class LessonListContainer extends StatelessWidget {
   final String className;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
-  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight});
+  final bool? isOnline;
+  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
 
   @override
   Widget build(BuildContext context) {
@@ -848,10 +875,10 @@ class LessonListContainer extends StatelessWidget {
         showBorder: lessons != null,
         child: () {
           if (lessons == null) {
-            return const Center(
+            return Center(
               child: Text(
-                "Keine Daten verfügbar.",
-                style: TextStyle(fontSize: 18),
+                isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
+                style: const TextStyle(fontSize: 18),
               ),
             );
           }

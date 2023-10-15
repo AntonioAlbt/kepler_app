@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
-import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -155,14 +155,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     final creds = Provider.of<CredentialStore>(context, listen: false);
     lsdata.notifications += (await lernsax.getNotifications(creds.lernSaxLogin, creds.lernSaxToken!, startId: lsdata.notifications.firstOrNull?.id) ?? (){
       // to be run when getNotifications returned null - this is probably bad coding style but idc lol
-      ScaffoldMessenger.of(context)
-        ..clearMaterialBanners()
-        ..showSnackBar(SnackBar(content: Selector<Preferences, bool>(
-          selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-          builder: (context, sie, _) {
-            return Text("Fehler beim Abfragen neuer Benachrichtungen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?");
-          }
-        )));
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen neuer Benachrichtungen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       return <LSNotification>[];
     }());
     setState(() => _loading = false);

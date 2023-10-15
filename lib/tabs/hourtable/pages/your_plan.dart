@@ -32,13 +32,6 @@ class YourPlanPage extends StatelessWidget {
             ),
           ),
         ),
-        if (showSTDebugStuff) ElevatedButton(
-          onPressed: () {
-            stdata.selectedClassName = null;
-            stdata.selectedCourseIDs = [];
-          },
-          child: const Text("reset"),
-        ),
       ],
     );
   }
