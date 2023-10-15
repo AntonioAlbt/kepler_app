@@ -303,11 +303,12 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       final data = <LSTask>[];
       final failed = <String>[];
       
-      final memberships = lsdata.memberships!.where((m) => m.effectiveRights.contains("tasks"));
+      // null is representing the users own tasks
+      final memberships = lsdata.memberships!.where((m) => m.effectiveRights.contains("tasks")).cast<LSMembership?>().toList()..add(null);
       for (final (i, membership) in memberships.indexed) {
-        final newData = await lernsax.getTasks(creds.lernSaxLogin, creds.lernSaxToken!, classLogin: membership.login);
+        final newData = await lernsax.getTasks(creds.lernSaxLogin, creds.lernSaxToken!, classLogin: membership?.login);
         if (newData == null) {
-          failed.add(membership.name);
+          failed.add(membership?.name ?? "Eigene");
         } else {
           data.addAll(newData);
         }
@@ -317,8 +318,8 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       if (failed.isNotEmpty) {
         showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben aus den Klassen/Gruppen: ${failed.join(", ")}. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
       }
-      if (data.isEmpty) {
-        showSnackBar(textGen: (sie) =>  "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+      if (failed.length == memberships.length) {
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       } else {
         connected = true;
         lsdata.addNewTasks(data);

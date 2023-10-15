@@ -31,8 +31,12 @@ Map<String, dynamic> call({required String method, Map<String, dynamic>? params,
       "method": method,
       if (params != null) "params": params,
       if (id != null) "id": id,
-      // "id": 2 + Random.secure().nextInt(1000)
     };
+
+Map<String, dynamic> focus(String object, { String? login }) => call(method: "set_focus", params: {
+  "object": object,
+  if (login != null) "login" : login,
+});
 
 String sha1(String input) {
   final bytes = utf8.encode(input);
@@ -165,10 +169,7 @@ Future<String> registerApp(String mail, String password) async {
         "is_online": 0,
       },
     ),
-    call(
-      method: "set_focus",
-      params: {"object": "trusts"},
-    ),
+    focus("trusts"),
     call(
       method: "register_master",
       params: {
@@ -201,10 +202,7 @@ Future<String?> getSingleUseLoginLink(String login, String token) async {
   try {
     final res = await api([
       await useSession(login, token),
-      call(
-        method: "set_focus",
-        params: {"object": "trusts"},
-      ),
+      focus("trusts"),
       call(
         id: 1,
         method: "get_url_for_autologin",
@@ -222,10 +220,7 @@ Future<List<LSNotification>?> getNotifications(String login, String token, {Stri
   try {
     final res = await api([
       await useSession(login, token),
-      call(
-        method: "set_focus",
-        params: {"object": "messages"},
-      ),
+      focus("messages"),
       call(
         id: 1,
         method: "get_messages",
@@ -260,13 +255,7 @@ Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin})
   try {
     final res = await api([
       await useSession(login, token),
-      call(
-        method: "set_focus",
-        params: {
-          "object": "tasks",
-          if (classLogin != null) "login": classLogin,
-        },
-      ),
+      focus("tasks", login: classLogin),
       call(
         id: 1,
         method: "get_entries",
@@ -311,6 +300,20 @@ Future<List<LSMembership>?> getGroupsAndClasses(String login, String token) asyn
       ));
     }
     return list;
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<bool?> unregisterApp(String login, String token) async {
+  try {
+    final res = await api([
+      await auth(login, token),
+      focus("trusts"),
+      call(method: "unregister_master", id: 1),
+    ]);
+    return res[0]["result"]["return"] != "OK";
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
     return null;

@@ -5,6 +5,12 @@ import 'package:provider/provider.dart';
 
 /// argument priority: text+error -> textGen+error -> child
 void showSnackBar({ String? text, bool error = false, Widget? child, String Function(bool sie)? textGen, bool clear = false, Duration duration = const Duration(seconds: 4) }) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    showSnackBarDirectly(text: text, error: error, child: child, textGen: textGen, clear: clear, duration: duration);
+  });
+}
+
+void showSnackBarDirectly({ String? text, bool error = false, Widget? child, String Function(bool sie)? textGen, bool clear = false, Duration duration = const Duration(seconds: 4) }) {
   final msgr = ScaffoldMessenger.of(globalScaffoldKey.currentContext!);
   if (clear) msgr.clearSnackBars();
   msgr.showSnackBar(

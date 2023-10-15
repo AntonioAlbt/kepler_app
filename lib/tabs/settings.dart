@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -59,12 +60,18 @@ class _SettingsTabState extends State<SettingsTab> {
                         TextButton(
                           onPressed: () {
                             final creds = Provider.of<CredentialStore>(globalScaffoldState.context, listen: false);
-                            creds.lernSaxLogin = "";
-                            creds.lernSaxToken = null;
-                            creds.vpUser = null;
-                            creds.vpPassword = null;
-                            Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
-                            SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+                            // try to unregister this app from LernSax, but don't care if it doesn't work
+                            // (most users don't check their registered apps on LernSax anyways)
+                            // waiting for this to complete is still necessary
+                            // because SystemNavigator.pop will kill the app which would stop it from completing
+                            unregisterApp(creds.lernSaxLogin, creds.lernSaxToken!).then((_) {
+                              creds.lernSaxLogin = "";
+                              creds.lernSaxToken = null;
+                              creds.vpUser = null;
+                              creds.vpPassword = null;
+                              Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
+                              SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+                            });
                           },
                           child: const Text("Ja, abmelden"),
                         ),
