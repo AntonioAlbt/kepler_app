@@ -1,0 +1,10 @@
+{
+    "info": "Diese Datei enthält die Daten für die Kepler-App, eine BeLL von Antonio A.",
+    "letztes_update": "16.10.2023 21:19",
+    "indiware": {
+        "host": "https://plan.kepler-chemnitz.de/stuplanindiware",
+        "user": "maxmustermann",
+        "password": "s1cherheitZaehlt"
+    },
+    "is_teacher_data": false
+}

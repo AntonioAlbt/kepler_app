@@ -7,8 +7,8 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '**/README.md'
-      - '**/notes.md'
+      - '**.md'
+      - 'lernsax_data/**'
   pull_request:
     branches: [main]
 
