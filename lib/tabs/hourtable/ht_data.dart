@@ -185,36 +185,36 @@ class IndiwareDataManager {
 
   /// returns (data, isOnline)
   static Future<(VPKlData?, bool)> getKlDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+      DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedKlDataForDate(date);
       if (cached != null) return (cached, false);
     }
-    final (real, online) = await getKlXMLForDate(username, password, date);
+    final (real, online) = await getKlXMLForDate(host, username, password, date);
     if (real == null) return (null, online);
     await _setCachedKlDataForDate(date, real);
     return (xmlToKlData(real), online);
   }
   /// returns (data, isOnline)
   static Future<(VPLeData?, bool)> getLeDataForDate(
-      DateTime date, String username, String password, {bool forceRefresh = false}) async {
+      DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedLeDataForDate(date);
       if (cached != null) return (cached, false);
     }
-    final (real, online) = await getLeXMLForDate(username, password, date);
+    final (real, online) = await getLeXMLForDate(host, username, password, date);
     if (real == null) return (null, online);
     await _setCachedLeDataForDate(date, real);
     return (xmlToLeData(real), online);
   }
   /// returns (data, isOnline)
   static Future<(VPKlData?, bool)> getKlassenXmlData(
-      String username, String password, {bool forceRefresh = false}) async {
+      String host, String username, String password, {bool forceRefresh = false}) async {
     if (!forceRefresh) {
       final cached = await getCachedKlassenXmlData();
       if (cached != null) return (cached, false);
     }
-    final (real, online) = await getKlassenXML(username, password);
+    final (real, online) = await getKlassenXML(host, username, password);
     if (real == null) return (null, online);
     await _setKlassenXmlData(real);
     return (xmlToKlData(real), online);

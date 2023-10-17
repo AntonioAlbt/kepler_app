@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/filesystem.dart';
-import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/indiware.dart' as indiware show baseUrl;
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -40,6 +41,9 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
 
   String? get lernSaxToken => attributes["lern_sax_token"];
   set lernSaxToken(String? token) => _setSaveNotify("lern_sax_token", token);
+
+  String? get vpHost => attributes["vp_host"] ?? indiware.baseUrl;
+  set vpHost(String? host) => _setSaveNotify("vp_host", host);
 
   String? get vpUser => attributes["vp_user"];
   set vpUser(String? user) => _setSaveNotify("vp_user", user);
@@ -208,13 +212,12 @@ final parentTypeEndings = [
   "onkel"
 ];
 
-/// This function assumes that the provided logins are valid and were checked beforehand and that the user has an internet connection.
-Future<UserType> determineUserType(String? lernSaxLogin, String? vpUser, String? vpPassword) async {
-  if (lernSaxLogin == null) return UserType.nobody;
+/// This function assumes that the lernsax login is valid and the user has an internet connection.
+Future<UserType> determineUserType(String? lernSaxLogin, String? lernSaxToken) async {
+  if (lernSaxLogin == null || lernSaxToken == null) return UserType.nobody;
   if (parentTypeEndings.any((element) => lernSaxLogin.split("@")[0].endsWith(".$element"))) return UserType.parent;
-  final lres = await authRequest(lUrlMLeXmlUrl, vpUser!, vpPassword!);
-  if (lres!.statusCode != 401) return UserType.teacher;
-  final sres = await authRequest(sUrlMKlXmlUrl, vpUser, vpPassword);
-  if (sres!.statusCode != 401) return UserType.pupil;
+  final teach = await isTeacher(lernSaxLogin, lernSaxToken);
+  if (teach == true) return UserType.teacher;
+  if (teach == false) return UserType.pupil;
   return UserType.nobody;
 }

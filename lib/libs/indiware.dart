@@ -6,13 +6,17 @@ import 'package:xml/xml.dart';
 import 'package:http/http.dart' as http;
 
 const baseUrl = "https://plan.kepler-chemnitz.de/stuplanindiware";
-const sUrlD = "$baseUrl/VplanonlineS";
-const sUrlM = "$baseUrl/VmobilS";
-const lUrlD = "$baseUrl/VplanonlineL";
-const lUrlM = "$baseUrl/VmobilL";
 
-final sUrlMKlXmlUrl = Uri.parse("$sUrlM/mobdaten/Klassen.xml");
-final lUrlMLeXmlUrl = Uri.parse("$lUrlM/mobdaten/Lehrer.xml");
+const sUrlDPath = "/VplanonlineS";
+const sUrlMPath = "/VmobilS";
+const sUrlMKlXmlPath = "$sUrlMPath/mobdaten/Klassen.xml";
+
+const lUrlDPath = "/VplanonlineL";
+const lUrlMPath = "/VmobilL";
+const lUrlMLeXmlPath = "$sUrlDPath/mobdaten/Lehrer.xml";
+
+Uri sUrlMKlXmlUrl(String host) => Uri.parse("$host$sUrlMKlXmlPath");
+Uri lUrlMLeXmlUrl(String host) => Uri.parse("$host$lUrlMLeXmlPath");
 
 class HMTime extends SerializableObject {
   int get hour => attributes["hour"];
@@ -271,26 +275,26 @@ Future<(XmlDocument?, bool)> _fetch(Uri url, String user, String password) async
 }
 
 /// returns (data, isOnline)
-Future<(XmlDocument?, bool)> getKlassenXML(String user, String password) async {
-  final xml = await _fetch(sUrlMKlXmlUrl, user, password);
+Future<(XmlDocument?, bool)> getKlassenXML(String host, String user, String password) async {
+  final xml = await _fetch(sUrlMKlXmlUrl(host), user, password);
   return xml;
 }
 
 /// returns (data, isOnline)
-Future<(XmlDocument?, bool)> getLehrerXML(String user, String password) async {
-  final xml = await _fetch(lUrlMLeXmlUrl, user, password);
+Future<(XmlDocument?, bool)> getLehrerXML(String host, String user, String password) async {
+  final xml = await _fetch(lUrlMLeXmlUrl(host), user, password);
   return xml;
 }
 
 final indiwareFilenameFormat = DateFormat("yyyyMMdd");
 
 /// returns (data, isOnline)
-Future<(XmlDocument?, bool)> getKlXMLForDate(String user, String password, DateTime date)
-  => _fetch(Uri.parse("$sUrlM/mobdaten/PlanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
+Future<(XmlDocument?, bool)> getKlXMLForDate(String host, String user, String password, DateTime date)
+  => _fetch(Uri.parse("$host$sUrlMPath/mobdaten/PlanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
 /// returns (data, isOnline)
-Future<(XmlDocument?, bool)> getLeXMLForDate(String user, String password, DateTime date)
-  => _fetch(Uri.parse("$lUrlM/mobdaten/PlanLe${indiwareFilenameFormat.format(date)}.xml"), user, password);
+Future<(XmlDocument?, bool)> getLeXMLForDate(String host, String user, String password, DateTime date)
+  => _fetch(Uri.parse("$host$lUrlMPath/mobdaten/PlanLe${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
 VPHeader _parseHeader(XmlElement kopf) => VPHeader(
   lastUpdated: kopf.getElement("zeitstempel")!.innerText,
@@ -388,29 +392,29 @@ VPLeData xmlToLeData(XmlDocument leData) {
 // multiple elements in the code above were inspired by or copied from ChatGPT: https://chat.openai.com/share/fbf40d1c-5c5f-4b9f-98fd-bf73e7273f6f
 
 /// returns (data, isOnline)
-Future<(VPKlData?, bool)> getKlassenXmlKlData(String username, String password) async {
-  final (xml, online) = await getKlassenXML(username, password);
+Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, String password) async {
+  final (xml, online) = await getKlassenXML(host, username, password);
   if (xml == null) return (null, online);
   return (xmlToKlData(xml), online);
 }
 
 /// returns (data, isOnline)
-Future<(VPKlData?, bool)> getStuPlanDataForDate(String username, String password, DateTime date) async {
-  final (xml, online) = await getKlXMLForDate(username, password, date);
+Future<(VPKlData?, bool)> getStuPlanDataForDate(String host, String username, String password, DateTime date) async {
+  final (xml, online) = await getKlXMLForDate(host, username, password, date);
   if (xml == null) return (null, online);
   return (xmlToKlData(xml), online);
 }
 
 /// returns (data, isOnline)
-Future<(VPLeData?, bool)> getLehrerXmlLeData(String username, String password) async {
-  final (xml, online) = await getLehrerXML(username, password);
+Future<(VPLeData?, bool)> getLehrerXmlLeData(String host, String username, String password) async {
+  final (xml, online) = await getLehrerXML(host, username, password);
   if (xml == null) return (null, online);
   return (xmlToLeData(xml), online);
 }
 
 /// returns (data, isOnline)
-Future<(VPLeData?, bool)> getLehPlanDataForDate(String username, String password, DateTime date) async {
-  final (xml, online) = await getLeXMLForDate(username, password, date);
+Future<(VPLeData?, bool)> getLehPlanDataForDate(String host, String username, String password, DateTime date) async {
+  final (xml, online) = await getLeXMLForDate(host, username, password, date);
   if (xml == null) return (null, online);
   return (xmlToLeData(xml), online);
 }

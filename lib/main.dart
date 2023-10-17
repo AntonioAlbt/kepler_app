@@ -141,7 +141,7 @@ class _KeplerAppState extends State<KeplerApp> {
       } else if (_credStore.vpUser == null || _credStore.vpPassword == null) {
         return UserType.nobody;
       } else {
-        final ut = await determineUserType(_credStore.lernSaxLogin, _credStore.vpUser, _credStore.vpPassword);
+        final ut = await determineUserType(_credStore.lernSaxLogin, _credStore.lernSaxToken!);
         if (ut == UserType.nobody) {
           _credStore.vpUser = null;
           _credStore.vpPassword = null;

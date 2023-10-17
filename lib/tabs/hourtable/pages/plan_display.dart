@@ -648,12 +648,14 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     }
     getKlData() => IndiwareDataManager.getKlDataForDate(
         widget.date,
+        creds.vpHost!,
         creds.vpUser!,
         creds.vpPassword!,
         forceRefresh: forceRefresh,
       );
     getLeData() => IndiwareDataManager.getLeDataForDate(
         widget.date,
+        creds.vpHost!,
         creds.vpUser!,
         creds.vpPassword!,
         forceRefresh: forceRefresh,

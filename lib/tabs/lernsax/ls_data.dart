@@ -274,14 +274,16 @@ class LSMembership extends SerializableObject {
     required List<String> baseRights,
     required List<String> memberRights,
     required List<String> effectiveRights,
+    required MembershipType type,
   }) {
+    _setup();
+
     this.login = login;
     this.name = name;
     this.baseRights = baseRights;
     this.memberRights = memberRights;
     this.effectiveRights = effectiveRights;
-
-    _setup();
+    this.type = type;
   }
 
   LSMembership.data(Map<String, dynamic> data) {
@@ -298,12 +300,27 @@ class LSMembership extends SerializableObject {
 
   @override
   String toString() {
-    return 'LSMembership {'
-        '\n  login: $login,'
-        '\n  name: $name,'
-        '\n  baseRights: $baseRights,'
-        '\n  memberRights: $memberRights,'
-        '\n  effectiveRights: $effectiveRights'
-        '\n}';
+    return 'LSMembership('
+        'login: $login,'
+        ' name: $name,'
+        ' baseRights: $baseRights,'
+        ' memberRights: $memberRights,'
+        ' effectiveRights: $effectiveRights'
+        ')';
+  }
+}
+
+class LSAppData {
+  final String host;
+  final String user;
+  final String password;
+  final String lastUpdate;
+  final bool isTeacherData;
+
+  LSAppData({required this.host, required this.user, required this.password, required this.lastUpdate, required this.isTeacherData});
+
+  @override
+  String toString() {
+    return "LSAppData(host: $host, user: $user, password: $password, lastUpdate: $lastUpdate, isTeacherData: $isTeacherData)";
   }
 }

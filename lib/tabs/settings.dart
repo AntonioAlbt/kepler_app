@@ -65,10 +65,11 @@ class _SettingsTabState extends State<SettingsTab> {
                             // waiting for this to complete is still necessary
                             // because SystemNavigator.pop will kill the app which would stop it from completing
                             unregisterApp(creds.lernSaxLogin, creds.lernSaxToken!).then((_) {
-                              creds.lernSaxLogin = "";
-                              creds.lernSaxToken = null;
-                              creds.vpUser = null;
-                              creds.vpPassword = null;
+                              // just hope that the creds store doesn't save again after this
+                              // because this saves a blank version, while the actual creds store saving again would just
+                              // save the original data again. even if it somehow happens, it shouldn't be too big of a
+                              // problem, though.
+                              CredentialStore().save();
                               Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
                               SystemChannels.platform.invokeMethod('SystemNavigator.pop');
                             });

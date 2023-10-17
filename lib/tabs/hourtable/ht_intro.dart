@@ -122,7 +122,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     });
     final spdata = Provider.of<StuPlanData>(context, listen: false);
     try {
-      final (data, online) = await getKlassenXmlKlData(creds.vpUser!, creds.vpPassword!);
+      final (data, online) = await getKlassenXmlKlData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
       if (data == null && !online) {
         setState(() {
           _loading = false;
@@ -141,7 +141,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     }
     if (widget.teacherMode) {
       try {
-        final (data, online) = await getLehrerXmlLeData(creds.vpUser!, creds.vpPassword!);
+        final (data, online) = await getLehrerXmlLeData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
         if (data == null && !online) {
           setState(() {
             _loading = false;

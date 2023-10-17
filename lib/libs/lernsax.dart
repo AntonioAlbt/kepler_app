@@ -105,6 +105,9 @@ Future<dynamic> api(List<Map<String, dynamic>> data) async => await http
     .then((res) => jsonDecode(utf8.decode(res.bodyBytes)));
 
 const keplerBaseUser = "info@jkgc.lernsax.de";
+const keplerTeacherBaseUser = "lehrer@jkgc.lernsax.de";
+const keplerAppFolderName = "Kepler-App";
+const keplerAppJsonFileName = "Kepler-App-Daten.json";
 
 enum MOJKGResult {
   allGood,
@@ -297,9 +300,22 @@ Future<List<LSMembership>?> getGroupsAndClasses(String login, String token) asyn
         baseRights: m["base_rights"]?.cast<String>() ?? [],
         memberRights: m["member_rights"]?.cast<String>() ?? [],
         effectiveRights: m["effective_rights"]?.cast<String>() ?? [],
+        type: MembershipType.fromInt(int.parse((m["type"] ?? -1).toString())),
       ));
     }
     return list;
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<bool?> isTeacher(String login, String token) async {
+  try {
+    final memberships = await getGroupsAndClasses(login, token);
+    if (memberships == null) return null;
+
+    return memberships.any((ms) => ms.login == keplerTeacherBaseUser);
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
     return null;
@@ -314,6 +330,70 @@ Future<bool?> unregisterApp(String login, String token) async {
       call(method: "unregister_master", id: 1),
     ]);
     return res[0]["result"]["return"] != "OK";
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTeachers) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
+      call(
+        method: "get_entries",
+        params: {
+          "get_folders": 1,
+          "get_files": 0,
+          "search_string": keplerAppFolderName,
+        },
+        id: 1,
+      ),
+    ]);
+    if (res[0]["result"]["return"] != "OK" || res[0]["result"]["entries"].length < 1) return null;
+
+    final folderId = res[0]["result"]["entries"][0]["id"];
+    final res2 = await api([
+      await useSession(login, token),
+      focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
+      call(
+        method: "get_entries",
+        params: {
+          "folder_id": folderId,
+          "get_folders": 0,
+          "get_files": 1,
+          "search_string": keplerAppJsonFileName,
+        },
+        id: 1,
+      ),
+    ]);
+    if (res2[0]["result"]["return"] != "OK" || res2[0]["result"]["entries"].length < 1) return null;
+
+    final fileId = res2[0]["result"]["entries"][0]["id"];
+    final res3 = await api([
+      await useSession(login, token),
+      focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
+      call(
+        method: "get_file",
+        params: {
+          "id": fileId,
+        },
+        id: 1,
+      ),
+    ]);
+    if (res3[0]["result"]["return"] != "OK" || res3[0]["result"]["file"] == null) return null;
+
+    final dataStr = utf8.decode(base64Decode(res3[0]["result"]["file"]["data"]));
+    final data = jsonDecode(dataStr);
+
+    return LSAppData(
+      lastUpdate: data["letztes_update"],
+      host: data["indiware"]["host"],
+      user: data["indiware"]["user"],
+      password: data["indiware"]["password"],
+      isTeacherData: data["is_teacher_data"],
+    );
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
     return null;

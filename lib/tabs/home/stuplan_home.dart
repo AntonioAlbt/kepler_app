@@ -63,6 +63,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       shouldGoToNextPlanDay(context)
                           ? DateTime.now().add(const Duration(days: 1))
                           : DateTime.now(),
+                      creds.vpHost!,
                       creds.vpUser!,
                       creds.vpPassword!,
                       forceRefresh: forceRefresh ?? false,
@@ -86,7 +87,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       );
                     }
                   ) : (user == UserType.teacher) ? FutureBuilder(
-                    future: IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh ?? false),
+                    future: IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh ?? false),
                     initialData: null,
                     builder: (context, datasn) {
                       forceRefresh = false;
