@@ -26,7 +26,7 @@ const securePrefs = FlutterSecureStorage(
 class CredentialStore extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
   bool loaded = false;
-  save() async {
+  Future<void> save() async {
     await securePrefs.write(key: credStorePrefKey, value: _serialize());
   }
 
@@ -55,6 +55,14 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   void loadFromJson(String json) {
     _serializer.deserialize(json, this);
     loaded = true;
+  }
+
+  void clearData() {
+    lernSaxLogin = "";
+    lernSaxToken = null;
+    vpHost = null;
+    vpUser = null;
+    vpPassword = null;
   }
 }
 
@@ -123,7 +131,18 @@ class NewsCache extends SerializableObject with ChangeNotifier {
   }
 }
 
-enum UserType { pupil, teacher, parent, nobody }
+enum UserType {
+  pupil, teacher, parent, nobody;
+  @override
+  String toString() {
+    return {
+      UserType.pupil: "Schüler",
+      UserType.teacher: "Lehrer",
+      UserType.parent: "Elternteil",
+      UserType.nobody: "nicht angemeldet",
+    }[this]!;
+  }
+}
 
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
@@ -192,7 +211,7 @@ class InternalState extends SerializableObject with ChangeNotifier {
 
   bool loaded = false;
 
-  save() async {
+  Future<void> save() async {
     sharedPreferences.setString(internalStatePrefsKey, _serialize());
   }
 

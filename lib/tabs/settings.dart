@@ -59,20 +59,24 @@ class _SettingsTabState extends State<SettingsTab> {
                       actions: [
                         TextButton(
                           onPressed: () {
+                            // this doesn't user the showLoginScreenAgain() method, because that is intended for
+                            // a login screen which the user can cancel - which isn't supposed to be possible for this
+                            // one, because it's intended as a clean login
+                            // this might be unneccessary, but it'd be worse to do this for the other one - parents probably would just not use the app after it closing itself
+
                             final creds = Provider.of<CredentialStore>(globalScaffoldState.context, listen: false);
-                            // try to unregister this app from LernSax, but don't care if it doesn't work
-                            // (most users don't check their registered apps on LernSax anyways)
-                            // waiting for this to complete is still necessary
-                            // because SystemNavigator.pop will kill the app which would stop it from completing
-                            unregisterApp(creds.lernSaxLogin, creds.lernSaxToken!).then((_) {
-                              // just hope that the creds store doesn't save again after this
-                              // because this saves a blank version, while the actual creds store saving again would just
-                              // save the original data again. even if it somehow happens, it shouldn't be too big of a
-                              // problem, though.
-                              CredentialStore().save();
-                              Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
+                            Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
+                            () async {
+                              if (creds.lernSaxToken != null) {
+                                // try to unregister this app from LernSax, but don't care if it doesn't work
+                                // (most users don't check their registered apps on LernSax anyways)
+                                // waiting for this to complete is still necessary
+                                // because SystemNavigator.pop will kill the app which would stop it from completing
+                                await unregisterApp(creds.lernSaxLogin, creds.lernSaxToken!);
+                              }
+                              creds.clearData();
                               SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-                            });
+                            }();
                           },
                           child: const Text("Ja, abmelden"),
                         ),

@@ -4,6 +4,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -54,7 +55,34 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                   ),
                 ),
               ),
-              if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
+              if (user == UserType.nobody) Padding(
+                padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
+                child: SPListContainer(
+                  color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+                  shadow: false,
+                  padding: EdgeInsets.zero,
+                  showBorder: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(
+                          "${sie ? "Sie sind" : "Du bist"} nicht angemeldet. Bitte ${sie ? "melden Sie sich" : "melde Dich"} an, um auf den Stundenplan zuzugreifen.",
+                          textAlign: TextAlign.center,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: ElevatedButton(
+                            onPressed: () => showLoginScreenAgain(clearData: false),
+                            child: const Text("Jetzt anmelden"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              else if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
                 height: 200,
                 child: ScrollConfiguration( // TODO: propagate scroll event to upper scroll view if this view couldn't scroll
                   behavior: const ScrollBehavior().copyWith(overscroll: false),
@@ -103,7 +131,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         isOnline: data?.$2 ?? false,
                       );
                     },
-                  ) : const Text("Nicht angemeldet."),
+                  ) : const Text("Fehler."),
                 ),
               ) else Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),

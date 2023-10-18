@@ -36,8 +36,8 @@ Future<bool> checkNotificationPermission() async {
   return await Permission.notification.isGranted;
 }
 
-// Dart doesn't support multi-threading like this, but the _receiveActions function is called from Android/iOS on another
-// thread, so all final vars outside of the function scope will be null without Dart knowing that they will be.
+// the _receiveActions function is called from Android/iOS on another isolate,
+// so all final vars outside of the function scope will be null without Dart knowing that they will be.
 @pragma("vm:entry-point")
 Future<void> _receiveActions(ReceivedAction receivedAction) async {
   lis() async {
@@ -49,10 +49,10 @@ Future<void> _receiveActions(ReceivedAction receivedAction) async {
     return internalState;
   }
   if (receivedAction.channelKey == newsNotificationKey) {
-    final context = globalScaffoldKey?.currentContext; // if appKey is in another thread, it might be null -> see analysis_options.yaml for ignoring the error
+    final context = globalScaffoldKey?.currentContext; // if appKey is in another isolate, it might be null -> see analysis_options.yaml for ignoring the error
     if (context == null) {
       log("clicked news notification, but the context was null");
-      (await lis()).nowOpenOnStartup = PageIDs.news;
+      await ((await lis())..nowOpenOnStartup = PageIDs.news).save();
       return;
     }
     log("clicked news notification, now setting the nav index to ${PageIDs.news}");
@@ -60,7 +60,7 @@ Future<void> _receiveActions(ReceivedAction receivedAction) async {
   } else if (receivedAction.channelKey == stuPlanNotificationKey) {
     final context = globalScaffoldKey?.currentContext;
     if (context == null) {
-      (await lis()).nowOpenOnStartup = StuPlanPageIDs.main;
+      await ((await lis())..nowOpenOnStartup = StuPlanPageIDs.main).save();
       return;
     }
     Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];

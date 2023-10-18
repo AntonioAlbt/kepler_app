@@ -25,7 +25,13 @@ class _AboutTabState extends State<AboutTab> {
                 );
               },
               child: const Text("Zum GitHub-Repo"),
-            )
+            ),
+            ElevatedButton(
+              onPressed: () {
+                showLicensePage(context: context);
+              },
+              child: const Text("Open-Source-Lizenzen anzeigen"),
+            ),
           ],
         ),
       ),

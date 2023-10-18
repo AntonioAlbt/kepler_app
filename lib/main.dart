@@ -12,6 +12,7 @@ import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/sentry_dsn.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/libs/filesystem.dart' as fs;
@@ -104,6 +105,19 @@ void main() async {
   }
 }
 
+void showLoginScreenAgain({ bool clearData = true }) {
+  final ctx = globalScaffoldState.context;
+  if (clearData) {
+    Provider.of<CredentialStore>(ctx, listen: false).clearData();
+    Provider.of<InternalState>(ctx, listen: false).introShown = false;
+  }
+  Provider.of<AppState>(ctx, listen: false)
+    ..selectedNavPageIDs = [PageIDs.home] // isn't neccessarily the default screen (because of prefs), but idc
+    ..infoScreen = InfoScreenDisplay(
+      infoScreens: loginAgainScreens,
+    );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -137,6 +151,8 @@ class _KeplerAppState extends State<KeplerApp> {
         _credStore.lernSaxToken = null;
       }
       if (check == null) {
+        // no internet = assume user didn't change
+        showSnackBar(textGen: (sie) => "LernSax ist nicht erreichbar. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
         return _internalState.lastUserType ?? UserType.nobody;
       } else if (_credStore.vpUser == null || _credStore.vpPassword == null) {
         return UserType.nobody;
@@ -146,9 +162,10 @@ class _KeplerAppState extends State<KeplerApp> {
           _credStore.vpUser = null;
           _credStore.vpPassword = null;
         }
+        return ut;
       }
     }
-    return _internalState.lastUserType ?? UserType.nobody;
+    return UserType.nobody;
   }
 
   Future<void> _load() async {

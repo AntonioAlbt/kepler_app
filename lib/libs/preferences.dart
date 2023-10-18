@@ -101,7 +101,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   bool loaded = false;
 
-  save() async {
+  Future<void> save() async {
     sharedPreferences.setString(prefsPrefKey, _serialize());
   }
   String _serialize() => _serializer.serialize(this);

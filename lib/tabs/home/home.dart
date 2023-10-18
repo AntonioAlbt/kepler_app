@@ -1,5 +1,7 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/home/news_home.dart';
@@ -30,12 +32,29 @@ class _HomepageTabState extends State<HomepageTab> {
                 padding: EdgeInsets.only(bottom: 16),
                 child: HomeStuPlanWidget(),
               ),
+              if (kDebugMode) Consumer<AppState>(
+                builder: (context, state, _) {
+                  return Text("Benutzer-Typ: ${state.userType}");
+                }
+              ),
+              if (kDebugMode) Consumer<CredentialStore>(
+                builder: (context, state, _) {
+                  return Text("Benutzer-Typ: ${state.attributes}");
+                }
+              ),
               if (kDebugMode) ElevatedButton(
                 onPressed: () {
                   Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = null;
                   showSnackBar(text: "is now ${Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload}");
                 },
                 child: const Text("Forget todays stuplan reload"),
+              ),
+              if (kDebugMode) ElevatedButton(
+                onPressed: () {
+                  sendNotification(NotificationContent(id: 124, channelKey: newsNotificationKey, body: "hi, das ist ein Test"));
+                  showSnackBar(text: "sent");
+                },
+                child: const Text("Send notification"),
               ),
             ],
           ),

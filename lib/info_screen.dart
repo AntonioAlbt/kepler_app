@@ -68,8 +68,9 @@ InfoScreenDisplayState get infoScreenState => infoScreenKey.currentState!;
 class InfoScreenDisplay extends StatefulWidget {
   final List<InfoScreen> infoScreens;
   final bool scrollable;
+  final void Function(InfoScreenDisplayState state)? openedCallback;
 
-  InfoScreenDisplay({required this.infoScreens, this.scrollable = false}): super(key: infoScreenKey);
+  InfoScreenDisplay({required this.infoScreens, this.scrollable = false, this.openedCallback}): super(key: infoScreenKey);
 
   @override
   State<InfoScreenDisplay> createState() => InfoScreenDisplayState();
@@ -241,6 +242,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
   void initState() {
     infoScreens = widget.infoScreens;
     _controller = TabController(length: infoScreens.length, vsync: this);
+    if (widget.openedCallback != null) widget.openedCallback?.call(this);
     super.initState();
   }
 

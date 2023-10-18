@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 
 class NavEntryData {
@@ -13,6 +15,8 @@ class NavEntryData {
   final List<NavEntryData>? children;
   final bool Function(BuildContext context)? isVisible;
   final List<UserType>? visibleFor;
+  final bool Function(BuildContext context)? isLocked;
+  final List<UserType>? lockedFor;
   final bool? externalLink;
   /// can also be used as "onTap", true or null means open new page, false means don't open new page
   final Future<bool> Function(BuildContext context)? onTryOpen;
@@ -23,8 +27,9 @@ class NavEntryData {
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
   bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
+  bool shouldBeLocked(BuildContext ctx, UserType type) => (isLocked?.call(ctx) ?? false) || (lockedFor?.contains(type) ?? false);
 
-  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo, this.navbarActions});
+  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.isLocked, this.lockedFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo, this.navbarActions});
 }
 
 class NavEntry extends StatefulWidget {
@@ -39,11 +44,13 @@ class NavEntry extends StatefulWidget {
   final bool parentOfSelected;
   final int layer;
   final void Function() onSelect;
+  final bool locked;
+  final List<UserType> unlockedFor;
   final List<NavEntry>? children;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen, this.onTryExpand});
+  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen, this.onTryExpand, required this.locked, required this.unlockedFor});
 
   @override
   State<NavEntry> createState() => _NavEntryState();
@@ -52,12 +59,48 @@ class NavEntry extends StatefulWidget {
 const expandDuration = 200;
 const reverseExpandDuration = 100;
 
+// from ChatGPT: https://chat.openai.com/share/8a597b7b-99e7-4be5-9df2-4b268912aa2f
+String replaceLast(String original, String find, String replace) {
+  int lastIndex = original.lastIndexOf(find);
+  if (lastIndex == -1) {
+    return original; // Substring not found, return the original string.
+  }
+
+  String beforeLast = original.substring(0, lastIndex);
+  String afterLast = original.substring(lastIndex + find.length);
+
+  return '$beforeLast$replace$afterLast';
+}
+
 class _NavEntryState extends State<NavEntry> {
   late bool expanded = widget.parentOfSelected || widget.selected;
 
   @override
   Widget build(BuildContext context) {
     final color = (widget.parentOfSelected) ? colorWithLightness(keplerColorBlue, 1/3) : keplerColorBlue;
+    showLockedDialog() {
+      final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Zugriff nur mit Anmeldung"),
+          content: Text("Um auf diese Funktion zuzugreifen, ${sie ? "melden Sie sich" : "melde Dich"} bitte als ${replaceLast(widget.unlockedFor.join(", "), ", ", " oder ")} an."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showLoginScreenAgain(clearData: false);
+              },
+              child: const Text("Neu einloggen"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Abbrechen"),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: (widget.layer == 0) ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5) : const EdgeInsets.only(top: 6),
       child: AnimatedSize(
@@ -70,16 +113,20 @@ class _NavEntryState extends State<NavEntry> {
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: ((widget.selected || widget.parentOfSelected) ? Colors.blue.shade900 : Colors.grey).withAlpha(40)
+                  color: ((widget.selected || widget.parentOfSelected) ? Colors.blue.shade900 : (widget.locked) ? Colors.grey.shade700 : Colors.grey).withAlpha(40)
                 ),
-                borderRadius: const BorderRadius.all(Radius.circular(16))
+                borderRadius: const BorderRadius.all(Radius.circular(16)),
               ),
               child: ListTile(
                 leading: (widget.selected || widget.parentOfSelected) ? widget.selectedIcon ?? widget.icon : widget.icon,
-                trailing: widget.isParent ? Transform.translate(
+                trailing: (widget.isParent || widget.locked) ? Transform.translate(
                   offset: const Offset(7.5, 0),
                   child: IconButton(
                     onPressed: () {
+                      if (widget.locked) {
+                        showLockedDialog();
+                        return;
+                      }
                       if (!expanded) {
                         final val = widget.onTryExpand?.call(context);
                         if (val != null) {
@@ -94,7 +141,7 @@ class _NavEntryState extends State<NavEntry> {
                       setState(() => expanded = !expanded);
                       _drawerKey.currentState?.redraw();
                     },
-                    icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                    icon: Icon(widget.locked ? Icons.lock : expanded ? Icons.expand_less : Icons.expand_more),
                   ),
                 ) : null,
                 title: DefaultTextStyle.merge(
@@ -104,7 +151,7 @@ class _NavEntryState extends State<NavEntry> {
                   ),
                   child: Row(
                     children: [
-                      widget.label,
+                      Flexible(child: widget.label),
                       if (widget.externalLink == true) const Padding(
                         padding: EdgeInsets.only(left: 8),
                         child: Icon(Icons.open_in_new, size: 18),
@@ -116,6 +163,10 @@ class _NavEntryState extends State<NavEntry> {
                 selectedColor: color,
                 splashColor: (widget.selected || widget.parentOfSelected) ? color.withOpacity(0.5) : null,
                 onTap: () {
+                  if (widget.locked) {
+                    showLockedDialog();
+                    return;
+                  }
                   final val = widget.onTryOpen?.call(context);
                   if (val != null) {
                     val.then((value) {
@@ -195,7 +246,7 @@ class _TheDrawerState extends State<TheDrawer> {
     return out;
   }
 
-  Widget dataToEntry(NavEntryData entryData, String selectedIndex, int layer, String parentIndex, UserType role) {
+  Widget dataToEntry(NavEntryData entryData, String selectedIndex, int layer, String parentIndex, UserType userType) {
     final selectionIndex = "${(parentIndex != '') ? '$parentIndex.' : ''}${entryData.id}";
     // generate all possible selection indices for the parents of the current selection, check if this entry has one of them -> parent to a selected node gets parent selection mode
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
@@ -217,22 +268,23 @@ class _TheDrawerState extends State<TheDrawer> {
       onTryOpen: entryData.onTryOpen,
       onTryExpand: entryData.onTryExpand,
       layer: layer,
+      locked: entryData.shouldBeLocked(context, userType),
+      unlockedFor: UserType.values.where((val) => entryData.lockedFor?.contains(val) != true).toList(),
       children: entryData.children
-          ?.map((data) => (data.shouldBeVisible(
-                  context, Provider.of<AppState>(context).userType))
-              ? dataToEntry(
-                  data, selectedIndex, layer + 1, selectionIndex, role)
+          ?.map((data) => (data.shouldBeVisible(context, userType))
+              ? dataToEntry(data, selectedIndex, layer + 1, selectionIndex, userType)
               : null,
           ).where((element) => element != null)
-          .toList()
-          .cast(),
+          .toList().cast(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final userType = Provider.of<AppState>(context, listen: false).userType;
-    final entries = widget.entries.asMap().map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values.toList().cast<Widget>();
+    final entries = widget.entries.where((e) => e.shouldBeVisible(context, userType)).toList().asMap()
+      .map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values
+      .toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
     return Drawer(
       child: ListView(
@@ -244,13 +296,6 @@ class _TheDrawerState extends State<TheDrawer> {
           ...entries,
           const Padding(padding: EdgeInsets.all(4))
         ],
-        // children: [
-        //   const DrawerHeader(child: Text("Kepler-App")),
-        //   ListView(
-        //     shrinkWrap: true,
-        //     children: entries,
-        //   ),
-        // ],
       ),
     );
   }

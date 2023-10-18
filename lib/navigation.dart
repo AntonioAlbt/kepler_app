@@ -100,6 +100,18 @@ final destinations = [
     label: Text("Kepler-News"),
     selectedIcon: Icon(Icons.newspaper),
   ),
+  // if (kDebugMode) const NavEntryData(
+  //   id: "locked_test_teacher",
+  //   icon: Icon(Icons.cases),
+  //   label: Text("Test: Nur für Lehrer"),
+  //   lockedFor: [UserType.nobody, UserType.pupil, UserType.parent]
+  // ),
+  // if (kDebugMode) const NavEntryData(
+  //   id: "locked_test_pupil",
+  //   icon: Icon(Icons.account_box),
+  //   label: Text("Test: Nur für Schüler"),
+  //   lockedFor: [UserType.nobody, UserType.parent, UserType.teacher]
+  // ),
   NavEntryData(
     id: StuPlanPageIDs.main,
     icon: const Icon(Icons.school_outlined),
@@ -107,6 +119,7 @@ final destinations = [
     selectedIcon: const Icon(Icons.school),
     onTryOpen: stuPlanOnTryOpenCallback,
     onTryExpand: stuPlanOnTryOpenCallback,
+    lockedFor: [UserType.nobody],
     redirectTo: [StuPlanPageIDs.main, StuPlanPageIDs.yours],
     children: [
       NavEntryData(
@@ -114,7 +127,10 @@ final destinations = [
         icon: const Icon(Icons.list_alt_outlined),
         label: Selector<Preferences, bool>(
           selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-          builder: (ctx, sie, _) => Text("${sie ? "Ihr" : "Dein"} Stundenplan"),
+          builder: (ctx, sie, _) => Selector<AppState, UserType>(
+            selector: (ctx, state) => state.userType,
+            builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}", overflow: TextOverflow.fade),
+          ),
         ),
         selectedIcon: const Icon(Icons.list_alt),
         navbarActions: [
@@ -181,6 +197,7 @@ final destinations = [
     icon: const Icon(Icons.laptop_outlined),
     label: const Text("LernSax"),
     selectedIcon: const Icon(Icons.laptop),
+    lockedFor: [UserType.nobody],
     children: [
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
@@ -259,6 +276,7 @@ final destinations = [
     icon: Icon(Icons.restaurant_outlined),
     label: Text("Essensbestellung"),
     selectedIcon: Icon(Icons.restaurant),
+    lockedFor: [UserType.nobody],
   ),
   const NavEntryData(
     id: PageIDs.ffjkg,

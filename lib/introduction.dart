@@ -8,12 +8,14 @@ import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/privacy_policy.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
+final loginAgainScreens = [lernSaxLoginAgainScreen, stuPlanLoginAgainScreen, finishScreen];
 
 const welcomeScreen = InfoScreen(
   infoTitle: Text("Willkommen in der Kepler-App!"),
@@ -29,9 +31,23 @@ const lernSaxLoginScreen = InfoScreen(
   infoImage: Icon(Icons.laptop, size: 48),
 );
 
+const lernSaxLoginAgainScreen = InfoScreen(
+  infoTitle: Text("LernSax-Anmeldung"),
+  infoText: LernSaxScreenMain(again: true),
+  closeable: true,
+  infoImage: Icon(Icons.laptop, size: 48),
+);
+
 const stuPlanLoginScreen = InfoScreen(
   infoTitle: Text("Stundenplan-Anmeldung"),
   infoText: StuPlanScreenMain(),
+  closeable: false,
+  infoImage: Icon(Icons.list_alt, size: 48),
+);
+
+const stuPlanLoginAgainScreen = InfoScreen(
+  infoTitle: Text("Stundenplan-Anmeldung"),
+  infoText: StuPlanScreenMain(again: true),
   closeable: false,
   infoImage: Icon(Icons.list_alt, size: 48),
 );
@@ -151,7 +167,9 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
 }
 
 class LernSaxScreenMain extends StatefulWidget {
-  const LernSaxScreenMain({super.key});
+  final bool again;
+
+  const LernSaxScreenMain({super.key, this.again = false});
 
   @override
   State<LernSaxScreenMain> createState() => _LernSaxScreenMainState();
@@ -176,7 +194,12 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: Text("Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}."),
+            child: Text(
+              (widget.again) ?
+              "Bitte ${sie ? "melden Sie sich" : "melde Dich"} erneut mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an."
+              :
+              "Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}.",
+            ),
           ),
           TextField(
             controller: _mailController,
@@ -232,7 +255,8 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
               child: const TextWithArrowForward(text: "Einloggen"),
             ),
           ),
-          RichText(
+          // don't show this again because the user already agreed
+          if (!widget.again) RichText(
             textAlign: TextAlign.center,
             textScaleFactor: 1,
             text: TextSpan(
@@ -297,7 +321,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        TextSpan(text: "Wirklich ohne Anmeldung fortfahren? ${sie ? "Sie stimmen" : "Du stimmst"} damit der Datenschutzerklärung zu.")
+                        const TextSpan(text: "Wirklich ohne Anmeldung fortfahren?")
                       ],
                     ),
                   ),
@@ -314,7 +338,53 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 ),
               ).then((value) {
                 if (value == true) {
-                  Provider.of<AppState>(context, listen: false).clearInfoScreen();
+                  Provider.of<InternalState>(context, listen: false)
+                    ..introShown = true
+                    ..lastUserType = UserType.nobody;
+                  Provider.of<AppState>(context, listen: false)
+                    ..userType = UserType.nobody
+                    ..clearInfoScreen();
+                  if (!widget.again) {
+                    showDialog(
+                      context: globalScaffoldState.context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Benachrichtigungen?"),
+                        content: const Text("Möchten Sie benachrichtigt werden, wenn neue Artikel auf der Webseite unserer Schule veröffentlicht werden?"),
+                        actions: [
+                          TextButton(
+                            onPressed: (){
+                              Provider.of<Preferences>(globalScaffoldKey.currentContext!, listen: false).enabledNotifs = [newsNotificationKey];
+                              checkNotificationPermission().then((notifAllowed) {
+                                if (notifAllowed) {
+                                  Navigator.pop(context);
+                                  return;
+                                }
+                                try {
+                                  requestNotificationPermission().then((val) {
+                                    if (val) {
+                                      showSnackBar(textGen: (sie) => "Danke für ${sie ? "Ihre" : "Deine"} Zustimmung!");
+                                    }
+                                    Navigator.pop(context);
+                                  });
+                                } catch (_) {
+                                  Navigator.pop(context);
+                                }
+                              });
+                              
+                            },
+                            child: const Text("Ja, gerne"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Provider.of<Preferences>(globalScaffoldKey.currentContext!, listen: false).enabledNotifs = [];
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Nein"),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 }
               });
             },
@@ -389,7 +459,9 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 }
 
 class StuPlanScreenMain extends StatefulWidget {
-  const StuPlanScreenMain({super.key});
+  final bool again;
+
+  const StuPlanScreenMain({super.key, this.again = false});
 
   @override
   State<StuPlanScreenMain> createState() => _StuPlanScreenMainState();
@@ -400,6 +472,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   String? _userErr;
   late TextEditingController _pwController;
   String? _pwErr;
+  late Future<bool?> _dataFuture;
 
   bool _triedToEnter = false;
   bool _loading = false;
@@ -410,7 +483,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
       builder: (context, state, _) => Selector<Preferences, bool>(
         selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
         builder: (context, sie, _) => FutureBuilder(
-          future: tryLoadStuPlanLoginFromLSDataFile(),
+          future: _dataFuture,
           builder: (context, datasn) {
             if (datasn.connectionState == ConnectionState.waiting) {
               return const Column(
@@ -427,7 +500,8 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
             if (datasn.data == true) {
               return Column(
                 children: [
-                  Text("${sie ? "Sie wurden" : "Du wurdest"} automatisch über LernSax beim Stundenplan angemeldet."),
+                  Text("${sie ? "Sie wurden" : "Du wurdest"} automatisch über LernSax beim ${state.userType == UserType.teacher ? "Lehrer-" : "Schüler-"}Stundenplan angemeldet."),
+                  if (state.userType == UserType.parent) Text("Damit ${sie ? "können Sie" : "kannst Du"} den Stundenplan ${sie ? "Ihres" : "Deines"} Kindes in der App abfragen."),
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: ElevatedButton(
@@ -437,7 +511,6 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                           .then((userType) {
                             Provider.of<AppState>(context, listen: false).userType = userType;
                             Provider.of<InternalState>(context, listen: false).lastUserType = userType;
-                            showSnackBar(text: "Erfolgreich angemeldet.", clear: true);
                             infoScreenState.next();
                           });
                       },
@@ -455,7 +528,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
             return Column(
               children: [
                 const Text("Leider konnten die Daten nicht automatisch von LernSax abgefragt werden.\n"),
-                Text("Bitte ${sie ? "geben Sie" : "gebe"} die Anmeldedaten für ${sie ? "Ihren" : "Deinen"} Stundenplan auf plan.kepler-chemnitz.de ein."),
+                Text("Bitte ${sie ? "geben Sie" : "gebe"} die Anmeldedaten für ${sie ? "Ihren" : "Deinen"} Stundenplan auf plan.kepler-chemnitz.de ${widget.again ? "erneut" : ""} ein."),
                 if (state.userType == UserType.parent) Text("Da ${sie ? "Sie" : "Du"} ein Elternteil ${sie ? "sind" : "bist"}, sollten dies die Anmeldedaten des Schülerstundenplanes sein."),
                 const Padding(padding: EdgeInsets.all(4)),
                 TextField(
@@ -555,7 +628,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
     _pwController.addListener(() {
       if (_triedToEnter) setState(() => _pwErr = checkPW());
     });
-
+    _dataFuture = tryLoadStuPlanLoginFromLSDataFile();
     super.initState();
   }
 
@@ -590,6 +663,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
         creds.vpHost = data.host;
         creds.vpUser = data.user;
         creds.vpPassword = data.password;
+        showSnackBar(text: "Erfolgreich angemeldet.", clear: true);
       }
       return success;
     }
