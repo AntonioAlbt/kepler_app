@@ -67,15 +67,15 @@ class _SettingsTabState extends State<SettingsTab> {
                             final creds = Provider.of<CredentialStore>(globalScaffoldState.context, listen: false);
                             Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
                             () async {
-                              if (creds.lernSaxToken != null) {
+                              if (creds.lernSaxToken != null && creds.lernSaxLogin != null) {
                                 // try to unregister this app from LernSax, but don't care if it doesn't work
                                 // (most users don't check their registered apps on LernSax anyways)
                                 // waiting for this to complete is still necessary
                                 // because SystemNavigator.pop will kill the app which would stop it from completing
-                                await unregisterApp(creds.lernSaxLogin, creds.lernSaxToken!);
+                                await unregisterApp(creds.lernSaxLogin!, creds.lernSaxToken!);
                               }
                               creds.clearData();
-                              SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+                              SystemNavigator.pop();
                             }();
                           },
                           child: const Text("Ja, abmelden"),

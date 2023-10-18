@@ -55,7 +55,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get showLernSaxCancelledLessonsInRoomPlan => attributes["show_ls_cl_irp"] ?? true;
   set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
-  HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(16, 00);
+  HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(14, 45);
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
   Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : keplerColorBlue;

@@ -1,6 +1,7 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -39,7 +40,7 @@ class _HomepageTabState extends State<HomepageTab> {
               ),
               if (kDebugMode) Consumer<CredentialStore>(
                 builder: (context, state, _) {
-                  return Text("Benutzer-Typ: ${state.attributes}");
+                  return Text("Benutzer-Typ: ${state.attributes} - last ut check: ${Provider.of<InternalState>(context, listen: false).lastUserTypeCheck}");
                 }
               ),
               if (kDebugMode) ElevatedButton(
@@ -55,6 +56,22 @@ class _HomepageTabState extends State<HomepageTab> {
                   showSnackBar(text: "sent");
                 },
                 child: const Text("Send notification"),
+              ),
+              if (kDebugMode) ElevatedButton(
+                onPressed: () {
+                  Provider.of<CredentialStore>(context, listen: false).vpPassword = "random-junk";
+                  showSnackBar(text: "done, password is now \"random-junk\"");
+                },
+                child: const Text("Invalidify stuplan auth"),
+              ),
+              if (kDebugMode) ElevatedButton(
+                onPressed: () {
+                  final creds = Provider.of<CredentialStore>(context, listen: false);
+                  unregisterApp(creds.lernSaxLogin ?? "", creds.lernSaxToken ?? "");
+                  creds.lernSaxToken = "im gay lol";
+                  showSnackBar(text: "done, token is now \"im gay lol\"");
+                },
+                child: const Text("Invalidify lernsax auth"),
               ),
             ],
           ),

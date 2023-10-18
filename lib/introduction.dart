@@ -15,7 +15,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
-final loginAgainScreens = [lernSaxLoginAgainScreen, stuPlanLoginAgainScreen, finishScreen];
+final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
 
 const welcomeScreen = InfoScreen(
   infoTitle: Text("Willkommen in der Kepler-App!"),
@@ -31,11 +31,11 @@ const lernSaxLoginScreen = InfoScreen(
   infoImage: Icon(Icons.laptop, size: 48),
 );
 
-const lernSaxLoginAgainScreen = InfoScreen(
-  infoTitle: Text("LernSax-Anmeldung"),
-  infoText: LernSaxScreenMain(again: true),
-  closeable: true,
-  infoImage: Icon(Icons.laptop, size: 48),
+InfoScreen lernSaxLoginAgainScreen(bool closeable) => InfoScreen(
+  infoTitle: const Text("LernSax-Anmeldung"),
+  infoText: const LernSaxScreenMain(again: true),
+  closeable: closeable,
+  infoImage: const Icon(Icons.laptop, size: 48),
 );
 
 const stuPlanLoginScreen = InfoScreen(
@@ -507,7 +507,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                     child: ElevatedButton(
                       onPressed: () {
                         final cs = Provider.of<CredentialStore>(context, listen: false);
-                        determineUserType(cs.lernSaxLogin, cs.lernSaxToken!)
+                        determineUserType(cs.lernSaxLogin!, cs.lernSaxToken!)
                           .then((userType) {
                             Provider.of<AppState>(context, listen: false).userType = userType;
                             Provider.of<InternalState>(context, listen: false).lastUserType = userType;
@@ -569,7 +569,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                               final cs = Provider.of<CredentialStore>(context, listen: false);
                               cs.vpUser = username;
                               cs.vpPassword = password;
-                              determineUserType(cs.lernSaxLogin, cs.lernSaxToken!)
+                              determineUserType(cs.lernSaxLogin!, cs.lernSaxToken!)
                                 .then((userType) {
                                   Provider.of<AppState>(context, listen: false).userType = userType;
                                   Provider.of<InternalState>(context, listen: false).lastUserType = userType;
@@ -646,10 +646,10 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   /// </ul>
   Future<bool?> tryLoadStuPlanLoginFromLSDataFile() async {
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    if (creds.lernSaxToken == null) return null;
-    final teacher = await isTeacher(creds.lernSaxLogin, creds.lernSaxToken!);
+    if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return null;
+    final teacher = await isTeacher(creds.lernSaxLogin!, creds.lernSaxToken!);
     if (teacher == null) return null;
-    final data = await getLernSaxAppDataJson(creds.lernSaxLogin, creds.lernSaxToken!, teacher);
+    final data = await getLernSaxAppDataJson(creds.lernSaxLogin!, creds.lernSaxToken!, teacher);
     if (data == null || data.isTeacherData != teacher) return null;
 
     try {

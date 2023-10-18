@@ -36,8 +36,8 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     save();
   }
 
-  String get lernSaxLogin => attributes["lern_sax_login"] ?? "";
-  set lernSaxLogin(String login) => _setSaveNotify("lern_sax_login", login);
+  String? get lernSaxLogin => attributes["lern_sax_login"] ?? "";
+  set lernSaxLogin(String? login) => _setSaveNotify("lern_sax_login", login);
 
   String? get lernSaxToken => attributes["lern_sax_token"];
   set lernSaxToken(String? token) => _setSaveNotify("lern_sax_token", token);
@@ -58,7 +58,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   }
 
   void clearData() {
-    lernSaxLogin = "";
+    lernSaxLogin = null;
     lernSaxToken = null;
     vpHost = null;
     vpUser = null;
@@ -184,6 +184,9 @@ class InternalState extends SerializableObject with ChangeNotifier {
 
   UserType? get lastUserType => UserType.values.firstWhere((element) => element.name == attributes["last_user_type"], orElse: () => UserType.nobody);
   set lastUserType(UserType? type) => _setSaveNotify("last_user_type", type?.name);
+
+  DateTime? get lastUserTypeCheck => (attributes.containsKey("last_ut_check") && attributes["last_ut_check"] != null) ? DateTime.parse(attributes["last_ut_check"]) : null;
+  set lastUserTypeCheck(DateTime? val) => _setSaveNotify("last_ut_check", val?.toIso8601String());
 
   bool get introShown => attributes["intro_shown"] ?? false;
   set introShown(bool introShown) => _setSaveNotify("intro_shown", introShown);

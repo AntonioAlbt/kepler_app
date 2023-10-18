@@ -99,7 +99,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
     setState(() => _loadingClasses = true);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    final classes = await lernsax.getGroupsAndClasses(creds.lernSaxLogin, creds.lernSaxToken!);
+    final classes = await lernsax.getGroupsAndClasses(creds.lernSaxLogin!, creds.lernSaxToken!);
     if (classes == null) {
       showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Klassen/Gruppen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       setState(() => _loadingClasses = false);
@@ -306,7 +306,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       // null is representing the users own tasks
       final memberships = lsdata.memberships!.where((m) => m.effectiveRights.contains("tasks")).cast<LSMembership?>().toList()..add(null);
       for (final (i, membership) in memberships.indexed) {
-        final newData = await lernsax.getTasks(creds.lernSaxLogin, creds.lernSaxToken!, classLogin: membership?.login);
+        final newData = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: membership?.login);
         if (newData == null) {
           failed.add(membership?.name ?? "Eigene");
         } else {
@@ -325,7 +325,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
         lsdata.addNewTasks(data);
       }
     } else {
-      final data = await lernsax.getTasks(creds.lernSaxLogin, creds.lernSaxToken!, classLogin: widget.selectedClass);
+      final data = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: widget.selectedClass);
       if (data == null) {
         showSnackBar(textGen: (sie) =>  "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       } else {

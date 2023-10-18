@@ -153,7 +153,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     setState(() => _loading = true);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    lsdata.notifications += (await lernsax.getNotifications(creds.lernSaxLogin, creds.lernSaxToken!, startId: lsdata.notifications.firstOrNull?.id) ?? (){
+    lsdata.notifications += (await lernsax.getNotifications(creds.lernSaxLogin!, creds.lernSaxToken!, startId: lsdata.notifications.firstOrNull?.id) ?? (){
       // to be run when getNotifications returned null - this is probably bad coding style but idc lol
       showSnackBar(textGen: (sie) => "Fehler beim Abfragen neuer Benachrichtungen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       return <LSNotification>[];

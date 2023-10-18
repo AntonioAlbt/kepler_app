@@ -24,7 +24,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
       builder: (context, state, creds, _) {
-        if (creds.lernSaxToken == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
+        if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
         final navPage = state.selectedNavPageIDs.last;
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
         if (navPage == LernSaxPageIDs.tasks) return LSTasksPage();

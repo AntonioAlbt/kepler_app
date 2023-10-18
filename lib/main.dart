@@ -8,6 +8,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
+import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -139,29 +140,67 @@ class KeplerApp extends StatefulWidget {
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
 
-const _loadingAnimationDuration = 1000;
+// const _loadingAnimationDuration = 1000;
+
+/// returns: null = request error, usertype.(pupil|teacher) = success, usertype.nobody = invalid creds
+Future<UserType?> checkIndiwareData(String host, String username, String password) async {
+  try {
+    final lres = await authRequest(lUrlMLeXmlUrl(host), username, password);
+    // if null, throw -> to catch block
+    if (lres!.statusCode == 401) { // if teacher auth failed, try again with pupil auth
+      final sres = await authRequest(sUrlMKlXmlUrl(host), username, password);
+      if (sres!.statusCode == 401) return UserType.nobody;
+      if (sres.statusCode != 200) return null;
+      return UserType.pupil;
+    }
+    if (lres.statusCode != 200) return null;
+    return UserType.teacher;
+  } catch (_) {
+    return null;
+  }
+}
 
 class _KeplerAppState extends State<KeplerApp> {
   UserType utype = UserType.nobody;
+  bool isStuplanInvalid = false;
+  bool isLernsaxInvalid = false;
 
   Future<UserType> calcUT() async {
-    if (_credStore.lernSaxToken != null) {
-      final check = await confirmLernSaxCredentials(_credStore.lernSaxLogin, _credStore.lernSaxToken!);
+    if (
+      _internalState.lastUserType != null &&
+      _internalState.lastUserType != UserType.nobody &&
+      (_internalState.lastUserTypeCheck?.difference(DateTime.now()).abs().inHours ?? 0) < 23
+    ) {
+      return _internalState.lastUserType!;
+    }
+    _internalState.lastUserTypeCheck = DateTime.now();
+    if (_credStore.lernSaxToken != null && _credStore.lernSaxLogin != null) {
+      final check = await confirmLernSaxCredentials(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);
       if (check == false) {
+        isLernsaxInvalid = true;
+        _credStore.lernSaxLogin = null;
         _credStore.lernSaxToken = null;
       }
+      if (
+        _credStore.vpPassword == null ||
+        _credStore.vpUser == null ||
+        await () async {
+          final ut = await checkIndiwareData(_credStore.vpHost ?? baseUrl, _credStore.vpUser ?? "u", _credStore.vpPassword ?? "p");
+          return ut == UserType.nobody || (_internalState.lastUserType == UserType.teacher && ut == UserType.pupil);
+        }()
+      ) {
+        isStuplanInvalid = true;
+        _credStore.vpHost = null;
+        _credStore.vpUser = null;
+        _credStore.vpPassword = null;
+      }
+      if (isLernsaxInvalid || isStuplanInvalid) return UserType.nobody;
       if (check == null) {
         // no internet = assume user didn't change
         showSnackBar(textGen: (sie) => "LernSax ist nicht erreichbar. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
         return _internalState.lastUserType ?? UserType.nobody;
-      } else if (_credStore.vpUser == null || _credStore.vpPassword == null) {
-        return UserType.nobody;
       } else {
-        final ut = await determineUserType(_credStore.lernSaxLogin, _credStore.lernSaxToken!);
-        if (ut == UserType.nobody) {
-          _credStore.vpUser = null;
-          _credStore.vpPassword = null;
-        }
+        final ut = await determineUserType(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);
         return ut;
       }
     }
@@ -173,19 +212,23 @@ class _KeplerAppState extends State<KeplerApp> {
     await loadAndPrepareApp();
     utype = await calcUT();
     _internalState.lastUserType = utype;
-    // This seems unneccessary and makes the login process a lot more difficult to handle (also adds a lot of requests).
-    // _credStore.addListener(() {
-    //   calcUT().then((value) {
-    //     _appState.setUserType(value);
-    //     _internalState.lastUserType = value;
-    //   });
-    // });
 
     if (!_internalState.introShown) {
       introductionDisplay = InfoScreenDisplay(
         infoScreens: introScreens,
       );
     } else {
+      if (isLernsaxInvalid || isStuplanInvalid) {
+        final both = isLernsaxInvalid && isStuplanInvalid;
+        showSnackBar(textGen: (sie) => "${sie ? "Ihre" : "Deine"} Anmeldedaten für ${isLernsaxInvalid ? "LernSax" : ""}${both ? " und " : ""}${isStuplanInvalid ? "den Stundenplan" : ""} sind ungültig. Bitte ${sie ? "melden Sie sich" : "melde Dich"} erneut an.");
+        introductionDisplay = InfoScreenDisplay(
+          infoScreens: [
+            if (isLernsaxInvalid) lernSaxLoginAgainScreen(false),
+            if (isStuplanInvalid) stuPlanLoginAgainScreen,
+            finishScreen,
+          ],
+        );
+      }
       if (!await checkNotificationPermission()) {
         await requestNotificationPermission();
       }
@@ -193,7 +236,8 @@ class _KeplerAppState extends State<KeplerApp> {
 
     final mdif = DateTime.now().difference(t1).inMilliseconds;
     if (kDebugMode) print("Playing difference: $mdif");
-    if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
+    // if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
+    // await Future.delayed(const Duration(seconds: 100));
     setState(() => _loading = false);
   }
 
@@ -207,7 +251,7 @@ class _KeplerAppState extends State<KeplerApp> {
       providers: [
         ChangeNotifierProvider(
           create: (_) => _appState
-            ..infoScreen = introductionDisplay // TODO: show "sign in again" screens to user if creds are invalid
+            ..infoScreen = introductionDisplay
             ..userType = utype
             ..selectedNavPageIDs = (){
               final nowOpen = _internalState.nowOpenOnStartup;

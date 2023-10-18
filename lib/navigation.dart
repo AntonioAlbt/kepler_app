@@ -30,6 +30,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // all IDs should be constants
+// all IDs should be lowercase letters only, and definitely not include "." (the dot)
 class PageIDs {
   static const home = "home";
   static const news = "news";
@@ -73,10 +74,6 @@ const tabs = {
   PageIDs.about: AboutTab(),
 };
 
-// TODO: disable some when youre UserType.nobody (but allow to click to login!)
-// TODO: hide some when usertype doesnt fit, like Lehrerplan
-
-// all ids should be lowercase letters only, and definitely not include "." (the dot)
 final destinations = [
   NavEntryData(
     id: PageIDs.home,
@@ -129,7 +126,7 @@ final destinations = [
           selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
           builder: (ctx, sie, _) => Selector<AppState, UserType>(
             selector: (ctx, state) => state.userType,
-            builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}", overflow: TextOverflow.fade),
+            builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}"),
           ),
         ),
         selectedIcon: const Icon(Icons.list_alt),
@@ -206,8 +203,8 @@ final destinations = [
         externalLink: true,
         onTryOpen: (context) async {
           final creds = Provider.of<CredentialStore>(context, listen: false);
-          if (creds.lernSaxToken == null) return false;
-          final url = await getSingleUseLoginLink(creds.lernSaxLogin, creds.lernSaxToken!);
+          if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;
+          final url = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
           if (url == null) {
             showSnackBar(text: "Fehler beim Erstellen des Links.", error: true);
             return false;

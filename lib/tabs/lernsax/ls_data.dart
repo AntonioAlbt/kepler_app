@@ -10,6 +10,8 @@ import 'package:synchronized/synchronized.dart';
 const lernSaxDataPrefsKey = "lernsaxdata";
 
 Future<String> get lernSaxDataFilePath async => "${await userDataDirPath}/$lernSaxDataPrefsKey-data.json";
+
+// TODO: after some time, mark data as stale and update it again to stop it from getting outdated
 class LernSaxData extends SerializableObject with ChangeNotifier {
   LernSaxData() {
     objectCreators["notifs"] = (_) => <LSNotification>[];
