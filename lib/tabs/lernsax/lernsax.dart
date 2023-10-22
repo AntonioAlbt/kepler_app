@@ -6,7 +6,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
-import 'package:kepler_app/tabs/lernsax/pages/msgboard_page.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
@@ -28,9 +28,21 @@ class _LernSaxTabState extends State<LernSaxTab> {
         final navPage = state.selectedNavPageIDs.last;
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
         if (navPage == LernSaxPageIDs.tasks) return LSTasksPage();
-        if (navPage == LernSaxPageIDs.messageBoard) return const LSMsgBoardPage();
+        if (navPage == LernSaxPageIDs.emails) return LSMailsPage();
+        if (navPage == LernSaxPageIDs.main) return const LSHomePage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
+    );
+  }
+}
+
+class LSHomePage extends StatelessWidget {
+  const LSHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text("Bald verfügbar."),
     );
   }
 }

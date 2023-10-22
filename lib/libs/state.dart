@@ -201,6 +201,8 @@ class InternalState extends SerializableObject with ChangeNotifier {
   set lastSelectedLSTaskClass(String? val) => _setSaveNotify("lslstc", val);
   bool get lastSelectedLSTaskShowDone => attributes["lslstsd"] ?? false;
   set lastSelectedLSTaskShowDone(bool val) => _setSaveNotify("lslstsd", val);
+  String? get lastSelectedLSMailFolder => attributes["lslsmf"];
+  set lastSelectedLSMailFolder(String? val) => _setSaveNotify("lslsmf", val);
 
   List<String> get infosShown => (attributes["infos_shown"] as String?)?.split("|") ?? [];
   set infosShown(List<String> val) => _setSaveNotify("infos_shown", val.join("|"));

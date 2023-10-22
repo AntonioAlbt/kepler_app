@@ -21,7 +21,7 @@ class _FeedbackTabState extends State<FeedbackTab> {
             const Text("Feedback geben?"),
             ElevatedButton(
               onPressed: () {
-                launchUrl(Uri.parse("https://github.com/Gamer153/kepler_app"),
+                launchUrl(Uri.parse("https://github.com/AntonioAlbt/kepler_app"),
                     mode: LaunchMode.externalApplication);
               },
               child: Text("App im ${(Platform.isIOS) ? 'App Store' : 'Play Store'} bewerten"),

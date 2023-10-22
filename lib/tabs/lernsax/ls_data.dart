@@ -22,6 +22,11 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
 
     objectCreators["memberships"] = (_) => <LSMembership>[];
     objectCreators["memberships.value"] = (data) => data != null ? LSMembership.data(data) : null;
+
+    objectCreators["mail_folders"] = (_) => <LSMailFolder>[];
+    objectCreators["mail_folders.value"] = (data) => data != null ? LSMailFolder.data(data) : null;
+    objectCreators["mail_listings"] = (_) => <LSMailListing>[];
+    objectCreators["mail_listings.value"] = (data) => data != null ? LSMailListing.data(data) : null;
   }
 
   void _setSaveNotify(String key, dynamic data) {
@@ -52,6 +57,12 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
 
   List<LSMembership>? get memberships => attributes["memberships"];
   set memberships(List<LSMembership>? val) => _setSaveNotify("memberships", val);
+
+  List<LSMailFolder>? get mailFolders => attributes["mail_folders"];
+  set mailFolders(List<LSMailFolder>? val) => _setSaveNotify("mail_folders", val);
+
+  List<LSMailListing>? get mailListings => attributes["mail_listings"];
+  set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml1.date.compareTo(ml2.date)));
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -325,4 +336,323 @@ class LSAppData {
   String toString() {
     return "LSAppData(host: $host, user: $user, password: $password, lastUpdate: $lastUpdate, isTeacherData: $isTeacherData)";
   }
+}
+
+class LSMailFolder extends SerializableObject {
+  String get id => attributes["id"];
+  set id(String val) => attributes["id"] = val;
+
+  String get name => attributes["name"];
+  set name(String val) => attributes["name"] = val;
+
+  bool get isInbox => attributes["is_inbox"];
+  set isInbox(bool val) => attributes["is_inbox"] = val;
+
+  bool get isTrash => attributes["is_trash"];
+  set isTrash(bool val) => attributes["is_trash"] = val;
+
+  bool get isDrafts => attributes["is_drafts"];
+  set isDrafts(bool val) => attributes["is_drafts"] = val;
+
+  bool get isSent => attributes["is_sent"];
+  set isSent(bool val) => attributes["is_sent"] = val;
+
+  DateTime get lastModified => DateTime.parse(attributes["lastModified"]);
+  set lastModified(DateTime val) => attributes["lastModified"] = val.toIso8601String();
+
+  LSMailFolder({
+    required String id,
+    required String name,
+    required bool isInbox,
+    required bool isTrash,
+    required bool isDrafts,
+    required bool isSent,
+    required DateTime lastModified
+  }) {
+    this.id = id;
+    this.name = name;
+    this.isInbox = isInbox;
+    this.isTrash = isTrash;
+    this.isDrafts = isDrafts;
+    this.isSent = isSent;
+    this.lastModified = lastModified;
+  }
+
+  LSMailFolder.data(Map<String, dynamic> data) {
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  @override
+  String toString() {
+    return 'LSMailFolder(id: $id, name: $name, isInbox: $isInbox, isTrash: $isTrash, isDrafts: $isDrafts, isSent: $isSent, lastModified: $lastModified)';
+  }
+}
+
+class LSMailAddressable extends SerializableObject {
+  String get address => attributes["address"];
+  set address(String val) => attributes["address"] = val;
+
+  String get name => attributes["name"];
+  set name(String val) => attributes["name"] = val;
+
+  LSMailAddressable({
+    required String address,
+    required String name
+  }) {
+    this.address = address;
+    this.name = name;
+  }
+
+  LSMailAddressable.data(Map<String, dynamic> data) {
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  LSMailAddressable.fromLSApiData(Map<String, String> val) {
+    address = val["addr"]!;
+    name = val["name"]!;
+  }
+
+  static List<LSMailAddressable> fromLSApiDataList(List<Map<String, String>> val)
+    => val.map((val) => LSMailAddressable.fromLSApiData(val)).toList();
+
+  @override
+  String toString() {
+    return 'LSMailAddressable(address: $address, name: $name)';
+  }
+}
+
+class LSMailListing extends SerializableObject {
+  int get id => attributes["id"];
+  set id(int val) => attributes["id"] = val;
+
+  String get subject => attributes["subject"];
+  set subject(String val) => attributes["subject"] = val;
+
+  bool get isUnread => attributes["isUnread"];
+  set isUnread(bool val) => attributes["isUnread"] = val;
+
+  bool get isFlagged => attributes["isFlagged"];
+  set isFlagged(bool val) => attributes["isFlagged"] = val;
+
+  bool get isAnswered => attributes["isAnswered"];
+  set isAnswered(bool val) => attributes["isAnswered"] = val;
+
+  bool get isDeleted => attributes["isDeleted"];
+  set isDeleted(bool val) => attributes["isDeleted"] = val;
+
+  DateTime get date => attributes["date"];
+  set date(DateTime val) => attributes["date"] = val;
+
+  int get size => attributes["size"];
+  set size(int val) => attributes["size"] = val;
+
+  List<LSMailAddressable> get from => attributes["from"];
+  set from(List<LSMailAddressable> val) => attributes["from"] = val;
+
+  String get folderId => attributes["folder_id"];
+  set folderId(String val) => attributes["folder_id"] = val;
+
+  LSMailListing({
+    required int id,
+    required String subject,
+    required bool isUnread,
+    required bool isFlagged,
+    required bool isAnswered,
+    required bool isDeleted,
+    required DateTime date,
+    required int size,
+    required List<LSMailAddressable> from,
+    required String folderId,
+  }) {
+    _setup();
+
+    this.id = id;
+    this.subject = subject;
+    this.isUnread = isUnread;
+    this.isFlagged = isFlagged;
+    this.isAnswered = isAnswered;
+    this.isDeleted = isDeleted;
+    this.date = date;
+    this.size = size;
+    this.from = from;
+    this.folderId = folderId;
+  }
+
+  LSMailListing.data(Map<String, dynamic> data) {
+    _setup();
+
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  void _setup() {
+    objectCreators["from"] = (_) => <LSMailAddressable>[];
+    objectCreators["from.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
+  }
+
+  @override
+  String toString() {
+    return 'LSMailListing(id: $id, subject: $subject, isUnread: $isUnread, isFlagged: $isFlagged, isAnswered: $isAnswered, isDeleted: $isDeleted, date: $date, from: $from)';
+  }
+}
+
+
+class LSMailAttachment extends SerializableObject {
+  String get id => attributes["id"];
+  set id(String val) => attributes["id"] = val;
+
+  String get name => attributes["name"];
+  set name(String val) => attributes["name"] = val;
+
+  int get size => attributes["size"];
+  set size(int val) => attributes["size"] = val;
+
+  LSMailAttachment({
+    required String id,
+    required String name,
+    required int size,
+  }) {
+    this.id = id;
+    this.name = name;
+    this.size = size;
+  }
+  
+  LSMailAttachment.data(Map<String, dynamic> data) {
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+
+  LSMailAttachment.fromLSApiData(Map<String, dynamic> val) {
+    id = val["id"]!;
+    name = val["name"]!;
+    size = val["size"]!;
+  }
+
+  static List<LSMailAttachment> fromLSApiDataList(List<Map<String, dynamic>> val)
+    => val.map((val) => LSMailAttachment.fromLSApiData(val)).toList();
+
+  @override
+  String toString() {
+    return 'LSMailAttachment(id: $id, name: $name, size: $size)';
+  }
+}
+
+class LSMail extends SerializableObject {
+  int get id => attributes["id"];
+  set id(int val) => attributes["id"] = val;
+
+  String get subject => attributes["subject"];
+  set subject(String val) => attributes["subject"] = val;
+
+  int get isUnread => attributes["isUnread"];
+  set isUnread(int val) => attributes["isUnread"] = val;
+
+  int get isFlagged => attributes["isFlagged"];
+  set isFlagged(int val) => attributes["isFlagged"] = val;
+
+  int get isAnswered => attributes["isAnswered"];
+  set isAnswered(int val) => attributes["isAnswered"] = val;
+
+  int get isDeleted => attributes["isDeleted"];
+  set isDeleted(int val) => attributes["isDeleted"] = val;
+
+  DateTime get date => DateTime.parse(attributes["date"]);
+  set date(DateTime val) => attributes["date"] = val.toIso8601String();
+
+  int get size => attributes["size"];
+  set size(int val) => attributes["size"] = val;
+
+  String get bodyPlain => attributes["bodyPlain"];
+  set bodyPlain(String val) => attributes["bodyPlain"] = val;
+
+  List<LSMailAddressable> get from => attributes["from"];
+  set from(List<LSMailAddressable> val) => attributes["from"] = val;
+
+  List<LSMailAddressable> get to => attributes["to"];
+  set to(List<LSMailAddressable> val) => attributes["to"] = val;
+
+  List<LSMailAddressable> get replyTo => attributes["replyTo"];
+  set replyTo(List<LSMailAddressable> val) => attributes["replyTo"] = val;
+
+  List<LSMailAttachment> get attachments => attributes["attachments"];
+  set attachments(List<LSMailAttachment> val) => attributes["attachments"] = val;
+
+  String get folderId => attributes["folder_id"];
+  set folderId(String val) => attributes["folder_id"] = val;
+
+  LSMail({
+    required int id,
+    required String subject,
+    required int isUnread,
+    required int isFlagged,
+    required int isAnswered,
+    required int isDeleted,
+    required DateTime date,
+    required int size,
+    required String bodyPlain,
+    required List<LSMailAddressable> from,
+    required List<LSMailAddressable> to,
+    required List<LSMailAddressable> replyTo,
+    required List<LSMailAttachment> attachments,
+    required String folderId,
+  }) {
+    _setup();
+
+    this.id = id;
+    this.subject = subject;
+    this.isUnread = isUnread;
+    this.isFlagged = isFlagged;
+    this.isAnswered = isAnswered;
+    this.isDeleted = isDeleted;
+    this.date = date;
+    this.size = size;
+    this.bodyPlain = bodyPlain;
+    this.from = from;
+    this.to = to;
+    this.replyTo = replyTo;
+    this.attachments = attachments;
+    this.folderId = folderId;
+  }
+
+  LSMail.data(Map<String, dynamic> data) {
+    _setup();
+
+    Serializer().deserialize(jsonEncode(data), this);
+  }
+  
+  void _setup() {
+    objectCreators["from"] = (_) => <LSMailAddressable>[];
+    objectCreators["from.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
+    objectCreators["to"] = (_) => <LSMailAddressable>[];
+    objectCreators["to.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
+    objectCreators["replyTo"] = (_) => <LSMailAddressable>[];
+    objectCreators["replyTo.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
+    objectCreators["attachments"] = (_) => <LSMailAttachment>[];
+    objectCreators["attachments.value"] = (data) => data != null ? LSMailAttachment.data(data) : null;
+  }
+}
+
+
+/// enum value name is the string that the ls api returns for mode in mailbox.get_state
+enum LSMailMode {
+  /// can only send mails to other @school.lernsax.de mail addresses
+  local,
+  // warning: the name "platform" is just a guess, I have no access to a lernsax account that can only send mails
+  // to other accounts on lernsax
+  /// can only send mails to other @*lernsax.de mail addresses
+  platform,
+  /// can send mails to everyone
+  global,
+  unknown;
+
+  static LSMailMode fromString(String val) => LSMailMode.values.where((v) => v.name == val).toList().firstOrNull ?? LSMailMode.unknown;
+}
+
+// this isn't a serializable because this really doesn't need to be available offline
+class LSMailState {
+  final int usageBytes;
+  final int freeBytes;
+  final int limitBytes;
+  final int unreadMessages;
+  final LSMailMode mode;
+
+  LSMailState({required this.usageBytes, required this.freeBytes, required this.limitBytes, required this.unreadMessages, required this.mode});
 }

@@ -20,6 +20,7 @@ import 'package:kepler_app/tabs/hourtable/pages/room_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
@@ -223,7 +224,7 @@ final destinations = [
         label: Text("Benachrichtigungen"),
         navbarActions: [
           IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
-        ]
+        ],
       ),
       const NavEntryData(
         id: LernSaxPageIDs.tasks,
@@ -231,7 +232,7 @@ final destinations = [
         label: Text("Aufgaben"),
         navbarActions: [
           IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
-        ]
+        ],
       ),
       const NavEntryData(
         id: LernSaxPageIDs.files,
@@ -244,19 +245,19 @@ final destinations = [
       const NavEntryData(
         id: LernSaxPageIDs.emails,
         icon: Icon(Icons.mail_outlined),
-        // selectedIcon: Icon(Icons.mail),
+        selectedIcon: Icon(Icons.mail),
         label: Text("E-Mails"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInOfficialApp,
+        navbarActions: [
+          IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
       const NavEntryData(
         id: LernSaxPageIDs.messageBoard,
         icon: Icon(MdiIcons.bulletinBoard),
         // selectedIcon: Icon(MdiIcons.bulletinBoard),
         label: Text("Nachrichten"),
-        navbarActions: [
-          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
-        ]
+        externalLink: true,
+        onTryOpen: lernSaxOpenInOfficialApp,
       ),
       const NavEntryData(
         id: LernSaxPageIDs.emails,

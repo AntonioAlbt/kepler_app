@@ -18,12 +18,12 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 ## Designing
 
 - Flutter unterstüzt Material 3! → sieht modern aus, erfordert keine weitere Arbeit
-- MaterialApp Design hat [`useMaterial3: true`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/main.dart#L66)
+- MaterialApp Design hat [`useMaterial3: true`](https://github.com/AntonioAlbt/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/main.dart#L66)
 - Drawer-Items ähnlich zu Material 3-`NavigationDrawer` gestaltet
   - gute Übersichtlichkeit
   - angenehme Farben und Größe
   - auch Meinungen von Freunden und Familie eingeholt
-- Dark Mode hinzugefügt, kann ohne Neustart smooth geändert werden (wird von Flutter direkt unterstützt, [`ColorScheme.brightness`](https://github.com/Gamer153/kepler_app/blob/0413b2a63be3ca92d8059f11a1346401a670533e/lib/main.dart#L243))
+- Dark Mode hinzugefügt, kann ohne Neustart smooth geändert werden (wird von Flutter direkt unterstützt, [`ColorScheme.brightness`](https://github.com/AntonioAlbt/kepler_app/blob/0413b2a63be3ca92d8059f11a1346401a670533e/lib/main.dart#L243))
   - wird von allen Widgets unterstützt
   - im News-Browser umsetzen?
 - Kepler-Farbpalette sollte mehr verwendet werden
@@ -41,16 +41,20 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - viele nötige Elemente, meine beste Lösungsidee: **verschachtelte Drawer-Items**
   - allerdings: keine gute Implementation dafür gefunden?
 - Lösung:
-  - also eigenes System dafür entwickelt, erlaubt komplette Bearbeitbarkeit (siehe [`drawer.dart`](https://github.com/Gamer153/kepler_app/blob/main/lib/drawer.dart))
+  - also eigenes System dafür entwickelt, erlaubt komplette Bearbeitbarkeit (siehe [`drawer.dart`](https://github.com/AntonioAlbt/kepler_app/blob/main/lib/drawer.dart))
   - Design ähnlich wie Mat3 NavDrawers, aber kompakter und mit Möglichkeit für `children`
   - erlaubt jetzt auch verschiedene Aktionen in der Navigationsleiste pro Page
   - auch Überprüfungsfunktionen, ob Öffnen/Aufklappen möglich ist -> für StuPlan Erst-Datenerfassung
+  - Einträge können auch:
+    - ausgeblendet werden, z.B. Lehrerplan für Schüler - damit muss ich nicht das Array der Entries bei Runtime bearbeiten, sondern zeige einfach bestimmte Einträge daraus nicht an
+    - gesperrt werden, z.B. um nicht angemeldeten Benutzern zu zeigen, was sie durch Anmeldung freischalten, und damit sie sich einfacher anmelden können
 
 ## Essensplan
 
 - eigentlich: Bestellung und Abfrage per API direkt integrieren
 - aber: DLS erlaubte mir das (auf Anfrage) nicht
 - deshalb: Webseite-Link und Knopf, um die App zu installieren oder öffnen
+- Plan: nochmal anfragen, Unterstützung von Schulleiter ausdrücken; anbieten, die offizielle Dart-Library vom Eigentümer vom Dienstleister der DLS zu benutzen
 
 ## Kepler-News-System
 
@@ -61,8 +65,8 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - Footer/Header werden durch JS entfernt
 - *TODO: wenn möglich, Zugriff auf die API bekommen, um Posts besser anzuzeigen* (eher nicht, da Einbettung in die App die Sperre unnötig machen würde)
 - News auch offline anzeigen:
-  - News-Data in Cache als JSON (siehe [NewsEntryData](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/tabs/news/news_data.dart#L7))
-  - [`NewsEntries`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/tabs/news/news.dart#L49-L50) werden daraus generiert
+  - News-Data in Cache als JSON (siehe [NewsEntryData](https://github.com/AntonioAlbt/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/tabs/news/news_data.dart#L7))
+  - [`NewsEntries`](https://github.com/AntonioAlbt/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/tabs/news/news.dart#L49-L50) werden daraus generiert
   - Offline-Anzeige von News nicht möglich, da echter Inhalt (HTML) nicht gecached werden kann
 - siehe [Benachrichtigungen](#benarichtigungen)
 - News-"Widget" zur Homepage hinzugefügt
@@ -72,10 +76,10 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
 ## Kepler-Stundenplan
 
 - Datenabfrage:
-  - eigene Schnittstelle plus Modelle für Indiware-API geschrieben: [`indiware.dart`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/libs/indiware.dart)
-  - zusätzlich Management von Caching für alle Daten -> `IndiwareDataManager` aus [`ht_data.dart`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart)
+  - eigene Schnittstelle plus Modelle für Indiware-API geschrieben: [`indiware.dart`](https://github.com/AntonioAlbt/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/libs/indiware.dart)
+  - zusätzlich Management von Caching für alle Daten -> `IndiwareDataManager` aus [`ht_data.dart`](https://github.com/AntonioAlbt/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart)
   - alles wird gecached, Daten älter als 3 Tage werden beim Start gelöscht
-  - `Klassen.xml` (Plan-Datei, die nur für allgemeine Infos genutzt wird) wird nach 30 Tagen erneuert ([`Änderungszeitpunkt vor mehr als 30 Tagen`](https://github.com/Gamer153/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart#L169))
+  - `Klassen.xml` (Plan-Datei, die nur für allgemeine Infos genutzt wird) wird nach 30 Tagen erneuert ([`Änderungszeitpunkt vor mehr als 30 Tagen`](https://github.com/AntonioAlbt/kepler_app/blob/af6d4de02d25b093c7d09193d71a6612f36cc6e8/lib/tabs/hourtable/ht_data.dart#L169))
 - Anmeldedaten werden bei Anmeldung von LernSax abgefragt
   - wenn das scheitert, wird Benutzer gefragt
   - mehr Infos: siehe `lernsax_data/info.md`
@@ -199,7 +203,7 @@ Zu jedem dieser Punkte gibt es noch mehr Notizen weiter unten.
   - `Workmanager` zum Erstellen eines Tasks verwenden
     - iOS-Kompatibilität fragwürdig!
   - damit wird alle 2 Stunden auf neue News überprüft
-  - falls neue News verfügbar: Benachrichtigung wird gesendet (siehe [`sendNotification`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/tasks.dart#L57-L65) in `tasks.dart`, verwendet API von [`notifications.dart`](https://github.com/Gamer153/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/notifications.dart))
+  - falls neue News verfügbar: Benachrichtigung wird gesendet (siehe [`sendNotification`](https://github.com/AntonioAlbt/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/tasks.dart#L57-L65) in `tasks.dart`, verwendet API von [`notifications.dart`](https://github.com/AntonioAlbt/kepler_app/blob/3634ace5014b236d26bf24d50520c9c2f1c6f587/lib/libs/notifications.dart))
     - Benachrichtigungen scheinen aktuell iOS gar nicht zu unterstützen
     - erfordern extra Berechtigungen auf Android 13+ -> werden aktuell nicht angefragt
 - für Stundenplan-Änderungen:

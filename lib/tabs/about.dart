@@ -20,7 +20,7 @@ class _AboutTabState extends State<AboutTab> {
             ElevatedButton(
               onPressed: () {
                 launchUrl(
-                  Uri.parse("https://github.com/Gamer153/kepler_app"),
+                  Uri.parse("https://github.com/AntonioAlbt/kepler_app"),
                   mode: LaunchMode.externalApplication
                 );
               },

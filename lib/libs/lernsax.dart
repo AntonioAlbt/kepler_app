@@ -91,10 +91,10 @@ Future<String> session(String mail, String token) async {
 }
 
 // this never needs an ID, because the response from the API for set_session doesn't contain the login information
-Future<Map<String, dynamic>> useSession(String mail, String token) async =>
+Future<Map<String, dynamic>> useSession(String login, String token) async =>
     call(
         method: "set_session",
-        params: {"session_id": await session(mail, token)});
+        params: {"session_id": await session(login, token)});
 
 Future<dynamic> api(List<Map<String, dynamic>> data) async => await http
     .post(
@@ -393,6 +393,108 @@ Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTea
       user: data["indiware"]["user"],
       password: data["indiware"]["password"],
       isTeacherData: data["is_teacher_data"],
+    );
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<List<LSMailFolder>?> getMailFolders(String login, String token) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "get_folders", id: 1),
+    ]);
+    if (res[0]["result"]["return"] != "OK") return null;
+    return (res[0]["result"]["folders"] as List<dynamic>).map((data) => LSMailFolder(
+      id: data["id"],
+      name: data["name"],
+      isInbox: data["is_inbox"],
+      isTrash: data["is_trash"],
+      isDrafts: data["is_drafts"],
+      isSent: data["is_sent"],
+      lastModified: DateTime.fromMillisecondsSinceEpoch(data["m_date"] * 1000),
+    )).toList();
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<List<LSMailListing>?> getMailListings(String login, String token, { required String folderId }) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "get_messages", params: {"folder_id": folderId}, id: 1),
+    ]);
+    if (res[0]["result"]["return"] != "OK") return null;
+    return (res[0]["result"]["messages"] as List<dynamic>).map((data) => LSMailListing(
+      id: data["id"],
+      subject: data["subject"],
+      isUnread: data["is_unread"],
+      isFlagged: data["is_flagged"],
+      isAnswered: data["is_answered"],
+      isDeleted: data["is_deleted"],
+      date: data["date"],
+      size: data["size"],
+      from: LSMailAddressable.fromLSApiDataList(data),
+      folderId: folderId,
+    )).toList();
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<LSMail?> getMail(String login, String token, { required String folderId, required int mailId }) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "read_message", params: {"folder_id": folderId, "message_id": mailId}, id: 1),
+    ]);
+    if (res[0]["result"]["return"] != "OK") return null;
+    final data = res[0]["result"]["message"] as Map<String, dynamic>;
+    return LSMail(
+      id: data["id"],
+      subject: data["subject"],
+      isUnread: data["is_unread"],
+      isFlagged: data["is_flagged"],
+      isAnswered: data["is_answered"],
+      isDeleted: data["is_deleted"],
+      date: DateTime.fromMillisecondsSinceEpoch(data["date"] * 1000),
+      size: data["size"],
+      bodyPlain: data["body_plain"],
+      from: LSMailAddressable.fromLSApiDataList(data["from"]),
+      to: LSMailAddressable.fromLSApiDataList(data["to"]),
+      replyTo: data.containsKey("reply_to") ? LSMailAddressable.fromLSApiDataList(data["reply_to"]) : [],
+      attachments: data.containsKey("files") ? LSMailAttachment.fromLSApiDataList(data["files"]) : [],
+      folderId: folderId,
+    );
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return null;
+  }
+}
+
+Future<LSMailState?> getMailState(String login, String token) async {
+  try {
+    final res = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "get_state", id: 1),
+    ]);
+    if (res[0]["result"]["return"] != "OK") return null;
+    final data = res[0]["result"] as Map<String, dynamic>;
+    return LSMailState(
+      usageBytes: data["quota"]["usage"],
+      freeBytes: data["quota"]["free"],
+      limitBytes: data["quota"]["limit"],
+      mode: LSMailMode.fromString(data["mode"]),
+      unreadMessages: data["unread_messages"],
     );
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
