@@ -62,7 +62,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   set mailFolders(List<LSMailFolder>? val) => _setSaveNotify("mail_folders", val);
 
   List<LSMailListing>? get mailListings => attributes["mail_listings"];
-  set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml1.date.compareTo(ml2.date)));
+  set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml2.date.compareTo(ml1.date)));
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -412,13 +412,19 @@ class LSMailAddressable extends SerializableObject {
     name = val["name"]!;
   }
 
-  static List<LSMailAddressable> fromLSApiDataList(List<Map<String, String>> val)
-    => val.map((val) => LSMailAddressable.fromLSApiData(val)).toList();
+  static List<LSMailAddressable> fromLSApiDataList(List<dynamic> val)
+    => val.cast<Map<String, dynamic>>().map((val) => LSMailAddressable.fromLSApiData(val.cast())).toList();
 
   @override
   String toString() {
     return 'LSMailAddressable(address: $address, name: $name)';
   }
+}
+
+enum MailDirection {
+  /// might also mean "to be sent" (e.g. for drafts)
+  sent,
+  received,
 }
 
 class LSMailListing extends SerializableObject {
@@ -440,14 +446,18 @@ class LSMailListing extends SerializableObject {
   bool get isDeleted => attributes["isDeleted"];
   set isDeleted(bool val) => attributes["isDeleted"] = val;
 
-  DateTime get date => attributes["date"];
-  set date(DateTime val) => attributes["date"] = val;
+  DateTime get date => DateTime.parse(attributes["date"]);
+  set date(DateTime val) => attributes["date"] = val.toIso8601String();
 
   int get size => attributes["size"];
   set size(int val) => attributes["size"] = val;
 
-  List<LSMailAddressable> get from => attributes["from"];
-  set from(List<LSMailAddressable> val) => attributes["from"] = val;
+  MailDirection get direction => MailDirection.values.firstWhere((element) => element.name == attributes["direction"]);
+  set direction(MailDirection val) => attributes["direction"] = val.name;
+
+  /// depends on if the message is supposed to be sent or was received
+  List<LSMailAddressable> get addressed => attributes["addressed"];
+  set addressed(List<LSMailAddressable> val) => attributes["addressed"] = val;
 
   String get folderId => attributes["folder_id"];
   set folderId(String val) => attributes["folder_id"] = val;
@@ -461,7 +471,8 @@ class LSMailListing extends SerializableObject {
     required bool isDeleted,
     required DateTime date,
     required int size,
-    required List<LSMailAddressable> from,
+    required List<LSMailAddressable> addressed,
+    required MailDirection direction,
     required String folderId,
   }) {
     _setup();
@@ -474,7 +485,8 @@ class LSMailListing extends SerializableObject {
     this.isDeleted = isDeleted;
     this.date = date;
     this.size = size;
-    this.from = from;
+    this.addressed = addressed;
+    this.direction = direction;
     this.folderId = folderId;
   }
 
@@ -491,7 +503,7 @@ class LSMailListing extends SerializableObject {
 
   @override
   String toString() {
-    return 'LSMailListing(id: $id, subject: $subject, isUnread: $isUnread, isFlagged: $isFlagged, isAnswered: $isAnswered, isDeleted: $isDeleted, date: $date, from: $from)';
+    return 'LSMailListing(id: $id, subject: $subject, isUnread: $isUnread, isFlagged: $isFlagged, isAnswered: $isAnswered, isDeleted: $isDeleted, date: $date, from: $addressed)';
   }
 }
 
@@ -526,8 +538,8 @@ class LSMailAttachment extends SerializableObject {
     size = val["size"]!;
   }
 
-  static List<LSMailAttachment> fromLSApiDataList(List<Map<String, dynamic>> val)
-    => val.map((val) => LSMailAttachment.fromLSApiData(val)).toList();
+  static List<LSMailAttachment> fromLSApiDataList(List<dynamic> val)
+    => val.cast<Map<String, dynamic>>().map((val) => LSMailAttachment.fromLSApiData(val)).toList();
 
   @override
   String toString() {
@@ -542,17 +554,17 @@ class LSMail extends SerializableObject {
   String get subject => attributes["subject"];
   set subject(String val) => attributes["subject"] = val;
 
-  int get isUnread => attributes["isUnread"];
-  set isUnread(int val) => attributes["isUnread"] = val;
+  bool get isUnread => attributes["isUnread"];
+  set isUnread(bool val) => attributes["isUnread"] = val;
 
-  int get isFlagged => attributes["isFlagged"];
-  set isFlagged(int val) => attributes["isFlagged"] = val;
+  bool get isFlagged => attributes["isFlagged"];
+  set isFlagged(bool val) => attributes["isFlagged"] = val;
 
-  int get isAnswered => attributes["isAnswered"];
-  set isAnswered(int val) => attributes["isAnswered"] = val;
+  bool get isAnswered => attributes["isAnswered"];
+  set isAnswered(bool val) => attributes["isAnswered"] = val;
 
-  int get isDeleted => attributes["isDeleted"];
-  set isDeleted(int val) => attributes["isDeleted"] = val;
+  bool get isDeleted => attributes["isDeleted"];
+  set isDeleted(bool val) => attributes["isDeleted"] = val;
 
   DateTime get date => DateTime.parse(attributes["date"]);
   set date(DateTime val) => attributes["date"] = val.toIso8601String();
@@ -581,10 +593,10 @@ class LSMail extends SerializableObject {
   LSMail({
     required int id,
     required String subject,
-    required int isUnread,
-    required int isFlagged,
-    required int isAnswered,
-    required int isDeleted,
+    required bool isUnread,
+    required bool isFlagged,
+    required bool isAnswered,
+    required bool isDeleted,
     required DateTime date,
     required int size,
     required String bodyPlain,

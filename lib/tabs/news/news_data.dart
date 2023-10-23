@@ -31,7 +31,12 @@ class NewsEntryData extends SerializableObject {
 
 Future<List<NewsEntryData>?> loadNews(int page) async {
   final newNewsData = <NewsEntryData>[];
-  final res = await http.get(Uri.parse(keplerNewsURL.replaceAll("{page}", "${page + 1}")));
+  final http.Response res;
+  try {
+    res = await http.get(Uri.parse(keplerNewsURL.replaceAll("{page}", "${page + 1}")));
+  } catch (_) {
+    return null;
+  }
   if (res.statusCode == 404) {
     return null;
   }

@@ -168,6 +168,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     "messenger": MdiIcons.mail,
     "tasks": MdiIcons.checkCircleOutline,
     "board": MdiIcons.bulletinBoard,
+    "calendar": MdiIcons.calendar,
   };
 
   final hideData = ["files", "trusts"];

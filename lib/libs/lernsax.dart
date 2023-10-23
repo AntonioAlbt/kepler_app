@@ -44,6 +44,8 @@ String sha1(String input) {
   return digest.toString();
 }
 
+bool toBool(dynamic input) => (input is num && input > 0) || (input is bool && input) || (input is String && input.isNotEmpty);
+
 Future<Map<String, dynamic>> auth(String mail, String token, {int? id}) async {
   final nonce = (await api([call(method: "get_nonce", id: 1)]))[0]["result"];
   if (nonce["return"] == "OK" && nonce["nonce"] != null) {
@@ -411,10 +413,10 @@ Future<List<LSMailFolder>?> getMailFolders(String login, String token) async {
     return (res[0]["result"]["folders"] as List<dynamic>).map((data) => LSMailFolder(
       id: data["id"],
       name: data["name"],
-      isInbox: data["is_inbox"],
-      isTrash: data["is_trash"],
-      isDrafts: data["is_drafts"],
-      isSent: data["is_sent"],
+      isInbox: toBool(data["is_inbox"]),
+      isTrash: toBool(data["is_trash"]),
+      isDrafts: toBool(data["is_drafts"]),
+      isSent: toBool(data["is_sent"]),
       lastModified: DateTime.fromMillisecondsSinceEpoch(data["m_date"] * 1000),
     )).toList();
   } catch (e, s) {
@@ -423,24 +425,33 @@ Future<List<LSMailFolder>?> getMailFolders(String login, String token) async {
   }
 }
 
-Future<List<LSMailListing>?> getMailListings(String login, String token, { required String folderId }) async {
+Future<List<LSMailListing>?> getMailListings(String login, String token, { required String folderId, int? offset, int? limit }) async {
   try {
     final res = await api([
       await useSession(login, token),
       focus("mailbox"),
-      call(method: "get_messages", params: {"folder_id": folderId}, id: 1),
+      call(
+        method: "get_messages",
+        params: {
+          "folder_id": folderId,
+          if (offset != null) "offset": offset,
+          if (limit != null) "limit": limit,
+        },
+        id: 1,
+      ),
     ]);
     if (res[0]["result"]["return"] != "OK") return null;
     return (res[0]["result"]["messages"] as List<dynamic>).map((data) => LSMailListing(
       id: data["id"],
       subject: data["subject"],
-      isUnread: data["is_unread"],
-      isFlagged: data["is_flagged"],
-      isAnswered: data["is_answered"],
-      isDeleted: data["is_deleted"],
-      date: data["date"],
+      isUnread: toBool(data["is_unread"]),
+      isFlagged: toBool(data["is_flagged"]),
+      isAnswered: toBool(data["is_answered"]),
+      isDeleted: toBool(data["is_deleted"]),
+      date: DateTime.fromMillisecondsSinceEpoch(data["date"] * 1000),
       size: data["size"],
-      from: LSMailAddressable.fromLSApiDataList(data),
+      addressed: data.containsKey("from") ? LSMailAddressable.fromLSApiDataList(data["from"]) : data.containsKey("to") ? LSMailAddressable.fromLSApiDataList(data["to"]) : [],
+      direction: data.containsKey("from") ? MailDirection.received : data.containsKey("to") ? MailDirection.sent : MailDirection.received,
       folderId: folderId,
     )).toList();
   } catch (e, s) {
@@ -461,10 +472,10 @@ Future<LSMail?> getMail(String login, String token, { required String folderId, 
     return LSMail(
       id: data["id"],
       subject: data["subject"],
-      isUnread: data["is_unread"],
-      isFlagged: data["is_flagged"],
-      isAnswered: data["is_answered"],
-      isDeleted: data["is_deleted"],
+      isUnread: toBool(data["is_unread"]),
+      isFlagged: toBool(data["is_flagged"]),
+      isAnswered: toBool(data["is_answered"]),
+      isDeleted: toBool(data["is_deleted"]),
       date: DateTime.fromMillisecondsSinceEpoch(data["date"] * 1000),
       size: data["size"],
       bodyPlain: data["body_plain"],

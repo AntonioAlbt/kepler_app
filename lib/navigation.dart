@@ -235,14 +235,6 @@ final destinations = [
         ],
       ),
       const NavEntryData(
-        id: LernSaxPageIDs.files,
-        icon: Icon(Icons.folder_copy_outlined),
-        // selectedIcon: Icon(Icons.folder_copy),
-        label: Text("Dateien"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInOfficialApp,
-      ),
-      const NavEntryData(
         id: LernSaxPageIDs.emails,
         icon: Icon(Icons.mail_outlined),
         selectedIcon: Icon(Icons.mail),
@@ -250,6 +242,14 @@ final destinations = [
         navbarActions: [
           IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
         ],
+      ),
+      const NavEntryData(
+        id: LernSaxPageIDs.files,
+        icon: Icon(Icons.folder_copy_outlined),
+        // selectedIcon: Icon(Icons.folder_copy),
+        label: Text("Dateien"),
+        externalLink: true,
+        onTryOpen: lernSaxOpenInOfficialApp,
       ),
       const NavEntryData(
         id: LernSaxPageIDs.messageBoard,
@@ -260,7 +260,7 @@ final destinations = [
         onTryOpen: lernSaxOpenInOfficialApp,
       ),
       const NavEntryData(
-        id: LernSaxPageIDs.emails,
+        id: LernSaxPageIDs.chats,
         icon: Icon(Icons.chat_bubble_outline),
         selectedIcon: Icon(Icons.chat_bubble),
         label: Text("Messenger (Chats)"),

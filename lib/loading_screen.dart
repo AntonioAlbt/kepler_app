@@ -119,7 +119,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     _circle3AnimContr.addListener(() {
       if (_circle3AnimContr.isCompleted) {
         Future.delayed(const Duration(milliseconds: 200)).then((_) {
-          if (!context.mounted) return;
+          if (!mounted) return;
           _textAnimContr.repeat(reverse: true, period: const Duration(milliseconds: 700));
 
           _circle1AnimContr.dispose();
@@ -136,6 +136,7 @@ class _LoadingScreenState extends State<LoadingScreen>
           setState(() {});
         });
         Future.delayed(const Duration(milliseconds: 2000)).then((_) {
+          if (!mounted) return;
           setState(() {
             _switcherChild = ElevatedButton(
               onPressed: () {
@@ -146,8 +147,14 @@ class _LoadingScreenState extends State<LoadingScreen>
             );
           });
         });
-        Future.delayed(const Duration(seconds: 9)).then((_) => Sentry.captureException("LoadingError: long loading time, ~ 10s"));
-        Future.delayed(const Duration(milliseconds: 19050)).then((_) => Sentry.captureException("LoadingError: extremely long loading time, = 20s"));
+        Future.delayed(const Duration(seconds: 14)).then((_) {
+          if (!mounted) return;
+          Sentry.captureException("LoadingError: long loading time, ~ 15s");
+        });
+        Future.delayed(const Duration(milliseconds: 24050)).then((_) {
+          if (!mounted) return;
+          Sentry.captureException("LoadingError: extremely long loading time, = 25s");
+        });
       }
     });
     // _circle3AnimContr.addListener(() {
