@@ -354,14 +354,14 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                     ..clearInfoScreen();
                   if (!widget.again) {
                     showDialog(
-                      context: globalScaffoldState.context,
+                      context: globalScaffoldContext,
                       builder: (context) => AlertDialog(
                         title: const Text("Benachrichtigungen?"),
                         content: const Text("Möchten Sie benachrichtigt werden, wenn neue Artikel auf der Webseite unserer Schule veröffentlicht werden?"),
                         actions: [
                           TextButton(
                             onPressed: (){
-                              Provider.of<Preferences>(globalScaffoldKey.currentContext!, listen: false).enabledNotifs = [newsNotificationKey];
+                              Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [newsNotificationKey];
                               checkNotificationPermission().then((notifAllowed) {
                                 if (notifAllowed) {
                                   Navigator.pop(context);
@@ -384,7 +384,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                           ),
                           TextButton(
                             onPressed: () {
-                              Provider.of<Preferences>(globalScaffoldKey.currentContext!, listen: false).enabledNotifs = [];
+                              Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [];
                               Navigator.pop(context);
                             },
                             child: const Text("Nein"),

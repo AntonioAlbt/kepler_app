@@ -84,7 +84,7 @@ final destinations = [
     navbarActions: [
       if (kDebugMode) IconButton(
         onPressed: () {
-          Provider.of<AppState>(globalScaffoldState.context, listen: false).infoScreen = InfoScreenDisplay(
+          Provider.of<AppState>(globalScaffoldContext, listen: false).infoScreen = InfoScreenDisplay(
             infoScreens: introScreens,
           );
         },

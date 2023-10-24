@@ -107,7 +107,7 @@ void main() async {
 }
 
 void showLoginScreenAgain({ bool clearData = true }) {
-  final ctx = globalScaffoldState.context;
+  final ctx = globalScaffoldContext;
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
     Provider.of<InternalState>(ctx, listen: false).introShown = false;
@@ -124,7 +124,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const KeplerApp();
+    // added this for iOS compatibility
+    return const SafeArea(child: KeplerApp());
   }
 }
 
@@ -139,6 +140,7 @@ class KeplerApp extends StatefulWidget {
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
+BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
 
 // const _loadingAnimationDuration = 1000;
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +12,9 @@ import 'package:provider/provider.dart';
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
 void lernSaxMailsRefreshAction() {
-  lsMailPageKey.currentState?.loadData(force: true);
+  lsMailPageKey.currentState
+    ?..loadData(force: true)
+    ..dayDispController.onForceRefresh?.call();
 }
 
 class LSMailsPage extends StatefulWidget {
@@ -23,6 +27,7 @@ class LSMailsPage extends StatefulWidget {
 class _LSMailsPageState extends State<LSMailsPage> {
   bool _loadingFolders = false;
   String? selectedFolderId;
+  final LSMailDispController dayDispController = LSMailDispController();
 
   String improveName(String oldName) {
     if (oldName == "INBOX") return "Posteingang";
@@ -82,7 +87,14 @@ class _LSMailsPageState extends State<LSMailsPage> {
               ),
             ),
             Flexible(
-              child: (selectedFolderId != null) ? LSMailDisplay(selectedFolderId: selectedFolderId!, key: ValueKey(selectedFolderId)) : const Text("..."),
+              child: (selectedFolderId != null)
+                ? LSMailDisplay(
+                    key: ValueKey(selectedFolderId),
+                    selectedFolderId: selectedFolderId!,
+                    isDraftsFolder: lsdata.mailFolders?.firstWhere((f) => f.id == selectedFolderId).isDrafts ?? false,
+                    controller: dayDispController,
+                  )
+                : const Text("..."),
             ),
           ],
         );
@@ -120,10 +132,16 @@ class _LSMailsPageState extends State<LSMailsPage> {
   }
 }
 
+class LSMailDispController {
+  void Function()? onForceRefresh;
+}
+
 class LSMailDisplay extends StatefulWidget {
   final String selectedFolderId;
+  final bool isDraftsFolder;
+  final LSMailDispController? controller;
 
-  const LSMailDisplay({super.key, required this.selectedFolderId});
+  const LSMailDisplay({super.key, required this.selectedFolderId, required this.isDraftsFolder, this.controller});
 
   @override
   State<LSMailDisplay> createState() => _LSMailDisplayState();
@@ -223,7 +241,10 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                       const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
                                       Padding(
                                         padding: const EdgeInsets.only(left: 4),
-                                        child: Text("${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}"),
+                                        child: Text(
+                                          "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
+                                          style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -245,8 +266,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      // onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)), // TODO: create generateLernSaxMailInfoDialog
-                      onPressed: () {},
+                      onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
                       child: Column(
                         children: [
                           Padding(
@@ -288,7 +308,21 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                 Flexible(
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 4),
-                                    child: Text("${mail.direction == MailDirection.received ? "von" : "an"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
+                                    child: Text("${mail.isDraft ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty) Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.file_download_done, size: 20, color: Colors.grey),
+                                Flexible(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Text("offline verfügbar", style: Theme.of(context).textTheme.bodySmall),
                                   ),
                                 ),
                               ],
@@ -310,8 +344,9 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
 
   @override
   void initState() {
-    loadTasksForSelectedClass();
     super.initState();
+    loadTasksForSelectedClass();
+    widget.controller?.onForceRefresh = () => loadTasksForSelectedClass();
   }
 
   Future<void> loadTasksForSelectedClass() async {
@@ -320,8 +355,8 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // TODO: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
     // this might require an additional request with limit = 0 and offset = 0 to get the new total_messages and then load the new ones
-    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId);
-    final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
+    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId, isDraftsFolder: widget.isDraftsFolder);
+    final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24 && lsdata.mailListings != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
     if (!online) {
       showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
     } else if (data == null) {

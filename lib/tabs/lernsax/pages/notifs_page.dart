@@ -7,7 +7,8 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
-final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:MM:ss");
+final lernSaxTimeFormatWithSeconds = DateFormat("dd.MM.yyyy HH:MM:ss");
+final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:MM");
 
 final lsNotifPageKey = GlobalKey<LSNotificationPageState>();
 
@@ -78,7 +79,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
                           const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
                           Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Text(lernSaxTimeFormat.format(notif.date)),
+                            child: Text(lernSaxTimeFormatWithSeconds.format(notif.date)),
                           ),
                         ],
                       ),
@@ -153,7 +154,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final (online, data) = await lernsax.getNotifications(creds.lernSaxLogin!, creds.lernSaxToken!, startId: lsdata.notifications?.firstOrNull?.id);
-    final text = (online == false && lsdata.lastNotificationsUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Benachrichtigungen verfügbar sein." : "";
+    final text = (online == false && lsdata.lastNotificationsUpdateDiff.inHours >= 24 && lsdata.notifications != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Benachrichtigungen verfügbar sein." : "";
     if (!online) {
       showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
     } else if (data == null) {
@@ -187,7 +188,7 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
         mainAxisSize: MainAxisSize.min,
         children: [
           InfoDialogEntry(icon: Icons.numbers, text: "ID: ${notif.id}", paddingTop: EdgeInsets.zero),
-          InfoDialogEntry(icon: Icons.access_time_filled, text: lernSaxTimeFormat.format(notif.date)),
+          InfoDialogEntry(icon: Icons.access_time_filled, text: lernSaxTimeFormatWithSeconds.format(notif.date)),
           InfoDialogEntry(icon: Icons.info, text: notif.message),
           if (notif.data != null) InfoDialogEntry(icon: MdiIcons.shape, text: notif.data!),
           if (notif.hasUserData) InfoDialogEntry(icon: Icons.person, text: "${notif.fromUserName ?? "Kein Benutzer"}${notif.fromUserLogin != null && notif.fromUserName != notif.fromUserLogin ? " (E-Mail: ${notif.fromUserLogin})" : ""}"),

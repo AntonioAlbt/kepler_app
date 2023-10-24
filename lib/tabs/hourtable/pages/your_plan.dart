@@ -38,7 +38,7 @@ class YourPlanPage extends StatelessWidget {
 }
 
 void yourStuPlanEditAction() {
-  final state = Provider.of<AppState>(globalScaffoldKey.currentContext!, listen: false);
+  final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
   state.infoScreen ??= (state.userType != UserType.teacher)
       ? stuPlanPupilIntroScreens()
       : stuPlanTeacherIntroScreens();

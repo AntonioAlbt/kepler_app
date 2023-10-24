@@ -103,12 +103,10 @@ class _LSTasksPageState extends State<LSTasksPage> {
     setState(() => _loadingClasses = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final (online, classes) = await lernsax.getGroupsAndClasses(creds.lernSaxLogin!, creds.lernSaxToken!);
-    // final text = (online == false && lsdata.lastMembershipsUpdate.difference(DateTime.now()).inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Sie sind vielleicht nicht mehr aktuell." : "";
-    const text = "";
     if (!online) {
-      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
+      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
     } else if (classes == null) {
-      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Klassen/Gruppen. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Klassen/Gruppen. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
     } else {
       lsdata.memberships = classes;
       lsdata.lastMembershipsUpdate = DateTime.now();
@@ -317,7 +315,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
         final (online, newData) = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: membership?.login);
 
         if (!online) {
-          text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
+          text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24 && lsdata.tasks != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
           showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", clear: true, error: true);
           setState(() => _loading = false);
           return;
@@ -342,7 +340,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       }
     } else {
       final (online, data) = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: widget.selectedClass);
-      final text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
+      final text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24 && lsdata.tasks != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
       if (!online) {
         showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
       } else if (data == null) {

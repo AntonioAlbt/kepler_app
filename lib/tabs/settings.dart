@@ -64,8 +64,8 @@ class _SettingsTabState extends State<SettingsTab> {
                             // one, because it's intended as a clean login
                             // this might be unneccessary, but it'd be worse to do this for the other one - parents probably would just not use the app after it closing itself
 
-                            final creds = Provider.of<CredentialStore>(globalScaffoldState.context, listen: false);
-                            Provider.of<InternalState>(globalScaffoldState.context, listen: false).introShown = false;
+                            final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                            Provider.of<InternalState>(globalScaffoldContext, listen: false).introShown = false;
                             () async {
                               if (creds.lernSaxToken != null && creds.lernSaxLogin != null) {
                                 // try to unregister this app from LernSax, but don't care if it doesn't work

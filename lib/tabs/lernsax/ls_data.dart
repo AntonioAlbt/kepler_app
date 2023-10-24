@@ -25,6 +25,8 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
     objectCreators["mail_folders.value"] = (data) => data != null ? LSMailFolder.data(data) : null;
     objectCreators["mail_listings"] = (_) => <LSMailListing>[];
     objectCreators["mail_listings.value"] = (data) => data != null ? LSMailListing.data(data) : null;
+    objectCreators["mails"] = (_) => <LSMail>[];
+    objectCreators["mails.value"] = (data) => data != null ? LSMail.data(data) : null;
   }
 
   void _setSaveNotify(String key, dynamic data) {
@@ -71,6 +73,17 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   List<LSMailListing>? get mailListings => attributes["mail_listings"];
   set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml2.date.compareTo(ml1.date)));
 
+  /// This doesn't have a "last update" value, because (lernsax) mails can never change.
+  /// And they never will.
+  List<LSMail> get mailCache => attributes["mails"] ?? [];
+  set mailCache(List<LSMail> val) => _setSaveNotify("mails", val);
+  void addMailToCache(LSMail mail) {
+    final l = mailCache;
+    if (l.any((m) => m.id == mail.id)) return;
+    l.add(mail);
+    mailCache = l;
+  }
+
   final _serializer = Serializer();
   bool loaded = false;
   final Lock _fileLock = Lock();
@@ -78,7 +91,8 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
     if (_fileLock.locked) log("The file lock for LernSaxData (file: cache/$lernSaxDataPrefsKey-data.json) is still locked!!! This means waiting...");
     _fileLock.synchronized(() async => await writeFile(await lernSaxDataFilePath, _serialize()));
   }
-  String _serialize() => _serializer.serialize(this);
+  // lernsax always returns CRLF-s as line endings but the dart JSON lib can't seem to decode it after it's been encoded
+  String _serialize() => _serializer.serialize(this).replaceAll("\r", "").replaceAll("\t", "");
   void loadFromJson(String json) {
     try {
       _serializer.deserialize(json, this);
@@ -428,12 +442,6 @@ class LSMailAddressable extends SerializableObject {
   }
 }
 
-enum MailDirection {
-  /// might also mean "to be sent" (e.g. for drafts)
-  sent,
-  received,
-}
-
 class LSMailListing extends SerializableObject {
   int get id => attributes["id"];
   set id(int val) => attributes["id"] = val;
@@ -441,17 +449,17 @@ class LSMailListing extends SerializableObject {
   String get subject => attributes["subject"];
   set subject(String val) => attributes["subject"] = val;
 
-  bool get isUnread => attributes["isUnread"];
-  set isUnread(bool val) => attributes["isUnread"] = val;
+  bool get isUnread => attributes["is_unread"];
+  set isUnread(bool val) => attributes["is_unread"] = val;
 
-  bool get isFlagged => attributes["isFlagged"];
-  set isFlagged(bool val) => attributes["isFlagged"] = val;
+  bool get isFlagged => attributes["is_flagged"];
+  set isFlagged(bool val) => attributes["is_flagged"] = val;
 
-  bool get isAnswered => attributes["isAnswered"];
-  set isAnswered(bool val) => attributes["isAnswered"] = val;
+  bool get isAnswered => attributes["is_answered"];
+  set isAnswered(bool val) => attributes["is_answered"] = val;
 
-  bool get isDeleted => attributes["isDeleted"];
-  set isDeleted(bool val) => attributes["isDeleted"] = val;
+  bool get isDeleted => attributes["is_deleted"];
+  set isDeleted(bool val) => attributes["is_deleted"] = val;
 
   DateTime get date => DateTime.parse(attributes["date"]);
   set date(DateTime val) => attributes["date"] = val.toIso8601String();
@@ -459,10 +467,11 @@ class LSMailListing extends SerializableObject {
   int get size => attributes["size"];
   set size(int val) => attributes["size"] = val;
 
-  MailDirection get direction => MailDirection.values.firstWhere((element) => element.name == attributes["direction"]);
-  set direction(MailDirection val) => attributes["direction"] = val.name;
+  /// determined by checking if it's in the drafts folder
+  bool get isDraft => attributes["is_draft"];
+  set isDraft(bool val) => attributes["is_draft"] = val;
 
-  /// depends on if the message is supposed to be sent or was received
+  /// depends on if the message is a draft (then: read from "to") or a received message (then: read from "from")
   List<LSMailAddressable> get addressed => attributes["addressed"];
   set addressed(List<LSMailAddressable> val) => attributes["addressed"] = val;
 
@@ -479,7 +488,7 @@ class LSMailListing extends SerializableObject {
     required DateTime date,
     required int size,
     required List<LSMailAddressable> addressed,
-    required MailDirection direction,
+    required bool isDraft,
     required String folderId,
   }) {
     _setup();
@@ -493,7 +502,7 @@ class LSMailListing extends SerializableObject {
     this.date = date;
     this.size = size;
     this.addressed = addressed;
-    this.direction = direction;
+    this.isDraft = isDraft;
     this.folderId = folderId;
   }
 
@@ -504,8 +513,8 @@ class LSMailListing extends SerializableObject {
   }
 
   void _setup() {
-    objectCreators["from"] = (_) => <LSMailAddressable>[];
-    objectCreators["from.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
+    objectCreators["addressed"] = (_) => <LSMailAddressable>[];
+    objectCreators["addressed.value"] = (data) => data != null ? LSMailAddressable.data(data) : null;
   }
 
   @override

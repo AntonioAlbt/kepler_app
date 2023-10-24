@@ -11,7 +11,7 @@ void showSnackBar({ String? text, bool error = false, Widget? child, String Func
 }
 
 void showSnackBarDirectly({ String? text, bool error = false, Widget? child, String Function(bool sie)? textGen, bool clear = false, Duration duration = const Duration(seconds: 4) }) {
-  final msgr = ScaffoldMessenger.of(globalScaffoldKey.currentContext!);
+  final msgr = ScaffoldMessenger.of(globalScaffoldContext);
   if (clear) msgr.clearSnackBars();
   msgr.showSnackBar(
     SnackBar(

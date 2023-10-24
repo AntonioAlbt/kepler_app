@@ -156,7 +156,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                       ],
                     ),
                   ),
-                  KeyboardVisibilityBuilder(
+                  if (infoScreens.length > 1) KeyboardVisibilityBuilder(
                     builder: (context, keyboardHidden) {
                       if (keyboardHidden) return const SizedBox.shrink();
                       final dark = hasDarkTheme(context);
