@@ -34,6 +34,16 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     }
     return Consumer<LernSaxData>(
       builder: (context, lsdata, child) {
+        if (lsdata.notifications == null) {
+          return const Center(
+            child: Text(
+              "Fehler beim Laden von Benachrichtigungen.",
+              style: TextStyle(
+                fontSize: 18,
+              ),
+            ),
+          );
+        }
         if (lsdata.notifications?.isEmpty ?? true) {
           return const Center(
             child: Text(
@@ -46,9 +56,9 @@ class LSNotificationPageState extends State<LSNotificationPage> {
         }
         return ListView.separated(
           shrinkWrap: true,
-          itemCount: lsdata.notifications.length,
+          itemCount: lsdata.notifications!.length,
           itemBuilder: (context, i) {
-            final notif = lsdata.notifications[i];
+            final notif = lsdata.notifications![i];
             return Padding(
               padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
               child: TextButton(
@@ -135,29 +145,23 @@ class LSNotificationPageState extends State<LSNotificationPage> {
   @override
   void initState() {
     super.initState();
-    loadData().then((_) {
-      // final lsdata = Provider.of<LernSaxData>(context, listen: false);
-      // if (lsdata.notifications.isEmpty) {
-      //   showDialog(context: context, builder: (context) => AlertDialog(
-      //     title: Text("Nachrichten aktivieren?"),
-      //     content: Selector<Preferences, bool>(
-      //       selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-      //       builder: (context, sie, _) => Text("${sie ? "Sie haben" : "Du hast"} keine Benachrichtungen auf LernSax. "),
-      //     ),
-      //   ));
-      // }
-    });
+    loadData();
   }
 
   Future<void> loadData() async {
     setState(() => _loading = true);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    lsdata.notifications += (await lernsax.getNotifications(creds.lernSaxLogin!, creds.lernSaxToken!, startId: lsdata.notifications.firstOrNull?.id) ?? (){
-      // to be run when getNotifications returned null - this is probably bad coding style but idc lol
-      showSnackBar(textGen: (sie) => "Fehler beim Abfragen neuer Benachrichtungen. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-      return <LSNotification>[];
-    }());
+    final (online, data) = await lernsax.getNotifications(creds.lernSaxLogin!, creds.lernSaxToken!, startId: lsdata.notifications?.firstOrNull?.id);
+    final text = (online == false && lsdata.lastNotificationsUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Benachrichtigungen verfügbar sein." : "";
+    if (!online) {
+      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
+    } else if (data == null) {
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen neuer Benachrichtungen. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
+    } else {
+      lsdata.lastNotificationsUpdate = DateTime.now();
+      lsdata.notifications = (lsdata.notifications ?? []) + data;
+    }
     setState(() => _loading = false);
   }
 

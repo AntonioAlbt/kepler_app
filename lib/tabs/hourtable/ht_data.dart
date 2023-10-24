@@ -14,6 +14,7 @@ import 'package:xml/xml.dart';
 const stuPlanDataPrefsKey = "stuplandata";
 
 Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
+// TODO: after some time, mark data as stale and update it again to stop it from getting outdated
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];

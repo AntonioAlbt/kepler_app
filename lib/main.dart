@@ -175,7 +175,11 @@ class _KeplerAppState extends State<KeplerApp> {
     }
     _internalState.lastUserTypeCheck = DateTime.now();
     if (_credStore.lernSaxToken != null && _credStore.lernSaxLogin != null) {
-      final check = await confirmLernSaxCredentials(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);
+      final (online, check) = await confirmLernSaxCredentials(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);
+      if (!online) {
+        showSnackBar(textGen: (sie) => "LernSax ist nicht erreichbar. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
+        return _internalState.lastUserType ?? UserType.nobody;
+      }
       if (check == false) {
         isLernsaxInvalid = true;
         _credStore.lernSaxLogin = null;

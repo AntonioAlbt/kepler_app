@@ -240,7 +240,8 @@ final parentTypeEndings = [
 Future<UserType> determineUserType(String? lernSaxLogin, String? lernSaxToken) async {
   if (lernSaxLogin == null || lernSaxToken == null) return UserType.nobody;
   if (parentTypeEndings.any((element) => lernSaxLogin.split("@")[0].endsWith(".$element"))) return UserType.parent;
-  final teach = await isTeacher(lernSaxLogin, lernSaxToken);
+  final (online, teach) = await isTeacher(lernSaxLogin, lernSaxToken);
+  if (!online) return UserType.nobody;
   if (teach == true) return UserType.teacher;
   if (teach == false) return UserType.pupil;
   return UserType.nobody;

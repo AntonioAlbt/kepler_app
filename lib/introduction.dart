@@ -234,7 +234,15 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 runLogin(mail, pw, sie).then((error) {
                   if (error == null) {
                     try {
-                      registerApp(mail, pw).then((token) {
+                      registerApp(mail, pw).then((data) {
+                        final (online, token) = data;
+                        if (!online) {
+                          showSnackBar(text: "Keine Verbindung zu den LernSax-Servern möglich. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                          return;
+                        } else if (token == null) {
+                          showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
+                          return;
+                        }
                         final credStore = Provider.of<CredentialStore>(context, listen: false);
                         credStore.lernSaxLogin = mail;
                         credStore.lernSaxToken = token;
@@ -402,7 +410,8 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 
   Future<String?> runLogin(String mail, String pw, bool sie) async {
     setState(() => _loading = true);
-    final check = await isMemberOfJKG(mail, pw);
+    // "online" boolean is unnecessary here because MOJKGResult.otherError
+    final (_, check) = await isMemberOfJKG(mail, pw);
     setState(() => _loading = false);
     switch (check) {
       case MOJKGResult.invalidLogin:
@@ -647,9 +656,10 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   Future<bool?> tryLoadStuPlanLoginFromLSDataFile() async {
     final creds = Provider.of<CredentialStore>(context, listen: false);
     if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return null;
-    final teacher = await isTeacher(creds.lernSaxLogin!, creds.lernSaxToken!);
+    // ignore the online bool because it doesn't matter - I don't show any actual error message to the user
+    final (_, teacher) = await isTeacher(creds.lernSaxLogin!, creds.lernSaxToken!);
     if (teacher == null) return null;
-    final data = await getLernSaxAppDataJson(creds.lernSaxLogin!, creds.lernSaxToken!, teacher);
+    final (_, data) = await getLernSaxAppDataJson(creds.lernSaxLogin!, creds.lernSaxToken!, teacher);
     if (data == null || data.isTeacherData != teacher) return null;
 
     try {

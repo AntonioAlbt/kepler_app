@@ -205,15 +205,17 @@ final destinations = [
         onTryOpen: (context) async {
           final creds = Provider.of<CredentialStore>(context, listen: false);
           if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;
-          final url = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
-          if (url == null) {
+          final (online, url) = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
+          if (!online) {
+            showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+          } else if (url == null) {
             showSnackBar(text: "Fehler beim Erstellen des Links.", error: true);
-            return false;
+          } else {
+            launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            );
           }
-          launchUrl(
-            Uri.parse(url),
-            mode: LaunchMode.externalApplication,
-          );
           return false;
         },
       ),

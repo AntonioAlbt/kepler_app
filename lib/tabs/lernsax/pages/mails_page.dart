@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
 void lernSaxMailsRefreshAction() {
-  lsMailPageKey.currentState?.loadData();
+  lsMailPageKey.currentState?.loadData(force: true);
 }
 
 class LSMailsPage extends StatefulWidget {
@@ -97,21 +97,26 @@ class _LSMailsPageState extends State<LSMailsPage> {
     super.initState();
   }
 
-  Future<void> loadData() async {
-    setState(() => _loadingFolders = true);
+  Future<void> loadData({ bool force = false }) async {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
+    // only update mail folder data every 3 days because it doesn't change as often
+    if (lsdata.lastMailFoldersUpdateDiff.inDays < 3 || force) return;
+
+    setState(() => _loadingFolders = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
-    final folders = await lernsax.getMailFolders(creds.lernSaxLogin!, creds.lernSaxToken!);
-    if (folders == null) {
-      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mail-Ordner. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-      setState(() => _loadingFolders = false);
+    final (online, folders) = await lernsax.getMailFolders(creds.lernSaxLogin!, creds.lernSaxToken!);
+    if (!online) {
+      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+    } else if (folders == null) {
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails-Postfächer. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
     } else {
       lsdata.mailFolders = folders;
-      setState(() {
-        _loadingFolders = false;
-        if (selectedFolderId == "") selectedFolderId = folders.first.id;
-      });
+      lsdata.lastMailFoldersUpdate = DateTime.now();
+      // don't setState here because I already tell flutter that I setState three lines from now
+      if (selectedFolderId == "") selectedFolderId = folders.first.id;
+      showSnackBar(text: "Erfolgreich aktualisiert.");
     }
+    setState(() => _loadingFolders = false);
   }
 }
 
@@ -175,7 +180,8 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                       child: FutureBuilder(
                         future: lernsax.getMailState(creds.lernSaxLogin!, creds.lernSaxToken!),
                         builder: (context, datasn) {
-                          final data = datasn.data;
+                          final dataD = datasn.data;
+                          final online = dataD?.$1 ?? false, data = dataD?.$2;
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
                             child: (datasn.connectionState == ConnectionState.waiting) ?
@@ -192,6 +198,8 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                   ),
                                 ],
                               )
+                            : (!online) ?
+                              const Text("Keine Verbindung zu LernSax möglich.")
                             : (data == null) ?
                               const Text("Fehler beim Laden der E-Mail-Daten.")
                             : Column(
@@ -312,11 +320,16 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // TODO: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
     // this might require an additional request with limit = 0 and offset = 0 to get the new total_messages and then load the new ones
-    final data = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId);
-    if (data == null) {
-      showSnackBar(textGen: (sie) =>  "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId);
+    final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
+    if (!online) {
+      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
+    } else if (data == null) {
+      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
     } else {
       lsdata.mailListings = data;
+      lsdata.lastMailListingsUpdate = DateTime.now();
+      showSnackBar(text: "Erfolgreich aktualisiert.");
     }
     setState(() {
       _loading = false;

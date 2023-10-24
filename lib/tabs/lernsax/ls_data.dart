@@ -10,8 +10,6 @@ import 'package:synchronized/synchronized.dart';
 const lernSaxDataPrefsKey = "lernsaxdata";
 
 Future<String> get lernSaxDataFilePath async => "${await userDataDirPath}/$lernSaxDataPrefsKey-data.json";
-
-// TODO: after some time, mark data as stale and update it again to stop it from getting outdated
 class LernSaxData extends SerializableObject with ChangeNotifier {
   LernSaxData() {
     objectCreators["notifs"] = (_) => <LSNotification>[];
@@ -35,32 +33,41 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
     save();
   }
 
-  List<LSNotification> get notifications => (attributes["notifs"] as List<LSNotification>? ?? [])..sort((a, b) => b.date.compareTo(a.date));
-  set notifications(List<LSNotification> val) => _setSaveNotify("notifs", val);
-  // void addNotification(LSNotification notif, {bool sort = true}) {
-  //   final l = notifications;
-  //   if (l.contains(notif)) return;
-  //   l.add(notif);
-  //   if (sort) l.sort((a, b) => a.date.compareTo(b.date));
-  //   notifications = l;
-  // }
+  DateTime get lastNotificationsUpdate => (attributes.containsKey("lu_notifs") && attributes["lu_notifs"] != null) ? DateTime.parse(attributes["lu_notifs"]) : DateTime(1900);
+  set lastNotificationsUpdate(DateTime val) => attributes["lu_notifs"] = val.toIso8601String();
+  Duration get lastNotificationsUpdateDiff => lastNotificationsUpdate.difference(DateTime.now()).abs();
+  List<LSNotification>? get notifications => (attributes["notifs"] as List<LSNotification>? ?? [])..sort((a, b) => b.date.compareTo(a.date));
+  set notifications(List<LSNotification>? val) => _setSaveNotify("notifs", val);
 
-  List<LSTask> get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  set tasks(List<LSTask> val) => _setSaveNotify("tasks", val);
+  DateTime get lastTasksUpdate => (attributes.containsKey("lu_tasks") && attributes["lu_tasks"] != null) ? DateTime.parse(attributes["lu_tasks"]) : DateTime(1900);
+  set lastTasksUpdate(DateTime val) => attributes["lu_tasks"] = val.toIso8601String();
+  Duration get lastTasksUpdateDiff => lastTasksUpdate.difference(DateTime.now()).abs();
+  List<LSTask>? get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  set tasks(List<LSTask>? val) => _setSaveNotify("tasks", val);
   void addNewTasks(List<LSTask> newTasks, {bool sort = true}) {
-    final l = tasks;
+    final l = tasks ?? [];
     final ids = l.map((e) => e.id);
     l.addAll(newTasks.where((e) => !ids.contains(e.id)));
     if (sort) l.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    lastTasksUpdate = DateTime.now();
     tasks = l;
   }
 
+  DateTime get lastMembershipsUpdate => (attributes.containsKey("lu_memberships") && attributes["lu_memberships"] != null) ? DateTime.parse(attributes["lu_memberships"]) : DateTime(1900);
+  set lastMembershipsUpdate(DateTime val) => attributes["lu_memberships"] = val.toIso8601String();
+  Duration get lastMembershipsUpdateDiff => lastMembershipsUpdate.difference(DateTime.now()).abs();
   List<LSMembership>? get memberships => attributes["memberships"];
   set memberships(List<LSMembership>? val) => _setSaveNotify("memberships", val);
 
+  DateTime get lastMailFoldersUpdate => (attributes.containsKey("lu_mail_folders") && attributes["lu_mail_folders"] != null) ? DateTime.parse(attributes["lu_mail_folders"]) : DateTime(1900);
+  set lastMailFoldersUpdate(DateTime val) => attributes["lu_mail_folders"] = val.toIso8601String();
+  Duration get lastMailFoldersUpdateDiff => lastMailFoldersUpdate.difference(DateTime.now()).abs();
   List<LSMailFolder>? get mailFolders => attributes["mail_folders"];
   set mailFolders(List<LSMailFolder>? val) => _setSaveNotify("mail_folders", val);
 
+  DateTime get lastMailListingsUpdate => (attributes.containsKey("lu_mail_listings") && attributes["lu_mail_listings"] != null) ? DateTime.parse(attributes["lu_mail_listings"]) : DateTime(1900);
+  set lastMailListingsUpdate(DateTime val) => attributes["lu_mail_listings"] = val.toIso8601String();
+  Duration get lastMailListingsUpdateDiff => lastMailListingsUpdate.difference(DateTime.now()).abs();
   List<LSMailListing>? get mailListings => attributes["mail_listings"];
   set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml2.date.compareTo(ml1.date)));
 

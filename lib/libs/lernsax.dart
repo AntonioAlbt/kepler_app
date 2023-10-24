@@ -46,11 +46,13 @@ String sha1(String input) {
 
 bool toBool(dynamic input) => (input is num && input > 0) || (input is bool && input) || (input is String && input.isNotEmpty);
 
-Future<Map<String, dynamic>> auth(String mail, String token, {int? id}) async {
-  final nonce = (await api([call(method: "get_nonce", id: 1)]))[0]["result"];
+Future<(bool, Map<String, dynamic>?)> auth(String mail, String token, {int? id}) async {
+  final (online, res) = (await api([call(method: "get_nonce", id: 1)]));
+  if (!online) return (false, null);
+  final nonce = res[0]["result"];
   if (nonce["return"] == "OK" && nonce["nonce"] != null) {
     final hash = sha1("${nonce["nonce"]["key"]}$salt$token");
-    return call(
+    return (true, call(
       method: "login",
       params: {
         "login": mail,
@@ -63,33 +65,38 @@ Future<Map<String, dynamic>> auth(String mail, String token, {int? id}) async {
         "is_online": 0,
       },
       id: id,
-    );
+    ));
   } else {
     throw LernSaxException("get_nonce failed");
   }
 }
 
-Future<String> newSession(String mail, String token, int durationSeconds) async {
-  final res = await api([
-    await auth(mail, token),
+Future<(bool, String)> newSession(String mail, String token, int durationSeconds) async {
+  final (online1, authres) = await auth(mail, token);
+  if (!online1 || authres == null) return (false, "");
+  final (online2, res) = await api([
+    authres,
     call(method: "set_options", params: {"session_timeout": durationSeconds}),
     call(method: "get_information", id: 1),
   ]);
+  if (!online2) return (false, "");
   final result = res[0]["result"];
-  return result["session_id"];
+  return (true, result["session_id"] as String);
 }
 
 String _currentSessionId = "";
 DateTime _lastSessionUpdate = DateTime(1900);
 const _timeTilRefresh = Duration(minutes: 15);
 String durform(Duration dur) => "${dur.inMinutes.abs()}m${dur.inSeconds % 60}s";
-Future<String> session(String mail, String token) async {
+Future<(bool, String)> session(String mail, String token) async {
   if (kDebugMode) print("[LS-AuthDebug] current sesh: $_currentSessionId, last update: ${DateFormat.Hms().format(_lastSessionUpdate)}, time to update: ${durform(_lastSessionUpdate.difference(DateTime.now().subtract(_timeTilRefresh)))}, update now: ${_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh}");
   if (_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh) {
-    _currentSessionId = await newSession(mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
+    final (online, newSesId) = await newSession(mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
+    if (!online) return (false, "");
+    _currentSessionId = newSesId;
     _lastSessionUpdate = DateTime.now();
   }
-  return _currentSessionId;
+  return (true, _currentSessionId);
 }
 
 // this never needs an ID, because the response from the API for set_session doesn't contain the login information
@@ -98,13 +105,14 @@ Future<Map<String, dynamic>> useSession(String login, String token) async =>
         method: "set_session",
         params: {"session_id": await session(login, token)});
 
-Future<dynamic> api(List<Map<String, dynamic>> data) async => await http
+Future<(bool, dynamic)> api(List<Map<String, dynamic>> data) async => await http
     .post(
       uri,
       headers: {"content-type": "application/json"},
       body: jsonEncode(data),
     )
-    .then((res) => jsonDecode(utf8.decode(res.bodyBytes)));
+    .then((res) => (true, jsonDecode(utf8.decode(res.bodyBytes))))
+    .catchError((_) => (false, null));
 
 const keplerBaseUser = "info@jkgc.lernsax.de";
 const keplerTeacherBaseUser = "lehrer@jkgc.lernsax.de";
@@ -119,10 +127,10 @@ enum MOJKGResult {
   invalidResponse
 }
 
-Future<MOJKGResult> isMemberOfJKG(String mail, String password) async {
+Future<(bool, MOJKGResult)> isMemberOfJKG(String mail, String password) async {
   late final dynamic res;
   try {
-    res = await api([
+    final (online, resInner) = await api([
       call(
         method: "login",
         params: {
@@ -134,10 +142,12 @@ Future<MOJKGResult> isMemberOfJKG(String mail, String password) async {
       ),
       call(method: "logout"),
     ]);
+    if (!online) return (false, MOJKGResult.otherError);
+    res = resInner;
   } catch (_) {
-    return MOJKGResult.otherError;
+    return (true, MOJKGResult.otherError);
   }
-  return _processMemberResponse(res);
+  return (true, _processMemberResponse(res));
 }
 
 MOJKGResult _processMemberResponse(res) {
@@ -161,51 +171,59 @@ MOJKGResult _processMemberResponse(res) {
   }
 }
 
-Future<String> registerApp(String mail, String password) async {
-  final deviceModel = (Platform.isAndroid)
-      ? (await DeviceInfoPlugin().androidInfo).model
-      : (await DeviceInfoPlugin().iosInfo).model;
-  final res = await api([
-    call(
-      method: "login",
-      params: {
-        "login": mail,
-        "password": password,
-        "is_online": 0,
-      },
-    ),
-    focus("trusts"),
-    call(
-      method: "register_master",
-      params: {
-        "remote_application": appID,
-        "remote_title": appTitle,
-        "remote_ident": deviceModel,
-      },
-      id: 1,
-    ),
-    call(method: "logout"),
-  ]);
-  final response = res[0]["result"];
-  return response["trust"]["token"];
-}
-
-Future<bool?> confirmLernSaxCredentials(String login, String token) async {
+Future<(bool, String?)> registerApp(String mail, String password) async {
   try {
-    final res = await api([
-      await auth(login, token, id: 1),
+    final deviceModel = (Platform.isAndroid)
+        ? (await DeviceInfoPlugin().androidInfo).model
+        : (await DeviceInfoPlugin().iosInfo).model;
+    final (online, res) = await api([
+      call(
+        method: "login",
+        params: {
+          "login": mail,
+          "password": password,
+          "is_online": 0,
+        },
+      ),
+      focus("trusts"),
+      call(
+        method: "register_master",
+        params: {
+          "remote_application": appID,
+          "remote_title": appTitle,
+          "remote_ident": deviceModel,
+        },
+        id: 1,
+      ),
       call(method: "logout"),
     ]);
-    final ret = res[0]["result"]["return"];
-    return ret == "OK";
+    if (!online) return (false, null);
+    final response = res[0]["result"];
+    return (true, response["trust"]["token"] as String);
   } catch (_) {
-    return null;
+    return (true, null);
   }
 }
 
-Future<String?> getSingleUseLoginLink(String login, String token) async {
+Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) async {
   try {
-    final res = await api([
+    final (online1, authres) = await auth(login, token, id: 1);
+    if (!online1 || authres == null) return (false, null);
+    final (online2, res) = await api([
+      authres,
+      call(method: "logout"),
+    ]);
+    if (!online2) return (false, null);
+    final ret = res[0]["result"]["return"];
+    return (true, ret == "OK");
+  } catch (_) {
+    return (true, null);
+  }
+}
+
+Future<(bool, String?)> getSingleUseLoginLink(String login, String token) async {
+  try {
+    final (online, res) = await api([
       await useSession(login, token),
       focus("trusts"),
       call(
@@ -213,17 +231,18 @@ Future<String?> getSingleUseLoginLink(String login, String token) async {
         method: "get_url_for_autologin",
       ),
     ]);
+    if (!online) return (false, null);
     // if (kDebugMode) print(res);
     final url = res[0]["result"]["url"];
     return url;
   } catch (e) {
-    return null;
+    return (true, null);
   }
 }
 
-Future<List<LSNotification>?> getNotifications(String login, String token, {String? startId}) async {
+Future<(bool, List<LSNotification>?)> getNotifications(String login, String token, {String? startId}) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("messages"),
       call(
@@ -234,10 +253,11 @@ Future<List<LSNotification>?> getNotifications(String login, String token, {Stri
         }
       ),
     ]);
+    if (!online) return (false, null);
     // if (kDebugMode) print(res);
     final messages = (res[0]["result"]["messages"] as List<dynamic>).cast<Map<String, dynamic>>();
     if (startId != null) messages.removeAt(0);
-    return messages.map((data) => LSNotification(
+    return (true, messages.map((data) => LSNotification(
       id: data["id"],
       date: DateTime.fromMillisecondsSinceEpoch(int.parse(data["date"]) * 1000),
       messageTypeId: data["message"],
@@ -249,16 +269,16 @@ Future<List<LSNotification>?> getNotifications(String login, String token, {Stri
       unread: data["unread"] == 1,
       object: data["object"],
       data: data["data"],
-    )).toList();
+    )).toList());
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (false, null);
   }
 }
 
-Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin}) async {
+Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? classLogin}) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("tasks", login: classLogin),
       call(
@@ -266,9 +286,10 @@ Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin})
         method: "get_entries",
       ),
     ]);
+    if (!online) return (false, null);
     // if (kDebugMode) print(res);
     final messages = (res[0]["result"]["entries"] as List<dynamic>).cast<Map<String, dynamic>>();
-    return messages.map((data) => LSTask(
+    return (true, messages.map((data) => LSTask(
       id: data["id"],
       startDate: data["start_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["start_date"]) * 1000) : null,
       dueDate: data["due_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["due_date"]) * 1000) : null,
@@ -279,20 +300,21 @@ Future<List<LSTask>?> getTasks(String login, String token, {String? classLogin})
       createdByLogin: data["created"]["user"]["login"],
       createdByName: data["created"]["user"]["name_hr"],
       createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
-    )).toList();
+    )).toList());
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<List<LSMembership>?> getGroupsAndClasses(String login, String token) async {
+Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String token) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       call(method: "reload", id: 1, params: { "get_properties": ["member"] }),
     ]);
-    if (res[0]["result"]["return"] != "OK") return null;
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
     final memberList = res[0]["result"]["member"] as List<dynamic>;
     final list = <LSMembership>[];
     for (final m in memberList) {
@@ -305,42 +327,46 @@ Future<List<LSMembership>?> getGroupsAndClasses(String login, String token) asyn
         type: MembershipType.fromInt(int.parse((m["type"] ?? -1).toString())),
       ));
     }
-    return list;
+    return (true, list);
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<bool?> isTeacher(String login, String token) async {
+Future<(bool, bool?)> isTeacher(String login, String token) async {
   try {
-    final memberships = await getGroupsAndClasses(login, token);
-    if (memberships == null) return null;
+    final (online, memberships) = await getGroupsAndClasses(login, token);
+    if (!online) return (false, null);
+    if (memberships == null) return (true, null);
 
-    return memberships.any((ms) => ms.login == keplerTeacherBaseUser);
+    return (true, memberships.any((ms) => ms.login == keplerTeacherBaseUser));
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<bool?> unregisterApp(String login, String token) async {
+Future<(bool, bool?)> unregisterApp(String login, String token) async {
   try {
-    final res = await api([
-      await auth(login, token),
+    final (online, authres) = await auth(login, token);
+    if (!online) return (false, null);
+    final (online2, res) = await api([
+      authres!,
       focus("trusts"),
       call(method: "unregister_master", id: 1),
     ]);
-    return res[0]["result"]["return"] != "OK";
+    if (!online2) return (false, null);
+    return (true, res[0]["result"]["return"] != "OK");
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTeachers) async {
+Future<(bool, LSAppData?)> getLernSaxAppDataJson(String login, String token, bool forTeachers) async {
   try {
-    final res = await api([
+    final (online1, res) = await api([
       await useSession(login, token),
       focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
       call(
@@ -353,10 +379,11 @@ Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTea
         id: 1,
       ),
     ]);
-    if (res[0]["result"]["return"] != "OK" || res[0]["result"]["entries"].length < 1) return null;
+    if (!online1) return (false, null);
+    if (res[0]["result"]["return"] != "OK" || res[0]["result"]["entries"].length < 1) return (true, null);
 
     final folderId = res[0]["result"]["entries"][0]["id"];
-    final res2 = await api([
+    final (online2, res2) = await api([
       await useSession(login, token),
       focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
       call(
@@ -370,10 +397,11 @@ Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTea
         id: 1,
       ),
     ]);
-    if (res2[0]["result"]["return"] != "OK" || res2[0]["result"]["entries"].length < 1) return null;
+    if (!online2) return (false, null);
+    if (res2[0]["result"]["return"] != "OK" || res2[0]["result"]["entries"].length < 1) return (true, null);
 
     final fileId = res2[0]["result"]["entries"][0]["id"];
-    final res3 = await api([
+    final (online3, res3) = await api([
       await useSession(login, token),
       focus("files", login: forTeachers ? keplerTeacherBaseUser : keplerBaseUser),
       call(
@@ -384,33 +412,35 @@ Future<LSAppData?> getLernSaxAppDataJson(String login, String token, bool forTea
         id: 1,
       ),
     ]);
-    if (res3[0]["result"]["return"] != "OK" || res3[0]["result"]["file"] == null) return null;
+    if (!online3) return (false, null);
+    if (res3[0]["result"]["return"] != "OK" || res3[0]["result"]["file"] == null) return (true, null);
 
     final dataStr = utf8.decode(base64Decode(res3[0]["result"]["file"]["data"]));
     final data = jsonDecode(dataStr);
 
-    return LSAppData(
+    return (true, LSAppData(
       lastUpdate: data["letztes_update"],
       host: data["indiware"]["host"],
       user: data["indiware"]["user"],
       password: data["indiware"]["password"],
       isTeacherData: data["is_teacher_data"],
-    );
+    ));
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<List<LSMailFolder>?> getMailFolders(String login, String token) async {
+Future<(bool, List<LSMailFolder>?)> getMailFolders(String login, String token) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("mailbox"),
       call(method: "get_folders", id: 1),
     ]);
-    if (res[0]["result"]["return"] != "OK") return null;
-    return (res[0]["result"]["folders"] as List<dynamic>).map((data) => LSMailFolder(
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    return (true, (res[0]["result"]["folders"] as List<dynamic>).map((data) => LSMailFolder(
       id: data["id"],
       name: data["name"],
       isInbox: toBool(data["is_inbox"]),
@@ -418,16 +448,16 @@ Future<List<LSMailFolder>?> getMailFolders(String login, String token) async {
       isDrafts: toBool(data["is_drafts"]),
       isSent: toBool(data["is_sent"]),
       lastModified: DateTime.fromMillisecondsSinceEpoch(data["m_date"] * 1000),
-    )).toList();
+    )).toList());
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<List<LSMailListing>?> getMailListings(String login, String token, { required String folderId, int? offset, int? limit }) async {
+Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token, { required String folderId, int? offset, int? limit }) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("mailbox"),
       call(
@@ -440,8 +470,9 @@ Future<List<LSMailListing>?> getMailListings(String login, String token, { requi
         id: 1,
       ),
     ]);
-    if (res[0]["result"]["return"] != "OK") return null;
-    return (res[0]["result"]["messages"] as List<dynamic>).map((data) => LSMailListing(
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    return (true, (res[0]["result"]["messages"] as List<dynamic>).map((data) => LSMailListing(
       id: data["id"],
       subject: data["subject"],
       isUnread: toBool(data["is_unread"]),
@@ -453,23 +484,24 @@ Future<List<LSMailListing>?> getMailListings(String login, String token, { requi
       addressed: data.containsKey("from") ? LSMailAddressable.fromLSApiDataList(data["from"]) : data.containsKey("to") ? LSMailAddressable.fromLSApiDataList(data["to"]) : [],
       direction: data.containsKey("from") ? MailDirection.received : data.containsKey("to") ? MailDirection.sent : MailDirection.received,
       folderId: folderId,
-    )).toList();
+    )).toList());
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<LSMail?> getMail(String login, String token, { required String folderId, required int mailId }) async {
+Future<(bool, LSMail?)> getMail(String login, String token, { required String folderId, required int mailId }) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("mailbox"),
       call(method: "read_message", params: {"folder_id": folderId, "message_id": mailId}, id: 1),
     ]);
-    if (res[0]["result"]["return"] != "OK") return null;
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
     final data = res[0]["result"]["message"] as Map<String, dynamic>;
-    return LSMail(
+    return (true, LSMail(
       id: data["id"],
       subject: data["subject"],
       isUnread: toBool(data["is_unread"]),
@@ -484,31 +516,32 @@ Future<LSMail?> getMail(String login, String token, { required String folderId, 
       replyTo: data.containsKey("reply_to") ? LSMailAddressable.fromLSApiDataList(data["reply_to"]) : [],
       attachments: data.containsKey("files") ? LSMailAttachment.fromLSApiDataList(data["files"]) : [],
       folderId: folderId,
-    );
+    ));
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
 
-Future<LSMailState?> getMailState(String login, String token) async {
+Future<(bool, LSMailState?)> getMailState(String login, String token) async {
   try {
-    final res = await api([
+    final (online, res) = await api([
       await useSession(login, token),
       focus("mailbox"),
       call(method: "get_state", id: 1),
     ]);
-    if (res[0]["result"]["return"] != "OK") return null;
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
     final data = res[0]["result"] as Map<String, dynamic>;
-    return LSMailState(
+    return (true, LSMailState(
       usageBytes: data["quota"]["usage"],
       freeBytes: data["quota"]["free"],
       limitBytes: data["quota"]["limit"],
       mode: LSMailMode.fromString(data["mode"]),
       unreadMessages: data["unread_messages"],
-    );
+    ));
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);
-    return null;
+    return (true, null);
   }
 }
