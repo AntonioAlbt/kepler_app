@@ -121,11 +121,11 @@ class _MailDetailPageState extends State<MailDetailPage> {
       final (online, mailDataLive) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.listing.folderId, mailId: widget.listing.id);
       if (!online) {
         showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-        Provider.of<AppState>(context, listen: false).clearInfoScreen();
+        Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
         return;
       } else if (mailDataLive == null) {
         showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
-        Provider.of<AppState>(context, listen: false).clearInfoScreen();
+        Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
         return;
       } else {
         if (!widget.listing.isDraft) lsdata.addMailToCache(mailDataLive);
