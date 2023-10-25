@@ -1,14 +1,19 @@
+import 'dart:io';
+
+import 'package:appcheck/appcheck.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
@@ -179,164 +184,195 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
             ),
           );
         }
-        return Column(
-          children: [
-            if (mails.isEmpty) const Expanded(
-              child: Center(
-                child: Text(
-                  "Keine E-Mails vorhanden.",
-                  style: TextStyle(
-                    fontSize: 18,
+        return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              showDialog(context: context, builder: (context) => AlertDialog(
+                title: const Text("E-Mail schreiben"),
+                content: const Text("E-Mails können aktuell nur in LernSax Messenger verfasst werden."), // TODO: maybe add a basic email writer with just a mail, subject and text input? but also like why?
+                actions: [
+                  FutureBuilder(
+                    future: AppCheck.checkAvailability(lernSaxMsgrAndroidPkg).catchError((_) => null),
+                    builder: (context, datasn) {
+                      return TextButton(
+                        onPressed: () {
+                          if (Platform.isAndroid) {
+                            AppCheck.launchApp(lernSaxMsgrAndroidPkg).catchError((_) => launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg")).catchError((_) {
+                              showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", error: true);
+                              return false;
+                            }));
+                          } else if (Platform.isIOS) {
+                            launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"));
+                          }
+                        },
+                        child: Text("Jetzt ${Platform.isIOS ? "öffnen/installieren" : datasn.data != null ? "öffnen" : "installieren"}"),
+                      );
+                    },
+                  ),
+                ],
+              ));
+            },
+            child: const Icon(Icons.edit_note),
+          ),
+          body: Column(
+            children: [
+              if (mails.isEmpty) const Expanded(
+                child: Center(
+                  child: Text(
+                    "Keine E-Mails vorhanden.",
+                    style: TextStyle(
+                      fontSize: 18,
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (mails.isNotEmpty) Expanded(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: mails.length + 1,
-                itemBuilder: (context, i) {
-                  if (i == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Builder(
-                        builder: (context) {
-                          final online = mailData?.$1 ?? false, data = mailData?.$2;
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                            child: (mailData == null) ?
-                              const Column(
+              if (mails.isNotEmpty) Expanded(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: mails.length + 1,
+                  itemBuilder: (context, i) {
+                    if (i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Builder(
+                          builder: (context) {
+                            final online = mailData?.$1 ?? false, data = mailData?.$2;
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                              child: (mailData == null) ?
+                                const Column(
+                                  children: [
+                                    Text("Lädt Status..."),
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: SizedBox(
+                                        height: 3,
+                                        width: 250,
+                                        child: LinearProgressIndicator(),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : (!online) ?
+                                const Text("Keine Verbindung zu LernSax möglich.")
+                              : (data == null) ?
+                                const Text("Fehler beim Laden der E-Mail-Daten.")
+                              : Column(
                                 children: [
-                                  Text("Lädt Status..."),
                                   Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: SizedBox(
-                                      height: 3,
-                                      width: 250,
-                                      child: LinearProgressIndicator(),
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Row(
+                                      children: [
+                                        const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 4),
+                                          child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (widget.selectedFolder.isInbox) Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Row(
+                                      children: [
+                                        const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 4),
+                                          child: Text(
+                                            "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
+                                            style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
-                              )
-                            : (!online) ?
-                              const Text("Keine Verbindung zu LernSax möglich.")
-                            : (data == null) ?
-                              const Text("Fehler beim Laden der E-Mail-Daten.")
-                            : Column(
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }
+                    final mail = mails[i - 1];
+                    return Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          textStyle: Theme.of(context).textTheme.bodyMedium,
+                          foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Text(lernSaxTimeFormat.format(mail.date)),
+                                  ),
+                                  const Spacer(),
+                                  const Icon(MdiIcons.file, size: 16, color: Colors.grey),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
+                                  ),
+                                  if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
+                                    Tooltip(
+                                      triggerMode: TooltipTriggerMode.tap,
+                                      message: "E-Mail ist offline verfügbar",
+                                      child: CircleAvatar(
+                                        backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey,
+                                        radius: 8,
+                                        child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Row(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Row(
-                                    children: [
-                                      const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4),
-                                        child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
-                                      ),
-                                    ],
+                                const SizedBox(width: 28, child: Icon(Icons.mail)),
+                                Flexible(
+                                    child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(
+                                    mail.subject,
+                                    style: (mail.isUnread) ? const TextStyle(fontWeight: FontWeight.bold) : null,
                                   ),
-                                ),
-                                if (widget.selectedFolder.isInbox) Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Row(
-                                    children: [
-                                      const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4),
-                                        child: Text(
-                                          "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
-                                          style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                )),
                               ],
                             ),
-                          );
-                        },
-                      ),
-                    );
-                  }
-                  final mail = mails[i - 1];
-                  return Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        textStyle: Theme.of(context).textTheme.bodyMedium,
-                        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              children: [
-                                const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Text(lernSaxTimeFormat.format(mail.date)),
-                                ),
-                                const Spacer(),
-                                const Icon(MdiIcons.file, size: 16, color: Colors.grey),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
-                                ),
-                                if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
-                                  Tooltip(
-                                    triggerMode: TooltipTriggerMode.tap,
-                                    message: "E-Mail ist offline verfügbar",
-                                    child: CircleAvatar(
-                                      backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey,
-                                      radius: 8,
-                                      child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 28, child: Icon(MdiIcons.account)),
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 4),
+                                      // child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((a) => a.name).join(", ")}"),
+                                      child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
                                     ),
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              const SizedBox(width: 28, child: Icon(Icons.mail)),
-                              Flexible(
-                                  child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: Text(
-                                  mail.subject,
-                                  style: (mail.isUnread) ? const TextStyle(fontWeight: FontWeight.bold) : null,
-                                ),
-                              )),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 28, child: Icon(MdiIcons.account)),
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    // child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((a) => a.name).join(", ")}"),
-                                    child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          AttachmentAmountDisplay(folderId: widget.selectedFolder.id, mailId: mail.id, isDraft: mail.isDraft),
-                        ],
+                            AttachmentAmountDisplay(folderId: widget.selectedFolder.id, mailId: mail.id, isDraft: mail.isDraft),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-                separatorBuilder: (context, i) => const Divider(),
+                    );
+                  },
+                  separatorBuilder: (context, i) => const Divider(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
