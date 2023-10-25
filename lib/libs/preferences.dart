@@ -99,6 +99,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get reloadStuPlanAutoOnceDaily => attributes["sp_rl_on_open_d"] ?? true;
   set reloadStuPlanAutoOnceDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
 
+  bool get lernSaxAutoLoadMailOnScrollBy => attributes["ls_mail_auto_load_osb"] ?? true;
+  set lernSaxAutoLoadMailOnScrollBy(bool val) => setSaveNotify("ls_mail_auto_load_osb", val);
+
   bool loaded = false;
 
   Future<void> save() async {

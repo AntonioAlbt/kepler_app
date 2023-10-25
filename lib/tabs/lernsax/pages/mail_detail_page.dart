@@ -34,6 +34,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
       );
     }
     if (mailData == null) return const Center(child: Text("Fehler."));
+    final attachmentCount = mailData!.attachments.length;
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -96,6 +97,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: SelectableLinkify(
+                      // needed to show the real context menu like on a normal selectabletext, it somehow doesn't show otherwise
+                      contextMenuBuilder: const SelectableText("").contextMenuBuilder,
                       // change order so emails get linkified first, is needed because of looseUrl
                       linkifiers: const [EmailLinkifier(), UrlLinkifier()],
                       options: const LinkifyOptions(looseUrl: true, defaultToHttps: true),
@@ -138,6 +141,52 @@ class _MailDetailPageState extends State<MailDetailPage> {
                       text: mailData!.bodyPlain,
                     ),
                   ),
+                  if (attachmentCount > 0) const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Divider(),
+                  ),
+                  if (attachmentCount > 0) Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(right: 4),
+                              child: Icon(Icons.attachment, size: 20, color: Colors.grey),
+                            ),
+                            Text(
+                              "$attachmentCount ${attachmentCount == 1 ? "Anhang" : "Anhänge"}",
+                              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                        ...mailData!.attachments.map((att) => TextButton(onPressed: () {
+                          // show this as a kind of loading message
+                          showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
+                          final creds = Provider.of<CredentialStore>(context, listen: false);
+                          lernsax.exportSessionFileFromMail(
+                            creds.lernSaxLogin!,
+                            creds.lernSaxToken!,
+                            folderId: mailData!.folderId,
+                            mailId: mailData!.id,
+                            attachmentId: att.id,
+                          ).then((data) {
+                            final (online, sessionFile) = data;
+                            if (!online) {
+                              showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", clear: true);
+                            } else if (sessionFile == null) {
+                              showSnackBar(text: "Fehler beim Abfragen der Datei. Bitte später erneut versuchen.", clear: true);
+                            } else {
+                              showSnackBar(text: "Download-Link wird geöffnet.", clear: true, duration: const Duration(seconds: 1));
+                              launchUrl(Uri.parse(sessionFile.downloadUrl), mode: LaunchMode.externalApplication);
+                            }
+                          });
+                        }, child: Text(att.name))),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -158,8 +207,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
 
-    final mailDataCached = lsdata.mailCache.cast<LSMail?>().firstWhere((ml) => ml!.id == widget.listing.id && ml.folderId == widget.listing.folderId, orElse: () => null);
-    if (mailDataCached != null) {
+    final mailDataCached = lsdata.getCachedMail(widget.listing.folderId, widget.listing.id);
+    if (mailDataCached != null && !widget.listing.isDraft) {
       mailData = mailDataCached;
     } else {
       final (online, mailDataLive) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.listing.folderId, mailId: widget.listing.id);

@@ -571,3 +571,33 @@ Future<(bool, LSMailState?)> getMailState(String login, String token) async {
     return (true, null);
   }
 }
+
+Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String token, { required String folderId, required int mailId, required String attachmentId }) async {
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(
+        method: "export_session_file",
+        params: {
+          "folder_id": folderId,
+          "message_id": mailId,
+          "file_id": attachmentId,
+        },
+        id: 1,
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    final data = res[0]["result"]["file"] as Map<String, dynamic>;
+    return (true, LSSessionFile(
+      id: data["id"],
+      name: data["name"],
+      size: data["size"],
+      downloadUrl: data["download_url"],
+    ));
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}

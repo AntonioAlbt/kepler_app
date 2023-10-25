@@ -124,8 +124,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // added this for iOS compatibility
-    return const SafeArea(child: KeplerApp());
+    if (Platform.isIOS) {
+      // added this for iOS compatibility
+      return const SafeArea(child: KeplerApp());
+    } else if (Platform.isAndroid) {
+      return const KeplerApp();
+    } else {
+      return const Center(
+        child: Text("Gerät nicht unterstüzt."),
+      );
+    }
   }
 }
 

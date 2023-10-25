@@ -79,10 +79,12 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   set mailCache(List<LSMail> val) => _setSaveNotify("mails", val);
   void addMailToCache(LSMail mail) {
     final l = mailCache;
-    if (l.any((m) => m.id == mail.id)) return;
+    if (l.any((m) => m.id == mail.id && m.folderId == mail.folderId)) return;
     l.add(mail);
     mailCache = l;
   }
+  LSMail? getCachedMail(String folderId, int mailId)
+    => mailCache.cast<LSMail?>().firstWhere((ml) => ml!.id == mailId && ml.folderId == folderId, orElse: () => null);
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -689,4 +691,13 @@ class LSMailState {
   final LSMailMode mode;
 
   LSMailState({required this.usageBytes, required this.freeBytes, required this.limitBytes, required this.unreadMessages, required this.mode});
+}
+
+class LSSessionFile {
+  final String id;
+  final String name;
+  final int size;
+  final String downloadUrl;
+
+  const LSSessionFile({required this.id, required this.name, required this.size, required this.downloadUrl});
 }

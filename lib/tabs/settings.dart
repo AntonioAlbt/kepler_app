@@ -157,6 +157,17 @@ class _SettingsTabState extends State<SettingsTab> {
               ],
             ),
             SettingsSection(
+              title: const Text("LernSax"),
+              tiles: [
+                SettingsTile.switchTile(
+                  initialValue: prefs.lernSaxAutoLoadMailOnScrollBy,
+                  onToggle: (val) => prefs.lernSaxAutoLoadMailOnScrollBy = val,
+                  title: const Text("LernSax-Mails beim ersten Vorbeiscrollen einmalig herunterladen"),
+                  description: const Text("das ist nötig, damit die Anhänge geladen werden können (verbraucht mehr Daten)"),
+                ),
+              ],
+            ),
+            SettingsSection(
               title: const Text("Lustiges"),
               tiles: [
                 SettingsTile.switchTile(
