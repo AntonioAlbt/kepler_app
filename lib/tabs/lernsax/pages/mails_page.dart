@@ -46,22 +46,26 @@ class _LSMailsPageState extends State<LSMailsPage> {
       builder: (context, lsdata, child) {
         if (lsdata.mailFolders == null) {
           return Center(
-            child: Column(
-              children: [
-                const Text(
-                  "Fehler beim Abfragen. Ist Internet vorhanden?",
-                  style: TextStyle(
-                    fontSize: 18,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Fehler beim Abfragen. Ist Internet vorhanden?",
+                    style: TextStyle(
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: ElevatedButton(
-                    onPressed: loadData,
-                    child: const Text("Erneut versuchen"),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: ElevatedButton(
+                      onPressed: loadData,
+                      child: const Text("Erneut versuchen"),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
@@ -92,6 +96,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
                     key: ValueKey(selectedFolderId),
                     selectedFolderId: selectedFolderId!,
                     isDraftsFolder: lsdata.mailFolders?.firstWhere((f) => f.id == selectedFolderId).isDrafts ?? false,
+                    isSentFolder: lsdata.mailFolders?.firstWhere((f) => f.id == selectedFolderId).isSent ?? false,
                     controller: dayDispController,
                   )
                 : const Text("..."),
@@ -139,9 +144,10 @@ class LSMailDispController {
 class LSMailDisplay extends StatefulWidget {
   final String selectedFolderId;
   final bool isDraftsFolder;
+  final bool isSentFolder;
   final LSMailDispController? controller;
 
-  const LSMailDisplay({super.key, required this.selectedFolderId, required this.isDraftsFolder, this.controller});
+  const LSMailDisplay({super.key, required this.selectedFolderId, required this.isDraftsFolder, required this.isSentFolder, this.controller});
 
   @override
   State<LSMailDisplay> createState() => _LSMailDisplayState();
@@ -149,6 +155,7 @@ class LSMailDisplay extends StatefulWidget {
 
 class _LSMailDisplayState extends State<LSMailDisplay> {
   bool _loading = true;
+  (bool, LSMailState?)? mailData;
   
   @override
   Widget build(BuildContext context) {
@@ -195,14 +202,12 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                   if (i == 0) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: FutureBuilder(
-                        future: lernsax.getMailState(creds.lernSaxLogin!, creds.lernSaxToken!),
-                        builder: (context, datasn) {
-                          final dataD = datasn.data;
-                          final online = dataD?.$1 ?? false, data = dataD?.$2;
+                      child: Builder(
+                        builder: (context) {
+                          final online = mailData?.$1 ?? false, data = mailData?.$2;
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                            child: (datasn.connectionState == ConnectionState.waiting) ?
+                            child: (mailData == null) ?
                               const Column(
                                 children: [
                                   Text("Lädt Status..."),
@@ -281,9 +286,15 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                 const Spacer(),
                                 const Icon(MdiIcons.file, size: 16, color: Colors.grey),
                                 Padding(
-                                  padding: const EdgeInsets.only(left: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
                                   child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
                                 ),
+                                if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
+                                  CircleAvatar(
+                                    backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey,
+                                    radius: 8,
+                                    child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
+                                  ),
                               ],
                             ),
                           ),
@@ -308,21 +319,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                 Flexible(
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 4),
-                                    child: Text("${mail.isDraft ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty) Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.file_download_done, size: 20, color: Colors.grey),
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    child: Text("offline verfügbar", style: Theme.of(context).textTheme.bodySmall),
+                                    child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
                                   ),
                                 ),
                               ],
@@ -355,7 +352,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // TODO: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
     // this might require an additional request with limit = 0 and offset = 0 to get the new total_messages and then load the new ones
-    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId, isDraftsFolder: widget.isDraftsFolder);
+    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolderId, isDraftsFolder: widget.isDraftsFolder, isSentFolder: widget.isSentFolder);
     final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24 && lsdata.mailListings != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
     if (!online) {
       showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
@@ -364,10 +361,22 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
     } else {
       lsdata.mailListings = data;
       lsdata.lastMailListingsUpdate = DateTime.now();
-      showSnackBar(text: "Erfolgreich aktualisiert.");
+      // showSnackBar(text: "Erfolgreich aktualisiert.");
     }
+    loadMailState();
     setState(() {
       _loading = false;
+    });
+  }
+
+  Future<void> loadMailState() async {
+    final creds = Provider.of<CredentialStore>(context, listen: false);
+    setState(() {
+      mailData = null;
+    });
+    final newMailData = await lernsax.getMailState(creds.lernSaxLogin!, creds.lernSaxToken!);
+    setState(() {
+      mailData = newMailData;
     });
   }
 }

@@ -471,6 +471,10 @@ class LSMailListing extends SerializableObject {
   bool get isDraft => attributes["is_draft"];
   set isDraft(bool val) => attributes["is_draft"] = val;
 
+  /// determined by checking if it's in the sent folder
+  bool get isSent => attributes["is_sent"];
+  set isSent(bool val) => attributes["is_sent"] = val;
+
   /// depends on if the message is a draft (then: read from "to") or a received message (then: read from "from")
   List<LSMailAddressable> get addressed => attributes["addressed"];
   set addressed(List<LSMailAddressable> val) => attributes["addressed"] = val;
@@ -489,6 +493,7 @@ class LSMailListing extends SerializableObject {
     required int size,
     required List<LSMailAddressable> addressed,
     required bool isDraft,
+    required bool isSent,
     required String folderId,
   }) {
     _setup();
@@ -503,6 +508,7 @@ class LSMailListing extends SerializableObject {
     this.size = size;
     this.addressed = addressed;
     this.isDraft = isDraft;
+    this.isSent = isSent;
     this.folderId = folderId;
   }
 

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// this class is supposed to be shown as a customWidget on an InfoScreen -> InfoScreenDisplay
 /// this is neccessary for it to still have access to the context that can access all the Provider-s
@@ -45,7 +48,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  if (!widget.listing.isDraft) Padding(
+                  if (!widget.listing.isDraft && !widget.listing.isSent) Padding(
                     padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
                     child: Row(
                       children: [
@@ -92,7 +95,48 @@ class _MailDetailPageState extends State<MailDetailPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: SelectableText(mailData!.bodyPlain),
+                    child: SelectableLinkify(
+                      // change order so emails get linkified first, is needed because of looseUrl
+                      linkifiers: const [EmailLinkifier(), UrlLinkifier()],
+                      options: const LinkifyOptions(looseUrl: true, defaultToHttps: true),
+                      onOpen: (link) {
+                        if (link.text.contains("@")) {
+                          showDialog(context: context, builder: (context) => AlertDialog(
+                            content: Text("E-Mail-Adresse: ${link.text}", style: const TextStyle(fontSize: 18)),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  launchUrl(Uri.parse(link.url), mode: LaunchMode.externalNonBrowserApplication).catchError((_) {
+                                    showSnackBar(text: "Keine App für E-Mails gefunden.");
+                                    return false;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("E-Mail senden"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Clipboard.setData(ClipboardData(text: link.text));
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("Kopieren"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Schließen"),
+                              ),
+                            ],
+                          ));
+                          return;
+                        }
+                        try {
+                          launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+                        } on Exception catch (_) {
+                          showSnackBar(text: "Keine App zum Öffnen dieses Links gefunden.");
+                        }
+                      },
+                      text: mailData!.bodyPlain,
+                    ),
                   ),
                 ],
               ),
@@ -136,24 +180,27 @@ class _MailDetailPageState extends State<MailDetailPage> {
   }
 }
 
-TextSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast)
-  => TextSpan(
-    children: [
-      TextSpan(text: addressable.name),
-      if (addressable.name != addressable.address) WidgetSpan(child: GestureDetector(
-        onTap: () => showDialog(context: globalScaffoldContext, builder: (ctx) {
-          return AlertDialog(
-            content: SelectableText("Name: ${addressable.name}\n\nE-Mail-Adresse: ${addressable.address}"),
-            // actions: [
-            //   TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
-            // ],
-          );
-        }),
-        child: const Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Icon(Icons.info, size: 16, color: Colors.grey),
+InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast)
+  => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast);
+
+InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = true})
+  => WidgetSpan(
+    child: Tooltip(
+      preferBelow: false,
+      verticalOffset: 8,
+      triggerMode: (mail != name) ? TooltipTriggerMode.tap : TooltipTriggerMode.manual,
+      message: mail,
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: name ?? mail ?? "unbekannt"),
+            if (name != mail) const WidgetSpan(child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.info, size: 16, color: Colors.grey),
+            )),
+            if (addComma) const TextSpan(text: ", "),
+          ],
         ),
-      )),
-      if (!isLast) const TextSpan(text: ", "),
-    ]
+      ),
+    ),
   );

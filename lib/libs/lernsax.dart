@@ -478,7 +478,7 @@ Future<(bool, List<LSMailFolder>?)> getMailFolders(String login, String token) a
 }
 
 /// returns: isOnline, data
-Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token, { required String folderId, int? offset, int? limit, bool isDraftsFolder = false }) async {
+Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token, { required String folderId, int? offset, int? limit, bool isDraftsFolder = false, bool isSentFolder = false }) async {
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -506,6 +506,7 @@ Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token,
       size: data["size"],
       addressed: data.containsKey("from") ? LSMailAddressable.fromLSApiDataList(data["from"]) : data.containsKey("to") ? LSMailAddressable.fromLSApiDataList(data["to"]) : [],
       isDraft: isDraftsFolder,
+      isSent: isSentFolder,
       folderId: folderId,
     )).toList());
   } catch (e, s) {

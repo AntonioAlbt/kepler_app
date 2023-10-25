@@ -37,22 +37,26 @@ class _LSTasksPageState extends State<LSTasksPage> {
       builder: (context, lsdata, child) {
         if (lsdata.memberships == null) {
           return Center(
-            child: Column(
-              children: [
-                const Text(
-                  "Fehler beim Abfragen. Ist Internet vorhanden?",
-                  style: TextStyle(
-                    fontSize: 18,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Fehler beim Abfragen. Ist Internet vorhanden?",
+                    style: TextStyle(
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: ElevatedButton(
-                    onPressed: loadData,
-                    child: const Text("Erneut versuchen"),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: ElevatedButton(
+                      onPressed: loadData,
+                      child: const Text("Erneut versuchen"),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
