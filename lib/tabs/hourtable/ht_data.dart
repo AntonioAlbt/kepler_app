@@ -15,6 +15,7 @@ const stuPlanDataPrefsKey = "stuplandata";
 
 Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
 // TODO: after some time, mark data as stale and update it again to stop it from getting outdated
+// TODO: ask user for new class if the old one isnt available anymore (how can i detect a new school year though?)
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];

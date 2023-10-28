@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 // import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -25,14 +26,6 @@ Future<bool> requestNotificationPermission() async {
 }
 
 Future<bool> checkNotificationPermission() async {
-  // TODO: test if I can actually remove this, especially on iOS
-  // if (Platform.isAndroid) {
-  //   final aInfo = await DeviceInfoPlugin().androidInfo;
-  //   if (aInfo.version.sdkInt < kAndroid13) return true;
-  // } else if (Platform.isIOS) {
-  //   final iInfo = await DeviceInfoPlugin().iosInfo;
-  //   if ((int.tryParse(iInfo.systemVersion?.split(".").first ?? "10") ?? 10) < kIos9) return true;
-  // }
   return await Permission.notification.isGranted;
 }
 
@@ -40,8 +33,8 @@ Future<bool> checkNotificationPermission() async {
 // so all final vars outside of the function scope will be null without Dart knowing that they will be.
 @pragma("vm:entry-point")
 Future<void> _receiveActions(ReceivedAction receivedAction) async {
+  final sprefs = await SharedPreferences.getInstance();
   lis() async {
-    final sprefs = await SharedPreferences.getInstance();
     final internalState = InternalState();
     if (sprefs.containsKey(internalStatePrefsKey)) {
       internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
@@ -52,10 +45,13 @@ Future<void> _receiveActions(ReceivedAction receivedAction) async {
     final context = globalScaffoldKey?.currentContext; // if appKey is in another isolate, it might be null -> see analysis_options.yaml for ignoring the error
     if (context == null) {
       log("clicked news notification, but the context was null");
+      // TODO: somehow test this and fix it
       await ((await lis())..nowOpenOnStartup = PageIDs.news).save();
       return;
     }
     log("clicked news notification, now setting the nav index to ${PageIDs.news}");
+    // dumb flutter, just because it's called context doesn't mean it's used across async gaps
+    // ignore: use_build_context_synchronously
     Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [PageIDs.news];
   } else if (receivedAction.channelKey == stuPlanNotificationKey) {
     final context = globalScaffoldKey?.currentContext;
@@ -63,6 +59,7 @@ Future<void> _receiveActions(ReceivedAction receivedAction) async {
       await ((await lis())..nowOpenOnStartup = StuPlanPageIDs.main).save();
       return;
     }
+    // ignore: use_build_context_synchronously
     Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
   }
 }
@@ -89,7 +86,14 @@ void initializeNotifications() {
   );
 }
 
-// TODO: fix notification icon, fix/test on ios
-Future<bool> sendNotification(NotificationContent content, [List<NotificationActionButton>? actions]) {
+Future<bool> isAppInForeground() async {
+  // the getAppLifeCycle function doesnt exist for ios, so i have to ignore it
+  if (Platform.isIOS) return false;
+  return await AwesomeNotifications().getAppLifeCycle() == NotificationLifeCycle.Foreground;
+}
+
+// TODO: fix android small notification icon
+Future<bool> sendNotification(NotificationContent content, [List<NotificationActionButton>? actions]) async {
+  // if (await isAppInForeground()) return false;
   return AwesomeNotifications().createNotification(content: content, actionButtons: actions);
 }

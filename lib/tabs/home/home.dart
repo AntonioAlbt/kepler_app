@@ -1,7 +1,6 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -45,33 +44,43 @@ class _HomepageTabState extends State<HomepageTab> {
               ),
               if (kDebugMode) ElevatedButton(
                 onPressed: () {
-                  Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = null;
-                  showSnackBar(text: "is now ${Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload}");
-                },
-                child: const Text("Forget todays stuplan reload"),
-              ),
-              if (kDebugMode) ElevatedButton(
-                onPressed: () {
-                  sendNotification(NotificationContent(id: 124, channelKey: newsNotificationKey, body: "hi, das ist ein Test"));
+                  sendNotification(NotificationContent(id: 124, channelKey: newsNotificationKey, body: "hi, das ist ein Test", notificationLayout: NotificationLayout.BigText));
                   showSnackBar(text: "sent");
                 },
-                child: const Text("Send notification"),
+                child: const Text("Send news notification"),
               ),
               if (kDebugMode) ElevatedButton(
                 onPressed: () {
-                  Provider.of<CredentialStore>(context, listen: false).vpPassword = "random-junk";
-                  showSnackBar(text: "done, password is now \"random-junk\"");
+                  sendNotification(NotificationContent(
+                    id: 124, channelKey: stuPlanNotificationKey, body: "hi, das ist ein Test\nzeilenumbrüche\n sind schwer. wie deine mutter hahahhaHAHaHAhahah",
+                    notificationLayout: NotificationLayout.BigText,
+                    title: "test2 der Kepler App"
+                  ));
+                  showSnackBar(text: "sent");
                 },
-                child: const Text("Invalidify stuplan auth"),
+                child: const Text("Send stuplan notification"),
               ),
               if (kDebugMode) ElevatedButton(
                 onPressed: () {
-                  final creds = Provider.of<CredentialStore>(context, listen: false);
-                  unregisterApp(creds.lernSaxLogin ?? "", creds.lernSaxToken ?? "");
-                  creds.lernSaxToken = "im gay lol";
-                  showSnackBar(text: "done, token is now \"im gay lol\"");
+                  sendNotification(NotificationContent(
+                    id: 124, channelKey: stuPlanNotificationKey, body: "hi, das ist ein Test, sach mal der Text hier kann schon ganz schön lang sein das ist ja mal unglaublich wer hat denn sowas authorisiert was soll denn das",
+                    notificationLayout: NotificationLayout.Default,
+                    title: "Test der kepler app"
+                  ));
+                  showSnackBar(text: "sent");
                 },
-                child: const Text("Invalidify lernsax auth"),
+                child: const Text("Send sp notif - different type 1"),
+              ),
+              if (kDebugMode) ElevatedButton(
+                onPressed: () {
+                  sendNotification(NotificationContent(
+                    id: 124, channelKey: stuPlanNotificationKey, body: "Was ist denn hier lso.\nBei dir wurden einfach Stunden geändert",
+                    notificationLayout: NotificationLayout.Inbox,
+                    title: "Inbox Test der KA",
+                  ));
+                  showSnackBar(text: "sent");
+                },
+                child: const Text("Send sp notif - different type 2"),
               ),
             ],
           ),

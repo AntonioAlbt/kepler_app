@@ -47,6 +47,15 @@ class HMTime extends SerializableObject {
   String toString() {
     return '${hour.toString().padLeft(2, "0")}:${minute.toString().padLeft(2, "0")}';
   }
+
+  @override
+  operator ==(Object other) {
+    if (other is! DateTime) return false;
+    return hashCode == other.hashCode;
+  }
+
+  @override
+  int get hashCode => toString().hashCode;
 }
 
 class VPKlData {

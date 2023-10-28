@@ -37,10 +37,10 @@ packages:
     dependency: "direct main"
     description:
       name: awesome_notifications
-      sha256: "2b430c75cc879d6cfd52bb6eb2b5c1591ed425347816408cdcbd3f6916bba14c"
+      sha256: "65f730f9c0e73a346039ef746384bcff1773f9f03821b859705a7ab8db977b23"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.4+1"
+    version: "0.8.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -420,10 +420,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "910f85bce16fb5c6f614e117efa303e85a1731bb0081edf3604a2ae6e9a3cc91"
+      sha256: "3bc132a9dbce73a7e4a21a17d06e1878839ffbf975568bc875c60537824b0c4d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.0"
+    version: "0.18.1"
   js:
     dependency: transitive
     description:
@@ -668,10 +668,10 @@ packages:
     dependency: transitive
     description:
       name: plugin_platform_interface
-      sha256: "6a2128648c854906c53fa8e33986fc0247a1116122f9534dd20e3ab9e16a32bc"
+      sha256: da3fdfeccc4d4ff2da8f8c556704c08f912542c5fb3cf2233ed75372384a034d
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.4"
+    version: "2.1.6"
   pointycastle:
     dependency: transitive
     description:
@@ -897,10 +897,10 @@ packages:
     dependency: "direct main"
     description:
       name: universal_feed
-      sha256: d755eb41f654de5f74bad9f01f8b36fdb7ea91192eff7d69f1c6f99c5c65fe2a
+      sha256: "8c74b46e252b5557032aa4dc7c56744c913fac61cc59ba0896c180881b09419a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.4.0"
   url_launcher:
     dependency: "direct main"
     description:

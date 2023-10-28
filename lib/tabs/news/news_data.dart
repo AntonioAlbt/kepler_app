@@ -40,16 +40,16 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
   if (res.statusCode == 404) {
     return null;
   }
-  final feed = Atom.parseFromString(res.body);
-  if (feed.entries == null) return null;
-  for (var e in feed.entries!) {
+  final feed = UniversalFeed.parseFromString(res.body);
+  if (feed.items.isEmpty) return null;
+  for (var e in feed.items) {
     final data = NewsEntryData()
       ..title = e.title ?? "???"
       ..createdDate = ((e.published != null) ? e.published!.parseValue() ?? DateTime(2023) : DateTime(2023))
-      ..link = ((e.links?.isNotEmpty == true) ? e.links!.first.href : e.id) ?? "https://kepler-chemnitz.de"
-      ..summary = e.summary ?? "..."
-      ..writer = (e.authors?.isNotEmpty == true) ? e.authors!.first.name : null
-      ..categories = (e.categories?.isNotEmpty == true) ? e.categories!.map((e) => e.term ?? "?").toList() : null;
+      ..link = ((e.links?.isNotEmpty == true) ? e.links.first.href : e.guid) ?? "https://kepler-chemnitz.de"
+      ..summary = e.description ?? "..."
+      ..writer = (e.authors?.isNotEmpty == true) ? e.authors.first.name : null
+      ..categories = (e.categories?.isNotEmpty == true) ? e.categories.map((e) => e.term ?? "?").toList() : null;
     newNewsData.add(data);
   }
   return newNewsData;

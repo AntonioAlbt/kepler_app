@@ -8,6 +8,10 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+
+    // same duration as on android
+    UIApplication.shared.setMinimumBackgroundFetchInterval(TimeInterval(120))
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

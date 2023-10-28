@@ -60,14 +60,23 @@ Future<void> loadAndPrepareApp() async {
 
   Workmanager().initialize(
     taskCallbackDispatcher,
-    //isInDebugMode: kDebugMode
+    isInDebugMode: kDebugMode
   );
-  Workmanager().registerPeriodicTask(
-      (Platform.isIOS) ? Workmanager.iOSBackgroundTask : newsFetchTaskName,
-      newsFetchTaskName,
+  // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
+  if (Platform.isAndroid) {
+    try {
+      // add this because users on previous versions of the app with the old "fetch_news" task will have both running
+      Workmanager().cancelByUniqueName("fetch_news");
+    } on Exception catch (_) {}
+    Workmanager().registerPeriodicTask(
+      fetchTaskName,
+      fetchTaskName,
       frequency: const Duration(minutes: 120),
       existingWorkPolicy: ExistingWorkPolicy.replace,
-      initialDelay: const Duration(seconds: 5));
+      initialDelay: const Duration(seconds: 5),
+    );
+  }
+  
   if (_newsCache.newsData.isNotEmpty) {
     loadAllNewNews(_newsCache.newsData.first.link).then((data) {
       if (data != null) _newsCache.insertNewsData(0, data);
@@ -124,10 +133,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isIOS) {
-      // added this for iOS compatibility
-      return const SafeArea(child: KeplerApp());
-    } else if (Platform.isAndroid) {
+    if (Platform.isIOS || Platform.isAndroid) {
       return const KeplerApp();
     } else {
       return const Center(
@@ -269,14 +275,21 @@ class _KeplerAppState extends State<KeplerApp> {
             ..userType = utype
             ..selectedNavPageIDs = (){
               final nowOpen = _internalState.nowOpenOnStartup;
+              if (kDebugMode) {
+                if (nowOpen != null) {
+                  showDialog(context: context, builder: (context) => AlertDialog(
+                    title: const Text("now open on startup"),
+                    content: Text(nowOpen),
+                  ));
+                } else {
+                  showSnackBar(text: "nothing to open now", clear: true, duration: const Duration(seconds: 1));
+                }
+              }
               _internalState.nowOpenOnStartup = null;
               return (nowOpen != null) ? [
                 nowOpen,
                 if (nowOpen == StuPlanPageIDs.main) StuPlanPageIDs.yours,
-              ] : [
-                _prefs.startNavPage,
-                if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours,
-              ];
+              ] : _prefs.startNavPageIDs;
             }(),
         ),
         ChangeNotifierProvider(
@@ -314,8 +327,8 @@ class _KeplerAppState extends State<KeplerApp> {
             children: [
               WillPopScope(
                 onWillPop: () async {
-                  if (_appState.selectedNavPageIDs.last != _prefs.startNavPage) {
-                    _appState.selectedNavPageIDs = [_prefs.startNavPage, if (_prefs.startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours];
+                  if (_appState.selectedNavPageIDs != _prefs.startNavPageIDs) {
+                    _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
                     return false;
                   } else {
                     return true;
