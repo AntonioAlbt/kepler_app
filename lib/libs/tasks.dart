@@ -20,10 +20,10 @@ var lastNotifId = 153;
 void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     // TODO: fix workmanager for ios
-    if (await isAppInForeground()) return false;
+    if (await isAppInForeground()) return true;
 
     final canPostNotifications = await checkNotificationPermission();
-    if (!canPostNotifications) return false;
+    if (!canPostNotifications) return true;
 
     final sprefs = await SharedPreferences.getInstance();  
     final prefs = Preferences();

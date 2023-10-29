@@ -60,7 +60,7 @@ Future<void> loadAndPrepareApp() async {
 
   Workmanager().initialize(
     taskCallbackDispatcher,
-    isInDebugMode: kDebugMode
+    // isInDebugMode: kDebugMode
   );
   // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
   if (Platform.isAndroid) {
@@ -274,22 +274,8 @@ class _KeplerAppState extends State<KeplerApp> {
             ..infoScreen = introductionDisplay
             ..userType = utype
             ..selectedNavPageIDs = (){
-              final nowOpen = _internalState.nowOpenOnStartup;
-              if (kDebugMode) {
-                if (nowOpen != null) {
-                  showDialog(context: context, builder: (context) => AlertDialog(
-                    title: const Text("now open on startup"),
-                    content: Text(nowOpen),
-                  ));
-                } else {
-                  showSnackBar(text: "nothing to open now", clear: true, duration: const Duration(seconds: 1));
-                }
-              }
-              _internalState.nowOpenOnStartup = null;
-              return (nowOpen != null) ? [
-                nowOpen,
-                if (nowOpen == StuPlanPageIDs.main) StuPlanPageIDs.yours,
-              ] : _prefs.startNavPageIDs;
+              // TODO: open the respective page if opened from notification
+              return _prefs.startNavPageIDs;
             }(),
         ),
         ChangeNotifierProvider(

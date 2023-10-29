@@ -49,6 +49,15 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     save();
   }
 
+  DateTime _getUpdateDateTime(String key) {
+    if (attributes.containsKey("lu_$key")) {
+      return DateTime.tryParse(attributes["lu_$key"]) ?? DateTime(1900);
+    } else {
+      return DateTime(1900);
+    }
+  }
+  void _setUpdateDateTime(String key, DateTime date) => _setSaveNotify("lu_$key", date.toIso8601String());
+
   String? get selectedClassName => attributes["selected_class_name"];
   set selectedClassName(String? cn) => _setSaveNotify("selected_class_name", cn);
 
@@ -66,9 +75,13 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     selectedCourseIDs = l;
   }
 
+  DateTime get lastAvailClassesUpdate => _getUpdateDateTime("available_classes");
+  set lastAvailClassesUpdate(DateTime val) => _setUpdateDateTime("available_classes", val);
   List<String> get availableClasses => attributes["available_classes"] ?? [];
   set availableClasses(List<String> ac) => _setSaveNotify("available_classes", ac);
 
+  DateTime get lastAvailSubjectsUpdate => _getUpdateDateTime("available_subjects");
+  set lastAvailSubjectsUpdate(DateTime val) => _setUpdateDateTime("available_subjects", val);
   Map<String, List<VPCSubjectS>> get availableSubjects => _jsonDataStrToMap(attributes["available_subjects"] ?? "");
   set availableSubjects(Map<String, List<VPCSubjectS>> ac) => _setSaveNotify("available_subjects", jsonEncode(ac));
   List<VPCSubjectS>? get availableClassSubjects =>
@@ -77,8 +90,16 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   
   String? get selectedTeacherName => attributes["selected_teacher_name"];
   set selectedTeacherName(String? tn) => _setSaveNotify("selected_teacher_name", tn);
+
+  DateTime get lastAvailTeachersUpdate => _getUpdateDateTime("available_teachers");
+  set lastAvailTeachersUpdate(DateTime val) => _setUpdateDateTime("available_teachers", val);
   List<String> get availableTeachers => attributes["available_teachers"] ?? [];
   set availableTeachers(List<String> at) => _setSaveNotify("available_teachers", at);
+
+  DateTime get lastFreeDaysUpdate => _getUpdateDateTime("school_free_days");
+  set lastFreeDaysUpdate(DateTime val) => _setUpdateDateTime("school_free_days", val);
+  List<DateTime> get freeDays => attributes.containsKey("school_free_days") ? (attributes["school_free_days"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
+  set freeDays(List<DateTime> val) => _setSaveNotify("school_free_days", val.map((d) => d.toIso8601String()).join("|"));
 
   final _serializer = Serializer();
   bool loaded = false;
