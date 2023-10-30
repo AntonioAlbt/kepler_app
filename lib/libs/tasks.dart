@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -14,14 +13,9 @@ import 'package:workmanager/workmanager.dart';
 
 const fetchTaskName = "fetch_task";
 
-var lastNotifId = 153;
-
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    // TODO: fix workmanager for ios
-    if (await isAppInForeground()) return true;
-
     final canPostNotifications = await checkNotificationPermission();
     if (!canPostNotifications) return true;
 
@@ -72,15 +66,10 @@ Future<void> runNewsFetchTask() async {
   if (newNews.isEmpty) return;
 
   sendNotification(
-    NotificationContent(
-      id: lastNotifId,
-      channelKey: newsNotificationKey,
-      body: "Wir haben neue Kepler-News!<br>${newNews.sublist(0, min(5, newNews.length)).map((e) => "- ${e.title}").join("<br>")}${(newNews.length > 5) ? "\nund weitere..." : ""}",
-      category: NotificationCategory.Recommendation,
-      notificationLayout: NotificationLayout.BigText
-    ),
+    title: "Neue Kepler-News",
+    body: "${newNews.sublist(0, min(5, newNews.length)).map((e) => "- ${e.title}").join("\n")}${(newNews.length > 5) ? "\nund weitere..." : ""}",
+    notifKey: newsNotificationKey,
   );
-  lastNotifId++;
 }
 
 Future<void> runStuPlanFetchTask() async {

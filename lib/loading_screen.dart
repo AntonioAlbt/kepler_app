@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/state.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -142,7 +143,7 @@ class _LoadingScreenState extends State<LoadingScreen>
               onPressed: () {
                 SystemNavigator.pop();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(6, 15, 111, 190)),
+              style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(6, 15, 111, 190) : Colors.white),
               child: const Text("Schließen"),
             );
           });

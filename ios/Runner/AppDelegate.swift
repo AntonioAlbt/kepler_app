@@ -12,6 +12,11 @@ import Flutter
     // same duration as on android
     UIApplication.shared.setMinimumBackgroundFetchInterval(TimeInterval(120))
 
+    // for flutter_local_notifications
+    if #available(iOS 10.0, *) {
+      UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

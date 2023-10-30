@@ -1,9 +1,8 @@
-import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 // import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -18,100 +17,97 @@ const stuPlanNotificationKey = "stu_plan_notification";
 const kAndroid13 = 33;
 const kIos9 = 9;
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
 Future<bool> requestNotificationPermission() async {
-  log("started request");
-  final result = await Permission.notification.request();
-  log("successfully requested notification perm, status now $result");
-  return result == PermissionStatus.granted;
+  var result = false;
+  if (Platform.isIOS) {
+    result = await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+      ?.requestPermissions(badge: true) ?? false;
+  } else {
+    result = await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestNotificationsPermission() ?? false;
+  }
+  return result;
 }
 
 Future<bool> checkNotificationPermission() async {
-  return await Permission.notification.isGranted;
-}
-
-// TODO: use flutter_local_notifications because tapping on a notification doesn't work currently
-// the _receiveActions function is called from Android/iOS on another isolate,
-// so all final vars outside of the function scope will be null without Dart knowing that they will be.
-@pragma("vm:entry-point")
-Future<void> _receiveActions(ReceivedAction receivedAction) async {
-  // print("notif test -> received notif action: $receivedAction");
-  // final sprefs = await SharedPreferences.getInstance();
-  // lis() async {
-  //   final internalState = InternalState();
-  //   if (sprefs.containsKey(internalStatePrefsKey)) {
-  //     internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
-  //   }
-  //   return internalState;
-  // }
-  if (receivedAction.channelKey == newsNotificationKey) {
-    final context = globalScaffoldKey?.currentContext; // if appKey is in another isolate, it might be null -> see analysis_options.yaml for ignoring the error
-    if (context == null) {
-      // if (kDebugMode) print("clicked news notification, but the context was null");
-      // try {
-      //   await ((await lis())..nowOpenOnStartup = PageIDs.news).save();
-      // } catch (e, s) {
-      //   if (kDebugMode) print("$e - $s");
-      // }
-      // if (kDebugMode) print("IntSt -> nowOpenOnStartup = ${(await lis()).nowOpenOnStartup}");
-      // afterLoadingCallbacks.add((ctx) {
-      //   Provider.of<AppState>(ctx, listen: false).selectedNavPageIDs = [PageIDs.news];
-      // });
-      // print("notif test -> why?");
-      // print("notif test -> is debug: $kDebugMode");
-      // print("notif test -> clicked news notif, global app key: $globalKeplerAppKey");
-      // print("notif test -> cb's: ${globalKeplerAppKey?.currentState?.loadingFinishedCallbacks.length}");
-      // globalKeplerAppKey?.currentState?.addLoadingFinishedCallback((state) {
-      //   print("notif test -> hi from loading callback - current nav id: ${state.selectedNavPageIDs}");
-      //   // showDialog(context: ctx, builder: (_) => const AlertDialog(title: Text("clicked on news notif")));
-      // });
-      // print("notif test -> cb's now: ${globalKeplerAppKey?.currentState?.loadingFinishedCallbacks.length}");
-      return;
-    }
-    // log("clicked news notification, now setting the nav index to ${PageIDs.news}");
-    // dumb flutter, just because it's called context doesn't mean it's used across async gaps
-    // ignore: use_build_context_synchronously
-    Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [PageIDs.news];
-  } else if (receivedAction.channelKey == stuPlanNotificationKey) {
-    final context = globalScaffoldKey?.currentContext;
-    if (context == null) {
-      // await ((await lis())..nowOpenOnStartup = StuPlanPageIDs.main).save();
-      return;
-    }
-    // ignore: use_build_context_synchronously
-    Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+  if (Platform.isIOS) {
+    return await Permission.notification.isGranted;
+  } else {
+    return await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.areNotificationsEnabled() ?? true;
   }
 }
 
-void initializeNotifications() {
-  AwesomeNotifications().initialize(
-    null,
-    [
-      NotificationChannel(
-        channelKey: newsNotificationKey,
-        channelName: "Neue Kepler-News",
-        channelDescription: "Benachrichtigungen für neue Kepler-News",
-      ),
-      NotificationChannel(
-        channelKey: stuPlanNotificationKey,
-        channelName: "Stundenplan-Änderungen",
-        channelDescription: "Benachrichtigungen bei neuen Änderungen im Vertretungsplan",
-      ),
-    ],
-    debug: kDebugMode,
-  );
-  AwesomeNotifications().setListeners(
-    onActionReceivedMethod: _receiveActions
-  );
-}
-
-Future<bool> isAppInForeground() async {
-  // the getAppLifeCycle function doesnt exist for ios, so i have to ignore it
-  if (Platform.isIOS) return false;
-  return await AwesomeNotifications().getAppLifeCycle() == NotificationLifeCycle.Foreground;
-}
-
 // TODO: fix android small notification icon
-Future<bool> sendNotification(NotificationContent content, [List<NotificationActionButton>? actions]) async {
-  // if (await isAppInForeground()) return false;
-  return AwesomeNotifications().createNotification(content: content, actionButtons: actions);
+void initializeNotifications() {
+  flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings("transparent_app_icon"),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+        defaultPresentAlert: false,
+        defaultPresentSound: false,
+        defaultPresentBadge: true,
+      ),
+    ),
+    onDidReceiveNotificationResponse: (action) async {
+      if (action.notificationResponseType != NotificationResponseType.selectedNotification) return;
+      switch (action.payload) {
+        case newsNotificationKey:
+          if (globalScaffoldKey?.currentContext == null) return;
+          Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [PageIDs.news];
+          break;
+        case stuPlanNotificationKey:
+          if (globalScaffoldKey?.currentContext == null) return;
+          Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+          break;
+      }
+    }
+  );
 }
+
+NotificationDetails newsNotificationDetails(String bigText) => NotificationDetails(
+  android: AndroidNotificationDetails(
+    newsNotificationKey,
+    "Neue Kepler-News",
+    channelDescription: "Benachrichtigungen für neue Kepler-News",
+    category: AndroidNotificationCategory.social,
+    playSound: false,
+    styleInformation: BigTextStyleInformation(bigText),
+  ),
+  iOS: const DarwinNotificationDetails(
+    threadIdentifier: newsNotificationKey,
+  ),
+);
+NotificationDetails stuPlanNotificationDetails(String bigText) => NotificationDetails(
+  android: AndroidNotificationDetails(
+    newsNotificationKey,
+    "Stundenplan-Änderungen",
+    channelDescription: "Benachrichtigungen bei neuen Änderungen im Vertretungsplan",
+    category: AndroidNotificationCategory.social,
+    styleInformation: BigTextStyleInformation(bigText),
+  ),
+  iOS: const DarwinNotificationDetails(
+    threadIdentifier: stuPlanNotificationKey,
+  ),
+);
+
+Future<void> sendNotification({required String title, required String body, required String notifKey}) async {
+  if (notifKey != newsNotificationKey && notifKey != stuPlanNotificationKey) return;
+  await flutterLocalNotificationsPlugin.show(
+    Random().nextInt(153000),
+    title,
+    body,
+    (notifKey == newsNotificationKey) ? newsNotificationDetails(body) : stuPlanNotificationDetails(body),
+    payload: notifKey,
+  );
+}
+
+Future<NotificationAppLaunchDetails?> getNotifLaunchInfo() async => flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();

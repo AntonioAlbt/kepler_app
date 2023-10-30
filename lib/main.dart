@@ -258,11 +258,26 @@ class _KeplerAppState extends State<KeplerApp> {
     if (kDebugMode) print("Playing difference: $mdif");
     // if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
     // await Future.delayed(const Duration(seconds: 100));
+
+    final launchInfo = await getNotifLaunchInfo();
+    if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.notificationResponse != null && launchInfo.notificationResponse!.payload != null) {
+      switch (launchInfo.notificationResponse!.payload!) {
+        case newsNotificationKey:
+          startingNavPageIDs = [PageIDs.news];
+          break;
+        case stuPlanNotificationKey:
+          startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+          break;
+      }
+    }
+
     setState(() => _loading = false);
   }
 
   bool _loading = true;
   InfoScreenDisplay? introductionDisplay;
+
+  List<String>? startingNavPageIDs;
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +289,7 @@ class _KeplerAppState extends State<KeplerApp> {
             ..infoScreen = introductionDisplay
             ..userType = utype
             ..selectedNavPageIDs = (){
-              // TODO: open the respective page if opened from notification
+              if (startingNavPageIDs != null) return startingNavPageIDs!;
               return _prefs.startNavPageIDs;
             }(),
         ),

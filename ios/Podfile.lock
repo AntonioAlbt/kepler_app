@@ -1,20 +1,18 @@
 PODS:
   - appcheck (1.0.3):
     - Flutter
-  - awesome_notifications (0.8.1):
-    - Flutter
-    - IosAwnCore (~> 0.8.0)
   - device_info_plus (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - flutter_keyboard_visibility (0.0.1):
+    - Flutter
+  - flutter_local_notifications (0.0.1):
     - Flutter
   - flutter_secure_storage (6.0.0):
     - Flutter
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - IosAwnCore (0.8.0)
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -46,10 +44,10 @@ PODS:
 
 DEPENDENCIES:
   - appcheck (from `.symlinks/plugins/appcheck/ios`)
-  - awesome_notifications (from `.symlinks/plugins/awesome_notifications/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
   - flutter_keyboard_visibility (from `.symlinks/plugins/flutter_keyboard_visibility/ios`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -65,21 +63,20 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - FMDB
-    - IosAwnCore
     - Sentry
     - SentryPrivate
 
 EXTERNAL SOURCES:
   appcheck:
     :path: ".symlinks/plugins/appcheck/ios"
-  awesome_notifications:
-    :path: ".symlinks/plugins/awesome_notifications/ios"
   device_info_plus:
     :path: ".symlinks/plugins/device_info_plus/ios"
   Flutter:
     :path: Flutter
   flutter_keyboard_visibility:
     :path: ".symlinks/plugins/flutter_keyboard_visibility/ios"
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_secure_storage:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   package_info_plus:
@@ -105,13 +102,12 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   appcheck: e1ab9d4e03736f03e0401554a134d1ed502d7629
-  awesome_notifications: db394d2e061e4583ba0f738ddea611e3986cc3fb
   device_info_plus: e5c5da33f982a436e103237c0c85f9031142abed
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_keyboard_visibility: 0339d06371254c3eb25eeb90ba8d17dca8f9c069
+  flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743
   flutter_secure_storage: 23fc622d89d073675f2eaa109381aefbcf5a49be
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  IosAwnCore: ed1b2b6d84962a758354dbacd9ce525c72ce28a9
   package_info_plus: 6c92f08e1f853dc01228d6f553146438dafcd14e
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
