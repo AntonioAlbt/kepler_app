@@ -43,7 +43,6 @@ Future<bool> checkNotificationPermission() async {
   }
 }
 
-// TODO: fix android small notification icon
 void initializeNotifications() {
   flutterLocalNotificationsPlugin.initialize(
     const InitializationSettings(
@@ -88,7 +87,7 @@ NotificationDetails newsNotificationDetails(String bigText) => NotificationDetai
 );
 NotificationDetails stuPlanNotificationDetails(String bigText) => NotificationDetails(
   android: AndroidNotificationDetails(
-    newsNotificationKey,
+    stuPlanNotificationKey,
     "Stundenplan-Änderungen",
     channelDescription: "Benachrichtigungen bei neuen Änderungen im Vertretungsplan",
     category: AndroidNotificationCategory.social,

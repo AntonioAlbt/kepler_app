@@ -45,6 +45,7 @@ dependencies:
   device_info_plus: ^8.1.0
   flutter_keyboard_visibility: ^5.4.1
   permission_handler: ^11.0.1
+  scroll_to_index: ^3.0.1
 
   # crash analytics lib
   sentry_flutter: ^7.8.0

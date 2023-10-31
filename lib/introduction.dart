@@ -727,13 +727,18 @@ class _NotifInfoScreenMainState extends State<NotifInfoScreenMain> {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () {
+                        if (prefs.enabledNotifs.isEmpty) {
+                          infoScreenState.next();
+                          return;
+                        }
                         checkNotificationPermission().then((hasAgreed) {
                           if (!hasAgreed) {
                             requestNotificationPermission().then((agreedNow) {
                               if (agreedNow) {
                                 showSnackBar(text: "Danke für ${sie ? "Ihre" : "Deine"} Zustimmung.", error: false);
                               } else {
-                                showSnackBar(text: "Leider ${sie ? "haben Sie" : "hast Du"} nicht zugestimmt. Wir werden keine Benachrichtigungen senden.", error: true);
+                                prefs.enabledNotifs = [];
+                                showSnackBar(text: "Leider ${sie ? "haben Sie" : "hast Du"} nicht zugestimmt. Wir werden keine Benachrichtigungen senden. ${sie ? "Sie können" : "Du kannst"} sie in den Einstellungen aktivieren.", error: true);
                               }
                               infoScreenState.next();
                             });

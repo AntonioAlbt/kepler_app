@@ -4,7 +4,9 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
@@ -26,6 +28,11 @@ final _startPageMap = {
   LernSaxPageIDs.main: "LernSax-Infos",
 };
 
+final _notifKeyMap = {
+  newsNotificationKey: "Neue Kepler-News",
+  stuPlanNotificationKey: "Änderungen im Stundenplan",
+};
+
 class _SettingsTabState extends State<SettingsTab> {
   @override
   Widget build(BuildContext context) {
@@ -40,7 +47,10 @@ class _SettingsTabState extends State<SettingsTab> {
               tiles: [
                 selectionSettingsTile(prefs.theme, AppTheme.values, "Farbmodus", (val) => prefs.theme = val),
                 selectionSettingsTile(prefs.preferredPronoun, Pronoun.values, "Bevorzugte Anrede", (val) => prefs.preferredPronoun = val),
-                selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key),
+                notificationSettingsTile(prefs.enabledNotifs.map((en) => _notifKeyMap[en]).where((e) => e != null).toList(), userType == UserType.nobody ? ["Neue Kepler-News"] : _notifKeyMap.values.toList(), "Benachrichtigungen", (selectedNow) {
+                  prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
+                }),
+                selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key, disabled: userType == UserType.nobody),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
@@ -97,25 +107,28 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: Text(userType == UserType.teacher ? "Lehrer ändern" : "Klasse oder Belegung ändern"),
                   description: Text("${sie ? "Ihre" : "Deine"} ${userType == UserType.teacher ? "Lehrer-Abkürzung" : "Klasse und/oder belegte Fächer ändern"} (für ${sie ? "Ihren" : "Deinen"} Stundenplan)"),
                   onPressed: (_) => yourStuPlanEditAction(),
+                  enabled: userType != UserType.nobody,
                 ),
                 SettingsTile.switchTile(
                   initialValue: prefs.reloadStuPlanAutoOnceDaily,
                   onToggle: (val) => prefs.reloadStuPlanAutoOnceDaily = val,
                   title: const Text("Beim Öffnen automatisch aktualisieren"),
                   description: const Text("passiert einmal täglich beim Öffnen des Stundenplanes"),
+                  enabled: userType != UserType.nobody,
                 ),
                 SettingsTile.switchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation,
                   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
                   title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
                   description: const Text("auch wenn das kein richtiger Ausfall ist"),
+                  enabled: userType != UserType.nobody,
                 ),
                 SettingsTile.switchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
                   onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
                   title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
                   description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
-                  enabled: prefs.considerLernSaxTasksAsCancellation,
+                  enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
                 ),
                 SettingsTile.navigation(
                   title: const Text("Zeit für nächsten Tag bzw. Plan"),
@@ -132,19 +145,20 @@ class _SettingsTabState extends State<SettingsTab> {
                       prefs.timeToDefaultToNextPlanDay = HMTime(picked.hour, picked.minute);
                     }
                   }),
+                  enabled: userType != UserType.nobody,
                 ),
                 ColorSelectSettingsTile(
                   title: "Rahmenfarbe für Stundenplanliste",
                   current: prefs.stuPlanDataAvailableBorderColor,
                   updateData: (col) => prefs.stuPlanDataAvailableBorderColor = col!,
-                  disabled: prefs.stuPlanDataAvailableBorderWidth == 0,
+                  disabled: prefs.stuPlanDataAvailableBorderWidth == 0 || userType == UserType.nobody,
                 ),
                 ColorSelectSettingsTile(
                   title: "Rahmenfarbe 2 für Stundenplanliste - Farbe für Farbverlauf",
                   current: prefs.stuPlanDataAvailableBorderGradientColor,
                   updateData: (col) => prefs.stuPlanDataAvailableBorderGradientColor = col,
                   nullAvailable: true,
-                  disabled: prefs.stuPlanDataAvailableBorderWidth == 0,
+                  disabled: prefs.stuPlanDataAvailableBorderWidth == 0 || userType == UserType.nobody,
                 ),
                 selectionSettingsTile(
                   "${prefs.stuPlanDataAvailableBorderWidth.round()} px${prefs.stuPlanDataAvailableBorderWidth == 0 ? " (kein Rahmen)" : ""}",
@@ -153,7 +167,8 @@ class _SettingsTabState extends State<SettingsTab> {
                   (val) {
                     prefs.stuPlanDataAvailableBorderWidth = double.parse(val.split(" px")[0]);
                   },
-              ),
+                  disabled: userType == UserType.nobody,
+                ),
               ],
             ),
             SettingsSection(
@@ -164,6 +179,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   onToggle: (val) => prefs.lernSaxAutoLoadMailOnScrollBy = val,
                   title: const Text("LernSax-Mails beim ersten Vorbeiscrollen einmalig herunterladen"),
                   description: const Text("das ist nötig, damit die Anhänge geladen werden können (verbraucht mehr Daten)"),
+                  enabled: userType != UserType.nobody,
                 ),
               ],
             ),
@@ -177,6 +193,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   },
                   title: const Text("Konfetti aktivieren"),
                   description: const Text("z.B. bei Ausfall"),
+                  enabled: userType != UserType.nobody,
                 ),
               ],
             ),
@@ -187,7 +204,7 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 }
 
-SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData) {
+SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false}) {
   return SettingsTile.navigation(
     title: Text(title),
     value: Text(data.toString()),
@@ -211,7 +228,103 @@ SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void
         )).toList(),
       ),
     )),
+    enabled: !disabled,
   );
+}
+
+SettingsTile notificationSettingsTile<T>(List<T> selected, List<T> values, String title, void Function(List<dynamic> selectedNow) updateData, {bool disabled = false}) {
+  // return CustomSettingsTile(child: MultiSelectionSettingsDialog(selected: selected, values: values, title: title, updateData: updateData));
+  return SettingsTile.navigation(
+    title: Text(title),
+    value: Text(selected.isNotEmpty ? selected.map((e) => e.toString()).join(", ") : "nichts ausgewählt"),
+    onPressed: (ctx) => showDialog(
+      context: ctx,
+      builder: (ctx) => NotificationSettingsDialog(selected: selected, values: values, title: title, updateData: updateData),
+    ),
+    enabled: !disabled,
+  );
+}
+
+class NotificationSettingsDialog<T> extends StatefulWidget {
+  final List<T> selected;
+  final List<T> values;
+  final String title;
+  final void Function(List<dynamic> selectedNow) updateData;
+
+  const NotificationSettingsDialog({super.key, required this.selected, required this.values, required this.title, required this.updateData});
+
+  @override
+  State<NotificationSettingsDialog> createState() => _NotificationSettingsDialogState();
+}
+
+class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDialog<T>> {
+  List<T> selected = <T>[];
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("${widget.title} auswählen", style: const TextStyle(fontSize: 20)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: widget.values.map((val) => CheckboxListTile(
+          value: selected.contains(val),
+          title: Text(
+            val.toString(),
+            // style: TextStyle(
+            //   fontWeight: (selected.contains(val)) ? FontWeight.bold : null,
+            // ),
+          ),
+          onChanged: (checked) {
+            if (checked == true && !selected.contains(val)) {
+              selected.add(val);
+              setState(() => ());
+            } else if (checked == false && selected.contains(val)) {
+              selected.remove(val);
+              setState(() => selected = selected..remove(val));
+            }
+          },
+        )).toList(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Abbrechen"),
+        ),
+        TextButton(
+          onPressed: () {
+            if (selected.isNotEmpty) {
+              checkNotificationPermission().then((notifsAllowed) {
+                if (notifsAllowed) {
+                  widget.updateData(selected);
+                  Navigator.pop(context);
+                } else {
+                  requestNotificationPermission().then((requestSuccessful) {
+                    if (requestSuccessful) {
+                      widget.updateData(selected);
+                    } else {
+                      widget.updateData(<T>[]);
+                      showSnackBar(text: "Keine Zustimmung erteilt. Wir werden keine Benachrichtigungen senden.", error: true);
+                    }
+                    Navigator.pop(context);
+                  });
+                }
+              });
+            } else {
+              widget.updateData(selected);
+              Navigator.pop(context);
+            }
+          },
+          child: const Text("Bestätigen"),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void initState() {
+    selected.addAll(widget.selected);
+    super.initState();
+  }
 }
 
 class ColorSelectSettingsTile extends AbstractSettingsTile {
@@ -332,7 +445,14 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
                 fontWeight: (widget.current == keplerColorOrange) ? FontWeight.bold : null,
               ),
             ),
-            trailing: Container(height: 24, width: 24, color: keplerColorOrange),
+            trailing: Container(
+              height: 24,
+              width: 24,
+              decoration: BoxDecoration(
+                color: keplerColorOrange,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
           ),
           ListTile(
             onTap: () {
@@ -345,7 +465,14 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
                 fontWeight: (widget.current == keplerColorYellow) ? FontWeight.bold : null,
               ),
             ),
-            trailing: Container(height: 24, width: 24, color: keplerColorYellow),
+            trailing: Container(
+              height: 24,
+              width: 24,
+              decoration: BoxDecoration(
+                color: keplerColorYellow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
           ),
           ListTile(
             onTap: () {

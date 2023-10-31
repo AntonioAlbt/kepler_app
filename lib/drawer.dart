@@ -6,6 +6,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 class NavEntryData {
   final String id;
@@ -46,7 +47,7 @@ class NavEntry extends StatefulWidget {
   final void Function() onSelect;
   final bool locked;
   final List<UserType> unlockedFor;
-  final List<NavEntry>? children;
+  final List<Widget>? children;
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
@@ -221,7 +222,9 @@ class TheDrawer extends StatefulWidget {
 }
 
 class _TheDrawerState extends State<TheDrawer> {
-  final _controller = ScrollController();
+  final _controller = AutoScrollController();
+  final _idMap = <String, int>{};
+  int _lastId = 0;
 
   void redraw() async {
     await Future.delayed(const Duration(milliseconds: expandDuration + 5));
@@ -251,31 +254,38 @@ class _TheDrawerState extends State<TheDrawer> {
     // generate all possible selection indices for the parents of the current selection, check if this entry has one of them -> parent to a selected node gets parent selection mode
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
     final selected = selectionIndex == selectedIndex;
-    return NavEntry(
-      id: entryData.id,
-      icon: entryData.icon,
-      selectedIcon: entryData.selectedIcon,
-      label: entryData.label,
-      externalLink: entryData.externalLink,
-      parentOfSelected: parentOfSelected,
-      selected: selected,
-      onSelect: () {
-        widget.onDestinationSelected(entryData.redirectTo?.join(".") ?? selectionIndex);
-        if (!entryData.isParent) {
-          Navigator.pop(context);
-        }
-      },
-      onTryOpen: entryData.onTryOpen,
-      onTryExpand: entryData.onTryExpand,
-      layer: layer,
-      locked: entryData.shouldBeLocked(context, userType),
-      unlockedFor: UserType.values.where((val) => entryData.lockedFor?.contains(val) != true).toList(),
-      children: entryData.children
-          ?.map((data) => (data.shouldBeVisible(context, userType))
-              ? dataToEntry(data, selectedIndex, layer + 1, selectionIndex, userType)
-              : null,
-          ).where((element) => element != null)
-          .toList().cast(),
+    _lastId++;
+    _idMap[entryData.id] = _lastId;
+    return AutoScrollTag(
+      controller: _controller,
+      index: _idMap[entryData.id]!,
+      key: ValueKey(entryData.id),
+      child: NavEntry(
+        id: entryData.id,
+        icon: entryData.icon,
+        selectedIcon: entryData.selectedIcon,
+        label: entryData.label,
+        externalLink: entryData.externalLink,
+        parentOfSelected: parentOfSelected,
+        selected: selected,
+        onSelect: () {
+          widget.onDestinationSelected(entryData.redirectTo?.join(".") ?? selectionIndex);
+          if (!entryData.isParent) {
+            Navigator.pop(context);
+          }
+        },
+        onTryOpen: entryData.onTryOpen,
+        onTryExpand: entryData.onTryExpand,
+        layer: layer,
+        locked: entryData.shouldBeLocked(context, userType),
+        unlockedFor: UserType.values.where((val) => entryData.lockedFor?.contains(val) != true).toList(),
+        children: entryData.children
+            ?.map((data) => (data.shouldBeVisible(context, userType))
+                ? dataToEntry(data, selectedIndex, layer + 1, selectionIndex, userType)
+                : null,
+            ).where((element) => element != null)
+            .toList().cast(),
+      ),
     );
   }
 
@@ -298,5 +308,14 @@ class _TheDrawerState extends State<TheDrawer> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final id = _idMap[Provider.of<AppState>(context, listen: false).selectedNavPageIDs.last];
+      if (id != null) _controller.scrollToIndex(id, duration: const Duration(microseconds: 1), preferPosition: AutoScrollPosition.begin);
+    });
   }
 }

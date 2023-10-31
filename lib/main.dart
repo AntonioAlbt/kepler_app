@@ -249,7 +249,7 @@ class _KeplerAppState extends State<KeplerApp> {
           ],
         );
       }
-      if (!await checkNotificationPermission()) {
+      if (!await checkNotificationPermission() && _prefs.enabledNotifs.isNotEmpty) {
         await requestNotificationPermission();
       }
     }

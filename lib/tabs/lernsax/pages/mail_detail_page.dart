@@ -20,8 +20,6 @@ class MailDetailPage extends StatefulWidget {
   State<MailDetailPage> createState() => _MailDetailPageState();
 }
 
-// TODO: improve design?
-// TODO: show attachments and open a download link in the browser on click
 class _MailDetailPageState extends State<MailDetailPage> {
   bool _loading = true;
   LSMail? mailData;
@@ -86,6 +84,52 @@ class _MailDetailPageState extends State<MailDetailPage> {
                       ],
                     ),
                   ),
+                  if (attachmentCount > 0) const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Divider(),
+                  ),
+                  if (attachmentCount > 0) Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(right: 4),
+                              child: Icon(Icons.attachment, size: 20, color: Colors.grey),
+                            ),
+                            Text(
+                              "$attachmentCount ${attachmentCount == 1 ? "Anhang" : "Anhänge"}",
+                              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                        ...mailData!.attachments.map((att) => TextButton(onPressed: () {
+                          // show this as a kind of loading message
+                          showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
+                          final creds = Provider.of<CredentialStore>(context, listen: false);
+                          lernsax.exportSessionFileFromMail(
+                            creds.lernSaxLogin!,
+                            creds.lernSaxToken!,
+                            folderId: mailData!.folderId,
+                            mailId: mailData!.id,
+                            attachmentId: att.id,
+                          ).then((data) {
+                            final (online, sessionFile) = data;
+                            if (!online) {
+                              showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", clear: true);
+                            } else if (sessionFile == null) {
+                              showSnackBar(text: "Fehler beim Abfragen der Datei. Bitte später erneut versuchen.", clear: true);
+                            } else {
+                              showSnackBar(text: "Download-Link wird geöffnet.", clear: true, duration: const Duration(seconds: 1));
+                              launchUrl(Uri.parse(sessionFile.downloadUrl), mode: LaunchMode.externalApplication);
+                            }
+                          });
+                        }, child: Text(att.name))),
+                      ],
+                    ),
+                  ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 4),
                     child: Divider(),
@@ -139,52 +183,6 @@ class _MailDetailPageState extends State<MailDetailPage> {
                         }
                       },
                       text: mailData!.bodyPlain,
-                    ),
-                  ),
-                  if (attachmentCount > 0) const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
-                    child: Divider(),
-                  ),
-                  if (attachmentCount > 0) Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(right: 4),
-                              child: Icon(Icons.attachment, size: 20, color: Colors.grey),
-                            ),
-                            Text(
-                              "$attachmentCount ${attachmentCount == 1 ? "Anhang" : "Anhänge"}",
-                              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
-                            ),
-                          ],
-                        ),
-                        ...mailData!.attachments.map((att) => TextButton(onPressed: () {
-                          // show this as a kind of loading message
-                          showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
-                          final creds = Provider.of<CredentialStore>(context, listen: false);
-                          lernsax.exportSessionFileFromMail(
-                            creds.lernSaxLogin!,
-                            creds.lernSaxToken!,
-                            folderId: mailData!.folderId,
-                            mailId: mailData!.id,
-                            attachmentId: att.id,
-                          ).then((data) {
-                            final (online, sessionFile) = data;
-                            if (!online) {
-                              showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", clear: true);
-                            } else if (sessionFile == null) {
-                              showSnackBar(text: "Fehler beim Abfragen der Datei. Bitte später erneut versuchen.", clear: true);
-                            } else {
-                              showSnackBar(text: "Download-Link wird geöffnet.", clear: true, duration: const Duration(seconds: 1));
-                              launchUrl(Uri.parse(sessionFile.downloadUrl), mode: LaunchMode.externalApplication);
-                            }
-                          });
-                        }, child: Text(att.name))),
-                      ],
                     ),
                   ),
                 ],
