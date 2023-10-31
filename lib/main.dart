@@ -260,7 +260,7 @@ class _KeplerAppState extends State<KeplerApp> {
     final vpUser = _credStore.vpUser, vpPass = _credStore.vpPassword, vpHost = _credStore.vpHost ?? baseUrl;
     if (vpUser != null && vpPass != null) {
       List<DateTime>? updatedFreeDays;
-      if (utype == UserType.teacher && _stuPlanData.availableTeachers != null && _stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).inDays >= 14) {
+      if (utype == UserType.teacher && _stuPlanData.availableTeachers != null && _stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).abs().inDays >= 14) {
         final (data, _) = await getLehrerXmlLeData(vpHost, vpUser, vpPass);
         if (data != null) {
           _stuPlanData.loadDataFromLeData(data);
@@ -273,7 +273,13 @@ class _KeplerAppState extends State<KeplerApp> {
         } else {
           output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
         }
-      } else if (utype != UserType.nobody && _stuPlanData.availableClasses != null && _stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).inDays >= 14) {
+      } else if (
+        utype != UserType.nobody &&
+        (
+          (_stuPlanData.availableClasses != null && _stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).abs().inDays >= 14)
+          || (_stuPlanData.availableSubjects.isNotEmpty && _stuPlanData.lastAvailSubjectsUpdate.difference(DateTime.now()).abs().inDays >= 14)
+        )
+      ) {
         final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
         if (rawData != null) {
           final data = xmlToKlData(rawData);
@@ -289,7 +295,7 @@ class _KeplerAppState extends State<KeplerApp> {
           output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
         }
       }
-      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).inDays >= 14) {
+      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14 || true) {
         if (updatedFreeDays != null) {
           _stuPlanData.holidayDates = updatedFreeDays;
           _stuPlanData.lastHolidayDatesUpdate = DateTime.now();

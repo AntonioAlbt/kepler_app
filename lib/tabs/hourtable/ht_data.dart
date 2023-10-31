@@ -99,6 +99,10 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   set lastHolidayDatesUpdate(DateTime val) => _setUpdateDateTime("school_holiday_dates", val);
   List<DateTime> get holidayDates => attributes.containsKey("school_holiday_dates") ? (attributes["school_holiday_dates"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
   set holidayDates(List<DateTime> val) => _setSaveNotify("school_holiday_dates", val.map((d) => d.toIso8601String()).join("|"));
+  void removeHolidayDate(DateTime date) {
+    holidayDates = holidayDates.where((d) => !(d.day == date.day && d.month == date.month && d.year == date.year)).toList();
+  }
+  bool checkIfHoliday(DateTime date) => holidayDates.any((d) => d.day == date.day && d.month == date.month && d.year == date.year);
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -258,6 +262,7 @@ class IndiwareDataManager {
     final thresholdDate = DateTime.now().subtract(const Duration(days: 3));
     for (final file in (await dir.list().toList())) {
       final fnDateStr = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
+      if (fnDateStr == "Klassen") continue;
       final date = fnTimeFormat.parse(fnDateStr);
       if (kDebugMode) print("found stuplan data xml with date ${fnTimeFormat.format(date)}, will be deleted: ${date.isBefore(thresholdDate)} - threshold: ${fnTimeFormat.format(thresholdDate)}");
       if (date.isBefore(thresholdDate)) await file.delete();

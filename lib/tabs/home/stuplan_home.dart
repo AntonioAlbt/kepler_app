@@ -34,6 +34,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
       builder: (context, stdata, state, creds, prefs, _) {
         final sie = prefs.preferredPronoun == Pronoun.sie;
         final user = state.userType;
+        final date = shouldGoToNextPlanDay(context) ? DateTime.now().add(const Duration(days: 1)) : DateTime.now();
         return Card(
           color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .2 : .8),
           child: Column(
@@ -84,13 +85,11 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
               )
               else if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
                 height: 200,
-                child: ScrollConfiguration( // TODO: propagate scroll event to upper scroll view if this view couldn't scroll
+                child: ScrollConfiguration( // possible qol improvement: propagate scroll event to upper scroll view if this view couldn't scroll
                   behavior: const ScrollBehavior().copyWith(overscroll: false),
                   child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
                     future: (creds.vpPassword != null) ? IndiwareDataManager.getKlDataForDate(
-                      shouldGoToNextPlanDay(context)
-                          ? DateTime.now().add(const Duration(days: 1))
-                          : DateTime.now(),
+                      date,
                       creds.vpHost!,
                       creds.vpUser!,
                       creds.vpPassword!,
@@ -112,10 +111,17 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         lessons: lessons?.map((lesson) => considerLernSaxCancellationForLesson(lesson, considerIt)).toList(),
                         onRefresh: () => setState(() => forceRefresh = true),
                         isOnline: dataP?.$2 ?? false,
+                        isSchoolHoliday: stdata.checkIfHoliday(date),
                       );
                     }
                   ) : (user == UserType.teacher) ? FutureBuilder(
-                    future: IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh ?? false),
+                    future: IndiwareDataManager.getLeDataForDate(
+                      date,
+                      creds.vpHost!,
+                      creds.vpUser!,
+                      creds.vpPassword!,
+                      forceRefresh: forceRefresh ?? false,
+                    ),
                     initialData: null,
                     builder: (context, datasn) {
                       forceRefresh = false;
@@ -129,6 +135,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                           .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
                         onRefresh: () => setState(() => forceRefresh = true),
                         isOnline: data?.$2 ?? false,
+                        isSchoolHoliday: stdata.checkIfHoliday(date),
                       );
                     },
                   ) : const Text("Fehler."),
@@ -196,7 +203,8 @@ class SPWidgetList extends StatelessWidget {
   final VoidCallback? onRefresh;
   final bool stillLoading;
   final bool isOnline;
-  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false, this.isOnline = false});
+  final bool isSchoolHoliday;
+  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false, this.isOnline = false, required this.isSchoolHoliday});
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +222,15 @@ class SPWidgetList extends StatelessWidget {
               child: Center(
                 child: Text(
                   "Heute ist Wochenende! 😃",
+                  style: TextStyle(fontSize: 17),
+                ),
+              ),
+            );
+          } else if (isSchoolHoliday) {
+            child = const Expanded(
+              child: Center(
+                child: Text(
+                  "Heute ist keine Schule.",
                   style: TextStyle(fontSize: 17),
                 ),
               ),

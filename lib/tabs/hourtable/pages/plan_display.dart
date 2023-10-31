@@ -229,18 +229,23 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
           ],
         ),
         Flexible(
-          child: StuPlanDayDisplay(
-            controller: _ctr,
-            date: currentDate,
-            key: ValueKey(currentDate.hashCode +
-                widget.selected.hashCode +
-                widget.mode.hashCode),
-            selected: widget.selected,
-            mode: widget.mode,
-            showInfo: widget.showInfo,
-            allRooms: widget.allRooms,
-            onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
-            onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
+          child: Selector<StuPlanData, List<DateTime>>(
+            selector: (_, stdata) => stdata.holidayDates,
+            builder: (_, holidayDates, __) => StuPlanDayDisplay(
+              controller: _ctr,
+              date: currentDate,
+              key: ValueKey(currentDate.hashCode +
+                  widget.selected.hashCode +
+                  widget.mode.hashCode +
+                  holidayDates.hashCode),
+              selected: widget.selected,
+              mode: widget.mode,
+              showInfo: widget.showInfo,
+              allRooms: widget.allRooms,
+              onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
+              onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
+              schoolHolidayList: holidayDates,
+            ),
           ),
         ),
       ],
@@ -268,6 +273,7 @@ class StuPlanDayDisplay extends StatefulWidget {
   final List<String>? allRooms;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
+  final List<DateTime>? schoolHolidayList;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
@@ -278,7 +284,8 @@ class StuPlanDayDisplay extends StatefulWidget {
       this.showSupervisions = true,
       this.allRooms,
       this.onSwipeLeft,
-      this.onSwipeRight});
+      this.onSwipeRight,
+      this.schoolHolidayList});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -298,6 +305,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   List<VPTeacherSupervision>? supervisions;
   /// is always updated when something is loaded
   bool? isOnline;
+  /// is always updated when something is loaded
+  bool? isSchoolHoliday;
 
   List<Widget> _buildAllReplacesLessonList() {
     // final currentClass = Provider.of<StuPlanData>(context, listen: false).selectedClassName;
@@ -486,7 +495,37 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           flex: 3,
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: (widget.mode == SPDisplayMode.allReplaces)
+            child: (widget.schoolHolidayList != null && isSchoolHoliday == true) ?
+                  SPListContainer(
+                    showBorder: true,
+                    onSwipeLeft: widget.onSwipeLeft,
+                    onSwipeRight: widget.onSwipeRight,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "Heute ist keine Schule.",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: Text("Das stimmt nicht?"),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(visualDensity: const VisualDensity(vertical: -2)),
+                            onPressed: () {
+                              // warning -> this in combination with the refresh every 14 days may cause holiday dates reappearing as holidays
+                              // but it doesn't seem like a major enough issue to warrant fixing to me
+                              Provider.of<StuPlanData>(context, listen: false).removeHolidayDate(widget.date);
+                            },
+                            child: const Text("Schulfreien Tag entfernen"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : (widget.mode == SPDisplayMode.allReplaces)
                   ? SPListContainer(
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
@@ -660,6 +699,13 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         creds.vpPassword!,
         forceRefresh: forceRefresh,
       );
+    
+    isSchoolHoliday = (widget.schoolHolidayList ?? []).any((date) => date.day == widget.date.day && date.month == widget.date.month && date.year == widget.date.year);
+    if (isSchoolHoliday == true) {
+      if (prefs.confettiEnabled) globalConfettiController.play();
+      setState(() => _loading = false);
+      return true;
+    }
 
     switch (widget.mode) {
       case SPDisplayMode.yourPlan:

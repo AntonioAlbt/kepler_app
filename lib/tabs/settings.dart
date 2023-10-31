@@ -192,7 +192,7 @@ class _SettingsTabState extends State<SettingsTab> {
                     return prefs.confettiEnabled = val;
                   },
                   title: const Text("Konfetti aktivieren"),
-                  description: const Text("z.B. bei Ausfall"),
+                  description: const Text("z.B. bei Ausfall oder schulfreien Tagen"),
                   enabled: userType != UserType.nobody,
                 ),
               ],
