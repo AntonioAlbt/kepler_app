@@ -115,6 +115,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
     } else {
       lsdata.memberships = classes;
       lsdata.lastMembershipsUpdate = DateTime.now();
+      showSnackBar(text: "Aufgaben erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
     }
     setState(() => _loadingClasses = false);
   }

@@ -3,9 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final lernSaxTimeFormatWithSeconds = DateFormat("dd.MM.yyyy HH:MM:ss");
 final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:MM");
@@ -162,6 +165,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     } else {
       lsdata.lastNotificationsUpdate = DateTime.now();
       lsdata.notifications = (lsdata.notifications ?? []) + data;
+      showSnackBar(text: "Benachrichtigungen erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
     }
     setState(() => _loading = false);
   }
@@ -179,6 +183,12 @@ class LSNotificationPageState extends State<LSNotificationPage> {
   final hideData = ["files", "trusts"];
 }
 
+final _appPageObjectMap = {
+  "mail": LernSaxPageIDs.emails,
+  "tasks": LernSaxPageIDs.tasks,
+};
+
+
 Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif) {
   return AlertDialog(
     title: const Text("Infos zur Benachrichtigung"),
@@ -194,12 +204,47 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
           if (notif.hasUserData) InfoDialogEntry(icon: Icons.person, text: "${notif.fromUserName ?? "Kein Benutzer"}${notif.fromUserLogin != null && notif.fromUserName != notif.fromUserLogin ? " (E-Mail: ${notif.fromUserLogin})" : ""}"),
           if (notif.hasGroupName) InfoDialogEntry(icon: Icons.group_sharp, text: "${notif.fromGroupName ?? "Keine Gruppe"}${notif.fromGroupLogin != null ? " (Login: ${notif.fromGroupLogin})" : ""}"),
           // InfoDialogEntry(icon: Icons.check_box, text: notif.unread ? "Ungelesen" : "Gelesen"),
-          InfoDialogEntry(icon: Icons.abc, text: notif.messageTypeId)
+          InfoDialogEntry(icon: Icons.abc, text: notif.messageTypeId),
         ],
       ),
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text("Schließen"))
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text("Schließen")),
+      TextButton(
+        onPressed: () {
+          Navigator.pop(context);
+          final appPageId = _appPageObjectMap[notif.object];
+          if (appPageId != null) {
+            Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [LernSaxPageIDs.main, appPageId];
+          } else {
+            final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+            // the target url path is the link to the system notifications page
+            lernsax.getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!, targetUrlPath: "/wws/240761.php").then((data) {
+              final (online, link) = data;
+              if (!online) {
+                showSnackBar(text: "Fehler bei der Verbindung zu LernSax.", error: true, clear: true);
+              } else if (link == null) {
+                showSnackBar(text: "Fehler bei Erstellung des LernSax-Links.", error: true, clear: true);
+              } else {
+                launchUrl(Uri.parse(link)).catchError((_) {
+                  showSnackBar(text: "Fehler beim Öffnen des Links.");
+                  return false;
+                });
+              }
+            });
+          }
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("${_appPageObjectMap.containsKey(notif.object) ? "In App" : "Im Browser"} öffnen", style: const TextStyle(fontWeight: FontWeight.w600)),
+            if (!_appPageObjectMap.containsKey(notif.object)) const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.open_in_new, size: 16),
+            ),
+          ],
+        ),
+      ),
     ],
   );
 }

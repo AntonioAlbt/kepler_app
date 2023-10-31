@@ -136,7 +136,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
       lsdata.lastMailFoldersUpdate = DateTime.now();
       // don't setState here because I already tell flutter that I setState three lines from now
       if (selectedFolderId == "") selectedFolderId = folders.first.id;
-      showSnackBar(text: "Erfolgreich aktualisiert.");
+      showSnackBar(text: "E-Mails erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
     }
     setState(() => _loadingFolders = false);
   }

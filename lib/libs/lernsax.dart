@@ -236,7 +236,7 @@ Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) asyn
 }
 
 /// returns: isOnline, data
-Future<(bool, String?)> getSingleUseLoginLink(String login, String token) async {
+Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { String? targetUrlPath }) async {
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -244,6 +244,9 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token) async 
       call(
         id: 1,
         method: "get_url_for_autologin",
+        params: {
+          if (targetUrlPath != null) "target_url_path": targetUrlPath,
+        },
       ),
     ]);
     if (!online) return (false, null);
