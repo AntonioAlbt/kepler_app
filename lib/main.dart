@@ -227,7 +227,10 @@ class _KeplerAppState extends State<KeplerApp> {
     return UserType.nobody;
   }
 
-  Future<void> _load() async {
+  // returns: the text to display in a snackbar, if not null; if text starts with "Achtung! " -> show as error
+  Future<String?> _load() async {
+    String? output;
+
     final t1 = DateTime.now();
     await loadAndPrepareApp();
     utype = await calcUT();
@@ -240,7 +243,7 @@ class _KeplerAppState extends State<KeplerApp> {
     } else {
       if (isLernsaxInvalid || isStuplanInvalid) {
         final both = isLernsaxInvalid && isStuplanInvalid;
-        showSnackBar(textGen: (sie) => "${sie ? "Ihre" : "Deine"} Anmeldedaten für ${isLernsaxInvalid ? "LernSax" : ""}${both ? " und " : ""}${isStuplanInvalid ? "den Stundenplan" : ""} sind ungültig. Bitte ${sie ? "melden Sie sich" : "melde Dich"} erneut an.");
+        output = "Die Anmeldedaten für ${isLernsaxInvalid ? "LernSax" : ""}${both ? " und " : ""}${isStuplanInvalid ? "den Stundenplan" : ""} sind ungültig. Bitte erneut anmelden.";
         introductionDisplay = InfoScreenDisplay(
           infoScreens: [
             if (isLernsaxInvalid) lernSaxLoginAgainScreen(false),
@@ -251,6 +254,55 @@ class _KeplerAppState extends State<KeplerApp> {
       }
       if (!await checkNotificationPermission() && _prefs.enabledNotifs.isNotEmpty) {
         await requestNotificationPermission();
+      }
+    }
+
+    final vpUser = _credStore.vpUser, vpPass = _credStore.vpPassword, vpHost = _credStore.vpHost ?? baseUrl;
+    if (vpUser != null && vpPass != null) {
+      List<DateTime>? updatedFreeDays;
+      if (utype == UserType.teacher && _stuPlanData.availableTeachers != null && _stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).inDays >= 14) {
+        final (data, _) = await getLehrerXmlLeData(vpHost, vpUser, vpPass);
+        if (data != null) {
+          _stuPlanData.loadDataFromLeData(data);
+          // check if selected teacher code doesn't exist anymore (because the school removed it)
+          if (_stuPlanData.selectedTeacherName != null && data?.teachers.map((t) => t.teacherCode).contains(_stuPlanData.selectedTeacherName!) == false) {
+            _stuPlanData.selectedTeacherName = null;
+            output ??= "Achtung! Der gewählte Lehrer ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
+          }
+          updatedFreeDays = data.holidays.holidayDates;
+        } else {
+          output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+        }
+      } else if (utype != UserType.nobody && _stuPlanData.availableClasses != null && _stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).inDays >= 14) {
+        final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
+        if (rawData != null) {
+          final data = xmlToKlData(rawData);
+          _stuPlanData.loadDataFromKlData(data);
+          // check if selected class name doesn't exist anymore (because the school removed it)
+          if (_stuPlanData.selectedClassName != null && data?.classes.map((t) => t.className).contains(_stuPlanData.selectedClassName!) == false) {
+            _stuPlanData.selectedClassName = null;
+            output ??= "Achtung! Die gewählte Klasse ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
+          }
+          IndiwareDataManager.setKlassenXmlData(rawData);
+          updatedFreeDays = data.holidays.holidayDates;
+        } else {
+          output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+        }
+      }
+      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).inDays >= 14) {
+        if (updatedFreeDays != null) {
+          _stuPlanData.holidayDates = updatedFreeDays;
+          _stuPlanData.lastHolidayDatesUpdate = DateTime.now();
+        } else {
+          final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
+          if (rawData != null) {
+            final data = xmlToKlData(rawData);
+            _stuPlanData.holidayDates = data.holidays.holidayDates;
+            IndiwareDataManager.setKlassenXmlData(rawData);
+          } else {
+            output ??= "Hinweis: Die Liste der schulfreien Tage ist nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+          }
+        }
       }
     }
 
@@ -272,6 +324,8 @@ class _KeplerAppState extends State<KeplerApp> {
     }
 
     setState(() => _loading = false);
+
+    return output;
   }
 
   bool _loading = true;
@@ -416,7 +470,15 @@ class _KeplerAppState extends State<KeplerApp> {
 
   @override
   void initState() {
-    _load();
+    _load().then((text) {
+      if (text != null) {
+        if (text.startsWith("Achtung! ")) {
+          showSnackBar(text: text, clear: true, error: true, duration: const Duration(seconds: 5));
+        } else {
+          showSnackBar(text: text);
+        }
+      }
+    });
     super.initState();
   }
 

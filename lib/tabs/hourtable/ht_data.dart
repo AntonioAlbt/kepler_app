@@ -14,8 +14,7 @@ import 'package:xml/xml.dart';
 const stuPlanDataPrefsKey = "stuplandata";
 
 Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
-// TODO: after some time, mark data as stale and update it again to stop it from getting outdated
-// TODO: ask user for new class if the old one isnt available anymore (how can i detect a new school year though?)
+// TODO - future: automatically determine summer holiday end and ask user if their class changed -> maybe with https://ferien-api.de/api/v1/holidays/SN ?
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];
@@ -77,8 +76,8 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   DateTime get lastAvailClassesUpdate => _getUpdateDateTime("available_classes");
   set lastAvailClassesUpdate(DateTime val) => _setUpdateDateTime("available_classes", val);
-  List<String> get availableClasses => attributes["available_classes"] ?? [];
-  set availableClasses(List<String> ac) => _setSaveNotify("available_classes", ac);
+  List<String>? get availableClasses => attributes.containsKey("available_classes") ? attributes["available_classes"] : null;
+  set availableClasses(List<String>? ac) => _setSaveNotify("available_classes", ac);
 
   DateTime get lastAvailSubjectsUpdate => _getUpdateDateTime("available_subjects");
   set lastAvailSubjectsUpdate(DateTime val) => _setUpdateDateTime("available_subjects", val);
@@ -93,13 +92,13 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   DateTime get lastAvailTeachersUpdate => _getUpdateDateTime("available_teachers");
   set lastAvailTeachersUpdate(DateTime val) => _setUpdateDateTime("available_teachers", val);
-  List<String> get availableTeachers => attributes["available_teachers"] ?? [];
-  set availableTeachers(List<String> at) => _setSaveNotify("available_teachers", at);
+  List<String>? get availableTeachers => attributes.containsKey("available_teachers") ? attributes["available_teachers"] : null;
+  set availableTeachers(List<String>? at) => _setSaveNotify("available_teachers", at);
 
-  DateTime get lastFreeDaysUpdate => _getUpdateDateTime("school_free_days");
-  set lastFreeDaysUpdate(DateTime val) => _setUpdateDateTime("school_free_days", val);
-  List<DateTime> get freeDays => attributes.containsKey("school_free_days") ? (attributes["school_free_days"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
-  set freeDays(List<DateTime> val) => _setSaveNotify("school_free_days", val.map((d) => d.toIso8601String()).join("|"));
+  DateTime get lastHolidayDatesUpdate => _getUpdateDateTime("school_holiday_dates");
+  set lastHolidayDatesUpdate(DateTime val) => _setUpdateDateTime("school_holiday_dates", val);
+  List<DateTime> get holidayDates => attributes.containsKey("school_holiday_dates") ? (attributes["school_holiday_dates"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
+  set holidayDates(List<DateTime> val) => _setSaveNotify("school_holiday_dates", val.map((d) => d.toIso8601String()).join("|"));
 
   final _serializer = Serializer();
   bool loaded = false;
@@ -122,14 +121,17 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   void loadDataFromKlData(VPKlData data) {
     availableClasses = data.classes.map((e) => e.className).toList();
+    lastAvailClassesUpdate = DateTime.now();
     availableSubjects = data.classes.fold({}, (val, element) {
       val[element.className] = element.subjects.map((c) => VPCSubjectS(c)).toList();
       return val;
     });
+    lastAvailSubjectsUpdate = DateTime.now();
   }
 
   void loadDataFromLeData(VPLeData data) {
     availableTeachers = data.teachers.map((e) => e.teacherCode).toList();
+    lastAvailTeachersUpdate = DateTime.now();
   }
 }
 
@@ -183,13 +185,13 @@ class IndiwareDataManager {
     return xmlToKlData(XmlDocument.parse(xml));
   }
 
-  static Future<void> _setCachedKlDataForDate(DateTime date, XmlDocument data) async {
+  static Future<void> setCachedKlDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml", data.toXmlString());
   }
-  static Future<void> _setCachedLeDataForDate(DateTime date, XmlDocument data) async {
+  static Future<void> setCachedLeDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml", data.toXmlString());
   }
-  static Future<void> _setKlassenXmlData(XmlDocument data) async {
+  static Future<void> setKlassenXmlData(XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml", data.toXmlString());
   }
 
@@ -215,7 +217,7 @@ class IndiwareDataManager {
     }
     final (real, online) = await getKlXMLForDate(host, username, password, date);
     if (real == null) return (null, online);
-    await _setCachedKlDataForDate(date, real);
+    await setCachedKlDataForDate(date, real);
     return (xmlToKlData(real), online);
   }
   /// returns (data, isOnline)
@@ -227,7 +229,7 @@ class IndiwareDataManager {
     }
     final (real, online) = await getLeXMLForDate(host, username, password, date);
     if (real == null) return (null, online);
-    await _setCachedLeDataForDate(date, real);
+    await setCachedLeDataForDate(date, real);
     return (xmlToLeData(real), online);
   }
   /// returns (data, isOnline)
@@ -239,7 +241,7 @@ class IndiwareDataManager {
     }
     final (real, online) = await getKlassenXML(host, username, password);
     if (real == null) return (null, online);
-    await _setKlassenXmlData(real);
+    await setKlassenXmlData(real);
     return (xmlToKlData(real), online);
   }
 

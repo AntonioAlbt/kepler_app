@@ -31,7 +31,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               bottom: PreferredSize(
                 preferredSize: const Size(100, 50),
                 child: DropdownButton<String>(
-                  items: stdata.availableClasses.map((e) => classNameToDropdownItem(e, false)).toList(),
+                  items: stdata.availableClasses!.map((e) => classNameToDropdownItem(e, false)).toList(),
                   onChanged: (val) {
                     setState(() => selectedClass = val!);
                     Provider.of<InternalState>(context, listen: false).lastSelectedClassPlan = val!;
@@ -63,7 +63,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
     // the class and subject select screen, which loads it
     final available = Provider.of<StuPlanData>(context, listen: false).availableClasses;
     final lastSelected = Provider.of<InternalState>(context, listen: false).lastSelectedClassPlan;
-    selectedClass = (available.contains(lastSelected) && lastSelected != null) ? lastSelected : available.first;
+    selectedClass = (available!.contains(lastSelected) && lastSelected != null) ? lastSelected : available.first;
     super.initState();
   }
 }

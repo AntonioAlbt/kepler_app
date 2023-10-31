@@ -25,7 +25,7 @@ final _startPageMap = {
   PageIDs.home: "Startseite",
   PageIDs.news: "Kepler-News",
   StuPlanPageIDs.main: "Aktueller Stundenplan",
-  LernSaxPageIDs.main: "LernSax-Infos",
+  LernSaxPageIDs.main: "LernSax-Übersicht",
 };
 
 final _notifKeyMap = {

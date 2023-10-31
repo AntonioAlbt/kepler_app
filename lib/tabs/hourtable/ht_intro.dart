@@ -7,7 +7,6 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 InfoScreenDisplay stuPlanPupilIntroScreens() => InfoScreenDisplay(
   infoScreens: [
@@ -77,10 +76,10 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
             ),
           ) else Consumer<StuPlanData>(
             builder: (context, stdata, _) => DropdownButton(
-              items: (widget.teacherMode ? stdata.availableTeachers : stdata.availableClasses)
+              items: (widget.teacherMode ? stdata.availableTeachers : stdata.availableClasses)!
                   .map((e) => classNameToDropdownItem(e, widget.teacherMode))
                   .toList(),
-              value: widget.teacherMode ? (stdata.selectedTeacherName ?? stdata.availableTeachers.first) : (stdata.selectedClassName ?? stdata.availableClasses.first),
+              value: widget.teacherMode ? (stdata.selectedTeacherName ?? stdata.availableTeachers!.first) : (stdata.selectedClassName ?? stdata.availableClasses!.first),
               onChanged: (value) => (widget.teacherMode) ? stdata.selectedTeacherName = value : stdata.selectedClassName = value,
               iconSize: 24,
             ),
@@ -123,17 +122,17 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     final spdata = Provider.of<StuPlanData>(context, listen: false);
     try {
       final (data, online) = await getKlassenXmlKlData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
-      if (data == null && !online) {
+      if (data == null) {
         setState(() {
           _loading = false;
-          _error = "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+          _error = online ? "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren." : "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
         });
+        return;
       }
-      spdata.loadDataFromKlData(data!);
-      spdata.selectedClassName ??= spdata.availableClasses.first;
+      spdata.loadDataFromKlData(data);
+      spdata.selectedClassName ??= spdata.availableClasses!.first;
       setState(() => _loading = false);
-    } catch (e, s) {
-      Sentry.captureException(e, stackTrace: s);
+    } catch (_) {
       setState(() {
         _loading = false;
         _error = "Fehler bei der Abfrage der Klassen. Bitte später erneut probieren.";
@@ -142,17 +141,17 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     if (widget.teacherMode) {
       try {
         final (data, online) = await getLehrerXmlLeData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
-        if (data == null && !online) {
+        if (data == null) {
           setState(() {
             _loading = false;
-            _error = "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+            _error = online ? "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren." : "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
           });
+          return;
         }
-        spdata.loadDataFromLeData(data!);
-        spdata.selectedTeacherName ??= spdata.availableTeachers.first;
+        spdata.loadDataFromLeData(data);
+        spdata.selectedTeacherName ??= spdata.availableTeachers!.first;
         setState(() => _loading = false);
-      } catch (e, s) {
-        Sentry.captureException(e, stackTrace: s);
+      } catch (_) {
         setState(() {
           _loading = false;
           _error = "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren.";

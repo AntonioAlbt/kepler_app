@@ -190,7 +190,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
             onPressed: () {
               showDialog(context: context, builder: (context) => AlertDialog(
                 title: const Text("E-Mail schreiben"),
-                content: const Text("E-Mails können aktuell nur in LernSax Messenger verfasst werden."), // TODO: maybe add a basic email writer with just a mail, subject and text input? but also like why?
+                content: const Text("E-Mails können aktuell nur in LernSax Messenger verfasst werden."), // TODO - future: add a basic email writer with just a mail, subject and text input
                 actions: [
                   FutureBuilder(
                     future: AppCheck.checkAvailability(lernSaxMsgrAndroidPkg).catchError((_) => null),
@@ -398,7 +398,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
     setState(() => _loading = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
-    // TODO: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
+    // TODO - future: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
     // this might require an additional request with limit = 0 and offset = 0 to get the new total_messages and then load the new ones
     final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolder.id, isDraftsFolder: widget.selectedFolder.isDrafts, isSentFolder: widget.selectedFolder.isSent);
     final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24 && lsdata.mailListings != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
