@@ -191,7 +191,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                         ),
                       ),
                     ),
-                  if (currentDate.day == DateTime.now().day + 1)
+                  if (currentDate.day == startDate.add(const Duration(days: 1)).day)
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Container(

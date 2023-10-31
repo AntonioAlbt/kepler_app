@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:appcheck/appcheck.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -96,6 +97,23 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
     }
   } else if (Platform.isIOS) {
     launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"));
+  }
+  return false;
+}
+
+Future<bool> lernSaxOpenInBrowser(context) async {
+  final creds = Provider.of<CredentialStore>(context, listen: false);
+  if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;
+  final (online, url) = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
+  if (!online) {
+    showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+  } else if (url == null) {
+    showSnackBar(text: "Fehler beim Erstellen des Links.", error: true);
+  } else {
+    launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
   }
   return false;
 }

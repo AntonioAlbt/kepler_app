@@ -315,7 +315,7 @@ class _TheDrawerState extends State<TheDrawer> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final id = _idMap[Provider.of<AppState>(context, listen: false).selectedNavPageIDs.last];
-      if (id != null) _controller.scrollToIndex(id, duration: const Duration(microseconds: 1), preferPosition: AutoScrollPosition.begin);
+      if (id != null) _controller.scrollToIndex(id, duration: const Duration(microseconds: 1), preferPosition: AutoScrollPosition.middle);
     });
   }
 }

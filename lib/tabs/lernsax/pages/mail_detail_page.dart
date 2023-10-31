@@ -59,7 +59,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                               children: [
                                 ...mailData!.from.map((addr) => createLSMailAddressableSpan(addr, mailData!.from.last == addr)),
                                 if (mailData!.from.isEmpty) const TextSpan(text: "niemandem!?"),
-                              ]
+                              ],
                             ),
                           ),
                         ),
@@ -77,7 +77,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             TextSpan(
                               children: [
                                 ...mailData!.to.map((addr) => createLSMailAddressableSpan(addr, mailData!.to.last == addr))
-                              ]
+                              ],
                             ),
                           ),
                         ),
@@ -89,49 +89,51 @@ class _MailDetailPageState extends State<MailDetailPage> {
                     child: Divider(),
                   ),
                   if (attachmentCount > 0) Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(right: 4),
-                              child: Icon(Icons.attachment, size: 20, color: Colors.grey),
-                            ),
-                            Text(
-                              "$attachmentCount ${attachmentCount == 1 ? "Anhang" : "Anhänge"}",
-                              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
-                            ),
-                          ],
+                        const Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Icon(Icons.attachment, size: 20, color: Colors.grey),
                         ),
-                        ...mailData!.attachments.map((att) => TextButton(onPressed: () {
-                          // show this as a kind of loading message
-                          showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
-                          final creds = Provider.of<CredentialStore>(context, listen: false);
-                          lernsax.exportSessionFileFromMail(
-                            creds.lernSaxLogin!,
-                            creds.lernSaxToken!,
-                            folderId: mailData!.folderId,
-                            mailId: mailData!.id,
-                            attachmentId: att.id,
-                          ).then((data) {
-                            final (online, sessionFile) = data;
-                            if (!online) {
-                              showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", clear: true);
-                            } else if (sessionFile == null) {
-                              showSnackBar(text: "Fehler beim Abfragen der Datei. Bitte später erneut versuchen.", clear: true);
-                            } else {
-                              showSnackBar(text: "Download-Link wird geöffnet.", clear: true, duration: const Duration(seconds: 1));
-                              launchUrl(Uri.parse(sessionFile.downloadUrl), mode: LaunchMode.externalApplication);
-                            }
-                          });
-                        }, child: Text(att.name))),
+                        Text(
+                          "$attachmentCount ${attachmentCount == 1 ? "Anhang" : "Anhänge"}",
+                          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
+                        ),
                       ],
                     ),
                   ),
+                  if (attachmentCount > 0) Wrap(
+                    children: mailData!.attachments.map((att) => TextButton(
+                      style: TextButton.styleFrom(visualDensity: const VisualDensity(vertical: -2)),
+                      onPressed: () {
+                        // show this as a kind of loading message
+                        showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
+                        final creds = Provider.of<CredentialStore>(context, listen: false);
+                        lernsax.exportSessionFileFromMail(
+                          creds.lernSaxLogin!,
+                          creds.lernSaxToken!,
+                          folderId: mailData!.folderId,
+                          mailId: mailData!.id,
+                          attachmentId: att.id,
+                        ).then((data) {
+                          final (online, sessionFile) = data;
+                          if (!online) {
+                            showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", clear: true);
+                          } else if (sessionFile == null) {
+                            showSnackBar(text: "Fehler beim Abfragen der Datei. Bitte später erneut versuchen.", clear: true);
+                          } else {
+                            showSnackBar(text: "Download-Link wird geöffnet.", clear: true, duration: const Duration(seconds: 1));
+                            launchUrl(Uri.parse(sessionFile.downloadUrl), mode: LaunchMode.externalApplication);
+                          }
+                        });
+                      },
+                      child: Text(att.name),
+                    )).toList(),
+                  ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.only(bottom: 4),
                     child: Divider(),
                   ),
                   Padding(
@@ -227,26 +229,29 @@ class _MailDetailPageState extends State<MailDetailPage> {
   }
 }
 
-InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast)
-  => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast);
+InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast, { Offset? translate })
+  => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast, translate: translate);
 
-InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = true})
+InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = true, Offset? translate })
   => WidgetSpan(
-    child: Tooltip(
-      preferBelow: false,
-      verticalOffset: 8,
-      triggerMode: (mail != name) ? TooltipTriggerMode.tap : TooltipTriggerMode.manual,
-      message: mail,
-      child: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: name ?? mail ?? "unbekannt"),
-            if (name != mail) const WidgetSpan(child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.info, size: 16, color: Colors.grey),
-            )),
-            if (addComma) const TextSpan(text: ", "),
-          ],
+    child: Transform.translate(
+      offset: translate ?? const Offset(0, 0),
+      child: Tooltip(
+        preferBelow: false,
+        verticalOffset: 8,
+        triggerMode: (mail != name) ? TooltipTriggerMode.tap : TooltipTriggerMode.manual,
+        message: mail,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: name ?? mail ?? "unbekannt"),
+              if (name != mail) const WidgetSpan(child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(Icons.info, size: 16, color: Colors.grey),
+              )),
+              if (addComma) const TextSpan(text: ", "),
+            ],
+          ),
         ),
       ),
     ),

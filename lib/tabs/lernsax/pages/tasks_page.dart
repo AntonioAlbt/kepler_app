@@ -65,6 +65,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
             SizedBox(
               height: 50,
               child: AppBar(
+                scrolledUnderElevation: 5,
                 backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
                 elevation: 5,
                 bottom: PreferredSize(

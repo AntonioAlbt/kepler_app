@@ -80,6 +80,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
             SizedBox(
               height: 50,
               child: AppBar(
+                scrolledUnderElevation: 5,
                 backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
                 elevation: 5,
                 bottom: PreferredSize(
@@ -356,7 +357,15 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 4),
                                       // child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((a) => a.name).join(", ")}"),
-                                      child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
+                                      // child: Text("${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
+                                      child: Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            TextSpan(text: "${mail.isDraft || mail.isSent ? "an" : "von"} "),
+                                            ...mail.addressed.map((addr) => createLSMailAddressableSpan(addr, mail.addressed.last == addr, translate: const Offset(0, 2))),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -487,7 +496,7 @@ class _AttachmentAmountDisplayState extends State<AttachmentAmountDisplay> {
       });
     // only load data from the Neuland if the user enabled it
     } else if (Provider.of<Preferences>(context, listen: false).lernSaxAutoLoadMailOnScrollBy) {
-      final (online, mail) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.folderId, mailId: widget.mailId);
+      final (online, mail) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.folderId, mailId: widget.mailId, peek: true);
       if (!online || mail == null) return;
       if (!widget.isDraft) lsdata.addMailToCache(mail);
       if (!mounted) return;

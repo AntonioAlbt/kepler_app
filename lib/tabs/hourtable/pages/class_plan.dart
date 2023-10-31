@@ -25,6 +25,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
           SizedBox(
             height: 50,
             child: AppBar(
+              scrolledUnderElevation: 5,
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               elevation: 5,
               bottom: PreferredSize(

@@ -249,8 +249,9 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token) async 
     if (!online) return (false, null);
     // if (kDebugMode) print(res);
     final url = res[0]["result"]["url"];
-    return url;
-  } catch (e) {
+    return (true, url as String);
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
 }
@@ -516,12 +517,20 @@ Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token,
 }
 
 /// returns: isOnline, data
-Future<(bool, LSMail?)> getMail(String login, String token, { required String folderId, required int mailId }) async {
+Future<(bool, LSMail?)> getMail(String login, String token, { required String folderId, required int mailId, bool peek = false }) async {
   try {
     final (online, res) = await api([
       await useSession(login, token),
       focus("mailbox"),
-      call(method: "read_message", params: {"folder_id": folderId, "message_id": mailId}, id: 1),
+      call(
+        method: "read_message",
+        params: {
+          "folder_id": folderId,
+          "message_id": mailId,
+          if (peek) "peek": peek,
+        },
+        id: 1,
+      ),
     ]);
     if (!online) return (false, null);
     if (res[0]["result"]["return"] != "OK") return (true, null);

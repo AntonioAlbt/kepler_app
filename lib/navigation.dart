@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
-import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
-import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/about.dart';
@@ -28,7 +26,6 @@ import 'package:kepler_app/tabs/news/news.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // all IDs should be constants
 // all IDs should be lowercase letters only, and definitely not include "." (the dot)
@@ -190,36 +187,21 @@ final destinations = [
       ),
     ],
   ),
-  NavEntryData(
+  const NavEntryData(
     id: LernSaxPageIDs.main,
-    icon: const Icon(Icons.laptop_outlined),
-    label: const Text("LernSax"),
-    selectedIcon: const Icon(Icons.laptop),
+    icon: Icon(Icons.laptop_outlined),
+    label: Text("LernSax"),
+    selectedIcon: Icon(Icons.laptop),
     lockedFor: [UserType.nobody],
     children: [
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
-        icon: const Icon(MdiIcons.web),
-        label: const Text("Im Browser öffnen"),
+        icon: Icon(MdiIcons.web),
+        label: Text("Im Browser öffnen"),
         externalLink: true,
-        onTryOpen: (context) async {
-          final creds = Provider.of<CredentialStore>(context, listen: false);
-          if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;
-          final (online, url) = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
-          if (!online) {
-            showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-          } else if (url == null) {
-            showSnackBar(text: "Fehler beim Erstellen des Links.", error: true);
-          } else {
-            launchUrl(
-              Uri.parse(url),
-              mode: LaunchMode.externalApplication,
-            );
-          }
-          return false;
-        },
+        onTryOpen: lernSaxOpenInBrowser,
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.notifications,
         icon: Icon(Icons.notifications_none),
         selectedIcon: Icon(Icons.notifications),
@@ -228,7 +210,7 @@ final destinations = [
           IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.tasks,
         icon: Icon(Icons.task_alt),
         label: Text("Aufgaben"),
@@ -236,7 +218,7 @@ final destinations = [
           IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.emails,
         icon: Icon(Icons.mail_outlined),
         selectedIcon: Icon(Icons.mail),
@@ -245,7 +227,7 @@ final destinations = [
           IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.files,
         icon: Icon(Icons.folder_copy_outlined),
         // selectedIcon: Icon(Icons.folder_copy),
@@ -253,7 +235,7 @@ final destinations = [
         externalLink: true,
         onTryOpen: lernSaxOpenInOfficialApp,
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.messageBoard,
         icon: Icon(MdiIcons.bulletinBoard),
         // selectedIcon: Icon(MdiIcons.bulletinBoard),
@@ -261,7 +243,7 @@ final destinations = [
         externalLink: true,
         onTryOpen: lernSaxOpenInOfficialApp,
       ),
-      const NavEntryData(
+      NavEntryData(
         id: LernSaxPageIDs.chats,
         icon: Icon(Icons.chat_bubble_outline),
         selectedIcon: Icon(Icons.chat_bubble),
