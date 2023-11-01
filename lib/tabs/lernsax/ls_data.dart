@@ -46,10 +46,10 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   Duration get lastTasksUpdateDiff => lastTasksUpdate.difference(DateTime.now()).abs();
   List<LSTask>? get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   set tasks(List<LSTask>? val) => _setSaveNotify("tasks", val);
-  void addNewTasks(List<LSTask> newTasks, {bool sort = true}) {
-    final l = tasks ?? [];
-    final ids = l.map((e) => e.id);
-    l.addAll(newTasks.where((e) => !ids.contains(e.id)));
+  void addTasksNew(List<LSTask> newTasks, {bool sort = true}) {
+    final newIds = newTasks.map((t) => t.id);
+    final l = (tasks ?? []).where((e) => !newIds.contains(e.id)).toList();
+    l.addAll(newTasks);
     if (sort) l.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     lastTasksUpdate = DateTime.now();
     tasks = l;

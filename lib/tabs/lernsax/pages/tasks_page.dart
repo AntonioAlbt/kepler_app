@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -103,7 +105,7 @@ class _LSTasksPageState extends State<LSTasksPage> {
   Future<void> loadData({ bool force = false }) async {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // only update membership data every 3 days because it doesn't change as often
-    if (lsdata.lastMembershipsUpdateDiff.inDays < 3 || force) return;
+    if (lsdata.lastMembershipsUpdateDiff.inDays < 3 && !force) return;
 
     setState(() => _loadingClasses = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
@@ -134,8 +136,6 @@ const linkRegex = r"(([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.
 
 class _LSTaskDisplayState extends State<LSTaskDisplay> {
   bool _loading = true;
-  // TODO: use this when making tasks able to be completed (disable if not connected)
-  // ignore: unused_field
   bool _connected = false;
   int _loadingProgress = -1;
   
@@ -178,6 +178,22 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
               },
               title: const Text("Abgeschlossene anzeigen"),
             ),
+            if (!_connected) const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.cloud_off, color: Colors.grey),
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text("Offline-Modus: Aufgaben können nicht verändert werden.\nAktualisieren, um zu deaktivieren."),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            
             if (tasks.isEmpty) const Expanded(
               child: Center(
                 child: Text(
@@ -198,95 +214,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
                     padding: (i > 0)
                         ? const EdgeInsets.symmetric(horizontal: 4)
                         : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        textStyle: Theme.of(context).textTheme.bodyMedium,
-                        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      // onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)), // TODO: create generateLernSaxTaskInfoDialog
-                      onPressed: () {},
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              children: [
-                                const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Text(lernSaxTimeFormat.format(task.createdAt)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.check_circle_outline),
-                              Flexible(
-                                  child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Text(task.title),
-                              )),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.list),
-                              Flexible(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Html(
-                                    data: task.description
-                                      .replaceAll("\r", "")
-                                      .replaceAll("\n\n\n", "\n\n")
-                                      .replaceAll("\n", "<br>")
-                                      .replaceAllMapped(RegExp(linkRegex, multiLine: true), (match) => "<a href=\"${match.group(0)}\">${match.group(0)}</a>"),
-                                    onLinkTap: (url, _, __) {
-                                      try {
-                                        launchUrl(Uri.parse((!url!.startsWith("http")) ? "http://$url" : url), mode: LaunchMode.externalApplication);
-                                      } catch (_) {}
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(MdiIcons.clock),
-                              Flexible(
-                                  child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Text("Start: ${task.startDate != null ? lernSaxTimeFormat.format(task.startDate!) : "-"}"),
-                              )),
-                              const SizedBox(width: 10),
-                              const Icon(MdiIcons.clock),
-                              Flexible(
-                                  child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Text("Ende: ${task.dueDate != null ? lernSaxTimeFormat.format(task.dueDate!) : "-"}"),
-                              )),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8, top: 4),
-                            child: Row(
-                              children: [
-                                const Icon(MdiIcons.account),
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    child: Text("${task.createdByName} (${task.createdByLogin})"),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: LSTaskEntry(task: task, online: _connected),
                   );
                 },
                 separatorBuilder: (context, i) => const Divider(),
@@ -302,9 +230,10 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
   void initState() {
     loadTasksForSelectedClass();
     super.initState();
+    // widget.controller?.onForceRefresh = () => loadTasksForSelectedClass();
   }
 
-  Future<void> loadTasksForSelectedClass() async {
+  Future<bool?> loadTasksForSelectedClass() async {
     setState(() => _loading = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
@@ -324,7 +253,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
           text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24 && lsdata.tasks != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
           showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", clear: true, error: true);
           setState(() => _loading = false);
-          return;
+          return false;
         }
         
         if (newData == null) {
@@ -332,6 +261,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
         } else {
           data.addAll(newData);
         }
+        if (!mounted) return null;
         setState(() => _loadingProgress = ((i + 1) / memberships.length * 100).round());
       }
 
@@ -339,10 +269,10 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
         showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben aus den Klassen/Gruppen: ${failed.join(", ")}. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
       }
       if (failed.length == memberships.length) {
-        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} aktuellen Aufgaben, oder ${sie ? "Sie haben" : "Du hast"} keine Aufgaben. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
       } else {
         connected = true;
-        lsdata.addNewTasks(data);
+        lsdata.addTasksNew(data);
       }
     } else {
       final (online, data) = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: widget.selectedClass);
@@ -350,15 +280,378 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       if (!online) {
         showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
       } else if (data == null) {
-        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} Aufgaben. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} aktuellen Aufgaben. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
       } else {
-        lsdata.addNewTasks(data);
+        lsdata.addTasksNew(data);
         connected = true;
       }
     }
+    if (!mounted) return null;
     setState(() {
       _loading = false;
       _connected = connected;
     });
+    return true;
+  }
+}
+
+class LSTaskEntry extends StatefulWidget {
+  const LSTaskEntry({
+    super.key,
+    required this.task,
+    required this.online,
+  });
+
+  final LSTask task;
+  final bool online;
+
+  @override
+  State<LSTaskEntry> createState() => _LSTaskEntryState();
+}
+
+class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool taskCompleted = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        textStyle: Theme.of(context).textTheme.bodyMedium,
+        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      // onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)), // TODO: create generateLernSaxTaskInfoDialog
+      onPressed: () {},
+      child: Column(
+        children: [
+          // Padding(
+          //   padding: const EdgeInsets.only(bottom: 4),
+          //   child: Row(
+          //     children: [
+          //       const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+          //       Padding(
+          //         padding: const EdgeInsets.only(left: 4),
+          //         child: Text(lernSaxTimeFormat.format(widget.task.createdAt)),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: LSTaskCheckBox(
+                  checked: widget.task.completed,
+                  updateChecked: (val) async {
+                    if (widget.task.classLogin != null) {
+                      await showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text("Hinweis"),
+                          content: Text("Leider können Aufgaben aus Klassen aufgrund eines LernSax-Fehlers aktuell nicht abgehakt werden. ${Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie ? "Sie können" : "Du kannst"} die Aufgabe stattdessen auf der Webseite per Link abhaken."),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Abbrechen")),
+                            TextButton(onPressed: () {
+                              Navigator.pop(ctx);
+                              showSnackBar(text: "Erstellt Link...", clear: true, duration: const Duration(seconds: 10));
+                              final creds = Provider.of<CredentialStore>(context, listen: false);
+                              lernsax.getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!, targetLogin: widget.task.classLogin, targetObject: "tasks")
+                                .then((data) {
+                                  final (online, url) = data;
+                                  if (!online) {
+                                    showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                                  } else if (url == null) {
+                                    showSnackBar(text: "Fehler bei der Erstellung des Links.", error: true, clear: true);
+                                  } else {
+                                    launchUrl(Uri.parse(url))
+                                      .then((_) => showSnackBar(text: "", clear: true, duration: const Duration(milliseconds: 100)))
+                                      .onError((_, __) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
+                                  }
+                                });
+                            }, child: const Text("Im Browser öffnen")),
+                          ],
+                        ),
+                      );
+                      return false;
+                    } else {
+                      final creds = Provider.of<CredentialStore>(context, listen: false);
+                      final (online, data) = await lernsax.modifyTask(
+                        creds.lernSaxLogin!,
+                        creds.lernSaxToken!,
+                        id: widget.task.id,
+                        classLogin: null,
+                        completed: val,
+                      );
+                      if (!online) {
+                        showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                      } else if (data == null) {
+                        showSnackBar(text: "Fehler bei der Aktualisierung der Aufgabe.", error: true, clear: true);
+                      } else {
+                        Provider.of<LernSaxData>(context, listen: false).addTasksNew([data]);
+                        setState(() => taskCompleted = !taskCompleted);
+                        return true;
+                      }
+                      return false;
+                    }
+                  },
+                  enabled: widget.online,
+                ),
+              ),
+              Flexible(
+                child: Column(
+                  children: [
+                    // Row(
+                    //   children: [
+                    //     const Icon(Icons.check_circle_outline),
+                    //     Flexible(
+                    //       child: Padding(
+                    //         padding: const EdgeInsets.symmetric(horizontal: 8),
+                    //         child: Text(widget.task.title),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        widget.task.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    if (widget.task.description != "") const SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        "Tippen, um Infos zur Aufgabe anzusehen.",
+                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
+                      ),
+                    ),
+                    if (kDebugMode) SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        "Class Login: ${widget.task.classLogin}",
+                      ),
+                    ),
+                    // Row(
+                    //   children: [
+                    //     const Icon(Icons.list),
+                    //     Flexible(
+                    //       child: Padding(
+                    //         padding: const EdgeInsets.symmetric(horizontal: 8),
+                    //         child: Html(
+                    //           data: widget.task.description
+                    //             .replaceAll("\r", "")
+                    //             .replaceAll("\n\n\n", "\n\n")
+                    //             .replaceAll("\n", "<br>")
+                    //             .replaceAllMapped(RegExp(linkRegex, multiLine: true), (match) => "<a href=\"${match.group(0)}\">${match.group(0)}</a>"),
+                    //           onLinkTap: (url, _, __) {
+                    //             try {
+                    //               launchUrl(Uri.parse((!url!.startsWith("http")) ? "http://$url" : url), mode: LaunchMode.externalApplication);
+                    //             } catch (_) {}
+                    //           },
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            MdiIcons.clock,
+                            size: 18,
+                            color: _shouldBeCompleted() ? Colors.red : null,
+                          ),
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Text(_getDateInfoString(), style: const TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(MdiIcons.account, size: 18, color: Colors.grey),
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  const TextSpan(text: "von "),
+                                  createLSNameMailSpan(widget.task.createdByName, widget.task.createdByLogin, addComma: false, translate: const Offset(0, 2)),
+                                ],
+                              ),
+                              style: const TextStyle(
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    taskCompleted = widget.task.completed;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _getDateInfoString() {
+    final task = widget.task;
+    final startDefined = task.startDate != null;// && task.startDate!.millisecondsSinceEpoch > 100;
+    if (startDefined || task.dueDate != null) {
+      return ((startDefined) ? "vom ${lernSaxTimeFormat.format(task.startDate!)}" : "") + (startDefined && task.dueDate != null ? "\n" : "") + ((task.dueDate != null) ? "bis zum ${lernSaxTimeFormat.format(task.dueDate!)}" : "");
+    } else {
+      return "erstellt am ${task.createdAt}";
+    }
+  }
+
+  bool _shouldBeCompleted() {
+    final due = widget.task.dueDate;
+    if (due == null || taskCompleted) return false;
+    return due.isBefore(DateTime.now());
+  }
+}
+
+class LSTaskCheckBox extends StatefulWidget {
+  final bool checked;
+  final bool enabled;
+  final Future<bool> Function(bool val)? updateChecked;
+  const LSTaskCheckBox({super.key, this.checked = false, this.updateChecked, this.enabled = true});
+
+  @override
+  State<LSTaskCheckBox> createState() => _LSTaskCheckBoxState();
+}
+
+class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late bool checked;
+  bool _loading = false;
+
+  void _processCheck() {
+    if (checked) {
+      _controller.reverse();
+    } else {
+      _controller.forward();
+    }
+    setState(() => checked = !checked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          if (!widget.enabled || _loading) return;
+
+          if (widget.updateChecked != null) {
+            setState(() => _loading = true);
+            widget.updateChecked!(!checked).then((val) {
+              if (!mounted) return;
+              if (val) _processCheck();
+              setState(() => _loading = false);
+            });
+          } else {
+            _processCheck();
+          }
+        },
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (_, __) => Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _getColor(),
+                      width: 2,
+                    ),
+                  ),
+                  width: 20,
+                  height: 20,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 6, top: 6),
+              child: Center(
+                child: ScaleTransition(
+                  scale: _controller,
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (_, __) => Icon(
+                      Icons.check,
+                      size: 16,
+                      grade: 200,
+                      weight: 700,
+                      opticalSize: 20,
+                      color: _getColor(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_loading) const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 8, left: 8),
+                child: SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checked = widget.checked;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+      reverseDuration: const Duration(milliseconds: 50),
+    );
+    if (widget.checked) _controller.animateTo(1, duration: const Duration());
+  }
+
+  Color _getColor() {
+    return ColorTween(
+      begin: hasDarkTheme(context) ? Colors.white : Colors.black,
+      end: hasDarkTheme(context) ? Colors.green.shade400 : Colors.green.shade600,
+    ).lerp(_controller.value)!;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

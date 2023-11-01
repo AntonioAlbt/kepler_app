@@ -236,7 +236,7 @@ Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) asyn
 }
 
 /// returns: isOnline, data
-Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { String? targetUrlPath }) async {
+Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { String? targetUrlPath, String? targetLogin, String? targetObject }) async {
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -246,6 +246,8 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { Stri
         method: "get_url_for_autologin",
         params: {
           if (targetUrlPath != null) "target_url_path": targetUrlPath,
+          if (targetLogin != null) "target_login": targetLogin,
+          if (targetObject != null) "target_object": targetObject,
         },
       ),
     ]);
@@ -309,11 +311,11 @@ Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? clas
     ]);
     if (!online) return (false, null);
     // if (kDebugMode) print(res);
-    final messages = (res[0]["result"]["entries"] as List<dynamic>).cast<Map<String, dynamic>>();
-    return (true, messages.map((data) => LSTask(
+    final tasks = (res[0]["result"]["entries"] as List<dynamic>).cast<Map<String, dynamic>>(); 
+    return (true, tasks.map((data) => LSTask(
       id: data["id"],
-      startDate: data["start_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["start_date"]) * 1000) : null,
-      dueDate: data["due_date"] != "" ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["due_date"]) * 1000) : null,
+      startDate: (data["start_date"] != "" && data["start_date"] != "0") ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["start_date"]) * 1000) : null,
+      dueDate: (data["due_date"] != "" && data["due_date"] != "0") ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["due_date"]) * 1000) : null,
       title: data["title"],
       description: data["description"],
       completed: data["completed"] == 1,
@@ -607,6 +609,41 @@ Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String to
       name: data["name"],
       size: data["size"],
       downloadUrl: data["download_url"],
+    ));
+  } catch (e, s) {
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}
+
+Future<(bool, LSTask?)> modifyTask(String login, String token, { required String id, required String? classLogin, required bool completed }) async {
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("tasks", login: classLogin),
+      call(
+        method: "set_entry",
+        params: {
+          "id": id,
+          "completed": completed ? 1 : 0,
+        },
+        id: 1,
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    final data = res[0]["result"]["entry"];
+    return (true, LSTask(
+      id: data["id"],
+      startDate: (data["start_date"] != "" && data["start_date"] != "0") ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["start_date"]) * 1000) : null,
+      dueDate: (data["due_date"] != "" && data["due_date"] != "0") ? DateTime.fromMillisecondsSinceEpoch(int.parse(data["due_date"]) * 1000) : null,
+      title: data["title"],
+      description: data["description"],
+      completed: data["completed"] == 1,
+      classLogin: classLogin,
+      createdByLogin: data["created"]["user"]["login"],
+      createdByName: data["created"]["user"]["name_hr"],
+      createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
     ));
   } catch (e, s) {
     if (kDebugMode) log("", error: e, stackTrace: s);

@@ -295,7 +295,7 @@ class _KeplerAppState extends State<KeplerApp> {
           output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
         }
       }
-      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14 || true) {
+      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14) {
         if (updatedFreeDays != null) {
           _stuPlanData.holidayDates = updatedFreeDays;
           _stuPlanData.lastHolidayDatesUpdate = DateTime.now();
