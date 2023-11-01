@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
@@ -179,14 +181,14 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
               title: const Text("Abgeschlossene anzeigen"),
             ),
             if (!_connected) const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
+              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               child: Row(
                 children: [
                   Icon(Icons.cloud_off, color: Colors.grey),
                   Flexible(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text("Offline-Modus: Aufgaben können nicht verändert werden.\nAktualisieren, um zu deaktivieren."),
+                      child: Text("Offline-Modus: Aufgaben können nicht verändert werden. Aktualisieren, um zu deaktivieren."),
                     ),
                   ),
                 ],
@@ -322,8 +324,13 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      // onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)), // TODO: create generateLernSaxTaskInfoDialog
-      onPressed: () {},
+      onPressed: () {
+        if (widget.task.description != "") {
+          showDialog(context: context, builder: (context) => generateLernSaxTaskInfoDialog(context, widget.task));
+        } else {
+          showSnackBar(text: "Keine weiteren Infos verfügbar.", clear: true, duration: const Duration(milliseconds: 500));
+        }
+      },
       child: Column(
         children: [
           // Padding(
@@ -402,22 +409,15 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
               Flexible(
                 child: Column(
                   children: [
-                    // Row(
-                    //   children: [
-                    //     const Icon(Icons.check_circle_outline),
-                    //     Flexible(
-                    //       child: Padding(
-                    //         padding: const EdgeInsets.symmetric(horizontal: 8),
-                    //         child: Text(widget.task.title),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        widget.task.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: SizedBox(
+                        key: ValueKey("${widget.task.title}$taskCompleted"),
+                        width: double.infinity,
+                        child: Text(
+                          widget.task.title,
+                          style: (taskCompleted) ? const TextStyle(decoration: TextDecoration.lineThrough, fontSize: 16, decorationThickness: 2) : const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
                       ),
                     ),
                     if (widget.task.description != "") const SizedBox(
@@ -433,36 +433,18 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                         "Class Login: ${widget.task.classLogin}",
                       ),
                     ),
-                    // Row(
-                    //   children: [
-                    //     const Icon(Icons.list),
-                    //     Flexible(
-                    //       child: Padding(
-                    //         padding: const EdgeInsets.symmetric(horizontal: 8),
-                    //         child: Html(
-                    //           data: widget.task.description
-                    //             .replaceAll("\r", "")
-                    //             .replaceAll("\n\n\n", "\n\n")
-                    //             .replaceAll("\n", "<br>")
-                    //             .replaceAllMapped(RegExp(linkRegex, multiLine: true), (match) => "<a href=\"${match.group(0)}\">${match.group(0)}</a>"),
-                    //           onLinkTap: (url, _, __) {
-                    //             try {
-                    //               launchUrl(Uri.parse((!url!.startsWith("http")) ? "http://$url" : url), mode: LaunchMode.externalApplication);
-                    //             } catch (_) {}
-                    //           },
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Row(
                         children: [
-                          Icon(
-                            MdiIcons.clock,
-                            size: 18,
-                            color: _shouldBeCompleted() ? Colors.red : null,
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: Icon(
+                              key: ValueKey(_shouldBeCompleted()),
+                              MdiIcons.clock,
+                              size: 18,
+                              color: _shouldBeCompleted() ? Colors.red : null,
+                            ),
                           ),
                           Flexible(
                             child: Padding(
@@ -589,6 +571,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
                       color: _getColor(),
                       width: 2,
                     ),
+                    color: (!widget.enabled) ? (hasDarkTheme(context) ? Colors.grey.shade800 : Colors.grey.shade200) : null,
                   ),
                   width: 20,
                   height: 20,
@@ -643,6 +626,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
   }
 
   Color _getColor() {
+    if (!widget.enabled) return Colors.grey;
     return ColorTween(
       begin: hasDarkTheme(context) ? Colors.white : Colors.black,
       end: hasDarkTheme(context) ? Colors.green.shade400 : Colors.green.shade600,
@@ -654,4 +638,35 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
     _controller.dispose();
     super.dispose();
   }
+}
+
+Widget generateLernSaxTaskInfoDialog(BuildContext context, LSTask task) {
+  final originMshp = Provider.of<LernSaxData>(globalScaffoldContext, listen: false).memberships?.cast<LSMembership?>().firstWhere((m) => m!.login == task.classLogin, orElse: () => null);
+  return AlertDialog(
+    title: const Text("Aufgabe"),
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(task.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Text(originMshp?.name ?? "Eigene Aufgabe"),
+          const Text(""),
+          SelectableLinkify(
+            text: task.description.replaceAll(RegExp(r"</?[a-z=]{1,20}>"), ""),
+            linkifiers: const [UrlLinkifier()],
+            onOpen: (url){
+              try {
+                launchUrl(Uri.parse(url.url), mode: LaunchMode.externalApplication);
+              } catch (_) {}
+            },
+          ),
+          const Text(""),
+          Text("- erstellt am ${lernSaxTimeFormat.format(task.createdAt)} von ${task.createdByName} (${task.createdByLogin})"),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text("Schließen")),
+    ],
+  );
 }
