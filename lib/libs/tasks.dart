@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/notifications.dart';
@@ -94,26 +96,51 @@ Future<void> runStuPlanFetchTask() async {
   // this does look like it'll use quite some of the users data, but for 12 times a day with 5 plans, each one only 12kB it's actually only about 720kB per day, which is fine
   var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!);
   differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!) : null;
+
+  if (kDebugMode) {
+    differentLessons ??= {
+      DateTime.now(): [const VPLesson(
+        subjectCode: "DE",
+        infoText: "",
+        roomChanged: false,
+        roomCodes: ["153"],
+        schoolHour: 2,
+        subjectChanged: false,
+        teacherCode: "Alb",
+        teacherChanged: false,
+        startTime: null, endTime: null, subjectID: null,
+      )],
+    };
+  }
+
   if (differentLessons == null) return;
 
-  // TODO: show notification
+  final dateFormat = DateFormat("EE");
+
+  sendNotification(
+    title: "Neue Änderungen im Stundenplan",
+    body: differentLessons.entries.map((e) => "${dateFormat.format(e.key)}:\n   ${e.value.map((val) => "${val.schoolHour}: ${val.subjectCode} bei ${val.teacherCode}${val.roomCodes.isNotEmpty ? " (Raum ${val.roomCodes.join(", ")})" : ""}${val.infoText != "" ? " - Info: ${val.infoText}" : ""}").join("\n   ")}").join("\n"),
+    notifKey: stuPlanNotificationKey,
+  );
 }
 
-Future<Map<DateTime, VPLesson>?> getDifferentClassLessons(CredentialStore creds, String className) async {
+Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className) async {
   final newDatas = <DateTime, VPKlData>{};
   final oldDatas = <DateTime, VPKlData>{};
   for (var i = 0; i < 5; i++) {
     final date = DateTime.now().add(Duration(days: i));
-    final (newData, online) = await getStuPlanDataForDate(creds.vpHost ?? baseUrl, creds.vpUser!, creds.vpPassword!, date);
+    final (newData, online) = await getKlXMLForDate(creds.vpHost ?? baseUrl, creds.vpUser!, creds.vpPassword!, date);
     if (!online) return null;
 
-    if (newData != null) newDatas[date] = newData;
+    if (newData != null) newDatas[date] = xmlToKlData(newData);
 
     final oldData = await IndiwareDataManager.getCachedKlDataForDate(date);
     if (oldData != null) oldDatas[date] = oldData;
+
+    if (newData != null) await IndiwareDataManager.setCachedKlDataForDate(date, newData);
   }
 
-  final differentLessons = <DateTime, VPLesson>{};
+  final differentLessons = <DateTime, List<VPLesson>>{};
   for (var mdata in newDatas.entries) {
     final date = mdata.key, data = mdata.value;
     for (var klasse in data.classes) {
@@ -125,7 +152,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentClassLessons(CredentialStore creds,
         final oldLesson = oldKlasse?.lessons.firstWhere((l) => l.startTime == lesson.startTime && l.endTime == lesson.endTime);
         if (oldLesson == null) {
           if (lesson.roomChanged || lesson.subjectChanged || lesson.teacherChanged) {
-            differentLessons[date] = lesson;
+            differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);
           }
         } else {
           if (
@@ -134,7 +161,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentClassLessons(CredentialStore creds,
             oldLesson.teacherCode != lesson.teacherCode ||
             oldLesson.infoText != lesson.infoText
           ) {
-            differentLessons[date] = lesson;
+            differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);
           }
         }
       }
@@ -143,7 +170,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentClassLessons(CredentialStore creds,
   return differentLessons;
 }
 
-Future<Map<DateTime, VPLesson>?> getDifferentTeacherLessons(CredentialStore creds, String teacherCode) async {
+Future<Map<DateTime, List<VPLesson>>?> getDifferentTeacherLessons(CredentialStore creds, String teacherCode) async {
   final newDatas = <DateTime, VPLeData>{};
   final oldDatas = <DateTime, VPLeData>{};
   for (var i = 0; i < 5; i++) {
@@ -157,7 +184,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentTeacherLessons(CredentialStore cred
     if (oldData != null) oldDatas[date] = oldData;
   }
 
-  final differentLessons = <DateTime, VPLesson>{};
+  final differentLessons = <DateTime, List<VPLesson>>{};
   for (var mdata in newDatas.entries) {
     final date = mdata.key, data = mdata.value;
     for (var teach in data.teachers) {
@@ -169,7 +196,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentTeacherLessons(CredentialStore cred
         final oldLesson = oldTeach?.lessons.firstWhere((l) => l.startTime == lesson.startTime && l.endTime == lesson.endTime);
         if (oldLesson == null) {
           if (lesson.roomChanged || lesson.subjectChanged || lesson.teachingClassChanged) {
-            differentLessons[date] = lesson;
+            differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);
           }
         } else {
           if (
@@ -178,7 +205,7 @@ Future<Map<DateTime, VPLesson>?> getDifferentTeacherLessons(CredentialStore cred
             oldLesson.teacherCode != lesson.teacherCode ||
             oldLesson.infoText != lesson.infoText
           ) {
-            differentLessons[date] = lesson;
+            differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);
           }
         }
       }
