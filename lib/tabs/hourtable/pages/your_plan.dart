@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -9,8 +8,6 @@ import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
-
-const bool showSTDebugStuff = kDebugMode;
 
 final yourPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
 

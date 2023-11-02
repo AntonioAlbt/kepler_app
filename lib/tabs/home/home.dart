@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/tabs/home/news_home.dart';
@@ -29,14 +29,14 @@ class _HomepageTabState extends State<HomepageTab> {
                 padding: EdgeInsets.only(bottom: 16),
                 child: HomeStuPlanWidget(),
               ),
-              if (kDebugMode) ElevatedButton(
+              if (kDebugFeatures) ElevatedButton(
                 onPressed: () {
                   sendNotification(title: "News Notify", body: "- Antonio ist der beste\n- #pride", notifKey: newsNotificationKey);
                   showSnackBar(text: "sent");
                 },
                 child: const Text("Send news notification"),
               ),
-              if (kDebugMode) ElevatedButton(
+              if (kDebugFeatures) ElevatedButton(
                 onPressed: () {
                   sendNotification(
                     title: "Test StuPlan Notif",

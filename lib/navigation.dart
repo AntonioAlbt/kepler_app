@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
@@ -79,7 +79,7 @@ final destinations = [
     label: const Text("Startseite"),
     selectedIcon: const Icon(Icons.home),
     navbarActions: [
-      if (kDebugMode) IconButton(
+      if (kDebugFeatures) IconButton(
         onPressed: () {
           Provider.of<AppState>(globalScaffoldContext, listen: false).infoScreen = InfoScreenDisplay(
             infoScreens: introScreens,

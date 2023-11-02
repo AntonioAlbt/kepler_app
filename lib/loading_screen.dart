@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -25,82 +27,100 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      height: 350,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 50,
-            child: ScaleTransition(
-              scale: _circle1AnimContr,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: keplerColorYellow,
-                  border:
-                      (_withBorder) ? Border.all(width: _borderWidth) : null,
-                ),
-                width: 200,
-                height: 200,
-              ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (kIsBetaVersion) Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadiusDirectional.circular(16),
+              color: Colors.red,
+            ),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Text("BETA-VERSION", style: TextStyle(color: Colors.white)),
             ),
           ),
-          Positioned(
-            top: 100,
-            left: 160,
-            child: ScaleTransition(
-              scale: _circle3AnimContr,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: keplerColorBlue,
-                  border:
-                      (_withBorder) ? Border.all(width: _borderWidth) : null,
-                ),
-                width: 115,
-                height: 115,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 110,
-            left: 30,
-            child: ScaleTransition(
-              scale: _circle2AnimContr,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: keplerColorOrange,
-                  border:
-                      (_withBorder) ? Border.all(width: _borderWidth) : null,
-                ),
-                width: 140,
-                height: 140,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FadeTransition(
-                  opacity: _textAnimContr,
-                  child: const Text(
-                    "Kepler-App lädt... Bitte warten.",
-                    style: TextStyle(fontSize: 18),
+        ),
+        SizedBox(
+          width: 300,
+          height: 350,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 50,
+                child: ScaleTransition(
+                  scale: _circle1AnimContr,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: keplerColorYellow,
+                      border:
+                          (_withBorder) ? Border.all(width: _borderWidth) : null,
+                    ),
+                    width: 200,
+                    height: 200,
                   ),
                 ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: _switcherChild ?? Opacity(key: UniqueKey(), opacity: 0, child: ElevatedButton(onPressed: () {}, child: const Text(""))),
+              ),
+              Positioned(
+                top: 100,
+                left: 160,
+                child: ScaleTransition(
+                  scale: _circle3AnimContr,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: keplerColorBlue,
+                      border:
+                          (_withBorder) ? Border.all(width: _borderWidth) : null,
+                    ),
+                    width: 115,
+                    height: 115,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 110,
+                left: 30,
+                child: ScaleTransition(
+                  scale: _circle2AnimContr,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: keplerColorOrange,
+                      border:
+                          (_withBorder) ? Border.all(width: _borderWidth) : null,
+                    ),
+                    width: 140,
+                    height: 140,
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FadeTransition(
+                      opacity: _textAnimContr,
+                      child: const Text(
+                        "Kepler-App lädt... Bitte warten.",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: _switcherChild ?? Opacity(key: UniqueKey(), opacity: 0, child: ElevatedButton(onPressed: () {}, child: const Text(""))),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -150,11 +170,11 @@ class _LoadingScreenState extends State<LoadingScreen>
         });
         Future.delayed(const Duration(seconds: 14)).then((_) {
           if (!mounted) return;
-          Sentry.captureException("LoadingError: long loading time, ~ 15s");
+          if (globalSentryEnabled) Sentry.captureException("LoadingError: long loading time, ~ 15s");
         });
         Future.delayed(const Duration(milliseconds: 24050)).then((_) {
           if (!mounted) return;
-          Sentry.captureException("LoadingError: extremely long loading time, = 25s");
+          if (globalSentryEnabled) Sentry.captureException("LoadingError: extremely long loading time, = 25s");
         });
       }
     });

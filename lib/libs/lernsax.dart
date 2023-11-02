@@ -7,7 +7,9 @@ import "package:flutter/foundation.dart";
 import "package:http/http.dart" as http;
 import 'package:crypto/crypto.dart' as crypto;
 import "package:intl/intl.dart";
+import "package:kepler_app/main.dart";
 import "package:kepler_app/tabs/lernsax/ls_data.dart";
+import "package:sentry_flutter/sentry_flutter.dart";
 
 //
 // Info to the function comments:
@@ -156,7 +158,8 @@ Future<(bool, MOJKGResult)> isMemberOfJKG(String mail, String password) async {
     ]);
     if (!online) return (false, MOJKGResult.otherError);
     res = resInner;
-  } catch (_) {
+  } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     return (true, MOJKGResult.otherError);
   }
   return (true, _processMemberResponse(res));
@@ -213,7 +216,8 @@ Future<(bool, String?)> registerApp(String mail, String password) async {
     if (!online) return (false, null);
     final response = res[0]["result"];
     return (true, response["trust"]["token"] as String);
-  } catch (_) {
+  } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     return (true, null);
   }
 }
@@ -230,7 +234,8 @@ Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) asyn
     if (!online2) return (false, null);
     final ret = res[0]["result"]["return"];
     return (true, ret == "OK");
-  } catch (_) {
+  } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     return (true, null);
   }
 }
@@ -256,6 +261,7 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { Stri
     final url = res[0]["result"]["url"];
     return (true, url as String);
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -293,6 +299,7 @@ Future<(bool, List<LSNotification>?)> getNotifications(String login, String toke
       data: data["data"],
     )).toList());
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (false, null);
   }
@@ -325,6 +332,7 @@ Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? clas
       createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
     )).toList());
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -353,6 +361,7 @@ Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String tok
     }
     return (true, list);
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -367,6 +376,7 @@ Future<(bool, bool?)> isTeacher(String login, String token) async {
 
     return (true, memberships.any((ms) => ms.login == keplerTeacherBaseUser));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -385,6 +395,7 @@ Future<(bool, bool?)> unregisterApp(String login, String token) async {
     if (!online2) return (false, null);
     return (true, res[0]["result"]["return"] != "OK");
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -453,6 +464,7 @@ Future<(bool, LSAppData?)> getLernSaxAppDataJson(String login, String token, boo
       isTeacherData: data["is_teacher_data"],
     ));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -478,6 +490,7 @@ Future<(bool, List<LSMailFolder>?)> getMailFolders(String login, String token) a
       lastModified: DateTime.fromMillisecondsSinceEpoch(data["m_date"] * 1000),
     )).toList());
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -516,6 +529,7 @@ Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token,
       folderId: folderId,
     )).toList());
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -557,6 +571,7 @@ Future<(bool, LSMail?)> getMail(String login, String token, { required String fo
       folderId: folderId,
     ));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -581,6 +596,7 @@ Future<(bool, LSMailState?)> getMailState(String login, String token) async {
       unreadMessages: data["unread_messages"],
     ));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -611,6 +627,7 @@ Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String to
       downloadUrl: data["download_url"],
     ));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }
@@ -646,6 +663,7 @@ Future<(bool, LSTask?)> modifyTask(String login, String token, { required String
       createdAt: DateTime.fromMillisecondsSinceEpoch(int.parse(data["created"]["date"].toString()) * 1000),
     ));
   } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
     if (kDebugMode) log("", error: e, stackTrace: s);
     return (true, null);
   }

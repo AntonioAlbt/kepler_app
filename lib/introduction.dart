@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
@@ -14,9 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// TODO: add sentry acceptance screen + add accepted dialog for beta versions
-
-final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
+final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, if (kSentryEnabled) sentryAcceptanceScreen, finishScreen];
 final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
 
 const welcomeScreen = InfoScreen(
@@ -59,6 +58,50 @@ const notificationInfoScreen = InfoScreen(
   infoText: NotifInfoScreenMain(),
   closeable: false,
   infoImage: Icon(Icons.notifications_active, size: 48),
+);
+
+final sentryAcceptanceScreen = InfoScreen(
+  infoTitle: const Text("Zustimmung zur Datenanalyse"),
+  closeable: false,
+  infoText: Consumer<Preferences>(
+    builder: (context, prefs, _) {
+      final sie = prefs.preferredPronoun == Pronoun.sie;
+      return Column(
+        children: [
+          Text("Damit wir die App weiter verbessern und Fehler schnell beheben können, würden wir ${sie ? "Sie" : "Dich"} bitten, der Verarbeitung ${sie ? "Ihrer" : "Deiner"} Daten zu Analysezwecken zuzustimmen."),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: CheckboxListTile(
+              value: prefs.sentryEnabled,
+              title: const Text("Datenverarbeitung durch Sentry.io für Fehleraufzeichnung erlauben"),
+              onChanged: (val) {
+                if (val == null) return;
+                prefs.sentryEnabled = val;
+              },
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => infoScreenState.next(),
+            child: const TextWithArrowForward(text: "Fortfahren"),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: GestureDetector(
+              onTap: () => launchUrl(Uri.parse("https://sentry.io/privacy/"), mode: LaunchMode.externalApplication).catchError((_) {
+                showSnackBar(text: "Fehler beim Öffnen.");
+                return false;
+              }),
+              child: const Text(
+                "Datenschutzerklärung von Sentry",
+                style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  ),
+  infoImage: const Icon(Icons.info, size: 48),
 );
 
 final finishScreen = InfoScreen(
@@ -534,7 +577,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
             if (datasn.data == false) {
               // notify the maintainer of the sentry account that something is wrong
               // but don't do anything else, just fallback to the user input
-              Sentry.captureException("LSDataError: lernsax indiware auth data isn't working");
+              if (globalSentryEnabled) Sentry.captureException("LSDataError: lernsax indiware auth data isn't working");
             }
             return Column(
               children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -51,6 +52,16 @@ class _SettingsTabState extends State<SettingsTab> {
                   prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
                 }),
                 selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key, disabled: userType == UserType.nobody),
+                if (kSentryEnabled) SettingsTile.switchTile(
+                  initialValue: prefs.sentryEnabled,
+                  onToggle: (val) {
+                    prefs.sentryEnabled = val;
+                    SystemNavigator.pop();
+                  },
+                  title: const Text("Sentry zur Fehleranalyse aktivieren"),
+                  description: const Text("erfordert Neustart der App"),
+                  enabled: !kIsBetaVersion,
+                ),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(

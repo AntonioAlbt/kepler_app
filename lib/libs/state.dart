@@ -8,6 +8,7 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart' as indiware show baseUrl;
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/news/news_data.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -100,7 +101,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
       _serializer.deserialize(json, this);
     } catch (e, s) {
       log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
-      Sentry.captureException(e, stackTrace: s);
+      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
       return;
     }
     loaded = true;

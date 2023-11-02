@@ -203,7 +203,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                               return false;
                             }));
                           } else if (Platform.isIOS) {
-                            launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"));
+                            launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"), mode: LaunchMode.externalApplication);
                           }
                         },
                         child: Text("Jetzt ${Platform.isIOS ? "öffnen/installieren" : datasn.data != null ? "öffnen" : "installieren"}"),

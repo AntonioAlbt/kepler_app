@@ -96,7 +96,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
       }
     }
   } else if (Platform.isIOS) {
-    launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"));
+    launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"), mode: LaunchMode.externalApplication);
   }
   return false;
 }

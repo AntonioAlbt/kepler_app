@@ -1,5 +1,6 @@
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -102,6 +103,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get lernSaxAutoLoadMailOnScrollBy => attributes["ls_mail_auto_load_osb"] ?? true;
   set lernSaxAutoLoadMailOnScrollBy(bool val) => setSaveNotify("ls_mail_auto_load_osb", val);
 
+  bool get sentryEnabled => (attributes["sentry_enabled"] ?? kIsBetaVersion) && kSentryEnabled;
+  set sentryEnabled(bool val) {
+    setSaveNotify("sentry_enabled", val);
+    globalSentryEnabled = val;
+  }
+
   bool loaded = false;
 
   Future<void> save() async {
@@ -114,6 +121,6 @@ class Preferences extends SerializableObject with ChangeNotifier {
   }
 
   Preferences() {
-    objectCreators["time_to_next_plan"] = (_) => HMTime(16, 0);
+    objectCreators["time_to_next_plan"] = (_) => HMTime(14, 45);
   }
 }

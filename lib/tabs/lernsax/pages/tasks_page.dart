@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -372,8 +372,8 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                                   } else if (url == null) {
                                     showSnackBar(text: "Fehler bei der Erstellung des Links.", error: true, clear: true);
                                   } else {
-                                    launchUrl(Uri.parse(url))
-                                      .then((_) => showSnackBar(text: "", clear: true, duration: const Duration(milliseconds: 100)))
+                                    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
+                                      .then((_) => showSnackBar(text: "Link wird geöffnet.", clear: true, duration: const Duration(milliseconds: 100)))
                                       .onError((_, __) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
                                   }
                                 });
@@ -427,7 +427,7 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                         style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
                       ),
                     ),
-                    if (kDebugMode) SizedBox(
+                    if (kDebugFeatures) SizedBox(
                       width: double.infinity,
                       child: Text(
                         "Class Login: ${widget.task.classLogin}",

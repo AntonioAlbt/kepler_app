@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
@@ -36,6 +38,8 @@ final _stuPlanData = StuPlanData();
 final _lernSaxData = LernSaxData();
 
 final ConfettiController globalConfettiController = ConfettiController();
+
+var globalSentryEnabled = kIsBetaVersion && kSentryEnabled;
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
@@ -95,14 +99,14 @@ Future<void> prepareApp() async {
   final sprefs = sharedPreferences;
   if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
   await IndiwareDataManager.createDataDirIfNecessary();
+  if (kSentryEnabled) globalSentryEnabled = _prefs.sentryEnabled;
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  appRunner() => prepareApp().then((_) {
-    runApp(const MyApp());
-  });
-  if (kDebugMode || !sentryEnabled) {
+  await prepareApp();
+  appRunner() => runApp(const MyApp());
+  if (kDebugMode || !kSentryEnabled || !_prefs.sentryEnabled) {
     appRunner();
   } else {
     await SentryFlutter.init(
@@ -483,6 +487,20 @@ class _KeplerAppState extends State<KeplerApp> {
         } else {
           showSnackBar(text: text);
         }
+      }
+      
+      if (kIsBetaVersion && kSentryEnabled && !_internalState.infosShown.contains("beta_sentry_info")) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showDialog(context: globalScaffoldContext, builder: (ctx) => AlertDialog(
+            title: const Text("Hinweis zur Datenerfassung"),
+            content: const Text("In dieser Beta-Version der App wird Sentry.io zur Fehlererfassung verwendet. Durch die Nutzung wird die Zustimmung erteilt."),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
+              TextButton(onPressed: () => SystemNavigator.pop(), child: const Text("App beenden")),
+            ],
+          ));
+          _internalState.addInfoShown("beta_sentry_info");
+        });
       }
     });
     super.initState();

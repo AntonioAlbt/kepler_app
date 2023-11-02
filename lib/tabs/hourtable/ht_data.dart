@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/main.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:xml/xml.dart';
@@ -117,7 +118,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
       _serializer.deserialize(json, this);
     } catch (e, s) {
       log("Error while decoding json for StuPlanData from file:", error: e, stackTrace: s);
-      Sentry.captureException(e, stackTrace: s);
+      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
       return;
     }
     loaded = true;

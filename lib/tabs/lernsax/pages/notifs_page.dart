@@ -226,7 +226,7 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
               } else if (link == null) {
                 showSnackBar(text: "Fehler bei Erstellung des LernSax-Links.", error: true, clear: true);
               } else {
-                launchUrl(Uri.parse(link)).catchError((_) {
+                launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication).catchError((_) {
                   showSnackBar(text: "Fehler beim Öffnen des Links.");
                   return false;
                 });

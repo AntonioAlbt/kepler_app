@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -10,7 +11,7 @@ import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
-    show generateLessonInfoDialog, showSTDebugStuff;
+    show generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -489,8 +490,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return Column(
       children: [
         if (lastUpdated != null) Text("zuletzt geändert am $lastUpdated"),
-        if (showSTDebugStuff)
-          Text("fetched ${isOnline == null ? "from somewhere?" : isOnline == false ? "from cache" : "from the internet"}"),
+        if (kDebugFeatures) Text("fetched ${isOnline == null ? "from somewhere?" : isOnline == false ? "from cache" : "from the internet"}"),
         Flexible(
           flex: 3,
           child: Padding(

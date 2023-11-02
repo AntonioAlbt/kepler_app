@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:provider/provider.dart';
 
@@ -138,7 +138,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                     physics: (!widget.scrollable) ? const NeverScrollableScrollPhysics() : null,
                     children: infoScreens,
                   ),
-                  if (kDebugMode) Align(
+                  if (kDebugFeatures) Align(
                     alignment: Alignment.topRight,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

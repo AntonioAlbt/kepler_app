@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/notifications.dart';
@@ -47,24 +47,24 @@ Future<void> runNewsFetchTask() async {
 
   final newNews = await loadAllNewNews(newsCache.newsData.first.link, 6);
   if (newNews == null) return;
-  // if (kDebugMode) {
-    //   newNews.add(
+  if (kDebugNotifData) {
+      newNews.add(
+          NewsEntryData()
+              ..createdDate = DateTime.now()
+              ..link = "https://kepler-chemnitz.de/allgemein/"
+              ..title = "Vielen Dank an alle, die sich diese App angeschaut haben!"
+              ..summary = "Es gibt wieder tolles neues Zeug an unserem Gymnasium. Ich habe hier über alles geschrieben, wenn du das aber genau wissen willst, musst du hier klicken."
+              ..writer = "Einerd Er-Schreiber"
+      );
+      // newNews.add(
       //     NewsEntryData()
-        //       ..createdDate = DateTime.now()
-        //       ..link = "https://kepler-chemnitz.de/allgemein/"
-        //       ..title = "Vielen Dank an alle, die sich diese App angeschaut haben!"
-        //       ..summary = "Es gibt wieder tolles neues Zeug an unserem Gymnasium. Ich habe hier über alles geschrieben, wenn du das aber genau wissen willst, musst du hier klicken."
-        //       ..writer = "Einerd Er-Schreiber"
-    //   );
-    //   newNews.add(
-      //     NewsEntryData()
-        //       ..createdDate = DateTime.now()
-        //       ..link = "https://kepler-chemnitz.de/allgemein/"
-        //       ..title = "Landesseminar mit diesem Vlad"
-        //       ..summary = "der hat mir auch geholfen - vielen Dank an Vlad von VLANT :D"
-        //       ..writer = "Jeman D'Anderes"
-    //   );
-  // }
+      //         ..createdDate = DateTime.now()
+      //         ..link = "https://kepler-chemnitz.de/allgemein/"
+      //         ..title = "Landesseminar mit diesem Vlad"
+      //         ..summary = "der hat mir auch geholfen - vielen Dank an Vlad von VLANT :D"
+      //         ..writer = "Jeman D'Anderes"
+      // );
+  }
   if (newNews.isEmpty) return;
 
   sendNotification(
@@ -97,7 +97,7 @@ Future<void> runStuPlanFetchTask() async {
   var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!);
   differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!) : null;
 
-  if (kDebugMode) {
+  if (kDebugNotifData) {
     differentLessons ??= {
       DateTime.now(): [const VPLesson(
         subjectCode: "DE",
