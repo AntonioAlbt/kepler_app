@@ -388,7 +388,7 @@ class _KeplerAppState extends State<KeplerApp> {
             children: [
               WillPopScope(
                 onWillPop: () async {
-                  if (_appState.selectedNavPageIDs != _prefs.startNavPageIDs) {
+                  if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {
                     _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
                     return false;
                   } else {
