@@ -80,20 +80,20 @@ jobs:
       - run: flutter analyze
       - run: flutter build apk --release --dart-define=beta=$BETA --dart-define=debug_features=$DEBUG --dart-define=sentry_enabled=$SENTRY --dart-define=debug_notif_data=$DEBUGNOTIF
         env:
-          BETA: ${{ github.event.inputs.beta }}
-          DEBUG: ${{ github.event.inputs.debugFeatures }}
-          SENTRY: ${{ github.event.inputs.sentry }}
-          DEBUGNOTIF: ${{ github.event.inputs.debugNotifyData }}
-        if: ${{ github.event.action == 'workflow_dispatch' }}
+          BETA: ${{ inputs.beta }}
+          DEBUG: ${{ inputs.debugFeatures }}
+          SENTRY: ${{ inputs.sentry }}
+          DEBUGNOTIF: ${{ inputs.debugNotifyData }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
       - run: flutter build apk --release --dart-define=beta=true
-        if: ${{ github.event.action != 'workflow_dispatch' }}
+        if: ${{ github.event_name != 'workflow_dispatch' }}
       - name: Publish new release
         uses: softprops/action-gh-release@v1
-        if: ${{ github.event.inputs.releaseTag != '' }}
+        if: ${{ inputs.releaseTag != '' }}
         with:
           files: "build/app/outputs/flutter-apk/app-release.apk"
-          prerelease: ${{ github.event.inputs.beta || github.event.inputs.debugFeatures }}
-          tag_name: ${{ github.event.inputs.releaseTag }}
+          prerelease: ${{ inputs.beta || inputs.debugFeatures }}
+          tag_name: ${{ inputs.releaseTag }}
       - uses: actions/upload-artifact@v3
         with:
           name: ReleaseBetaAPK

@@ -122,8 +122,6 @@ class _LSMailsPageState extends State<LSMailsPage> {
   void initState() {
     loadData().then((folderIds) {
       final prev = Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder;
-      print(prev);
-      print(folderIds);
       if (prev != null && folderIds != null && folderIds.contains(prev)) {
         setState(() => selectedFolderId = prev);
       } else if (folderIds != null) {
