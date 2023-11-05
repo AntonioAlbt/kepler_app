@@ -16,29 +16,32 @@ on:
   workflow_dispatch:
     inputs:
       releaseTag:
-        description: "if set, create a new release from the build with this tag"
+        description: "tag for a new release (if not set = don't release)"
         required: false
         type: string
       beta:
-        description: "if the build should be a beta build"
+        description: "beta build"
         required: true
         type: boolean
         default: false
       debugFeatures:
-        description: "if the build should have debug features enabled"
+        description: "debug features enabled"
         required: true
         type: boolean
         default: false
       sentry:
-        description: "if the build should have sentry (able to be) enabled"
+        description: "let sentry (able to) be enabled"
         required: true
         type: boolean
         default: false
       debugNotifyData:
-        description: "if the build should have notifications debug data added - will spam notifications every 2 hours"
+        description: "add notifications debug data - will spam notifications every 2 hours"
         required: true
         type: boolean
         default: false
+
+permissions:
+  contents: write
 
   # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -55,8 +58,11 @@ jobs:
           java-version: '11'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.5'
-      - run: flutter pub get
+          flutter-version: '3.13.9'
+      - run: |
+          flutter --disable-telemetry
+          flutter pub get
+        name: flutter pub get (and disable telemetry)
       - run: |
           cp lib/libs/sentry_dsn.example.dart lib/libs/sentry_dsn.dart
           sed -i "s|https://_@_.ingest.sentry.io/_|$SENTRY_DSN|g" lib/libs/sentry_dsn.dart
@@ -85,7 +91,7 @@ jobs:
           SENTRY: ${{ inputs.sentry }}
           DEBUGNOTIF: ${{ inputs.debugNotifyData }}
         if: ${{ github.event_name == 'workflow_dispatch' }}
-      - run: flutter build apk --release --dart-define=beta=true
+      - run: flutter build apk --release --dart-define=beta=true --dart-define=sentry_enabled=true
         if: ${{ github.event_name != 'workflow_dispatch' }}
       - name: Publish new release
         uses: softprops/action-gh-release@v1
@@ -96,6 +102,13 @@ jobs:
           tag_name: ${{ inputs.releaseTag }}
       - uses: actions/upload-artifact@v3
         with:
-          name: ReleaseBetaAPK
+          name: BuiltAPK-Beta
           path: "build/app/outputs/flutter-apk/app-release.apk"
           retention-days: 14
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.beta }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: BuiltAPK
+          path: "build/app/outputs/flutter-apk/app-release.apk"
+          retention-days: 14
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.beta }}
