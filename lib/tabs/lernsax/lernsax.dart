@@ -13,6 +13,7 @@ import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// TODO: check if user has all notifications for all courses enabled -> show question dialog then, and change it if user agrees
 class LernSaxTab extends StatefulWidget {
   const LernSaxTab({super.key});
 

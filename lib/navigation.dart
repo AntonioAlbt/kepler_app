@@ -3,6 +3,7 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
+import 'package:kepler_app/libs/kepler_app_custom_icons_icons.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -23,6 +24,7 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/news/news.dart';
+import 'package:kepler_app/tabs/pendel.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +35,7 @@ class PageIDs {
   static const home = "home";
   static const news = "news";
   static const foodOrder = "foodOrder";
+  static const pendel = "pendel";
   static const ffjkg = "ffjkg";
   static const settings = "settings";
   static const feedback = "feedback";
@@ -60,16 +63,17 @@ class LernSaxPageIDs {
   static const openInBrowser = "inbrowser";
 }
 
-const tabs = {
-  PageIDs.home: HomepageTab(),
-  PageIDs.news: NewsTab(),
-  StuPlanPageIDs.main: HourtableTab(),
-  LernSaxPageIDs.main: LernSaxTab(),
-  PageIDs.foodOrder: MealOrderingTab(),
-  PageIDs.ffjkg: FFJKGTab(),
-  PageIDs.settings: SettingsTab(),
-  PageIDs.feedback: FeedbackTab(),
-  PageIDs.about: AboutTab(),
+final tabs = {
+  PageIDs.home: const HomepageTab(),
+  PageIDs.news: const NewsTab(),
+  StuPlanPageIDs.main: const HourtableTab(),
+  LernSaxPageIDs.main: const LernSaxTab(),
+  PageIDs.foodOrder: const MealOrderingTab(),
+  PageIDs.pendel: PendelInfoTab(),
+  PageIDs.ffjkg: const FFJKGTab(),
+  PageIDs.settings: const SettingsTab(),
+  PageIDs.feedback: const FeedbackTab(),
+  PageIDs.about: const AboutTab(),
 };
 
 final destinations = [
@@ -259,6 +263,14 @@ final destinations = [
     label: Text("Essensbestellung"),
     selectedIcon: Icon(Icons.restaurant),
     lockedFor: [UserType.nobody],
+  ),
+  const NavEntryData(
+    id: PageIDs.pendel,
+    icon: Icon(KeplerAppCustomIcons.pendulumIcon),
+    label: Text("Foucault'sches Pendel"),
+    navbarActions: [
+      IconButton(onPressed: pendelInfoRefreshAction, icon: Icon(Icons.refresh)),
+    ],
   ),
   const NavEntryData(
     id: PageIDs.ffjkg,

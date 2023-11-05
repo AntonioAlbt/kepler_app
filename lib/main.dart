@@ -418,7 +418,7 @@ class _KeplerAppState extends State<KeplerApp> {
                       state.selectedNavPageIDs = val.split(".");
                     },
                     entries: destinations,
-                    dividers: const [5],
+                    dividers: const [6],
                   ),
                   body: tabs[index.first],
                 ),

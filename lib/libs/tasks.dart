@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -28,10 +29,18 @@ void taskCallbackDispatcher() {
     }
 
     if (prefs.enabledNotifs.contains(newsNotificationKey)) {
-      await runNewsFetchTask();
+      try {
+        await runNewsFetchTask();
+      } on Exception catch (e, s) {
+        if (kDebugMode) print("$e - $s");
+      }
     }
     if (prefs.enabledNotifs.contains(stuPlanNotificationKey)) {
-      await runStuPlanFetchTask();
+      try {
+        await runStuPlanFetchTask();
+      } on Exception catch (e, s) {
+        if (kDebugMode) print("$e - $s");
+      }
     }
     return true;
   });
