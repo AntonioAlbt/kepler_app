@@ -11,12 +11,14 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/privacy_policy.dart';
+import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, if (kSentryEnabled) sentryAcceptanceScreen, finishScreen];
 final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
+final loginAgainScreensUncloseable = [lernSaxLoginAgainScreen(false), stuPlanLoginAgainScreen, finishScreen];
 
 const welcomeScreen = InfoScreen(
   infoTitle: Text("Willkommen in der Kepler-App!"),
@@ -249,6 +251,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
           TextField(
             controller: _mailController,
             keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
             decoration: InputDecoration(
               labelText: "LernSax-Email-Adresse",
               errorText: _mailError,
@@ -257,6 +260,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
           TextField(
             controller: _pwController,
             keyboardType: TextInputType.visiblePassword,
+            autocorrect: false,
             obscureText: true,
             decoration: InputDecoration(
               labelText: "LernSax-Passwort",
@@ -295,6 +299,9 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                           Provider.of<AppState>(context, listen: false).userType = UserType.parent;
                         }
                         showSnackBar(text: "Erfolgreich eingeloggt und verbunden.", clear: true);
+
+                        Provider.of<LernSaxData>(context, listen: false).clearData();
+
                         infoScreenState.next();
                       });
                     } catch (_) {

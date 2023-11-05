@@ -104,7 +104,13 @@ class _LSMailsPageState extends State<LSMailsPage> {
                     selectedFolder: lsdata.mailFolders!.firstWhere((f) => f.id == selectedFolderId),
                     controller: dayDispController,
                   )
-                : const Text("..."),
+                : const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child:
+                          Text("Fehler beim Laden der Postfach-Ordner."),
+                    ),
+                  ),
             ),
           ],
         );
@@ -114,15 +120,25 @@ class _LSMailsPageState extends State<LSMailsPage> {
 
   @override
   void initState() {
-    selectedFolderId = Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder ?? "";
-    loadData();
+    loadData().then((folderIds) {
+      final prev = Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder;
+      print(prev);
+      print(folderIds);
+      if (prev != null && folderIds != null && folderIds.contains(prev)) {
+        setState(() => selectedFolderId = prev);
+      } else if (folderIds != null) {
+        setState(() => selectedFolderId = folderIds.first);
+      } else {
+        setState(() => selectedFolderId = null);
+      }
+    });
     super.initState();
   }
 
-  Future<void> loadData({ bool force = false }) async {
+  Future<List<String>?> loadData({ bool force = false }) async {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // only update mail folder data every 3 days because it doesn't change as often
-    if (lsdata.lastMailFoldersUpdateDiff.inDays < 3 || force) return;
+    if (lsdata.lastMailFoldersUpdateDiff.inDays < 3 || force) return lsdata.mailFolders?.map((f) => f.id).toList();
 
     setState(() => _loadingFolders = true);
     final creds = Provider.of<CredentialStore>(context, listen: false);
@@ -134,11 +150,12 @@ class _LSMailsPageState extends State<LSMailsPage> {
     } else {
       lsdata.mailFolders = folders;
       lsdata.lastMailFoldersUpdate = DateTime.now();
-      // don't setState here because I already tell flutter that I setState three lines from now
-      if (selectedFolderId == "") selectedFolderId = folders.first.id;
+      // // don't setState here because I already tell flutter that I setState three lines from now
+      // if (selectedFolderId == "") selectedFolderId = folders.first.id;
       showSnackBar(text: "E-Mails erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
     }
     setState(() => _loadingFolders = false);
+    return folders?.map((f) => f.id).toList();
   }
 }
 

@@ -47,6 +47,7 @@ class _NewsViewState extends State<NewsView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
+            if (Uri.parse(request.url) == widget.newsLink) return NavigationDecision.navigate;
             launchUrlString(
               request.url,
               mode: LaunchMode.externalApplication

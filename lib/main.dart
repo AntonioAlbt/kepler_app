@@ -5,6 +5,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
@@ -104,6 +105,7 @@ Future<void> prepareApp() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  initializeDateFormatting();
   await prepareApp();
   appRunner() => runApp(const MyApp());
   if (kDebugMode || !kSentryEnabled || !_prefs.sentryEnabled) {
@@ -119,7 +121,7 @@ void main() async {
   }
 }
 
-void showLoginScreenAgain({ bool clearData = true }) {
+void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
   final ctx = globalScaffoldContext;
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
@@ -128,7 +130,7 @@ void showLoginScreenAgain({ bool clearData = true }) {
   Provider.of<AppState>(ctx, listen: false)
     ..selectedNavPageIDs = [PageIDs.home] // isn't neccessarily the default screen (because of prefs), but idc
     ..infoScreen = InfoScreenDisplay(
-      infoScreens: loginAgainScreens,
+      infoScreens: closeable ? loginAgainScreens : loginAgainScreensUncloseable,
     );
 }
 

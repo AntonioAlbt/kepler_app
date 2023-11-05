@@ -317,96 +317,96 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-      style: TextButton.styleFrom(
-        textStyle: Theme.of(context).textTheme.bodyMedium,
-        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      onPressed: () {
-        if (widget.task.description != "") {
-          showDialog(context: context, builder: (context) => generateLernSaxTaskInfoDialog(context, widget.task));
-        } else {
-          showSnackBar(text: "Keine weiteren Infos verfügbar.", clear: true, duration: const Duration(milliseconds: 500));
-        }
-      },
-      child: Column(
-        children: [
-          // Padding(
-          //   padding: const EdgeInsets.only(bottom: 4),
-          //   child: Row(
-          //     children: [
-          //       const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
-          //       Padding(
-          //         padding: const EdgeInsets.only(left: 4),
-          //         child: Text(lernSaxTimeFormat.format(widget.task.createdAt)),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: LSTaskCheckBox(
-                  checked: widget.task.completed,
-                  updateChecked: (val) async {
-                    if (widget.task.classLogin != null) {
-                      await showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text("Hinweis"),
-                          content: Text("Leider können Aufgaben aus Klassen aufgrund eines LernSax-Fehlers aktuell nicht abgehakt werden. ${Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie ? "Sie können" : "Du kannst"} die Aufgabe stattdessen auf der Webseite per Link abhaken."),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Abbrechen")),
-                            TextButton(onPressed: () {
-                              Navigator.pop(ctx);
-                              showSnackBar(text: "Erstellt Link...", clear: true, duration: const Duration(seconds: 10));
-                              final creds = Provider.of<CredentialStore>(context, listen: false);
-                              lernsax.getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!, targetLogin: widget.task.classLogin, targetObject: "tasks")
-                                .then((data) {
-                                  final (online, url) = data;
-                                  if (!online) {
-                                    showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-                                  } else if (url == null) {
-                                    showSnackBar(text: "Fehler bei der Erstellung des Links.", error: true, clear: true);
-                                  } else {
-                                    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
-                                      .then((_) => showSnackBar(text: "Link wird geöffnet.", clear: true, duration: const Duration(milliseconds: 100)))
-                                      .onError((_, __) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
-                                  }
-                                });
-                            }, child: const Text("Im Browser öffnen")),
-                          ],
-                        ),
-                      );
-                      return false;
+    return Column(
+      children: [
+        // Padding(
+        //   padding: const EdgeInsets.only(bottom: 4),
+        //   child: Row(
+        //     children: [
+        //       const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+        //       Padding(
+        //         padding: const EdgeInsets.only(left: 4),
+        //         child: Text(lernSaxTimeFormat.format(widget.task.createdAt)),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: LSTaskCheckBox(
+                checked: widget.task.completed,
+                updateChecked: (val) async {
+                  if (widget.task.classLogin != null) {
+                    await showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text("Hinweis"),
+                        content: Text("Leider können Aufgaben aus Klassen aufgrund eines LernSax-Fehlers aktuell nicht abgehakt werden. ${Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie ? "Sie können" : "Du kannst"} die Aufgabe stattdessen auf der Webseite per Link abhaken."),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Abbrechen")),
+                          TextButton(onPressed: () {
+                            Navigator.pop(ctx);
+                            showSnackBar(text: "Erstellt Link...", clear: true, duration: const Duration(seconds: 10));
+                            final creds = Provider.of<CredentialStore>(context, listen: false);
+                            lernsax.getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!, targetLogin: widget.task.classLogin, targetObject: "tasks")
+                              .then((data) {
+                                final (online, url) = data;
+                                if (!online) {
+                                  showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                                } else if (url == null) {
+                                  showSnackBar(text: "Fehler bei der Erstellung des Links.", error: true, clear: true);
+                                } else {
+                                  launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
+                                    .then((_) => showSnackBar(text: "Link wird geöffnet.", clear: true, duration: const Duration(milliseconds: 100)))
+                                    .onError((_, __) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
+                                }
+                              });
+                          }, child: const Text("Im Browser öffnen")),
+                        ],
+                      ),
+                    );
+                    return false;
+                  } else {
+                    final creds = Provider.of<CredentialStore>(context, listen: false);
+                    final (online, data) = await lernsax.modifyTask(
+                      creds.lernSaxLogin!,
+                      creds.lernSaxToken!,
+                      id: widget.task.id,
+                      classLogin: null,
+                      completed: val,
+                    );
+                    if (!online) {
+                      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                    } else if (data == null) {
+                      showSnackBar(text: "Fehler bei der Aktualisierung der Aufgabe.", error: true, clear: true);
                     } else {
-                      final creds = Provider.of<CredentialStore>(context, listen: false);
-                      final (online, data) = await lernsax.modifyTask(
-                        creds.lernSaxLogin!,
-                        creds.lernSaxToken!,
-                        id: widget.task.id,
-                        classLogin: null,
-                        completed: val,
-                      );
-                      if (!online) {
-                        showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-                      } else if (data == null) {
-                        showSnackBar(text: "Fehler bei der Aktualisierung der Aufgabe.", error: true, clear: true);
-                      } else {
-                        Provider.of<LernSaxData>(context, listen: false).addTasksNew([data]);
-                        setState(() => taskCompleted = !taskCompleted);
-                        return true;
-                      }
-                      return false;
+                      Provider.of<LernSaxData>(context, listen: false).addTasksNew([data]);
+                      setState(() => taskCompleted = !taskCompleted);
+                      return true;
                     }
-                  },
-                  enabled: widget.online,
-                ),
+                    return false;
+                  }
+                },
+                enabled: widget.online,
               ),
-              Flexible(
+            ),
+            Flexible(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.bodyMedium,
+                  foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  if (widget.task.description != "") {
+                    showDialog(context: context, builder: (context) => generateLernSaxTaskInfoDialog(context, widget.task));
+                  } else {
+                    showSnackBar(text: "Keine weiteren Infos verfügbar.", clear: true, duration: const Duration(milliseconds: 500));
+                  }
+                },
                 child: Column(
                   children: [
                     AnimatedSwitcher(
@@ -479,10 +479,10 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                   ],
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

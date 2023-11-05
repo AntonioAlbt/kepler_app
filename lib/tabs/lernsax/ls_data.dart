@@ -87,6 +87,21 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   LSMail? getCachedMail(String folderId, int mailId)
     => mailCache.cast<LSMail?>().firstWhere((ml) => ml!.id == mailId && ml.folderId == folderId, orElse: () => null);
 
+  void clearData() {
+    final d0 = DateTime(1900);
+    lastMailFoldersUpdate = d0;
+    mailFolders = null;
+    lastMailListingsUpdate = d0;
+    mailListings = null;
+    lastMembershipsUpdate = d0;
+    memberships = null;
+    lastNotificationsUpdate = d0;
+    notifications = null;
+    lastTasksUpdate = d0;
+    tasks = null;
+    mailCache = [];
+  }
+
   final _serializer = Serializer();
   bool loaded = false;
   final Lock _fileLock = Lock();

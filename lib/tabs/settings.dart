@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -42,11 +44,19 @@ class _SettingsTabState extends State<SettingsTab> {
         final sie = prefs.preferredPronoun == Pronoun.sie;
         final userType = Provider.of<AppState>(context, listen: false).userType;
         return SettingsList(
+          platform: DevicePlatform.android,
           sections: [
             SettingsSection(
               title: const Text("Allgemeines"),
               tiles: [
-                selectionSettingsTile(prefs.theme, AppTheme.values, "Farbmodus", (val) => prefs.theme = val),
+                // the way this is implemented can cause minor desync and the dialog showing the wrong system theme, but it's not that big an issue
+                selectionSettingsTile(prefs.theme.toString().replaceAll("System", "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})"), AppTheme.values.map((val) {
+                  if (val == AppTheme.system) {
+                    return "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})";
+                  } else {
+                    return val.toString();
+                  }
+                }).toList(), "Farbmodus", (val) => prefs.theme = {"S": AppTheme.system, "D": AppTheme.dark, "H": AppTheme.light}[val.substring(0, 1)]!),
                 selectionSettingsTile(prefs.preferredPronoun, Pronoun.values, "Bevorzugte Anrede", (val) => prefs.preferredPronoun = val),
                 notificationSettingsTile(prefs.enabledNotifs.map((en) => _notifKeyMap[en]).where((e) => e != null).toList(), userType == UserType.nobody ? ["Neue Kepler-News"] : _notifKeyMap.values.toList(), "Benachrichtigungen", (selectedNow) {
                   prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
@@ -56,7 +66,8 @@ class _SettingsTabState extends State<SettingsTab> {
                   initialValue: prefs.sentryEnabled,
                   onToggle: (val) {
                     prefs.sentryEnabled = val;
-                    SystemNavigator.pop();
+                    if (Platform.isAndroid) SystemNavigator.pop();
+                    if (Platform.isIOS) showSnackBar(text: "Bitte App schließen und neu öffnen, um Einstellungen anzuwenden.");
                   },
                   title: const Text("Sentry zur Fehleranalyse aktivieren"),
                   description: const Text("erfordert Neustart der App"),
@@ -71,12 +82,12 @@ class _SettingsTabState extends State<SettingsTab> {
                       ],
                     ),
                   ),
-                  description: const Text("Abmelden und nach Neustart der App neu mit LernSax anmelden"),
+                  description: const Text("Abmelden und neu mit LernSax anmelden"),
                   onPressed: (context) => showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Wirklich fortfahren?"),
-                      content: Text("${sie ? "Wollen Sie sich" : "Willst Du Dich"} wirklich neu anmelden? Falls ja, wird die App geschlossen und die Anmeldung ist nach neuem Öffnen erneut nötig."),
+                      content: Text("${sie ? "Wollen Sie sich" : "Willst Du Dich"} wirklich neu anmelden? Falls ja, wird die Verbindung zu LernSax getrennt und die Anmeldung ist erneut nötig."),
                       actions: [
                         TextButton(
                           onPressed: () {
@@ -92,11 +103,12 @@ class _SettingsTabState extends State<SettingsTab> {
                                 // try to unregister this app from LernSax, but don't care if it doesn't work
                                 // (most users don't check their registered apps on LernSax anyways)
                                 // waiting for this to complete is still necessary
-                                // because SystemNavigator.pop will kill the app which would stop it from completing
                                 await unregisterApp(creds.lernSaxLogin!, creds.lernSaxToken!);
                               }
-                              creds.clearData();
-                              SystemNavigator.pop();
+                              if (!mounted) return;
+
+                              showLoginScreenAgain(closeable: false);
+                              Navigator.pop(context);
                             }();
                           },
                           child: const Text("Ja, abmelden"),

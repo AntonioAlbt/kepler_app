@@ -115,7 +115,7 @@ Future<void> runStuPlanFetchTask() async {
 
   if (differentLessons == null) return;
 
-  final dateFormat = DateFormat("EE");
+  final dateFormat = DateFormat("EE", "de-DE");
 
   sendNotification(
     title: "Neue Änderungen im Stundenplan",

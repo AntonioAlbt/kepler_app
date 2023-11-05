@@ -76,7 +76,7 @@ bool shouldStuPlanAutoReload(BuildContext context)
     !isSameDay((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
 
 class StuPlanDisplayState extends State<StuPlanDisplay> {
-  final format = DateFormat("EE, dd.MM.");
+  final format = DateFormat("EEEEE, dd.MM.", "de-DE");
   late DateTime currentDate;
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
