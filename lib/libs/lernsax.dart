@@ -668,3 +668,64 @@ Future<(bool, LSTask?)> modifyTask(String login, String token, { required String
     return (true, null);
   }
 }
+
+/// info: classLogin is ignored! I don't know how to check notifications for specific classes currently
+Future<(bool, List<LSNotifSettings>?)> getNotificationSettings(String login, String token, { String? classLogin }) async {
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("messages"),
+      call(
+        method: "get_settings",
+        id: 1,
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    return (true, (res[0]["result"]["messages"] as List<dynamic>).map((data) => LSNotifSettings(
+      classLogin: classLogin,
+      id: data["type"],
+      name: data["name"],
+      object: data["object"],
+      enabledFacilities: (data["facilities"]["enabled"] as List<dynamic>).cast<String>(),
+      disabledFacilities: (data["facilities"]["disabled"] as List<dynamic>).cast<String>(),
+    )).toList());
+  } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}
+
+int _bti(bool val) => val ? 1 : 0;
+
+/// info: classLogin is ignored! I don't know how to modify notifications for specific classes currently
+/// returns: isOnline, successful
+Future<(bool, bool)> setNotificationSettings(String login, String token, { String? classLogin, required List<LSNotifSettings> data }) async {
+  try {
+    final (online, _) = await api([
+      await useSession(login, token),
+      focus("messages"),
+      ...data.map((d) => call(
+        method: "set_facilities",
+        params: {
+          "type": d.id,
+          "normal": _bti(d.enabledFacilities.contains("normal")),
+          "push": _bti(d.enabledFacilities.contains("push")),
+          "qm": _bti(d.enabledFacilities.contains("qm")),
+          "mail": _bti(d.enabledFacilities.contains("mail")),
+          "digest": _bti(d.enabledFacilities.contains("digest")),
+          "digest_weekly": _bti(d.enabledFacilities.contains("digest_weekly")),
+        },
+      )),
+    ]);
+    if (!online) return (false, false);
+    // this doesn't return anything, because no call has an id set
+    // if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}

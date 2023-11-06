@@ -34,10 +34,12 @@ final pendelDateFormat = DateFormat("dd.MM., hh:mm", "de-DE");
 String formatForDisplay(double? num, int precision, [String? suffix, String? orElse])
   => num != null ? ((num * pow(10, precision)).roundToDouble() / pow(10, precision)).toString().replaceAll(".", ",") + (suffix ?? "") : orElse ?? "-";
 
-class _PendelInfoTabState extends State<PendelInfoTab> {
+class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProviderStateMixin {
   bool _loading = false, dataAvailable = false;
   double? cpu, ram, angle, period;
   DateTime? lastUpdate;
+
+  late final AnimationController _controller;
 
   @override
   Widget build(BuildContext context) {
@@ -122,12 +124,25 @@ class _PendelInfoTabState extends State<PendelInfoTab> {
                           ),
                           Center(
                             child: Transform.rotate(
-                              // 180 - x is needed because the data contains the wrong angle and + 90 is needed to change 0° to mean horizontal line
+                              // + 90 is needed to change 0° to mean horizontal line
                               angle: (pi / 180.0) * ((angle ?? 0) + 90),
-                              child: Container(
-                                color: hasDarkTheme(context) ? Colors.blue.shade300 : Colors.blue.shade800,
-                                width: 5,
-                                height: 200,
+                              child: AnimatedBuilder(
+                                animation: _controller,
+                                builder: (context, _) {
+                                  return Container(
+                                    // color: hasDarkTheme(context) ? Colors.blue.shade300 : Colors.blue.shade800,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        stops: [0, max(0, _controller.value - .3), _controller.value, _controller.value + .3, 2],
+                                        begin: AlignmentDirectional.topCenter,
+                                        end: AlignmentDirectional.bottomCenter,
+                                        colors: [Colors.blue.shade300, Colors.blue.shade300, Colors.blue.shade900, Colors.blue.shade300, Colors.blue.shade300],
+                                      ),
+                                    ),
+                                    width: 5,
+                                    height: 190,
+                                  );
+                                }
                               ),
                             ),
                           ),
@@ -154,9 +169,29 @@ class _PendelInfoTabState extends State<PendelInfoTab> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: Text("Aktueller Pendel-Winkel: ${angle != null ? "${angle!.round()} °" : "unbekannt"}"),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            const TextSpan(text: "Aktueller Pendel-Winkel: "),
+                            TextSpan(
+                              text: angle != null ? "${angle!.round()} °" : "unbekannt",
+                              style: angle != null ? const TextStyle(fontWeight: FontWeight.bold) : null,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    Text("Aktuelle Zeit pro voller Drehung: ${formatForDisplay(period, 2, " h", "unbekannt")}"),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(text: "Aktuelle Zeit pro voller Drehung: "),
+                          TextSpan(
+                            text: formatForDisplay(period, 2, " h", "unbekannt"),
+                            style: period != null ? const TextStyle(fontWeight: FontWeight.bold) : null,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -198,6 +233,14 @@ class _PendelInfoTabState extends State<PendelInfoTab> {
   void initState() {
     super.initState();
     _load();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3));
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {

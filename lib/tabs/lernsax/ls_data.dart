@@ -717,3 +717,14 @@ class LSSessionFile {
 
   const LSSessionFile({required this.id, required this.name, required this.size, required this.downloadUrl});
 }
+
+class LSNotifSettings {
+  final int id;
+  final String? classLogin;
+  final String name;
+  final String object;
+  final List<String> enabledFacilities;
+  final List<String> disabledFacilities;
+
+  const LSNotifSettings({required this.id, required this.classLogin, required this.name, required this.object, required this.enabledFacilities, required this.disabledFacilities});
+}

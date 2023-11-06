@@ -12,8 +12,8 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
-// TODO: check if user has all notifications for all courses enabled -> show question dialog then, and change it if user agrees
 class LernSaxTab extends StatefulWidget {
   const LernSaxTab({super.key});
 
@@ -22,6 +22,8 @@ class LernSaxTab extends StatefulWidget {
 }
 
 class _LernSaxTabState extends State<LernSaxTab> {
+  late final VideoPlayerController _controller;
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
@@ -35,6 +37,80 @@ class _LernSaxTabState extends State<LernSaxTab> {
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO: fix video player
+    _controller = VideoPlayerController.asset(
+      "ls_notif_explain_light.mp4",
+    );
+    _controller.setLooping(true);
+    _controller.play();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final istate = Provider.of<InternalState>(context, listen: false);
+      final creds = Provider.of<CredentialStore>(context, listen: false);
+      final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+      () async {
+        if (!istate.infosShown.contains("ls_notif_info")) {
+          final (online, data) = await getNotificationSettings(creds.lernSaxLogin!, creds.lernSaxToken!);
+          if (!online || data == null) return;
+
+          if (data.where((d) => d.enabledFacilities.contains("push")).length < data.length || true) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text("LernSax: Hinweis"),
+                content: Text(
+                  "${sie ? "Sie haben" : "Du hast"} bei LernSax nicht für alle Infos Benachrichtigungen aktiviert. "
+                  "Das bedeutet, dass ${sie ? "Sie" : "Du"} nicht alle Infos über die App ${sie ? "erhalten" : "erhältst"}.",
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Ignorieren")),
+                  TextButton(onPressed: () {
+                    showSnackBar(text: "Passt an...", duration: const Duration(seconds: 10), clear: true);
+                    setNotificationSettings(creds.lernSaxLogin!, creds.lernSaxToken!, data: data.map((d) {
+                      if (!d.enabledFacilities.contains("push")) d.enabledFacilities.add("push");
+                      return d;
+                    }).toList()).then((value) {
+                      if (value.$2) {
+                        showSnackBar(text: "Erfolgreich.", clear: true);
+                      } else {
+                        showSnackBar(text: "Fehler beim Ändern der Benachrichtigungen.", clear: true);
+                      }
+                    });
+                    Navigator.pop(ctx);
+                  }, child: const Text("Anpassen")),
+                ],
+              ),
+            ).then((_) => showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text("Info"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Wir können nicht überprüfen, ob ${sie ? "Sie" : "Du"} für alle Klassen oder Gruppen Benachrichtigungen aktiviert ${sie ? "haben" : "hast"}.\n"
+                      "Falls ${sie ? "Sie" : "Du"} dies selbst überprüfen ${sie ? "wollen, sehen Sie" : "willst, siehst du"} hier, wie das geht:",
+                    ),
+                    VideoPlayer(_controller),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
+                  TextButton(onPressed: () {
+                    lernSaxOpenInBrowser(context);
+                    Navigator.pop(ctx);
+                  }, child: const Text("Im Browser öffnen")),
+                ],
+              ),
+            ));
+          }
+        }
+      }();
+    });
   }
 }
 

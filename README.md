@@ -29,6 +29,8 @@ Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dab
 Zum Aktivieren beim App-Build `--dart-define=<varname>=[true|false]` an `flutter run` oder `flutter build` übergeben, z.B.:
 
 - `flutter build apk --dart-define=beta=true --dart-define=sentry_enabled=true`
-- `flutter build apk --dart-define=debug_features=true`
+  - &rarr; Android APK als Beta mit Sentry zwingend aktiviert
+- `flutter build ipa --dart-define=debug_features=true`
+  - &rarr; Apple Build mit Debug Features aktiviert
 
 Wenn ein ungültiger Wert übergeben wird, wird der Standardwert genommen.
