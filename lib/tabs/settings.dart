@@ -66,8 +66,10 @@ class _SettingsTabState extends State<SettingsTab> {
                   initialValue: prefs.sentryEnabled,
                   onToggle: (val) {
                     prefs.sentryEnabled = val;
-                    if (Platform.isAndroid) SystemNavigator.pop();
-                    if (Platform.isIOS) showSnackBar(text: "Bitte App schließen und neu öffnen, um Einstellungen anzuwenden.");
+                    prefs.save().then((_) {
+                      if (Platform.isAndroid) SystemNavigator.pop();
+                      if (Platform.isIOS) showSnackBar(text: "Bitte App schließen und neu öffnen, um Einstellungen anzuwenden.");
+                    });
                   },
                   title: const Text("Sentry zur Fehleranalyse aktivieren"),
                   description: const Text("erfordert Neustart der App"),
