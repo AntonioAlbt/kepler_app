@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -173,13 +174,13 @@ class _PendelInfoTabState extends State<PendelInfoTab> {
 
     try {
       final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);
-      cpu = double.tryParse(res["cpu"]);
-      ram = double.tryParse(res["ram"]);
-      angle = double.tryParse(res["angle"]);
-      lastUpdate = DateTime.parse(res["date"]);
-      period = double.tryParse(res["period"]);
+      cpu = double.tryParse(res["cpu"] ?? "-");
+      ram = double.tryParse(res["ram"] ?? "-");
+      angle = double.tryParse(res["angle"] ?? "-");
+      lastUpdate = DateTime.tryParse(res["date"] ?? "-");
+      period = double.tryParse(res["period"] ?? "-");
       online = true;
-    } catch (_) {
+    } catch (e, s) {
       if (kDebugFeatures) {
         cpu = double.tryParse("9.31415");
         ram = double.tryParse("15.3092341");
@@ -189,6 +190,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> {
       }
       // can be simplified, but is better readable this way
       online = kDebugFeatures ? true : false;
+      if (kDebugMode) print("$e - $s");
     }
 
     setState(() {

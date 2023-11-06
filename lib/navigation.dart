@@ -3,7 +3,7 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
-import 'package:kepler_app/libs/kepler_app_custom_icons_icons.dart';
+import 'package:kepler_app/libs/kepler_app_custom_icons.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
