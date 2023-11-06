@@ -33,7 +33,7 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
-            child: Text("Das direkte Einbinden des Speiseplans ist uns laut DLS nicht erlaubt, deshalb sind hier Links zu der Webseite bzw. der App von DLS:", style: Theme.of(context).textTheme.bodyLarge),
+            child: Text("Das direkte Einbinden des Speiseplans ist uns aus rechtlichen Gründen nicht erlaubt, deshalb sind hier Links zu der Webseite bzw. der App von DLS:", style: Theme.of(context).textTheme.bodyLarge),
           ),
           ElevatedButton(
             onPressed: () {
