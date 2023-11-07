@@ -66,7 +66,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
       child: SingleChildScrollView(
         child: Column(
           children: [
-            Text("Die aktuellen Daten des Foucault'schen Pendels an unserer Schule:", style: Theme.of(context).textTheme.bodyLarge),
+            Text("Die aktuellen Daten des Foucaultschen Pendels an unserer Schule:", style: Theme.of(context).textTheme.bodyLarge),
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text("Letzte Aktualisierung: ${lastUpdate != null ? pendelDateFormat.format(lastUpdate!) : "unbekannt"}"),
@@ -232,9 +232,17 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _load();
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3));
     _controller.repeat(reverse: true);
+    _autoReload();
+  }
+
+  void _autoReload() async {
+    if (!mounted) return;
+    _load();
+    Future.delayed(const Duration(seconds: 30)).then((_) {
+      _autoReload();
+    });
   }
 
   @override

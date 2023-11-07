@@ -57,7 +57,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
           final (online, data) = await getNotificationSettings(creds.lernSaxLogin!, creds.lernSaxToken!);
           if (!online || data == null) return;
 
-          if (data.where((d) => d.enabledFacilities.contains("push")).length < data.length || true) {
+          if (data.where((d) => d.enabledFacilities.contains("push")).length < data.length) {
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
@@ -106,7 +106,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
                   }, child: const Text("Im Browser öffnen")),
                 ],
               ),
-            ));
+            )).then((_) => istate.infosShown.add("ls_notif_info"));
           }
         }
       }();

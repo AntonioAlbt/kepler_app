@@ -267,7 +267,7 @@ final destinations = [
   const NavEntryData(
     id: PageIDs.pendel,
     icon: Icon(KeplerAppCustomIcons.pendulumIcon),
-    label: Text("Foucault'sches Pendel"),
+    label: Text("Foucaultsches Pendel"),
     navbarActions: [
       IconButton(onPressed: pendelInfoRefreshAction, icon: Icon(Icons.refresh)),
     ],
