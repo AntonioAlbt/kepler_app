@@ -119,6 +119,7 @@ class LSHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: make available soon, at least basic overview
     return const Center(
       child: Text("Bald verfügbar."),
     );

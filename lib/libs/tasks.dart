@@ -83,6 +83,7 @@ Future<void> runNewsFetchTask() async {
   );
 }
 
+// TODO: doesn't seem to be working -> test and fix
 Future<void> runStuPlanFetchTask() async {
   final spdata = StuPlanData();
   if (await fileExists(await stuPlanDataFilePath)) {

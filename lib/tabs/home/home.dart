@@ -21,6 +21,7 @@ class _HomepageTabState extends State<HomepageTab> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              // TODO: make widgets hideable and reorder-able
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: HomeNewsWidget(),

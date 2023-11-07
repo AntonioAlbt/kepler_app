@@ -389,10 +389,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       6: [],
       7: [],
       8: [],
-      9: []
+      9: [],
     };
     if (lessons == null) return [];
     for (final lesson in lessons!) {
+      // somehow, some people had a 10th and 11th lesson - what the fuck!?
+      if (!occupiedRooms.containsKey(lesson.schoolHour)) occupiedRooms[lesson.schoolHour] = [];
       occupiedRooms[lesson.schoolHour]!.addAll(lesson.roomCodes);
     }
     final freeRoomsPerHour = occupiedRooms.map((hour, occupied) => MapEntry(
@@ -432,7 +434,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 25,
+                width: 26,
                 child: Text(
                   "$hour.",
                   style: const TextStyle(fontSize: 18),
@@ -995,7 +997,7 @@ class LessonDisplay extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 SizedBox(
-                  width: 25,
+                  width: 26,
                   child: (previousLessonHour != lesson.schoolHour)
                       ? Text("${lesson.schoolHour}. ")
                       : const SizedBox.shrink(),

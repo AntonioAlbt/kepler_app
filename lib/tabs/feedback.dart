@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FeedbackTab extends StatefulWidget {
@@ -21,7 +23,14 @@ class _FeedbackTabState extends State<FeedbackTab> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Feedback geben?", style: Theme.of(context).textTheme.bodyLarge),
+              Selector<Preferences, bool>(
+                selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
+                builder: (context, sie, _) => Text(
+                  "Ich freue mich immer über Feedback von ${sie ? "Ihnen" : "Dir"}. Gerne ${sie ? "können Sie" : "kannst Du"} mir auch Wünsche, Fehler oder Fragen zukommen lassen.",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: ElevatedButton(
