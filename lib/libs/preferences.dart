@@ -6,6 +6,7 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/home/home.dart';
 
 const prefsPrefKey = "user_preferences";
 
@@ -77,7 +78,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   List<String> get homeScreenWidgetList => cast<String>(attributes["hs_widget_list"])?.split(",") ?? [];
   set homeScreenWidgetList(List<String> val) => setSaveNotify("hs_widget_list", val);
   void resetHomeScreenWidgetList() {
-    homeScreenWidgetList = flattenedDestinations.map((e) => e.id).toList();
+    homeScreenWidgetList = homeWidgetKeyMap.keys.toList();
   }
 
   String get startNavPage => attributes["start_nav_page"] ?? PageIDs.home;

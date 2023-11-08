@@ -264,7 +264,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
       cpu = double.tryParse(res["cpu"]?.toString() ?? "-");
       ram = double.tryParse(res["ram"]?.toString() ?? "-");
       angle = double.tryParse(res["angle"]?.toString() ?? "-");
-      lastUpdate = DateTime.tryParse(res["date"]?.toString() ?? "-");
+      lastUpdate = DateTime.tryParse(res["date"]?.toString() ?? "-")?.toLocal();
       period = double.tryParse(res["period"]?.toString() ?? "-");
       dataAvailable = true;
     } catch (e, s) {
