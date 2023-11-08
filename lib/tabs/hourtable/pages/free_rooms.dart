@@ -25,7 +25,7 @@ enum RoomType {
 // this even more
 final specialRoomInfo = {
   RoomType.compSci: ["K08", "K10", "013"],
-  RoomType.technic: ["004", "005"],
+  RoomType.technic: ["004", "006"],
   RoomType.sports: ["TH", "Jb1", "Jb2"],
   RoomType.specialist: ["113", "115", "116", "213", "215", "313", "315"],
   RoomType.music: ["317"],

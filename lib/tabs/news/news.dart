@@ -132,6 +132,7 @@ class _NewsTabState extends State<NewsTab> {
     final newNewsData = await loadNews(lastNewsPage);
 
     if (newNewsData == null) {
+      if (!mounted) return;
       setState(() {
         noMoreNews = true;
         loading = false;
@@ -146,6 +147,7 @@ class _NewsTabState extends State<NewsTab> {
       }
       _newsCache.addNewsData(newNewsData);
       lastNewsPage++;
+      if (!mounted) return;
       setState(() {
         loading = false;
       });

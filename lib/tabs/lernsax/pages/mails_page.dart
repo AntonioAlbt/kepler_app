@@ -152,6 +152,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
       // if (selectedFolderId == "") selectedFolderId = folders.first.id;
       showSnackBar(text: "E-Mails erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
     }
+    if (!mounted) return null;
     setState(() => _loadingFolders = false);
     return folders?.map((f) => f.id).toList();
   }

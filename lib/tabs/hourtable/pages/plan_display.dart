@@ -470,9 +470,30 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return children;
   }
 
+  String? _getLoadingDescription() {
+    switch (widget.mode) {
+      case SPDisplayMode.classPlan:
+        return "${widget.selected.contains("-") ? "Klasse" : "Jahrgang"} ${widget.selected}";
+      case SPDisplayMode.teacherPlan:
+        return "Lehrer ${widget.selected}";
+      case SPDisplayMode.yourPlan:
+        if (Provider.of<AppState>(context, listen: false).userType == UserType.teacher) {
+          return "Lehrer ${widget.selected}";
+        } else {
+          return "${widget.selected.contains("-") ? "Klasse" : "Jahrgang"} ${widget.selected}";
+        }
+      case SPDisplayMode.allReplaces:
+      case SPDisplayMode.freeRooms:
+        return null;
+      case SPDisplayMode.roomPlan:
+        return "Raum ${widget.selected}";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
+      final info = _getLoadingDescription();
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -483,8 +504,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 color: keplerColorBlue,
               ),
             ),
-            Text(
-                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)} (${widget.selected.contains("-") ? "Klasse" : "Jahrgang"} ${widget.selected})..."),
+            Text("Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}..."),
           ],
         ),
       );

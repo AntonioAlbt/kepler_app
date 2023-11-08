@@ -279,6 +279,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
       dataAvailable = kDebugFeatures ? true : false;
       if (kDebugMode) print("$e - $s");
     }
+    if (!mounted) return;
 
     setState(() {
       _loading = false;

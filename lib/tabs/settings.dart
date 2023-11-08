@@ -72,7 +72,7 @@ class _SettingsTabState extends State<SettingsTab> {
                     });
                   },
                   title: const Text("Sentry zur Fehleranalyse aktivieren"),
-                  description: const Text("erfordert Neustart der App"),
+                  description: const Text(kIsBetaVersion ? "App ist Beta-Version: Sentry ist zwingend aktiviert" : "erfordert Neustart der App"),
                   enabled: !kIsBetaVersion,
                 ),
                 SettingsTile.navigation(
@@ -141,20 +141,6 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("passiert einmal täglich beim Öffnen des Stundenplanes"),
                   enabled: userType != UserType.nobody,
                 ),
-                SettingsTile.switchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation,
-                  onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
-                  title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
-                  description: const Text("auch wenn das kein richtiger Ausfall ist"),
-                  enabled: userType != UserType.nobody,
-                ),
-                SettingsTile.switchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
-                  onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
-                  title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
-                  description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
-                  enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
-                ),
                 SettingsTile.navigation(
                   title: const Text("Zeit für nächsten Tag bzw. Plan"),
                   // description: const Text("ab welcher Uhrzeit der Plan für den nächsten Tag angezeigt werden soll"),
@@ -193,6 +179,20 @@ class _SettingsTabState extends State<SettingsTab> {
                     prefs.stuPlanDataAvailableBorderWidth = double.parse(val.split(" px")[0]);
                   },
                   disabled: userType == UserType.nobody,
+                ),
+                SettingsTile.switchTile(
+                  initialValue: prefs.considerLernSaxTasksAsCancellation,
+                  onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
+                  title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
+                  description: const Text("auch wenn das kein richtiger Ausfall ist"),
+                  enabled: userType != UserType.nobody,
+                ),
+                SettingsTile.switchTile(
+                  initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
+                  onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
+                  title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
+                  description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
+                  enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
                 ),
               ],
             ),
@@ -539,7 +539,16 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
               ),
             ),
             subtitle: customColor ? const Text("tippen, um zu ändern") : null,
-            trailing: customColor ? Container(height: 24, width: 24, color: selected) : null,
+            trailing: customColor
+              ? Container(
+                  height: 24,
+                  width: 24,
+                  decoration: BoxDecoration(
+                    color: selected,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                )
+              : null,
           ),
           if (widget.nullAvailable) ListTile(
             onTap: () {
