@@ -40,9 +40,9 @@ class _HomepageTabState extends State<HomepageTab> {
             builder: (context, prefs, _) {
               return Column(
                 children: [
-                  ...homeWidgetKeyMap.values.map((w) => Padding(
+                  ...homeWidgetKeyMap.values.map((widget) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: w,
+                    child: widget,
                   )),
                   if (kDebugFeatures) ElevatedButton(
                     onPressed: () {

@@ -64,12 +64,8 @@ bool shouldGoToNextPlanDay(BuildContext context) {
     && !isWeekend(today.add(const Duration(days: 1)));
 }
 
-// written by ChatGPT: https://chat.openai.com/share/49838517-03ac-4041-836b-b7cf1ef901a6
-bool isSameDay(DateTime dateTime1, DateTime dateTime2) {
-  return dateTime1.year == dateTime2.year &&
-      dateTime1.month == dateTime2.month &&
-      dateTime1.day == dateTime2.day;
-}
+bool isSameDay(DateTime dateTime1, DateTime dateTime2)
+  => dateTime1.year == dateTime2.year && dateTime1.month == dateTime2.month && dateTime1.day == dateTime2.day;
 
 bool shouldStuPlanAutoReload(BuildContext context)
   => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&

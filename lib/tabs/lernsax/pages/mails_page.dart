@@ -311,6 +311,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                       );
                     }
                     final mail = mails[i - 1];
+                    // TODO - future: long press actions -> delete mail, move to other folder, ...
                     return Padding(
                       padding: const EdgeInsets.all(4),
                       child: TextButton(
@@ -372,13 +373,18 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                   Flexible(
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 4),
-                                      // child: Text("${mail.isDraft || mail.isSent ? "an" : "von"} ${mail.addressed.map((a) => a.name).join(", ")}"),
-                                      // child: Text("${mail.addressed.map((e) => "${e.name}${e.name != e.address ? " (${e.address})" : ""}").join(", ")}"),
                                       child: Text.rich(
                                         TextSpan(
                                           children: [
                                             TextSpan(text: "${mail.isDraft || mail.isSent ? "an" : "von"} "),
-                                            ...mail.addressed.map((addr) => createLSMailAddressableSpan(addr, mail.addressed.last == addr, translate: const Offset(0, 2))),
+                                            ...mail.addressed.map((addr) {
+                                              final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+                                              return createLSMailAddressableSpan(
+                                                (addr.address == creds.lernSaxLogin) ? LSMailAddressable(address: addr.address, name: mail.isDraft || mail.isSent ? (sie ? "Sie" : "Dich") : (sie ? "Ihnen" : "Dir")) : addr,
+                                                mail.addressed.last == addr,
+                                                translate: const Offset(0, 2),
+                                              );
+                                            }),
                                           ],
                                         ),
                                       ),

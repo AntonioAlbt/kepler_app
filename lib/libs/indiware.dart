@@ -398,8 +398,6 @@ VPLeData xmlToLeData(XmlDocument leData) {
   );
 }
 
-// multiple elements in the code above were inspired by or copied from ChatGPT: https://chat.openai.com/share/fbf40d1c-5c5f-4b9f-98fd-bf73e7273f6f
-
 /// returns (data, isOnline)
 Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, String password) async {
   final (xml, online) = await getKlassenXML(host, username, password);

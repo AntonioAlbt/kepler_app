@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/filesystem.dart';
@@ -19,6 +20,8 @@ const fetchTaskName = "fetch_task";
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    if (kDebugMode) print("hey yo im workin' here!");
+
     final canPostNotifications = await checkNotificationPermission();
     if (!canPostNotifications) return true;
 
@@ -28,18 +31,22 @@ void taskCallbackDispatcher() {
       prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
     }
 
+    if (kDebugMode) print("enabledNotifs: ${prefs.enabledNotifs}");
+
     if (prefs.enabledNotifs.contains(newsNotificationKey)) {
       try {
         await runNewsFetchTask();
-      } on Exception catch (e, s) {
+      } catch (e, s) {
         if (kDebugMode) print("$e - $s");
+        return false;
       }
     }
     if (prefs.enabledNotifs.contains(stuPlanNotificationKey)) {
       try {
         await runStuPlanFetchTask();
-      } on Exception catch (e, s) {
+      } catch (e, s) {
         if (kDebugMode) print("$e - $s");
+        return false;
       }
     }
     return true;
@@ -104,8 +111,8 @@ Future<void> runStuPlanFetchTask() async {
   if (!spdata.loaded || !(spdata.selectedClassName != null || spdata.selectedTeacherName != null)) return;
 
   // this does look like it'll use quite some of the users data, but for 12 times a day with 5 plans, each one only 12kB it's actually only about 720kB per day, which is fine
-  var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!);
-  differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!) : null;
+  var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.selectedCourseIDs);
+  differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.selectedCourseIDs) : null;
 
   if (kDebugNotifData) {
     differentLessons ??= {
@@ -125,16 +132,17 @@ Future<void> runStuPlanFetchTask() async {
 
   if (differentLessons == null) return;
 
+  initializeDateFormatting();
   final dateFormat = DateFormat("EE", "de-DE");
 
   sendNotification(
     title: "Neue Änderungen im Stundenplan",
-    body: differentLessons.entries.map((e) => "${dateFormat.format(e.key)}:\n   ${e.value.map((val) => "${val.schoolHour}: ${val.subjectCode} bei ${val.teacherCode}${val.roomCodes.isNotEmpty ? " (Raum ${val.roomCodes.join(", ")})" : ""}${val.infoText != "" ? " - Info: ${val.infoText}" : ""}").join("\n   ")}").join("\n"),
+    body: differentLessons.entries.map((e) => "${dateFormat.format(e.key)}:\n   ${e.value.map((val) => "${val.schoolHour}: ${val.subjectCode}${val.teacherCode != "" ? " bei " : ""}${val.teacherCode}${val.roomCodes.isNotEmpty ? " (Raum ${val.roomCodes.join(", ")})" : ""}${val.infoText != "" ? " - Info: ${val.infoText}" : ""}").join("\n   ")}").join("\n"),
     notifKey: stuPlanNotificationKey,
   );
 }
 
-Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className) async {
+Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className, List<int> selectedCourseIds) async {
   final newDatas = <DateTime, VPKlData>{};
   final oldDatas = <DateTime, VPKlData>{};
   for (var i = 0; i < 5; i++) {
@@ -145,7 +153,19 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
     if (newData != null) newDatas[date] = xmlToKlData(newData);
 
     final oldData = await IndiwareDataManager.getCachedKlDataForDate(date);
-    if (oldData != null) oldDatas[date] = oldData;
+    if (oldData != null) {
+      if (kDebugNotifData) {
+        final kl = oldData.classes.firstWhere((e) => e.className == "12");
+        final l = kl.lessons.removeAt(0);
+        kl.lessons.insert(0, VPLesson(schoolHour: l.schoolHour, startTime: l.startTime, endTime: l.endTime, subjectCode: "Cool", subjectChanged: true, teacherCode: l.teacherCode, teacherChanged: l.teacherChanged, roomCodes: l.roomCodes, roomChanged: l.roomChanged, subjectID: l.subjectID, infoText: l.infoText));
+        oldDatas[date] = VPKlData(header: oldData.header, holidays: oldData.holidays, classes: [
+          ...oldData.classes.where((element) => element.className != "12"),
+          kl,
+        ], additionalInfo: oldData.additionalInfo);
+      } else {
+        oldDatas[date] = oldData;
+      }
+    }
 
     if (newData != null) await IndiwareDataManager.setCachedKlDataForDate(date, newData);
   }
@@ -156,10 +176,11 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
     for (var klasse in data.classes) {
       if (klasse.className != className) continue;
 
-      final oldKlasse = oldDatas[date]?.classes.firstWhere((c) => c.className == klasse.className);
+      final oldKlasse = oldDatas[date]?.classes.cast<VPClass?>().firstWhere((c) => c!.className == klasse.className, orElse: () => null);
       for (var lesson in klasse.lessons) {
         if (lesson.startTime == null || lesson.endTime == null) continue;
-        final oldLesson = oldKlasse?.lessons.firstWhere((l) => l.startTime == lesson.startTime && l.endTime == lesson.endTime);
+        if (!selectedCourseIds.contains(lesson.subjectID)) continue;
+        final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == l.schoolHour, orElse: () => null);
         if (oldLesson == null) {
           if (lesson.roomChanged || lesson.subjectChanged || lesson.teacherChanged) {
             differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);

@@ -10,8 +10,8 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final lernSaxTimeFormatWithSeconds = DateFormat("dd.MM.yyyy HH:MM:ss");
-final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:MM");
+final lernSaxTimeFormatWithSeconds = DateFormat("dd.MM.yyyy HH:mm:ss");
+final lernSaxTimeFormat = DateFormat("dd.MM.yyyy HH:mm");
 
 final lsNotifPageKey = GlobalKey<LSNotificationPageState>();
 
@@ -65,79 +65,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
             final notif = lsdata.notifications![i];
             return Padding(
               padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  textStyle: Theme.of(context).textTheme.bodyMedium,
-                  foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: Text(lernSaxTimeFormatWithSeconds.format(notif.date)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Icon(iconObjectMap[notif.object]),
-                        Flexible(child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(notif.message),
-                        )),
-                      ],
-                    ),
-                    // dont care about group login because no user can recognize that ever
-                    if (notif.fromUserName != null || notif.fromGroupName != null || notif.fromUserLogin != null) Padding(
-                      padding: const EdgeInsets.only(left: 8, top: 4),
-                      child: Row(
-                        children: [
-                          if (notif.hasGroupName) const Icon(MdiIcons.humanMaleBoard),
-                          if (notif.hasGroupName) Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: Text("${notif.fromGroupName}"),
-                            ),
-                          ),
-                          if (notif.hasUserData) const Padding(
-                            padding: EdgeInsets.only(left: 8.0),
-                            child: Icon(MdiIcons.account),
-                          ),
-                          if (notif.hasUserData) Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: Text("${notif.fromUserName ?? notif.fromUserLogin}"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (notif.data != null && !hideData.contains(notif.object)) Padding(
-                      padding: const EdgeInsets.only(left: 8, top: 4),
-                      child: Row(
-                        children: [
-                          Icon(notif.object == "mail" ? MdiIcons.inboxArrowDown : MdiIcons.formatListText),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: Text(notif.object == "mail" ? "von ${notif.data}" : notif.data!),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: LSNotificationTile(notif: notif),
             );
           },
           separatorBuilder: (context, i) => const Divider(),
@@ -169,18 +97,104 @@ class LSNotificationPageState extends State<LSNotificationPage> {
     }
     setState(() => _loading = false);
   }
+}
 
-  final iconObjectMap = {
-    "files": MdiIcons.fileMultiple,
-    "mail": MdiIcons.email,
-    "trusts": MdiIcons.login,
-    "messenger": MdiIcons.mail,
-    "tasks": MdiIcons.checkCircleOutline,
-    "board": MdiIcons.bulletinBoard,
-    "calendar": MdiIcons.calendar,
-  };
+final iconObjectMap = {
+  "files": MdiIcons.fileMultiple,
+  "mail": MdiIcons.email,
+  "trusts": MdiIcons.login,
+  "messenger": MdiIcons.mail,
+  "tasks": MdiIcons.checkCircleOutline,
+  "board": MdiIcons.bulletinBoard,
+  "calendar": MdiIcons.calendar,
+};
 
-  final hideData = ["files", "trusts"];
+final hideData = ["files", "trusts"];
+
+class LSNotificationTile extends StatelessWidget {
+  const LSNotificationTile({
+    super.key,
+    required this.notif,
+  });
+
+  final LSNotification notif;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        textStyle: Theme.of(context).textTheme.bodyMedium,
+        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: () => showDialog(context: context, builder: (ctx) => generateLernSaxNotifInfoDialog(ctx, notif)),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(lernSaxTimeFormatWithSeconds.format(notif.date)),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              Icon(iconObjectMap[notif.object]),
+              Flexible(child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(notif.message),
+              )),
+            ],
+          ),
+          // dont care about group login because no user can recognize that ever
+          if (notif.fromUserName != null || notif.fromGroupName != null || notif.fromUserLogin != null) Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4),
+            child: Row(
+              children: [
+                if (notif.hasGroupName) const Icon(MdiIcons.humanMaleBoard),
+                if (notif.hasGroupName) Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text("${notif.fromGroupName}"),
+                  ),
+                ),
+                if (notif.hasUserData) const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Icon(MdiIcons.account),
+                ),
+                if (notif.hasUserData) Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text("${notif.fromUserName ?? notif.fromUserLogin}"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (notif.data != null && !hideData.contains(notif.object)) Padding(
+            padding: const EdgeInsets.only(left: 8, top: 4),
+            child: Row(
+              children: [
+                Icon(notif.object == "mail" ? MdiIcons.inboxArrowDown : MdiIcons.formatListText),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(notif.object == "mail" ? "von ${notif.data}" : notif.data!),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 final _appPageObjectMap = {

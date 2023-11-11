@@ -76,14 +76,11 @@ class InfoScreenDisplay extends StatefulWidget {
   State<InfoScreenDisplay> createState() => InfoScreenDisplayState();
 }
 
-// chatgpt helper function: https://chat.openai.com/share/abec05b9-9556-4909-8eb9-53e69feb17b9
-int roundNumberAway(double number, double otherNumber) {
-  double difference = number - otherNumber;
-
-  if (difference > 0) {
-    return number.ceil();
-  } else if (difference < 0) {
+int roundNumberAway(double number, double other) {
+  if (number < other) {
     return number.floor();
+  } else if (number > other) {
+    return number.ceil();
   } else {
     return number.round();
   }

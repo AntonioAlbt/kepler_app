@@ -29,7 +29,7 @@ class PendelInfoTab extends StatefulWidget {
   State<PendelInfoTab> createState() => _PendelInfoTabState();
 }
 
-final pendelDateFormat = DateFormat("dd.MM., hh:mm", "de-DE");
+final pendelDateFormat = DateFormat("dd.MM., HH:mm", "de-DE");
 
 String formatForDisplay(double? num, int precision, [String? suffix, String? orElse])
   => num != null ? ((num * pow(10, precision)).roundToDouble() / pow(10, precision)).toString().replaceAll(".", ",") + (suffix ?? "") : orElse ?? "-";

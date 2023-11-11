@@ -13,7 +13,7 @@ class HomeLSLinkWidget extends StatelessWidget {
       color: hasDarkTheme(context) ? colorWithLightness(Colors.green, .15) : Colors.green,
       title: const Text("LernSax öffnen"),
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(255, 25, 88, 28) : Colors.green.shade100, foregroundColor: hasDarkTheme(context) ? Colors.white : const Color.fromARGB(255, 20, 67, 23)),
+        style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(255, 10, 36, 11) : Colors.green.shade100, foregroundColor: hasDarkTheme(context) ? Colors.white : const Color.fromARGB(255, 20, 67, 23)),
         onPressed: (){
           lernSaxOpenInBrowser(context);
         },

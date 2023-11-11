@@ -60,17 +60,12 @@ class NavEntry extends StatefulWidget {
 const expandDuration = 200;
 const reverseExpandDuration = 100;
 
-// from ChatGPT: https://chat.openai.com/share/8a597b7b-99e7-4be5-9df2-4b268912aa2f
-String replaceLast(String original, String find, String replace) {
-  int lastIndex = original.lastIndexOf(find);
-  if (lastIndex == -1) {
-    return original; // Substring not found, return the original string.
+String joinWithOptions(List<dynamic> toJoin, String joinStr, String joinStrLast) {
+  var out = "";
+  for (var i = 0; i < toJoin.length; i++) {
+    out += toJoin[i].toString() + ((i == toJoin.length - 1) ? "" : (i == toJoin.length - 2) ? joinStrLast : joinStr);
   }
-
-  String beforeLast = original.substring(0, lastIndex);
-  String afterLast = original.substring(lastIndex + find.length);
-
-  return '$beforeLast$replace$afterLast';
+  return out;
 }
 
 class _NavEntryState extends State<NavEntry> {
@@ -85,7 +80,7 @@ class _NavEntryState extends State<NavEntry> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Zugriff nur mit Anmeldung"),
-          content: Text("Um auf diese Funktion zuzugreifen, ${sie ? "melden Sie sich" : "melde Dich"} bitte als ${replaceLast(widget.unlockedFor.join(", "), ", ", " oder ")} an."),
+          content: Text("Um auf diese Funktion zuzugreifen, ${sie ? "melden Sie sich" : "melde Dich"} bitte als ${joinWithOptions(widget.unlockedFor, ", ", " oder ")} an."),
           actions: [
             TextButton(
               onPressed: () {

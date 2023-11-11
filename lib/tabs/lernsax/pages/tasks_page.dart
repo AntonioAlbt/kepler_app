@@ -251,6 +251,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
       for (final (i, membership) in memberships.indexed) {
         final (online, newData) = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!, classLogin: membership?.login);
 
+        if (!mounted) return null;
         if (!online) {
           text = (online == false && lsdata.lastTasksUpdateDiff.inHours >= 24 && lsdata.tasks != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue Aufgaben verfügbar sein." : "";
           showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", clear: true, error: true);
@@ -263,7 +264,6 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
         } else {
           data.addAll(newData);
         }
-        if (!mounted) return null;
         setState(() => _loadingProgress = ((i + 1) / memberships.length * 100).round());
       }
 
