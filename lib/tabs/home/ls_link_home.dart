@@ -5,11 +5,14 @@ import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 
 class HomeLSLinkWidget extends StatelessWidget {
-  const HomeLSLinkWidget({super.key});
+  final String id;
+
+  const HomeLSLinkWidget({super.key, required this.id});
 
   @override
   Widget build(BuildContext context) {
     return HomeWidgetBase(
+      id: id,
       color: hasDarkTheme(context) ? colorWithLightness(Colors.green, .15) : Colors.green,
       title: const Text("LernSax öffnen"),
       child: ElevatedButton(
@@ -20,7 +23,7 @@ class HomeLSLinkWidget extends StatelessWidget {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("LernSax angemeldet im Browser öffnen"),
+            Flexible(child: Text("LernSax angemeldet im Browser öffnen")),
             Padding(
               padding: EdgeInsets.only(left: 4),
               child: Icon(Icons.open_in_new, size: 16),

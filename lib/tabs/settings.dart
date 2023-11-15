@@ -13,6 +13,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -122,6 +123,22 @@ class _SettingsTabState extends State<SettingsTab> {
                       ],
                     ),
                   ),
+                ),
+              ],
+            ),
+            SettingsSection(
+              title: const Text("Startseite"),
+              tiles: [
+                SettingsTile.switchTile(
+                  initialValue: prefs.showHomeWidgetEditOptions,
+                  onToggle: (val) => prefs.showHomeWidgetEditOptions = val,
+                  title: const Text("Bearbeiten-Knöpfe anzeigen"),
+                  description: const Text("z.B. \"Ausblenden\" und \"Verschieben\" bei Widgets anzeigen"),
+                ),
+                SettingsTile.navigation(
+                  title: const Text("Widget-Reihenfolge ändern"),
+                  description: const Text("Reihenfolge der Informationsblöcke auf der Startseite ändern"),
+                  onPressed: (_) => openReorderHomeWidgetDialog(context),
                 ),
               ],
             ),

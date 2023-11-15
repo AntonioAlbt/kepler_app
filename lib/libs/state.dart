@@ -209,6 +209,9 @@ class InternalState extends SerializableObject with ChangeNotifier {
   set infosShown(List<String> val) => _setSaveNotify("infos_shown", val.join("|"));
   void addInfoShown(String info) => infosShown = infosShown..add(info);
 
+  List<String> get widgetsAdded => (attributes["widgets_added"] as String?)?.split("|") ?? [];
+  set widgetsAdded(List<String> val) => _setSaveNotify("widgets_added", val.join("|"));
+
   String? get nowOpenOnStartup => attributes["open_on_startup"];
   set nowOpenOnStartup(String? val) => _setSaveNotify("open_on_startup", val);
 

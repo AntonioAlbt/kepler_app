@@ -6,13 +6,16 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:provider/provider.dart';
 
 class HomeStuPlanWidget extends StatefulWidget {
-  const HomeStuPlanWidget({super.key});
+  final String id;
+
+  const HomeStuPlanWidget({super.key, required this.id});
 
   @override
   State<HomeStuPlanWidget> createState() => HomeStuPlanWidgetState();
@@ -35,27 +38,13 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
         final sie = prefs.preferredPronoun == Pronoun.sie;
         final user = state.userType;
         final date = shouldGoToNextPlanDay(context) ? DateTime.now().add(const Duration(days: 1)) : DateTime.now();
-        return Card(
+        return HomeWidgetBase(
+          id: widget.id,
+          title: Text("${shouldGoToNextPlanDay(context) ? "Morgige" : "Heutige"} Vertretungen"),
           color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .2 : .8),
+          titleColor: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .05 : .9),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Card(
-                  color: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .05 : .85),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                      child: Text(
-                        "${shouldGoToNextPlanDay(context) ? "Morgige" : "Heutige"} Vertretungen",
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               if (user == UserType.nobody) Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
                 child: SPListContainer(

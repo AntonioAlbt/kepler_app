@@ -297,7 +297,9 @@ class _TheDrawerState extends State<TheDrawer> {
         shrinkWrap: true,
         scrollDirection: Axis.vertical,
         children: [
-          const DrawerHeader(child: Text("Kepler-App")),
+          const DrawerHeader(
+            child: Text("Kepler-App"),
+          ),
           ...entries,
           const Padding(padding: EdgeInsets.all(4))
         ],

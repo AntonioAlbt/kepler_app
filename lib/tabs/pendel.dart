@@ -232,7 +232,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 3700));
     _controller.repeat(reverse: true);
     _autoReload();
   }
@@ -257,32 +257,36 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
       dataAvailable = false;
     });
 
-    try {
-      final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);
-      // the values should already be double-s, but just to be safe, convert them anyway
-      // the api is sometimes unreliable
-      cpu = double.tryParse(res["cpu"]?.toString() ?? "-");
-      ram = double.tryParse(res["ram"]?.toString() ?? "-");
-      angle = double.tryParse(res["angle"]?.toString() ?? "-");
-      lastUpdate = DateTime.tryParse(res["date"]?.toString() ?? "-")?.toLocal();
-      period = double.tryParse(res["period"]?.toString() ?? "-");
-      dataAvailable = true;
-    } catch (e, s) {
-      if (kDebugFeatures) {
-        cpu = double.tryParse("9.31415");
-        ram = double.tryParse("15.3092341");
-        angle = double.tryParse("66.66666");
-        lastUpdate = DateTime.parse(DateTime(2020, 3, 11).toString());
-        period = double.tryParse("31");
-      }
-      // can be simplified, but is better readable this way
-      dataAvailable = kDebugFeatures ? true : false;
-      if (kDebugMode) print("$e - $s");
-    }
+    final (date_, angle_, period_, cpu_, ram_) = await getPendelData();
+    lastUpdate = date_; angle = angle_; period = period_; cpu = cpu_; ram = ram_;
+    dataAvailable = angle != null;
     if (!mounted) return;
 
     setState(() {
       _loading = false;
     });
   }
+}
+
+Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
+  try {
+    final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);
+    // the values should already be double-s, but just to be safe, convert them anyway
+    // the api is sometimes unreliable
+    return (
+      DateTime.tryParse(res["date"]?.toString() ?? "-")?.toLocal(),
+      double.tryParse(res["angle"]?.toString() ?? "-"),
+      double.tryParse(res["period"]?.toString() ?? "-"),
+      double.tryParse(res["cpu"]?.toString() ?? "-"),
+      double.tryParse(res["ram"]?.toString() ?? "-"),
+    );
+  } catch (e, s) {
+    if (kDebugFeatures) {
+      return (DateTime(2020, 3, 11), 66.66, 31.2, 9.2314, 15.309);
+    }
+    // // can be simplified, but is better readable this way
+    // dataAvailable = kDebugFeatures ? true : false;
+    if (kDebugMode) print("$e - $s");
+  }
+  return (null, null, null, null, null);
 }

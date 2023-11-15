@@ -3,6 +3,8 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
+import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/home/foucault_home.dart';
 import 'package:kepler_app/tabs/home/ls_link_home.dart';
 import 'package:kepler_app/tabs/home/ls_mails_home.dart';
@@ -10,6 +12,7 @@ import 'package:kepler_app/tabs/home/ls_notifs_home.dart';
 import 'package:kepler_app/tabs/home/ls_tasks_home.dart';
 import 'package:kepler_app/tabs/home/news_home.dart';
 import 'package:kepler_app/tabs/home/stuplan_home.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
 class HomepageTab extends StatefulWidget {
@@ -20,14 +23,16 @@ class HomepageTab extends StatefulWidget {
 }
 
 final homeWidgetKeyMap = {
-  "news": const HomeNewsWidget(),
-  "stuplan": const HomeStuPlanWidget(),
-  "lernsax_browser": const HomeLSLinkWidget(),
-  "lernsax_notifs": const HomeLSNotifsWidget(),
-  "lernsax_mails": const HomeLSMailsWidget(),
-  "lernsax_tasks": const HomeLSTasksWidget(),
-  "foucault": const HomePendulumWidget(),
+  "news": ("Kepler-News", const HomeNewsWidget(id: "news")),
+  "stuplan": ("Aktuelle Vertretungen", const HomeStuPlanWidget(id: "stuplan")),
+  "lernsax_browser": ("LernSax öffnen", const HomeLSLinkWidget(id: "lernsax_browser")),
+  "lernsax_notifs": ("LernSax: Benachrichtigungen", const HomeLSNotifsWidget(id: "lernsax_notifs")),
+  "lernsax_mails": ("LernSax: E-Mails", const HomeLSMailsWidget(id: "lernsax_mails")),
+  "lernsax_tasks": ("LernSax: Aufgaben", const HomeLSTasksWidget(id: "lernsax_tasks")),
+  "foucault": ("Foucaultsches Pendel", const HomePendulumWidget(id: "foucault")),
 };
+
+final widgetsForNotLoggedIn = ["news", "foucault"];
 
 class _HomepageTabState extends State<HomepageTab> {
   @override
@@ -40,10 +45,15 @@ class _HomepageTabState extends State<HomepageTab> {
             builder: (context, prefs, _) {
               return Column(
                 children: [
-                  ...homeWidgetKeyMap.values.map((widget) => Padding(
+                  ...prefs.homeScreenWidgetOrderList.where((id) => homeWidgetKeyMap.keys.contains(id) && !prefs.hiddenHomeScreenWidgets.contains(id)).map((widget) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: widget,
+                    child: homeWidgetKeyMap[widget]?.$2,
                   )),
+                  if (prefs.hiddenHomeScreenWidgets.length == homeWidgetKeyMap.keys.length) const Text("Alle Widgets sind ausgeblendet."),
+                  TextButton(
+                    onPressed: () => openReorderHomeWidgetDialog(context),
+                    child: const Text("Ausgeblendete Widgets verwalten"),
+                  ),
                   if (kDebugFeatures) ElevatedButton(
                     onPressed: () {
                       sendNotification(title: "News Notify", body: "- Antonio ist der beste\n- #pride", notifKey: newsNotificationKey);
@@ -70,4 +80,74 @@ class _HomepageTabState extends State<HomepageTab> {
       ),
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+    final prefs = Provider.of<Preferences>(context, listen: false);
+    final istate = Provider.of<InternalState>(context, listen: false);
+    final notLoggedIn = Provider.of<AppState>(context, listen: false).userType == UserType.nobody;
+    final newIds = homeWidgetKeyMap.keys.where((id) => !istate.widgetsAdded.contains(id) && !prefs.homeScreenWidgetOrderList.contains(id)).where((id) {
+      return notLoggedIn ? widgetsForNotLoggedIn.contains(id) : true;
+    }).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      prefs.homeScreenWidgetOrderList = prefs.homeScreenWidgetOrderList.where((id) {
+        return homeWidgetKeyMap.keys.contains(id) && (notLoggedIn ? widgetsForNotLoggedIn.contains(id) : true);
+      }).toList() + newIds;
+      prefs.homeScreenWidgetOrderList = prefs.homeScreenWidgetOrderList.toSet().toList();
+      prefs.hiddenHomeScreenWidgets = prefs.hiddenHomeScreenWidgets.where((e) => e != "").toSet().toList();
+      istate.widgetsAdded = newIds;
+    });
+  }
 }
+
+Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog(context: baseContext, builder: (context) {
+  final prefs = Provider.of<Preferences>(globalScaffoldContext);
+  return AnimatedBuilder(
+    animation: prefs,
+    builder: (context, _) => AlertDialog(
+      title: const Text("Reihenfolge"),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Theme(
+          data: Theme.of(context).copyWith(platform: TargetPlatform.windows),
+          child: ReorderableListView(
+            shrinkWrap: true,
+            onReorder: (int oldIndex, int newIndex) {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final l = prefs.homeScreenWidgetOrderList;
+              final old = l.removeAt(oldIndex);
+              l.insert(newIndex, old);
+              prefs.homeScreenWidgetOrderList = l;
+            },
+            children: prefs.homeScreenWidgetOrderList.map((id) => Padding(
+              key: ValueKey(id),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(
+                children: [
+                  IconButton(icon: Icon(prefs.hiddenHomeScreenWidgets.contains(id) ? MdiIcons.eyeOff : MdiIcons.eye, size: 20), onPressed: () {
+                    prefs.hiddenHomeScreenWidgets = (prefs.hiddenHomeScreenWidgets.contains(id)) ? (prefs.hiddenHomeScreenWidgets..remove(id)) : (prefs.hiddenHomeScreenWidgets..add(id));
+                  }),
+                  Flexible(
+                    child: Text(
+                      homeWidgetKeyMap[id]?.$1 ?? "Unbekannt",
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Schließen"),
+        ),
+      ],
+    ),
+  );
+});

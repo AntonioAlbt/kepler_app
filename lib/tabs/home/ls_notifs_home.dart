@@ -11,16 +11,20 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:provider/provider.dart';
 
 class HomeLSNotifsWidget extends StatelessWidget {
-  const HomeLSNotifsWidget({super.key});
+  final String id;
+
+  const HomeLSNotifsWidget({super.key, required this.id});
 
   @override
   Widget build(BuildContext context) {
     return HomeWidgetBase(
+      id: id,
       color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 47, 135, 207), .1) : Colors.blue,
       title: const Text("LernSax: Benachrichtigungen"),
       child: Consumer<LernSaxData>(
         builder: (context, lsdata, _) {
           final notifs = lsdata.notifications;
+          // TODO: load notifs when not loaded
           if (notifs == null || notifs.isEmpty) {
             return const Center(child: Text("Benachrichtigungen konnten nicht geladen werden."));
           }

@@ -13,7 +13,7 @@ const sUrlMKlXmlPath = "$sUrlMPath/mobdaten/Klassen.xml";
 
 const lUrlDPath = "/VplanonlineL";
 const lUrlMPath = "/VmobilL";
-const lUrlMLeXmlPath = "$sUrlDPath/mobdaten/Lehrer.xml";
+const lUrlMLeXmlPath = "$lUrlDPath/mobdaten/Lehrer.xml";
 
 Uri sUrlMKlXmlUrl(String host) => Uri.parse("$host$sUrlMKlXmlPath");
 Uri lUrlMLeXmlUrl(String host) => Uri.parse("$host$lUrlMLeXmlPath");

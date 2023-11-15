@@ -126,6 +126,7 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
     Provider.of<InternalState>(ctx, listen: false).introShown = false;
+    Provider.of<Preferences>(ctx, listen: false).startNavPage = PageIDs.home;
   }
   Provider.of<AppState>(ctx, listen: false)
     ..selectedNavPageIDs = [PageIDs.home] // isn't neccessarily the default screen (because of prefs), but idc

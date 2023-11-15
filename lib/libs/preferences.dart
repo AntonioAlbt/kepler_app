@@ -75,11 +75,14 @@ class Preferences extends SerializableObject with ChangeNotifier {
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);
   void removeHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..remove(id);
 
-  List<String> get homeScreenWidgetList => cast<String>(attributes["hs_widget_list"])?.split(",") ?? [];
-  set homeScreenWidgetList(List<String> val) => setSaveNotify("hs_widget_list", val);
+  List<String> get homeScreenWidgetOrderList => cast<String>(attributes["hs_widget_list"])?.split("|") ?? [];
+  set homeScreenWidgetOrderList(List<String> val) => setSaveNotify("hs_widget_list", val.join("|"));
   void resetHomeScreenWidgetList() {
-    homeScreenWidgetList = homeWidgetKeyMap.keys.toList();
+    homeScreenWidgetOrderList = homeWidgetKeyMap.keys.toList();
   }
+
+  List<String> get hiddenHomeScreenWidgets => cast<String>(attributes["hs_hidden_widgets"])?.split("|") ?? [];
+  set hiddenHomeScreenWidgets(List<String> val) => setSaveNotify("hs_hidden_widgets", val.join("|"));
 
   String get startNavPage => attributes["start_nav_page"] ?? PageIDs.home;
   set startNavPage(String val) => setSaveNotify("start_nav_page", val);
@@ -109,6 +112,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
     setSaveNotify("sentry_enabled", val);
     globalSentryEnabled = val;
   }
+  
+  bool get showHomeWidgetEditOptions => attributes["show_home_weo"] ?? true;
+  set showHomeWidgetEditOptions(bool val) => setSaveNotify("show_home_weo", val);
 
   bool loaded = false;
 

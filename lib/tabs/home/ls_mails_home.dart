@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
 
 class HomeLSMailsWidget extends StatelessWidget {
-  const HomeLSMailsWidget({super.key});
+  final String id;
+
+  const HomeLSMailsWidget({super.key, required this.id});
 
   @override
   Widget build(BuildContext context) {
-    return const HomeWidgetBase(
+    return HomeWidgetBase(
+      id: id,
       color: Colors.blue,
-      title: Text("LernSax: E-Mails"),
-      child: SizedBox(
+      title: const Text("LernSax: E-Mails"),
+      child: const SizedBox(
         width: 100,
         height: 100,
         child: Placeholder(),
