@@ -12,7 +12,6 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
 
 class LernSaxTab extends StatefulWidget {
   const LernSaxTab({super.key});
@@ -22,8 +21,6 @@ class LernSaxTab extends StatefulWidget {
 }
 
 class _LernSaxTabState extends State<LernSaxTab> {
-  late final VideoPlayerController _controller;
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
@@ -42,12 +39,6 @@ class _LernSaxTabState extends State<LernSaxTab> {
   @override
   void initState() {
     super.initState();
-    // TODO: fix video player
-    _controller = VideoPlayerController.asset(
-      "ls_notif_explain_light.mp4",
-    );
-    _controller.setLooping(true);
-    _controller.play();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final istate = Provider.of<InternalState>(context, listen: false);
       final creds = Provider.of<CredentialStore>(context, listen: false);
@@ -88,15 +79,9 @@ class _LernSaxTabState extends State<LernSaxTab> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text("Info"),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Wir können nicht überprüfen, ob ${sie ? "Sie" : "Du"} für alle Klassen oder Gruppen Benachrichtigungen aktiviert ${sie ? "haben" : "hast"}.\n"
-                      "Falls ${sie ? "Sie" : "Du"} dies selbst überprüfen ${sie ? "wollen, sehen Sie" : "willst, siehst du"} hier, wie das geht:",
-                    ),
-                    VideoPlayer(_controller),
-                  ],
+                content: Text(
+                  "Wir können nicht überprüfen, ob ${sie ? "Sie" : "Du"} für alle Klassen oder Gruppen Benachrichtigungen aktiviert ${sie ? "haben" : "hast"}.\n"
+                  "${sie ? "Sie können" : "Du kannst"} dies im Browser aber selbst überprüfen.",
                 ),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
