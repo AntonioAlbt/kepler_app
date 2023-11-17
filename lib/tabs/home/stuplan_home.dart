@@ -204,6 +204,7 @@ class SPWidgetList extends StatelessWidget {
         shadow: false,
         padding: EdgeInsets.zero,
         showBorder: false,
+        // could've used a builder here, but whatever - it's just a bit less readable this way
         child: () {
           Widget? child;
           if (evrydayIsSaturday() && !shouldGoToNextPlanDay(context)) {

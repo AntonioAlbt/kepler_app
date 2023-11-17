@@ -23,7 +23,7 @@ class HomeLSLinkWidget extends StatelessWidget {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(child: Text("LernSax angemeldet im Browser öffnen")),
+            Flexible(child: Text("Im Browser öffnen")),
             Padding(
               padding: EdgeInsets.only(left: 4),
               child: Icon(Icons.open_in_new, size: 16),

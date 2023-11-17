@@ -215,9 +215,8 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                       ),
                     ),
                     TextSpan(
-                      text: DateFormat.yMMMMd().format(data.createdDate),
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
+                      text: DateFormat.yMMMMd("de-DE").format(data.createdDate),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
                     ),
                   ],
                 ),

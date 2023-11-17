@@ -197,6 +197,7 @@ final destinations = [
     label: Text("LernSax"),
     selectedIcon: Icon(Icons.laptop),
     lockedFor: [UserType.nobody],
+    redirectTo: [LernSaxPageIDs.main, LernSaxPageIDs.notifications],
     children: [
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,

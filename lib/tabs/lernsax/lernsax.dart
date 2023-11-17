@@ -33,7 +33,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
         if (navPage == LernSaxPageIDs.tasks) return LSTasksPage();
         if (navPage == LernSaxPageIDs.emails) return LSMailsPage();
-        if (navPage == LernSaxPageIDs.main) return const LSHomePage();
+        // if (navPage == LernSaxPageIDs.main) return const LSHomePage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
     );
@@ -114,12 +114,13 @@ class _LernSaxTabState extends State<LernSaxTab> {
   }
 }
 
+// currently unused
 class LSHomePage extends StatelessWidget {
   const LSHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // TODO: make available soon, at least basic overview
+    // TODO - future: make available, maybe special overview
     return const Center(
       child: Text("Bald verfügbar."),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/privacy_policy.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutTab extends StatefulWidget {
@@ -21,6 +22,16 @@ class _AboutTabState extends State<AboutTab> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text("Kepler-App, erstellt 2023 von A. Albert", style: Theme.of(context).textTheme.bodyLarge),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: FutureBuilder(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, datasn) {
+                    if (!datasn.hasData) return const Text("App-Version: unbekannt");
+                    return Text("App-Version: ${datasn.data?.version} (${datasn.data?.buildNumber})");
+                  }
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: ElevatedButton(
