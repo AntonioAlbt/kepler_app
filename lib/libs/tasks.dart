@@ -182,7 +182,8 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
         if (!selectedCourseIds.contains(lesson.subjectID)) continue;
         final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == l.schoolHour, orElse: () => null);
         if (oldLesson == null) {
-          if (lesson.roomChanged || lesson.subjectChanged || lesson.teacherChanged) {
+          // if the lesson is new and changed
+          if (lesson.roomChanged || lesson.subjectChanged || lesson.teacherChanged || lesson.infoText != "") {
             differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);
           }
         } else {

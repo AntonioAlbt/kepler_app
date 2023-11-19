@@ -4,7 +4,6 @@ import 'package:html_unescape/html_unescape.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/preferences.dart';
-import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/news/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';

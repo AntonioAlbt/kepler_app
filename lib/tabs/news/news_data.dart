@@ -1,6 +1,80 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:enough_serialization/enough_serialization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:kepler_app/libs/filesystem.dart';
+import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:universal_feed/universal_feed.dart';
+
+Future<String> get newsCacheDataFilePath async => "${await cacheDirPath}/$newsCachePrefKey-data.json";
+class NewsCache extends SerializableObject with ChangeNotifier {
+  NewsCache() {
+    objectCreators["news_data"] = (map) => <NewsEntryData>[];
+    objectCreators["news_data.value"] = (val) {
+      final obj = NewsEntryData();
+      _serializer.deserialize(jsonEncode(val), obj);
+      return obj;
+    };
+  }
+
+  final _serializer = Serializer();
+  bool loaded = false;
+  final Lock _fileLock = Lock();
+  Future<void> save() async {
+    if (_fileLock.locked) log("The file lock for NewsCache (file: cache/$newsCachePrefKey-data.json) is still locked!!! This means waiting...");
+    _fileLock.synchronized(() async => await writeFile(await newsCacheDataFilePath, _serialize()));
+  }
+
+  void _setSaveNotify(String key, dynamic data) {
+    attributes[key] = data;
+    notifyListeners();
+    save();
+  }
+
+  List<NewsEntryData> get newsData => attributes["news_data"] ?? [];
+  set newsData(List<NewsEntryData> val) => _setSaveNotify("news_data", val);
+
+  String _serialize() => _serializer.serialize(this);
+  void loadFromJson(String json) {
+    try {
+      _serializer.deserialize(json, this);
+    } catch (e, s) {
+      log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
+      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
+      return;
+    }
+    loaded = true;
+  }
+
+  NewsEntryData? getCachedNewsData(String link) {
+    return newsData.firstWhere((element) => element.link == link);
+  }
+
+  void addNewsData(List<NewsEntryData> data, {bool sort = true}) {
+    final oldData = newsData;
+    oldData.addAll(data);
+    if (sort) {
+      newsData = oldData..sort((a, b) => b.createdDate.compareTo(a.createdDate));
+    } else {
+      newsData = oldData;
+    }
+  }
+
+  void insertNewsData(int index, List<NewsEntryData> data, {bool sort = true}) {
+    final oldData = newsData;
+    oldData.insertAll(index, data);
+    if (sort) {
+      newsData = oldData..sort((a, b) => b.createdDate.compareTo(a.createdDate));
+    } else {
+      newsData = oldData;
+    }
+  }
+}
 
 const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 

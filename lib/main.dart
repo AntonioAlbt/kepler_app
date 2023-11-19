@@ -40,6 +40,7 @@ final _lernSaxData = LernSaxData();
 
 final ConfettiController globalConfettiController = ConfettiController();
 
+/// is necessary for codeblocks that aren't supposed to require passing the preferences value along every time
 var globalSentryEnabled = kIsBetaVersion && kSentryEnabled;
 
 Future<void> loadAndPrepareApp() async {

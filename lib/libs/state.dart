@@ -1,19 +1,11 @@
-import 'dart:convert';
-import 'dart:developer';
-
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kepler_app/info_screen.dart';
-import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart' as indiware show baseUrl;
 import 'package:kepler_app/libs/lernsax.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
-import 'package:kepler_app/tabs/news/news_data.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:synchronized/synchronized.dart';
 
 late final SharedPreferences sharedPreferences;
 bool hasDarkTheme(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
@@ -64,71 +56,6 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     vpHost = null;
     vpUser = null;
     vpPassword = null;
-  }
-}
-
-Future<String> get newsCacheDataFilePath async => "${await cacheDirPath}/$newsCachePrefKey-data.json";
-class NewsCache extends SerializableObject with ChangeNotifier {
-  NewsCache() {
-    objectCreators["news_data"] = (map) => <NewsEntryData>[];
-    objectCreators["news_data.value"] = (val) {
-      final obj = NewsEntryData();
-      _serializer.deserialize(jsonEncode(val), obj);
-      return obj;
-    };
-  }
-
-  final _serializer = Serializer();
-  bool loaded = false;
-  final Lock _fileLock = Lock();
-  Future<void> save() async {
-    if (_fileLock.locked) log("The file lock for NewsCache (file: cache/$newsCachePrefKey-data.json) is still locked!!! This means waiting...");
-    _fileLock.synchronized(() async => await writeFile(await newsCacheDataFilePath, _serialize()));
-  }
-
-  void _setSaveNotify(String key, dynamic data) {
-    attributes[key] = data;
-    notifyListeners();
-    save();
-  }
-
-  List<NewsEntryData> get newsData => attributes["news_data"] ?? [];
-  set newsData(List<NewsEntryData> val) => _setSaveNotify("news_data", val);
-
-  String _serialize() => _serializer.serialize(this);
-  void loadFromJson(String json) {
-    try {
-      _serializer.deserialize(json, this);
-    } catch (e, s) {
-      log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
-      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
-      return;
-    }
-    loaded = true;
-  }
-
-  NewsEntryData? getCachedNewsData(String link) {
-    return newsData.firstWhere((element) => element.link == link);
-  }
-
-  void addNewsData(List<NewsEntryData> data, {bool sort = true}) {
-    final oldData = newsData;
-    oldData.addAll(data);
-    if (sort) {
-      newsData = oldData..sort((a, b) => b.createdDate.compareTo(a.createdDate));
-    } else {
-      newsData = oldData;
-    }
-  }
-
-  void insertNewsData(int index, List<NewsEntryData> data, {bool sort = true}) {
-    final oldData = newsData;
-    oldData.insertAll(index, data);
-    if (sort) {
-      newsData = oldData..sort((a, b) => b.createdDate.compareTo(a.createdDate));
-    } else {
-      newsData = oldData;
-    }
   }
 }
 
@@ -211,9 +138,6 @@ class InternalState extends SerializableObject with ChangeNotifier {
 
   List<String> get widgetsAdded => (attributes["widgets_added"] as String?)?.split("|") ?? [];
   set widgetsAdded(List<String> val) => _setSaveNotify("widgets_added", val.join("|"));
-
-  String? get nowOpenOnStartup => attributes["open_on_startup"];
-  set nowOpenOnStartup(String? val) => _setSaveNotify("open_on_startup", val);
 
   DateTime? get lastStuPlanAutoReload => (attributes.containsKey("last_sp_auto_rl") && attributes["last_sp_auto_rl"] != null) ? DateTime.parse(attributes["last_sp_auto_rl"]) : null;
   set lastStuPlanAutoReload(DateTime? val) => _setSaveNotify("last_sp_auto_rl", val?.toIso8601String());
