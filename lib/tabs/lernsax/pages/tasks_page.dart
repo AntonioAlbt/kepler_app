@@ -393,92 +393,7 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
               ),
             ),
             Flexible(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  textStyle: Theme.of(context).textTheme.bodyMedium,
-                  foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: () {
-                  if (widget.task.description != "") {
-                    showDialog(context: context, builder: (context) => generateLernSaxTaskInfoDialog(context, widget.task));
-                  } else {
-                    showSnackBar(text: "Keine weiteren Infos verfügbar.", clear: true, duration: const Duration(milliseconds: 500));
-                  }
-                },
-                child: Column(
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: SizedBox(
-                        key: ValueKey("${widget.task.title}$taskCompleted"),
-                        width: double.infinity,
-                        child: Text(
-                          widget.task.title,
-                          style: (taskCompleted) ? const TextStyle(decoration: TextDecoration.lineThrough, fontSize: 16, decorationThickness: 2) : const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                    if (widget.task.description != "") const SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        "Tippen, um Infos zur Aufgabe anzusehen.",
-                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
-                      ),
-                    ),
-                    if (kDebugFeatures) SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        "Class Login: ${widget.task.classLogin}",
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Row(
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            child: Icon(
-                              key: ValueKey(_shouldBeCompleted()),
-                              MdiIcons.clock,
-                              size: 18,
-                              color: _shouldBeCompleted() ? Colors.red : null,
-                            ),
-                          ),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: Text(_getDateInfoString(), style: const TextStyle(fontSize: 14)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(MdiIcons.account, size: 18, color: Colors.grey),
-                        Flexible(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  const TextSpan(text: "von "),
-                                  createLSNameMailSpan(widget.task.createdByName, widget.task.createdByLogin, addComma: false, translate: const Offset(0, 2)),
-                                ],
-                              ),
-                              style: const TextStyle(
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              child: LSTaskTile(task: widget.task, completed: taskCompleted),
             ),
           ],
         ),
@@ -498,9 +413,109 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
     _controller.dispose();
     super.dispose();
   }
+}
+
+class LSTaskTile extends StatelessWidget {
+  final LSTask task;
+  final bool completed;
+
+  const LSTaskTile({
+    super.key,
+    required this.task,
+    required this.completed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        textStyle: Theme.of(context).textTheme.bodyMedium,
+        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: () {
+        if (task.description != "") {
+          showDialog(context: context, builder: (context) => generateLernSaxTaskInfoDialog(context, task));
+        } else {
+          showSnackBar(text: "Keine weiteren Infos verfügbar.", clear: true, duration: const Duration(milliseconds: 500));
+        }
+      },
+      child: Column(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: SizedBox(
+              key: ValueKey("${task.title}$completed"),
+              width: double.infinity,
+              child: Text(
+                task.title,
+                style: (completed) ? const TextStyle(decoration: TextDecoration.lineThrough, fontSize: 16, decorationThickness: 2) : const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ),
+          if (task.description != "") const SizedBox(
+            width: double.infinity,
+            child: Text(
+              "Tippen, um Infos zur Aufgabe anzusehen.",
+              style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
+            ),
+          ),
+          if (kDebugFeatures) SizedBox(
+            width: double.infinity,
+            child: Text(
+              "Class Login: ${task.classLogin}",
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    key: ValueKey(_shouldBeCompleted()),
+                    MdiIcons.clock,
+                    size: 18,
+                    color: _shouldBeCompleted() ? Colors.red : null,
+                  ),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(_getDateInfoString(), style: const TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              const Icon(MdiIcons.account, size: 18, color: Colors.grey),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(text: "von "),
+                        createLSNameMailSpan(task.createdByName, task.createdByLogin, addComma: false, translate: const Offset(0, 2)),
+                      ],
+                    ),
+                    style: const TextStyle(
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   String _getDateInfoString() {
-    final task = widget.task;
     final startDefined = task.startDate != null;// && task.startDate!.millisecondsSinceEpoch > 100;
     if (startDefined || task.dueDate != null) {
       return ((startDefined) ? "vom ${lernSaxTimeFormat.format(task.startDate!)}" : "") + (startDefined && task.dueDate != null ? "\n" : "") + ((task.dueDate != null) ? "bis zum ${lernSaxTimeFormat.format(task.dueDate!)}" : "");
@@ -510,8 +525,8 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
   }
 
   bool _shouldBeCompleted() {
-    final due = widget.task.dueDate;
-    if (due == null || taskCompleted) return false;
+    final due = task.dueDate;
+    if (due == null || completed) return false;
     return due.isBefore(DateTime.now());
   }
 }

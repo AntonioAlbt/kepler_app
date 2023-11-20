@@ -82,6 +82,8 @@ Future<void> runNewsFetchTask() async {
       // );
   }
   if (newNews.isEmpty) return;
+  
+  newsCache.newsData = newsCache.newsData + newNews;
 
   sendNotification(
     title: "Neue Kepler-News",
