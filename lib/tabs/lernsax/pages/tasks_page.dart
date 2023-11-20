@@ -520,7 +520,7 @@ class LSTaskTile extends StatelessWidget {
     if (startDefined || task.dueDate != null) {
       return ((startDefined) ? "vom ${lernSaxTimeFormat.format(task.startDate!)}" : "") + (startDefined && task.dueDate != null ? "\n" : "") + ((task.dueDate != null) ? "bis zum ${lernSaxTimeFormat.format(task.dueDate!)}" : "");
     } else {
-      return "erstellt am ${task.createdAt}";
+      return "erstellt am ${lernSaxTimeFormat.format(task.createdAt)}";
     }
   }
 

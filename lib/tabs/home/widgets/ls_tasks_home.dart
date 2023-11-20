@@ -29,7 +29,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(Color.fromARGB(255, 35, 126, 13), .1) : Colors.green.shade400,
+      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 35, 126, 13), .1) : Colors.green.shade400,
       title: const Text("LernSax: Aufgaben"),
       child: Builder(
         builder: (context) {

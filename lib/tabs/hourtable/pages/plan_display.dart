@@ -720,7 +720,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     
     isSchoolHoliday = (widget.schoolHolidayList ?? []).any((date) => date.day == widget.date.day && date.month == widget.date.month && date.year == widget.date.year);
     if (isSchoolHoliday == true) {
-      if (prefs.confettiEnabled) globalConfettiController.play();
+      if (prefs.confettiEnabled) Future.delayed(const Duration(milliseconds: 100)).then((_) => globalConfettiController.play());
       setState(() => _loading = false);
       return true;
     }

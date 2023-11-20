@@ -30,7 +30,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(Color.fromARGB(255, 46, 129, 25), .1) : Colors.green,
+      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 46, 129, 25), .1) : Colors.green,
       title: const Text("LernSax: E-Mails"),
       child: Builder(
         builder: (context) {
