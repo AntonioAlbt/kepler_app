@@ -29,8 +29,9 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 47, 135, 207), .1) : Colors.blue,
+      color: hasDarkTheme(context) ? colorWithLightness(Color.fromARGB(255, 13, 126, 83), .1) : Colors.teal,
       title: const Text("LernSax: Benachrichtigungen"),
+      titleColor: Theme.of(context).cardTheme.surfaceTintColor,
       child: Builder(
         builder: (context) {
           if (loading) {

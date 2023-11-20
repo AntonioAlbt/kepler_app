@@ -29,8 +29,8 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 47, 135, 207), .1) : Colors.blue,
-      title: const Text("LernSax: Benachrichtigungen"),
+      color: hasDarkTheme(context) ? colorWithLightness(Color.fromARGB(255, 35, 126, 13), .1) : Colors.green.shade400,
+      title: const Text("LernSax: Aufgaben"),
       child: Builder(
         builder: (context) {
           if (loading) {
@@ -53,7 +53,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text("Keine Aufgaben. Bitte öffne die Seite \"Alle Aufgaben\"."),
+                child: Text("Keine Aufgaben. Bitte die Seite \"Alle Aufgaben\" öffnen."),
               ),
             );
           }
@@ -61,7 +61,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
             children: separatedListViewWithDividers(
               tasksSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: LSTaskTile(task: data, completed: data.completed),
+                child: LSTaskEntry(task: data, online: true),
               )).toList()
                 ..add(
                   ListTile(
