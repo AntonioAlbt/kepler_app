@@ -66,7 +66,7 @@ Future<void> loadAndPrepareApp() async {
 
   Workmanager().initialize(
     taskCallbackDispatcher,
-    // isInDebugMode: kDebugMode
+    // isInDebugMode: kDebugMode && kDebugNotifData,
   );
   // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
   if (Platform.isAndroid) {

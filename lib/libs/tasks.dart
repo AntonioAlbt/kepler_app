@@ -80,10 +80,11 @@ Future<void> runNewsFetchTask() async {
       //         ..summary = "der hat mir auch geholfen - vielen Dank an Vlad von VLANT :D"
       //         ..writer = "Jeman D'Anderes"
       // );
+  } else {
+    if (newNews.isEmpty) return;
+    
+    newsCache.newsData = newsCache.newsData + newNews;
   }
-  if (newNews.isEmpty) return;
-  
-  newsCache.newsData = newsCache.newsData + newNews;
 
   sendNotification(
     title: "Neue Kepler-News",
@@ -92,7 +93,6 @@ Future<void> runNewsFetchTask() async {
   );
 }
 
-// TODO: doesn't seem to be working -> test and fix
 Future<void> runStuPlanFetchTask() async {
   final spdata = StuPlanData();
   if (await fileExists(await stuPlanDataFilePath)) {
@@ -132,14 +132,14 @@ Future<void> runStuPlanFetchTask() async {
     };
   }
 
-  if (differentLessons == null) return;
+  if (differentLessons == null || differentLessons.isEmpty) return;
 
   initializeDateFormatting();
   final dateFormat = DateFormat("EE", "de-DE");
 
   sendNotification(
     title: "Neue Änderungen im Stundenplan",
-    body: differentLessons.entries.map((e) => "${dateFormat.format(e.key)}:\n   ${e.value.map((val) => "${val.schoolHour}: ${val.subjectCode}${val.teacherCode != "" ? " bei " : ""}${val.teacherCode}${val.roomCodes.isNotEmpty ? " (Raum ${val.roomCodes.join(", ")})" : ""}${val.infoText != "" ? " - Info: ${val.infoText}" : ""}").join("\n   ")}").join("\n"),
+    body: differentLessons.entries.map((e) => "${dateFormat.format(e.key)}:\n   ${e.value.map((val) => "${val.schoolHour}. Stunde - neu: ${val.subjectCode}${val.teacherCode != "" ? " bei " : ""}${val.teacherCode}${val.roomCodes.isNotEmpty ? " (Raum ${val.roomCodes.join(", ")})" : ""}${val.infoText != "" ? " - Info: ${val.infoText}" : ""}").join("\n   ")}").join("\n"),
     notifKey: stuPlanNotificationKey,
   );
 }
@@ -182,7 +182,8 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
       for (var lesson in klasse.lessons) {
         if (lesson.startTime == null || lesson.endTime == null) continue;
         if (!selectedCourseIds.contains(lesson.subjectID)) continue;
-        final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == l.schoolHour, orElse: () => null);
+        final multipleInHour = (oldKlasse?.lessons.where((l) => l.schoolHour == lesson.schoolHour).length ?? 0) > 1;
+        final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == lesson.schoolHour && (multipleInHour ? l.subjectID == lesson.subjectID : true), orElse: () => null);
         if (oldLesson == null) {
           // if the lesson is new and changed
           if (lesson.roomChanged || lesson.subjectChanged || lesson.teacherChanged || lesson.infoText != "") {
@@ -227,7 +228,8 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentTeacherLessons(CredentialStor
       final oldTeach = oldDatas[date]?.teachers.firstWhere((c) => c.teacherCode == teach.teacherCode);
       for (var lesson in teach.lessons) {
         if (lesson.startTime == null || lesson.endTime == null) continue;
-        final oldLesson = oldTeach?.lessons.firstWhere((l) => l.startTime == lesson.startTime && l.endTime == lesson.endTime);
+        final multipleInHour = (oldTeach?.lessons.where((l) => l.schoolHour == lesson.schoolHour).length ?? 0) > 1;
+        final oldLesson = oldTeach?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == lesson.schoolHour && (multipleInHour ? l.subjectID == lesson.subjectID : true), orElse: () => null);
         if (oldLesson == null) {
           if (lesson.roomChanged || lesson.subjectChanged || lesson.teachingClassChanged) {
             differentLessons[date] = (differentLessons[date] ?? [])..add(lesson);

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
-import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/home/widgets/foucault_home.dart';
 import 'package:kepler_app/tabs/home/widgets/ls_link_home.dart';
@@ -56,21 +56,17 @@ class _HomepageTabState extends State<HomepageTab> {
                   ),
                   if (kDebugFeatures) ElevatedButton(
                     onPressed: () {
-                      sendNotification(title: "News Notify", body: "- Antonio ist der beste\n- #pride", notifKey: newsNotificationKey);
+                      runNewsFetchTask();
                       showSnackBar(text: "sent");
                     },
-                    child: const Text("Send news notification"),
+                    child: const Text("Run news task"),
                   ),
                   if (kDebugFeatures) ElevatedButton(
                     onPressed: () {
-                      sendNotification(
-                        title: "Test StuPlan Notif",
-                        body: "Hallo, das ist ein Test.\n\nWir versuchen, Sie wegen\nverlängerter Garantie für Ihr Auto\nzu kontaktieren.",
-                        notifKey: stuPlanNotificationKey,
-                      );
+                      runStuPlanFetchTask();
                       showSnackBar(text: "sent");
                     },
-                    child: const Text("Send stuplan notification"),
+                    child: const Text("Run stuplan task"),
                   ),
                 ],
               );
