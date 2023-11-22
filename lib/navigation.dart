@@ -85,7 +85,10 @@ final destinations = [
     navbarActions: [
       if (kDebugFeatures) IconButton(
         onPressed: () {
-          Provider.of<AppState>(globalScaffoldContext, listen: false).infoScreen = InfoScreenDisplay(
+          final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+          state.selectedNavPageIDs = ["intro-non-existent"];
+          state.navPagesToOpenAfterNextISClose = [PageIDs.home];
+          state.infoScreen = InfoScreenDisplay(
             infoScreens: introScreens,
           );
         },
@@ -310,7 +313,7 @@ final flattenedDestinations = (){
   return list;
 }();
 
-NavEntryData currentlySelectedNavEntry(BuildContext context) {
+NavEntryData? currentlySelectedNavEntry(BuildContext context) {
   final id = Provider.of<AppState>(context).selectedNavPageIDs.last;
-  return flattenedDestinations.firstWhere((element) => element.id == id);
+  return flattenedDestinations.cast<NavEntryData?>().firstWhere((element) => element!.id == id, orElse: () => null);
 }

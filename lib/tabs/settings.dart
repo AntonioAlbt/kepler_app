@@ -49,6 +49,17 @@ class _SettingsTabState extends State<SettingsTab> {
         return SettingsList(
           platform: DevicePlatform.android,
           sections: [
+            if (userType == UserType.nobody) SettingsSection(
+              tiles: [
+                SettingsTile(
+                  title: const Text("Hinweis"),
+                  description: Selector<Preferences, bool>(
+                    selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+                    builder: (context, sie, _) => Text("${sie ? "Sie müssen" : "Du musst"} angemeldet sein, um die meisten Einstellungen zu ändern."),
+                  ),
+                ),
+              ],
+            ),
             SettingsSection(
               title: const Text("Allgemeines"),
               tiles: [
@@ -132,15 +143,17 @@ class _SettingsTabState extends State<SettingsTab> {
               title: const Text("Startseite"),
               tiles: [
                 SettingsTile.switchTile(
-                  initialValue: prefs.showHomeWidgetEditOptions,
+                  initialValue: prefs.showHomeWidgetEditOptions && userType != UserType.nobody,
                   onToggle: (val) => prefs.showHomeWidgetEditOptions = val,
                   title: const Text("Bearbeiten-Knöpfe anzeigen"),
                   description: const Text("z.B. \"Ausblenden\" und \"Verschieben\" bei Widgets anzeigen"),
+                  enabled: userType != UserType.nobody,
                 ),
                 SettingsTile.navigation(
                   title: const Text("Widget-Reihenfolge ändern"),
                   description: const Text("Reihenfolge der Informationsblöcke auf der Startseite ändern"),
                   onPressed: (_) => openReorderHomeWidgetDialog(context),
+                  enabled: userType != UserType.nobody,
                 ),
               ],
             ),

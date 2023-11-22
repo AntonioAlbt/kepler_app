@@ -30,7 +30,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 46, 129, 25), .1) : Colors.green,
+      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 46, 129, 25), .1) : Colors.green.shade300,
       title: const Text("LernSax: E-Mails"),
       child: Builder(
         builder: (context) {
@@ -70,7 +70,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
             children: separatedListViewWithDividers(
               mailsSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: LSMailTile(mail: data, folderId: folderId!),
+                child: LSMailTile(mail: data, folderId: folderId!, darkerIcons: !hasDarkTheme(context)),
               )).toList()
                 ..add(
                   ListTile(
@@ -110,8 +110,15 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
     setState(() {
       loading = true;
     });
+    final creds = Provider.of<CredentialStore>(context, listen: false);
 
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
+    if (lsdata.mailFolders == null) {
+      final (online, mailFolders) = await lernsax.getMailFolders(creds.lernSaxLogin!, creds.lernSaxToken!);
+      if (online && mailFolders != null) {
+        lsdata.mailFolders = mailFolders;
+      }
+    }
     final inbox = lsdata.mailFolders?.firstWhere((fl) => fl.isInbox);
     if (inbox == null) {
       setState(() {
@@ -123,9 +130,6 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
     mailsSlice = mails?.sublist(0, min(3, mails.length));
 
     if (mailsSlice?.isEmpty ?? true) {
-      // this only loads tasks from the user themselves, because i don't want to bother loading all tasks just for this widget
-      // all widgets will be considered if the users opens the task page
-      final creds = Provider.of<CredentialStore>(context, listen: false);
       final (online, mailLsts) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: inbox.id);
       if (!online || mailLsts == null) {
         mailsSlice = null;

@@ -17,7 +17,7 @@ class HomePendulumWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: id,
-      color: Colors.blue.shade800,
+      color: hasDarkTheme(context) ? Colors.blue.shade800 : Colors.blue.shade300,
       title: const Text("Foucaultsches Pendel"),
       child: FutureBuilder(
         future: getPendelData(),

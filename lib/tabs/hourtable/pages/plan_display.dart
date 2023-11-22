@@ -114,6 +114,16 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
         forceRefreshData();
         Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = DateTime.now();
       }
+      final creds = Provider.of<CredentialStore>(context, listen: false);
+      checkAndUpdateSPMetaData(
+        creds.vpHost ?? baseUrl,
+        creds.vpUser!,
+        creds.vpPassword!,
+        Provider.of<AppState>(context, listen: false).userType,
+        Provider.of<StuPlanData>(context, listen: false),
+      ).then((info) {
+        if (info != null) showSnackBar(text: info);
+      });
     });
   }
 
@@ -139,113 +149,120 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 600,
+        ),
+        child: Column(
           children: [
-            IconButton.outlined(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: (canGoBack())
-                  ? () => makeCurrentDateGoBack()
-                  : null,
-            ),
-            // IconButton(
-            //   icon: const Icon(Icons.fast_rewind),
-            //   onPressed: (currentDate.isAfter(DateTime.now())) ? () => setState(() {
-            //     currentDate = DateTime.now();
-            //   }) : null,
-            // ),
-            Expanded(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      format.format(currentDate),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  // because the max difference is 9 days (e.g. Sat -> Mon+1)
-                  // only the day needs to be checked for "today"
-                  if (currentDate.day == DateTime.now().day)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: hasDarkTheme(context)
-                              ? colorWithLightness(keplerColorOrange, .15)
-                              : colorWithLightness(keplerColorOrange, .8),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Text(
-                            "heute",
-                            style: TextStyle(height: 0),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (currentDate.day == startDate.add(const Duration(days: 1)).day)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: hasDarkTheme(context)
-                              ? colorWithLightness(Colors.green, .15)
-                              : colorWithLightness(Colors.green, .8),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Text(
-                            "morgen",
-                            style: TextStyle(height: 0),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // IconButton(
-            //   icon: const Icon(Icons.fast_forward),
-            //   onPressed: (currentDate.isBefore(getStartDate().add(const Duration(days: 13)))) ? () => setState(() {
-            //     currentDate = getStartDate().add(const Duration(days: 14));
-            //   }) : null,
-            // ),
-            IconButton.outlined(
-              icon: const Icon(Icons.arrow_forward),
-              onPressed:
-                  (canGoForward())
-                      ? () => makeCurrentDateGoForward()
+            Row(
+              children: [
+                IconButton.outlined(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: (canGoBack())
+                      ? () => makeCurrentDateGoBack()
                       : null,
+                ),
+                // IconButton(
+                //   icon: const Icon(Icons.fast_rewind),
+                //   onPressed: (currentDate.isAfter(DateTime.now())) ? () => setState(() {
+                //     currentDate = DateTime.now();
+                //   }) : null,
+                // ),
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          format.format(currentDate),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      // because the max difference is 9 days (e.g. Sat -> Mon+1)
+                      // only the day needs to be checked for "today"
+                      if (currentDate.day == DateTime.now().day)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: hasDarkTheme(context)
+                                  ? colorWithLightness(keplerColorOrange, .15)
+                                  : colorWithLightness(keplerColorOrange, .8),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                "heute",
+                                style: TextStyle(height: 0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (currentDate.day == startDate.add(const Duration(days: 1)).day)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: hasDarkTheme(context)
+                                  ? colorWithLightness(Colors.green, .15)
+                                  : colorWithLightness(Colors.green, .8),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                "morgen",
+                                style: TextStyle(height: 0),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // IconButton(
+                //   icon: const Icon(Icons.fast_forward),
+                //   onPressed: (currentDate.isBefore(getStartDate().add(const Duration(days: 13)))) ? () => setState(() {
+                //     currentDate = getStartDate().add(const Duration(days: 14));
+                //   }) : null,
+                // ),
+                IconButton.outlined(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed:
+                      (canGoForward())
+                          ? () => makeCurrentDateGoForward()
+                          : null,
+                ),
+              ],
+            ),
+            Flexible(
+              child: Selector<StuPlanData, List<DateTime>>(
+                selector: (_, stdata) => stdata.holidayDates,
+                builder: (_, holidayDates, __) => StuPlanDayDisplay(
+                  controller: _ctr,
+                  date: currentDate,
+                  key: ValueKey(currentDate.hashCode +
+                      widget.selected.hashCode +
+                      widget.mode.hashCode +
+                      holidayDates.hashCode),
+                  selected: widget.selected,
+                  mode: widget.mode,
+                  showInfo: widget.showInfo,
+                  allRooms: widget.allRooms,
+                  onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
+                  onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
+                  schoolHolidayList: holidayDates,
+                ),
+              ),
             ),
           ],
         ),
-        Flexible(
-          child: Selector<StuPlanData, List<DateTime>>(
-            selector: (_, stdata) => stdata.holidayDates,
-            builder: (_, holidayDates, __) => StuPlanDayDisplay(
-              controller: _ctr,
-              date: currentDate,
-              key: ValueKey(currentDate.hashCode +
-                  widget.selected.hashCode +
-                  widget.mode.hashCode +
-                  holidayDates.hashCode),
-              selected: widget.selected,
-              mode: widget.mode,
-              showInfo: widget.showInfo,
-              allRooms: widget.allRooms,
-              onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
-              onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
-              schoolHolidayList: holidayDates,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

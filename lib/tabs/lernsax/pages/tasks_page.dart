@@ -302,10 +302,12 @@ class LSTaskEntry extends StatefulWidget {
     super.key,
     required this.task,
     required this.online,
+    this.darkerIcons = false,
   });
 
   final LSTask task;
   final bool online;
+  final bool darkerIcons;
 
   @override
   State<LSTaskEntry> createState() => _LSTaskEntryState();
@@ -390,10 +392,11 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                   }
                 },
                 enabled: widget.online,
+                darkerColors: widget.darkerIcons,
               ),
             ),
             Flexible(
-              child: LSTaskTile(task: widget.task, completed: taskCompleted),
+              child: LSTaskTile(task: widget.task, completed: taskCompleted, darkerIcons: widget.darkerIcons),
             ),
           ],
         ),
@@ -418,11 +421,13 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
 class LSTaskTile extends StatelessWidget {
   final LSTask task;
   final bool completed;
+  final bool darkerIcons;
 
   const LSTaskTile({
     super.key,
     required this.task,
     required this.completed,
+    required this.darkerIcons,
   });
 
   @override
@@ -491,7 +496,7 @@ class LSTaskTile extends StatelessWidget {
           ),
           Row(
             children: [
-              const Icon(MdiIcons.account, size: 18, color: Colors.grey),
+              Icon(MdiIcons.account, size: 18, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
               Flexible(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 4),
@@ -499,7 +504,7 @@ class LSTaskTile extends StatelessWidget {
                     TextSpan(
                       children: [
                         const TextSpan(text: "von "),
-                        createLSNameMailSpan(task.createdByName, task.createdByLogin, addComma: false, translate: const Offset(0, 2)),
+                        createLSNameMailSpan(task.createdByName, task.createdByLogin, addComma: false, translate: const Offset(0, 2), darkerIcon: darkerIcons),
                       ],
                     ),
                     style: const TextStyle(
@@ -535,7 +540,8 @@ class LSTaskCheckBox extends StatefulWidget {
   final bool checked;
   final bool enabled;
   final Future<bool> Function(bool val)? updateChecked;
-  const LSTaskCheckBox({super.key, this.checked = false, this.updateChecked, this.enabled = true});
+  final bool darkerColors;
+  const LSTaskCheckBox({super.key, this.checked = false, this.updateChecked, this.enabled = true, this.darkerColors = false});
 
   @override
   State<LSTaskCheckBox> createState() => _LSTaskCheckBoxState();
@@ -644,7 +650,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
     if (!widget.enabled) return Colors.grey;
     return ColorTween(
       begin: hasDarkTheme(context) ? Colors.white : Colors.black,
-      end: hasDarkTheme(context) ? Colors.green.shade400 : Colors.green.shade600,
+      end: hasDarkTheme(context) ? Colors.green.shade400 : (widget.darkerColors ? Colors.green.shade900 : Colors.green.shade600),
     ).lerp(_controller.value)!;
   }
 

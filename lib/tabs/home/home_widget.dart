@@ -26,7 +26,6 @@ class HomeWidgetBase extends StatelessWidget {
           width: double.infinity,
           child: Column(
             children: [
-              
               if (title != null) Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Card(
@@ -47,7 +46,7 @@ class HomeWidgetBase extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (Provider.of<Preferences>(context).showHomeWidgetEditOptions) Align(
+                          if (Provider.of<Preferences>(context).showHomeWidgetEditOptions && Provider.of<AppState>(context).userType != UserType.nobody) Align(
                             alignment: AlignmentDirectional.topEnd,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,

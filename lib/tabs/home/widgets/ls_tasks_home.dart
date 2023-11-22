@@ -29,7 +29,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 35, 126, 13), .1) : Colors.green.shade400,
+      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 35, 126, 13), .1) : const Color.fromARGB(255, 148, 211, 168),
       title: const Text("LernSax: Aufgaben"),
       child: Builder(
         builder: (context) {
@@ -61,7 +61,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
             children: separatedListViewWithDividers(
               tasksSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: LSTaskEntry(task: data, online: true),
+                child: LSTaskEntry(task: data, online: true, darkerIcons: !hasDarkTheme(context)),
               )).toList()
                 ..add(
                   ListTile(

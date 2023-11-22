@@ -291,14 +291,75 @@ class _TheDrawerState extends State<TheDrawer> {
       .map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values
       .toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
+    const divisor = 2;
     return Drawer(
       child: ListView(
         controller: _controller,
         shrinkWrap: true,
         scrollDirection: Axis.vertical,
         children: [
-          const DrawerHeader(
-            child: Text("Kepler-App"),
+          DrawerHeader(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 50/divisor,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: keplerColorYellow,
+                            border: Border.all(width: 2),
+                          ),
+                          width: 200/divisor,
+                          height: 200/divisor,
+                        ),
+                      ),
+                      Positioned(
+                        top: 100/divisor,
+                        left: 160/divisor,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: keplerColorBlue,
+                          border: Border.all(width: 2),
+                          ),
+                          width: 115/divisor,
+                          height: 115/divisor,
+                        ),
+                      ),
+                      Positioned(
+                        top: 110/divisor,
+                        left: 30/divisor,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: keplerColorOrange,
+                          border: Border.all(width: 2),
+                          ),
+                          width: 140/divisor,
+                          height: 140/divisor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Center(
+                  child: SizedBox(
+                    width: 120,
+                    child: Text(
+                      "Kepler-\nApp",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           ...entries,
           const Padding(padding: EdgeInsets.all(4))

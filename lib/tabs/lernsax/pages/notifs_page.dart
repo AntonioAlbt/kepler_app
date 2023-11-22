@@ -115,9 +115,11 @@ class LSNotificationTile extends StatelessWidget {
   const LSNotificationTile({
     super.key,
     required this.notif,
+    this.darkerClock = false,
   });
 
   final LSNotification notif;
+  final bool darkerClock;
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +137,7 @@ class LSNotificationTile extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+                Icon(MdiIcons.clock, size: 16, color: darkerClock ? Colors.grey.shade900 : Colors.grey),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(lernSaxTimeFormatWithSeconds.format(notif.date)),

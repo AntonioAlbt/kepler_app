@@ -16,7 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, if (kSentryEnabled) sentryAcceptanceScreen, finishScreen];
+final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, if (kSentryEnabled && !kIsBetaVersion) sentryAcceptanceScreen, finishScreen];
 final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
 final loginAgainScreensUncloseable = [lernSaxLoginAgainScreen(false), stuPlanLoginAgainScreen, finishScreen];
 

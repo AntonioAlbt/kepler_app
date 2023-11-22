@@ -184,6 +184,62 @@ Future<UserType?> checkIndiwareData(String host, String username, String passwor
   }
 }
 
+Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vpPass, UserType utype, StuPlanData stuPlanData) async {
+  List<DateTime>? updatedFreeDays;
+  String? output;
+  if (utype == UserType.teacher && stuPlanData.availableTeachers != null && stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).abs().inDays >= 14) {
+    final (data, _) = await getLehrerXmlLeData(vpHost, vpUser, vpPass);
+    if (data != null) {
+      stuPlanData.loadDataFromLeData(data);
+      // check if selected teacher code doesn't exist anymore (because the school removed it)
+      if (stuPlanData.selectedTeacherName != null && data?.teachers.map((t) => t.teacherCode).contains(stuPlanData.selectedTeacherName!) == false) {
+        stuPlanData.selectedTeacherName = null;
+        output ??= "Achtung! Der gewählte Lehrer ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
+      }
+      updatedFreeDays = data.holidays.holidayDates;
+    } else {
+      output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+    }
+  } else if (
+    utype != UserType.nobody &&
+    (
+      (stuPlanData.availableClasses != null && stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).abs().inDays >= 14)
+      || (stuPlanData.availableSubjects.isNotEmpty && stuPlanData.lastAvailSubjectsUpdate.difference(DateTime.now()).abs().inDays >= 14)
+    )
+  ) {
+    final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
+    if (rawData != null) {
+      final data = xmlToKlData(rawData);
+      stuPlanData.loadDataFromKlData(data);
+      // check if selected class name doesn't exist anymore (because the school removed it)
+      if (stuPlanData.selectedClassName != null && data?.classes.map((t) => t.className).contains(stuPlanData.selectedClassName!) == false) {
+        stuPlanData.selectedClassName = null;
+        output ??= "Achtung! Die gewählte Klasse ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
+      }
+      IndiwareDataManager.setKlassenXmlData(rawData);
+      updatedFreeDays = data.holidays.holidayDates;
+    } else {
+      output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+    }
+  }
+  if (stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14) {
+    if (updatedFreeDays != null) {
+      stuPlanData.holidayDates = updatedFreeDays;
+      stuPlanData.lastHolidayDatesUpdate = DateTime.now();
+    } else {
+      final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
+      if (rawData != null) {
+        final data = xmlToKlData(rawData);
+        stuPlanData.holidayDates = data.holidays.holidayDates;
+        IndiwareDataManager.setKlassenXmlData(rawData);
+      } else {
+        output ??= "Hinweis: Die Liste der schulfreien Tage ist nicht mehr aktuell. Bitte mit dem Internet verbinden.";
+      }
+    }
+  }
+  return output;
+}
+
 class _KeplerAppState extends State<KeplerApp> {
   UserType utype = UserType.nobody;
   bool isStuplanInvalid = false;
@@ -245,6 +301,8 @@ class _KeplerAppState extends State<KeplerApp> {
     _internalState.lastUserType = utype;
 
     if (!_internalState.introShown) {
+      // _appState.selectedNavPageIDs = ["intro-non-existent"]; // -> is done when setting the selectedNavPageIDs
+      _appState.navPagesToOpenAfterNextISClose = [PageIDs.home];
       introductionDisplay = InfoScreenDisplay(
         infoScreens: introScreens,
       );
@@ -267,57 +325,7 @@ class _KeplerAppState extends State<KeplerApp> {
 
     final vpUser = _credStore.vpUser, vpPass = _credStore.vpPassword, vpHost = _credStore.vpHost ?? baseUrl;
     if (vpUser != null && vpPass != null) {
-      List<DateTime>? updatedFreeDays;
-      if (utype == UserType.teacher && _stuPlanData.availableTeachers != null && _stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).abs().inDays >= 14) {
-        final (data, _) = await getLehrerXmlLeData(vpHost, vpUser, vpPass);
-        if (data != null) {
-          _stuPlanData.loadDataFromLeData(data);
-          // check if selected teacher code doesn't exist anymore (because the school removed it)
-          if (_stuPlanData.selectedTeacherName != null && data?.teachers.map((t) => t.teacherCode).contains(_stuPlanData.selectedTeacherName!) == false) {
-            _stuPlanData.selectedTeacherName = null;
-            output ??= "Achtung! Der gewählte Lehrer ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
-          }
-          updatedFreeDays = data.holidays.holidayDates;
-        } else {
-          output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-        }
-      } else if (
-        utype != UserType.nobody &&
-        (
-          (_stuPlanData.availableClasses != null && _stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).abs().inDays >= 14)
-          || (_stuPlanData.availableSubjects.isNotEmpty && _stuPlanData.lastAvailSubjectsUpdate.difference(DateTime.now()).abs().inDays >= 14)
-        )
-      ) {
-        final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
-        if (rawData != null) {
-          final data = xmlToKlData(rawData);
-          _stuPlanData.loadDataFromKlData(data);
-          // check if selected class name doesn't exist anymore (because the school removed it)
-          if (_stuPlanData.selectedClassName != null && data?.classes.map((t) => t.className).contains(_stuPlanData.selectedClassName!) == false) {
-            _stuPlanData.selectedClassName = null;
-            output ??= "Achtung! Die gewählte Klasse ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
-          }
-          IndiwareDataManager.setKlassenXmlData(rawData);
-          updatedFreeDays = data.holidays.holidayDates;
-        } else {
-          output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-        }
-      }
-      if (_stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14) {
-        if (updatedFreeDays != null) {
-          _stuPlanData.holidayDates = updatedFreeDays;
-          _stuPlanData.lastHolidayDatesUpdate = DateTime.now();
-        } else {
-          final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
-          if (rawData != null) {
-            final data = xmlToKlData(rawData);
-            _stuPlanData.holidayDates = data.holidays.holidayDates;
-            IndiwareDataManager.setKlassenXmlData(rawData);
-          } else {
-            output ??= "Hinweis: Die Liste der schulfreien Tage ist nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-          }
-        }
-      }
+      output ??= await checkAndUpdateSPMetaData(vpHost, vpUser, vpPass, utype, _stuPlanData);
     }
 
     final mdif = DateTime.now().difference(t1).inMilliseconds;
@@ -357,6 +365,7 @@ class _KeplerAppState extends State<KeplerApp> {
             ..infoScreen = introductionDisplay
             ..userType = utype
             ..selectedNavPageIDs = (){
+              if (introductionDisplay != null) return ["intro-non-existent"];
               if (startingNavPageIDs != null) return startingNavPageIDs!;
               return _prefs.startNavPageIDs;
             }(),
@@ -407,12 +416,12 @@ class _KeplerAppState extends State<KeplerApp> {
                   key: globalScaffoldKey,
                   appBar: AppBar(
                     title: (index.first == PageIDs.home) ? const Text("Kepler-App")
-                      : currentlySelectedNavEntry(context).label,
+                      : currentlySelectedNavEntry(context)?.label,
                     scrolledUnderElevation: 5,
                     elevation: 5,
                     // this is so the two appbars in that page seem like theyre one
                     shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans, LernSaxPageIDs.tasks].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
-                    actions: currentlySelectedNavEntry(context).navbarActions,
+                    actions: currentlySelectedNavEntry(context)?.navbarActions,
                   ),
                   drawer: TheDrawer(
                     selectedIndex: index.join("."),
@@ -422,7 +431,7 @@ class _KeplerAppState extends State<KeplerApp> {
                     entries: destinations,
                     dividers: const [6],
                   ),
-                  body: tabs[index.first],
+                  body: tabs[index.first] ?? const Text("Unbekannte Seite."),
                 ),
               ),
               Align(

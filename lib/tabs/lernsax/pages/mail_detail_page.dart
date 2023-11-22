@@ -229,10 +229,10 @@ class _MailDetailPageState extends State<MailDetailPage> {
   }
 }
 
-InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast, { Offset? translate })
-  => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast, translate: translate);
+InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast, { Offset? translate, bool darkerIcon = false })
+  => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast, translate: translate, darkerIcon: darkerIcon);
 
-InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = true, Offset? translate })
+InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = true, Offset? translate, bool darkerIcon = false })
   => WidgetSpan(
     child: Transform.translate(
       offset: translate ?? const Offset(0, 0),
@@ -245,9 +245,9 @@ InlineSpan createLSNameMailSpan(String? name, String? mail, { bool addComma = tr
           TextSpan(
             children: [
               TextSpan(text: name ?? mail ?? "unbekannt"),
-              if (name != mail) const WidgetSpan(child: Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Icon(Icons.info, size: 16, color: Colors.grey),
+              if (name != mail) WidgetSpan(child: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(Icons.info, size: 16, color: darkerIcon ? Colors.grey.shade900 : Colors.grey),
               )),
               if (addComma) const TextSpan(text: ", "),
             ],

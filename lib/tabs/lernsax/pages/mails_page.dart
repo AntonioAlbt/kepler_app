@@ -376,10 +376,12 @@ class LSMailTile extends StatelessWidget {
     super.key,
     required this.mail,
     required this.folderId,
+    this.darkerIcons = false,
   });
 
   final LSMailListing mail;
   final String folderId;
+  final bool darkerIcons;
 
   @override
   Widget build(BuildContext context) {
@@ -399,13 +401,13 @@ class LSMailTile extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                const Icon(MdiIcons.clock, size: 16, color: Colors.grey),
+                Icon(MdiIcons.clock, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(lernSaxTimeFormat.format(mail.date)),
                 ),
                 const Spacer(),
-                const Icon(MdiIcons.file, size: 16, color: Colors.grey),
+                Icon(MdiIcons.file, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
@@ -415,7 +417,7 @@ class LSMailTile extends StatelessWidget {
                     triggerMode: TooltipTriggerMode.tap,
                     message: "E-Mail ist offline verfügbar",
                     child: CircleAvatar(
-                      backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey,
+                      backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : (darkerIcons ? Colors.grey.shade900 : Colors.grey),
                       radius: 8,
                       child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
                     ),
@@ -454,6 +456,7 @@ class LSMailTile extends StatelessWidget {
                               (addr.address == lernSaxLogin) ? LSMailAddressable(address: addr.address, name: mail.isDraft || mail.isSent ? (sie ? "Sie" : "Dich") : (sie ? "Ihnen" : "Dir")) : addr,
                               mail.addressed.last == addr,
                               translate: const Offset(0, 2),
+                              darkerIcon: darkerIcons,
                             );
                           }),
                         ],

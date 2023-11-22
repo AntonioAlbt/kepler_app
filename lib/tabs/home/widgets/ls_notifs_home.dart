@@ -29,7 +29,7 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 13, 126, 83), .1) : Colors.teal,
+      color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 13, 126, 83), .1) : Colors.teal.shade200,
       title: const Text("LernSax: Benachrichtigungen"),
       titleColor: Theme.of(context).cardTheme.surfaceTintColor,
       child: Builder(
@@ -62,7 +62,7 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
             children: separatedListViewWithDividers(
               notifsSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: LSNotificationTile(notif: data),
+                child: LSNotificationTile(notif: data, darkerClock: !hasDarkTheme(context)),
               )).toList()
                 ..add(
                   ListTile(

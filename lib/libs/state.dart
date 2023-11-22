@@ -82,10 +82,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<String>? navPagesToOpenAfterNextISClose;
+
   InfoScreenDisplay? _infoScreen;
   InfoScreenDisplay? get infoScreen => _infoScreen;
   set infoScreen(InfoScreenDisplay? isd) {
     _infoScreen = isd;
+    if (isd == null && navPagesToOpenAfterNextISClose != null) {
+      selectedNavPageIDs = navPagesToOpenAfterNextISClose!;
+      navPagesToOpenAfterNextISClose = null;
+    }
     notifyListeners();
   }
 

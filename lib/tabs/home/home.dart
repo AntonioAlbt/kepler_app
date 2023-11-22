@@ -32,7 +32,7 @@ final homeWidgetKeyMap = {
   "foucault": ("Foucaultsches Pendel", const HomePendulumWidget(id: "foucault")),
 };
 
-final widgetsForNotLoggedIn = ["news", "foucault"];
+final widgetsForNotLoggedIn = ["news", "stuplan", "foucault"];
 
 class _HomepageTabState extends State<HomepageTab> {
   @override
@@ -51,7 +51,7 @@ class _HomepageTabState extends State<HomepageTab> {
                   )),
                   if (prefs.hiddenHomeScreenWidgets.length == homeWidgetKeyMap.keys.length) const Text("Alle Widgets sind ausgeblendet."),
                   TextButton(
-                    onPressed: () => openReorderHomeWidgetDialog(context),
+                    onPressed: Provider.of<AppState>(context).userType == UserType.nobody ? null : () => openReorderHomeWidgetDialog(context),
                     child: const Text("Ausgeblendete Widgets verwalten"),
                   ),
                   if (kDebugFeatures) ElevatedButton(
@@ -98,6 +98,11 @@ class _HomepageTabState extends State<HomepageTab> {
 }
 
 Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog(context: baseContext, builder: (context) {
+  if (Provider.of<AppState>(context, listen: false).userType == UserType.nobody) {
+    return AlertDialog(title: const Text("Fehler"), content: const Text("Anmeldung erforderlich."), actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+    ]);
+  }
   final prefs = Provider.of<Preferences>(globalScaffoldContext);
   return AnimatedBuilder(
     animation: prefs,
