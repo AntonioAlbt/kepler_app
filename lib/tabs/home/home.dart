@@ -98,7 +98,7 @@ class _HomepageTabState extends State<HomepageTab> {
 }
 
 Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog(context: baseContext, builder: (context) {
-  if (Provider.of<AppState>(context, listen: false).userType == UserType.nobody) {
+  if (Provider.of<AppState>(baseContext, listen: false).userType == UserType.nobody) {
     return AlertDialog(title: const Text("Fehler"), content: const Text("Anmeldung erforderlich."), actions: [
       TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
     ]);
