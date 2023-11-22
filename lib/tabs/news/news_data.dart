@@ -57,7 +57,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
 
   void addNewsData(List<NewsEntryData> data, {bool sort = true}) {
     final oldData = newsData;
-    oldData.addAll(data);
+    oldData.addAll(data.where((news) => !oldData.map((e) => e.link).contains(news.link)));
     if (sort) {
       newsData = oldData..sort((a, b) => b.createdDate.compareTo(a.createdDate));
     } else {

@@ -28,8 +28,10 @@ class SettingsTab extends StatefulWidget {
 final _startPageMap = {
   PageIDs.home: "Startseite",
   PageIDs.news: "Kepler-News",
-  StuPlanPageIDs.main: "Aktueller Stundenplan",
-  LernSaxPageIDs.main: "LernSax-Übersicht",
+  StuPlanPageIDs.yours: "Persönlicher Stundenplan",
+  StuPlanPageIDs.all: "Alle Vertretungen",
+  LernSaxPageIDs.notifications: "LernSax: Benachrichtigungen",
+  LernSaxPageIDs.emails: "LernSax: E-Mails",
 };
 
 final _notifKeyMap = {

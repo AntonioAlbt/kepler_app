@@ -86,7 +86,25 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   String get startNavPage => attributes["start_nav_page"] ?? PageIDs.home;
   set startNavPage(String val) => setSaveNotify("start_nav_page", val);
-  List<String> get startNavPageIDs => [ startNavPage, if (startNavPage == StuPlanPageIDs.main) StuPlanPageIDs.yours ];
+  List<String> get startNavPageIDs {
+    switch (startNavPage) {
+      case StuPlanPageIDs.all:
+      case StuPlanPageIDs.yours:
+        return [StuPlanPageIDs.main, startNavPage];
+        
+      case LernSaxPageIDs.notifications:
+      case LernSaxPageIDs.emails:
+        return [LernSaxPageIDs.main, startNavPage];
+      
+      // app versions older than 1.3.3 (25) used to set this for "your stuplan"
+      case StuPlanPageIDs.main:
+        startNavPage = StuPlanPageIDs.yours;
+        return [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+
+      default:
+        return [startNavPage];
+    }
+  }
 
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);

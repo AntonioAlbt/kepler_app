@@ -83,7 +83,7 @@ Future<void> runNewsFetchTask() async {
   } else {
     if (newNews.isEmpty) return;
     
-    newsCache.newsData = newsCache.newsData + newNews;
+    newsCache.addNewsData(newNews);
   }
 
   sendNotification(
