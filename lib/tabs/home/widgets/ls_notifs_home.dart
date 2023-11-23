@@ -113,6 +113,7 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
         notifsSlice = null;
         return;
       }
+      notifs.sort((a, b) => a.date.compareTo(b.date));
       Provider.of<LernSaxData>(context, listen: false).notifications = notifs;
       notifsSlice = notifs.sublist(0, min(3, notifs.length));
     }

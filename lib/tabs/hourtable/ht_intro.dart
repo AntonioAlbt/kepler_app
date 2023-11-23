@@ -120,31 +120,13 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
       _error = null;
     });
     final spdata = Provider.of<StuPlanData>(context, listen: false);
-    try {
-      final (data, online) = await getKlassenXmlKlData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
-      if (data == null) {
-        setState(() {
-          _loading = false;
-          _error = online ? "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren." : "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
-        });
-        return;
-      }
-      spdata.loadDataFromKlData(data);
-      spdata.selectedClassName ??= spdata.availableClasses!.first;
-      setState(() => _loading = false);
-    } catch (_) {
-      setState(() {
-        _loading = false;
-        _error = "Fehler bei der Abfrage der Klassen. Bitte später erneut probieren.";
-      });
-    }
     if (widget.teacherMode) {
       try {
         final (data, online) = await getLehrerXmlLeData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
         if (data == null) {
           setState(() {
-            _loading = false;
             _error = online ? "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren." : "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+            _loading = false;
           });
           return;
         }
@@ -153,8 +135,27 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
         setState(() => _loading = false);
       } catch (_) {
         setState(() {
-          _loading = false;
           _error = "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren.";
+          _loading = false;
+        });
+      }
+    } else {
+      try {
+        final (data, online) = await getKlassenXmlKlData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
+        if (data == null) {
+          setState(() {
+            _loading = false;
+            _error = online ? "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren." : "Fehler bei der Verbindung zum Server. Ist Internet vorhanden?";
+          });
+          return;
+        }
+        spdata.loadDataFromKlData(data);
+        spdata.selectedClassName ??= spdata.availableClasses!.first;
+        setState(() => _loading = false);
+      } catch (_) {
+        setState(() {
+          _loading = false;
+          _error = "Fehler bei der Abfrage der Klassen. Bitte später erneut probieren.";
         });
       }
     }

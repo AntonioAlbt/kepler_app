@@ -615,7 +615,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 100),
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.only(top: 8),
               child: Container(
                 decoration: BoxDecoration(
                   // border: Border.all(
