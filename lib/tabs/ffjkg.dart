@@ -30,6 +30,12 @@ class _FFJKGTabState extends State<FFJKGTab> {
                 });
             }, child: const Text("Kontaktieren")),
           ),
+          ElevatedButton(
+            onPressed: () {
+              launchUrl(Uri.parse("https://www.kepler-chemnitz.de/mitgliedsantrag/"), mode: LaunchMode.externalApplication);
+            },
+            child: const Text("Mitglied werden!"),
+          ),
         ],
       ),
     );

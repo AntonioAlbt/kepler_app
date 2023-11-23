@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/snack.dart';
+import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/privacy_policy.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -79,6 +80,18 @@ class _AboutTabState extends State<AboutTab> {
                   );
                 },
                 child: const Text("Datenschutzerklärung anzeigen"),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    launchUrl(Uri.parse("https://vlant.de"), mode: LaunchMode.externalApplication);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Image.asset("assets/logo${hasDarkTheme(context) ? "_light" : ""}.png", scale: 4),
+                  ),
+                ),
               ),
             ],
           ),
