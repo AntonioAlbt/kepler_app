@@ -105,10 +105,10 @@ NotificationDetails stuPlanNotificationDetails(String bigText) => NotificationDe
   ),
 );
 
-Future<void> sendNotification({required String title, required String body, required String notifKey}) async {
+Future<void> sendNotification({required String title, required String body, required String notifKey, int? notifId}) async {
   if (notifKey != newsNotificationKey && notifKey != stuPlanNotificationKey) return;
   await flutterLocalNotificationsPlugin.show(
-    Random().nextInt(153000),
+    notifId ?? Random().nextInt(153000),
     title,
     body,
     (notifKey == newsNotificationKey) ? newsNotificationDetails(body) : stuPlanNotificationDetails(body),
