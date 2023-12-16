@@ -71,6 +71,31 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
               padding: const EdgeInsets.only(top: 8),
               child: Text("Letzte Aktualisierung: ${lastUpdate != null ? pendelDateFormat.format(lastUpdate!) : "unbekannt"}"),
             ),
+            if (lastUpdate != null && lastUpdate!.difference(DateTime.now()).abs().inHours >= 4) Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Card(
+                color: hasDarkTheme(context) ? Colors.red.shade800 : Colors.red,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.white),
+                      Flexible(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Text(
+                            "Die Daten wurden schon länger nicht mehr aktualisiert, sie sind also wahrscheinlich nicht aktuell.",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
               child: DefaultTextStyle.merge(
