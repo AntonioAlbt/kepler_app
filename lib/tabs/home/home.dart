@@ -110,37 +110,41 @@ Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog
       title: const Text("Reihenfolge"),
       content: SizedBox(
         width: double.maxFinite,
-        child: Theme(
-          data: Theme.of(context).copyWith(platform: TargetPlatform.windows),
-          child: ReorderableListView(
-            shrinkWrap: true,
-            onReorder: (int oldIndex, int newIndex) {
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final l = prefs.homeScreenWidgetOrderList;
-              final old = l.removeAt(oldIndex);
-              l.insert(newIndex, old);
-              prefs.homeScreenWidgetOrderList = l;
-            },
-            children: prefs.homeScreenWidgetOrderList.map((id) => Padding(
-              key: ValueKey(id),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                children: [
-                  IconButton(icon: Icon(prefs.hiddenHomeScreenWidgets.contains(id) ? MdiIcons.eyeOff : MdiIcons.eye, size: 20), onPressed: () {
-                    prefs.hiddenHomeScreenWidgets = (prefs.hiddenHomeScreenWidgets.contains(id)) ? (prefs.hiddenHomeScreenWidgets..remove(id)) : (prefs.hiddenHomeScreenWidgets..add(id));
-                  }),
-                  Flexible(
-                    child: Text(
-                      homeWidgetKeyMap[id]?.$1 ?? "Unbekannt",
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
+        child: Column(
+          children: [
+            const Text("Zum Reihenfolge ändern auf Eintrag gedrückt halten."),
+            Expanded(
+              child: ReorderableListView(
+                shrinkWrap: true,
+                onReorder: (int oldIndex, int newIndex) {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  final l = prefs.homeScreenWidgetOrderList;
+                  final old = l.removeAt(oldIndex);
+                  l.insert(newIndex, old);
+                  prefs.homeScreenWidgetOrderList = l;
+                },
+                children: prefs.homeScreenWidgetOrderList.map((id) => Padding(
+                  key: ValueKey(id),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: [
+                      IconButton(icon: Icon(prefs.hiddenHomeScreenWidgets.contains(id) ? MdiIcons.eyeOff : MdiIcons.eye, size: 20), onPressed: () {
+                        prefs.hiddenHomeScreenWidgets = (prefs.hiddenHomeScreenWidgets.contains(id)) ? (prefs.hiddenHomeScreenWidgets..remove(id)) : (prefs.hiddenHomeScreenWidgets..add(id));
+                      }),
+                      Flexible(
+                        child: Text(
+                          homeWidgetKeyMap[id]?.$1 ?? "Unbekannt",
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                )).toList(),
               ),
-            )).toList(),
-          ),
+            ),
+          ],
         ),
       ),
       actions: [

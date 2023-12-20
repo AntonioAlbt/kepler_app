@@ -86,7 +86,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
                     onTap: () {
                       Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [
                         LernSaxPageIDs.main,
-                        LernSaxPageIDs.tasks,
+                        LernSaxPageIDs.emails,
                       ];
                     },
                     visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
