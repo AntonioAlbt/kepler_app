@@ -94,6 +94,8 @@ Future<void> runNewsFetchTask() async {
 }
 
 Future<void> runStuPlanFetchTask() async {
+  // TODO - future: inform the user about course ids changing -> if a course they had selected doesn't exist anymore (maybe not as a notif but when app opens)
+
   final spdata = StuPlanData();
   if (await fileExists(await stuPlanDataFilePath)) {
     final data = await readFile(await stuPlanDataFilePath);

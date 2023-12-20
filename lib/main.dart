@@ -74,6 +74,7 @@ Future<void> loadAndPrepareApp() async {
       // add this because users on previous versions of the app with the old "fetch_news" task will have both running
       Workmanager().cancelByUniqueName("fetch_news");
     } on Exception catch (_) {}
+    // TODO - future: maybe make it so this doesnt run when app is started from notif, may lead to duplicates
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
