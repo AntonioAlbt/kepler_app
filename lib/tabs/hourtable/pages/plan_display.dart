@@ -90,6 +90,12 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     });
   }
 
+  void jumpToStartDate() {
+    setState(() {
+      currentDate = _getStartDate();
+    });
+  }
+
   DateTime _getStartDate() {
     final today = DateTime.now();
     if (isWeekend(today)) return findNextMonday(today);
@@ -147,8 +153,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     }
   }
 
+  bool isSameDate(DateTime one, DateTime two) => one.day == two.day && one.month == two.month && one.year == two.year;
+
   @override
   Widget build(BuildContext context) {
+    final prefs = Provider.of<Preferences>(context, listen: false);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(
@@ -160,7 +169,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
               children: [
                 IconButton.outlined(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: (canGoBack())
+                  onPressed: (canGoBack() || prefs.enableInfiniteStuPlanScrolling)
                       ? () => makeCurrentDateGoBack()
                       : null,
                 ),
@@ -184,7 +193,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                       ),
                       // because the max difference is 9 days (e.g. Sat -> Mon+1)
                       // only the day needs to be checked for "today"
-                      if (currentDate.day == DateTime.now().day)
+                      if (isSameDate(currentDate, DateTime.now()))
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: Container(
@@ -203,7 +212,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                             ),
                           ),
                         ),
-                      if (currentDate.day == startDate.add(const Duration(days: 1)).day)
+                      if (isSameDate(currentDate, DateTime.now().add(const Duration(days: 1))))
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: Container(
@@ -234,7 +243,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                 IconButton.outlined(
                   icon: const Icon(Icons.arrow_forward),
                   onPressed:
-                      (canGoForward())
+                      (canGoForward() || prefs.enableInfiniteStuPlanScrolling)
                           ? () => makeCurrentDateGoForward()
                           : null,
                 ),
@@ -254,8 +263,8 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                   mode: widget.mode,
                   showInfo: widget.showInfo,
                   allRooms: widget.allRooms,
-                  onSwipeRight: () => canGoBack() ? makeCurrentDateGoBack() : null,
-                  onSwipeLeft: () => canGoForward() ? makeCurrentDateGoForward() : null,
+                  onSwipeRight: () => (canGoBack() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoBack() : null,
+                  onSwipeLeft: () => (canGoForward() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoForward() : null,
                   schoolHolidayList: holidayDates,
                 ),
               ),
@@ -885,60 +894,60 @@ class SPListContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // actually listen to this
-    final prefs = Provider.of<Preferences>(context);
-    
-    // prefs.stuPlanDataAvailableBorderColor = Colors.yellow.shade800;
-    // prefs.stuPlanDataAvailableBorderGradientColor = Colors.green.shade800;
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         final d = details.primaryVelocity ?? 0;
         if (d > 500) onSwipeRight?.call();
         if (d < -500) onSwipeLeft?.call();
       },
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          gradient: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ?
-            LinearGradient(
-              colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            )
-          : null,
-          border: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor == null)
-            ? Border.all(
-                // color: hasDarkTheme(context)
-                //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
-                //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
-                color: prefs.stuPlanDataAvailableBorderColor,
-                width: prefs.stuPlanDataAvailableBorderWidth)
-            : null,
-          boxShadow: (shadow) ? [
-            BoxShadow(
-              color: hasDarkTheme(context)
-                  ? Colors.black45
-                  : Colors.grey.withOpacity(0.5),
-              spreadRadius: 5,
-              blurRadius: 7,
-              offset: const Offset(0, 3),
-            )
-          ] : null,
-        ),
-        child: Padding(
-          padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
-          child: Container(
+      child: Consumer<Preferences>(
+        builder: (context, prefs, subChild) {
+          return Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
-              color: color ?? Theme.of(context).colorScheme.background,
+              borderRadius: BorderRadius.circular(8),
+              gradient: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null && prefs.stuPlanDataAvailableBorderWidth > 0) ?
+                LinearGradient(
+                  colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : null,
+              border: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor == null && prefs.stuPlanDataAvailableBorderWidth > 0)
+                ? Border.all(
+                    // color: hasDarkTheme(context)
+                    //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
+                    //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
+                    color: prefs.stuPlanDataAvailableBorderColor,
+                    width: prefs.stuPlanDataAvailableBorderWidth)
+                : null,
+              boxShadow: (shadow) ? [
+                BoxShadow(
+                  color: hasDarkTheme(context)
+                      ? Colors.black45
+                      : Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: const Offset(0, 3),
+                )
+              ] : null,
             ),
             child: Padding(
-              padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
-              child: child,
+              padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
+                  color: color ?? Theme.of(context).colorScheme.background,
+                ),
+                child: subChild,
+              ),
             ),
-          ),
+          );
+        },
+        child: Padding(
+          padding: padding ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          child: child,
         ),
       ),
     );

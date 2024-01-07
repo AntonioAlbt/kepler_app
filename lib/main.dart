@@ -69,12 +69,11 @@ Future<void> loadAndPrepareApp() async {
     // isInDebugMode: kDebugMode && kDebugNotifData,
   );
   // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
-  if (Platform.isAndroid) {
+  if (Platform.isAndroid && !((await getNotifLaunchInfo())?.didNotificationLaunchApp ?? false)) {
     try {
       // add this because users on previous versions of the app with the old "fetch_news" task will have both running
       Workmanager().cancelByUniqueName("fetch_news");
     } on Exception catch (_) {}
-    // TODO - future: maybe make it so this doesnt run when app is started from notif, may lead to duplicates
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
@@ -95,7 +94,7 @@ Future<void> loadAndPrepareApp() async {
   }
 
   initializeNotifications();
-  await IndiwareDataManager.removeOldCacheFiles();
+  if (!_prefs.enableInfiniteStuPlanScrolling) await IndiwareDataManager.removeOldCacheFiles();
 }
 
 Future<void> prepareApp() async {

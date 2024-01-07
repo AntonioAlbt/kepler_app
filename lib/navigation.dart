@@ -136,6 +136,12 @@ final destinations = [
         ),
         selectedIcon: const Icon(Icons.list_alt),
         navbarActions: [
+          Consumer<Preferences>(
+            builder: (context, prefs, _) {
+              if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
+              return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
+            },
+          ),
           const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
           const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],

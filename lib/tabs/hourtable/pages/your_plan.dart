@@ -45,6 +45,10 @@ void yourStuPlanRefreshAction() {
   yourPlanDisplayKey.currentState?.forceRefreshData();
 }
 
+void yourStuPlanJumpToStartAction() {
+  yourPlanDisplayKey.currentState?.jumpToStartDate();
+}
+
 const stuPlanInfoKey = "stu_plan_info";
 
 Future<bool> stuPlanShowInfoDialog(BuildContext context) async {

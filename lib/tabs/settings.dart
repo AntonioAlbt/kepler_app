@@ -226,6 +226,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
                   enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
                 ),
+                SettingsTile.switchTile(
+                  initialValue: prefs.enableInfiniteStuPlanScrolling,
+                  onToggle: (val) => prefs.enableInfiniteStuPlanScrolling = val,
+                  title: const Text("Unendlich blättern"),
+                  description: const Text("Unendlich Tage zurück- und vorblättern ermöglichen + Aktion zum Zurückspringen"),
+                  enabled: userType != UserType.nobody,
+                ),
               ],
             ),
             SettingsSection(
@@ -267,22 +274,24 @@ SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void
     value: Text(data.toString()),
     onPressed: (ctx) => showDialog(context: ctx, builder: (ctx) => AlertDialog(
       title: Text("$title auswählen", style: const TextStyle(fontSize: 20)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: values.map((val) => InkWell(
-          onTap: () {
-            updateData(val);
-            Navigator.pop(ctx);
-          },
-          child: ListTile(
-            title: Text(
-              val.toString(),
-              style: TextStyle(
-                fontWeight: (data == val) ? FontWeight.bold : null,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: values.map((val) => InkWell(
+            onTap: () {
+              updateData(val);
+              Navigator.pop(ctx);
+            },
+            child: ListTile(
+              title: Text(
+                val.toString(),
+                style: TextStyle(
+                  fontWeight: (data == val) ? FontWeight.bold : null,
+                ),
               ),
             ),
-          ),
-        )).toList(),
+          )).toList(),
+        ),
       ),
     )),
     enabled: !disabled,

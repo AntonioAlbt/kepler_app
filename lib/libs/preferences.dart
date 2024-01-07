@@ -57,6 +57,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get showLernSaxCancelledLessonsInRoomPlan => attributes["show_ls_cl_irp"] ?? true;
   set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
+  bool get enableInfiniteStuPlanScrolling => attributes["enable_is_sp"] ?? false;
+  set enableInfiniteStuPlanScrolling(bool val) => setSaveNotify("enable_is_sp", val);
+
   HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(14, 45);
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 

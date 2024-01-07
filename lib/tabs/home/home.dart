@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
+import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -68,6 +69,13 @@ class _HomepageTabState extends State<HomepageTab> {
                     },
                     child: const Text("Run stuplan task"),
                   ),
+                  if (kDebugFeatures) ElevatedButton(
+                    onPressed: () {
+                      sendNotification(title: "StuPlan Notif", body: "Info about the stuplan", notifKey: stuPlanNotificationKey);
+                      showSnackBar(text: "sent");
+                    },
+                    child: const Text("Send stuplan notif"),
+                  ),
                 ],
               );
             }
@@ -112,7 +120,7 @@ Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog
         width: double.maxFinite,
         child: Column(
           children: [
-            const Text("Zum Reihenfolge ändern auf Eintrag gedrückt halten."),
+            const Text("Zum Verschieben auf Eintrag gedrückt halten."),
             Expanded(
               child: ReorderableListView(
                 shrinkWrap: true,
