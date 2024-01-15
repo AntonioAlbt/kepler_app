@@ -102,7 +102,7 @@ class HomePendulumWidget extends StatelessWidget {
                   ],
                 );
               }
-            ) : null,
+            ) : const Center(child: CircularProgressIndicator()),
           ));
         }
       ),

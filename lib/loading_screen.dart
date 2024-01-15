@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -156,18 +158,20 @@ class _LoadingScreenState extends State<LoadingScreen>
           _circle3AnimContr.repeat(reverse: true);
           setState(() {});
         });
-        Future.delayed(const Duration(milliseconds: 2000)).then((_) {
-          if (!mounted) return;
-          setState(() {
-            _switcherChild = ElevatedButton(
-              onPressed: () {
-                SystemNavigator.pop();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(6, 15, 111, 190) : Colors.white),
-              child: const Text("Schließen"),
-            );
+        if (Platform.isAndroid) {
+          Future.delayed(const Duration(milliseconds: 2000)).then((_) {
+            if (!mounted) return;
+            setState(() {
+              _switcherChild = ElevatedButton(
+                onPressed: () {
+                  SystemNavigator.pop();
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(6, 15, 111, 190) : Colors.white),
+                child: const Text("Schließen"),
+              );
+            });
           });
-        });
+        }
         Future.delayed(const Duration(seconds: 14)).then((_) {
           if (!mounted) return;
           if (globalSentryEnabled) Sentry.captureException("LoadingError: long loading time, ~ 15s");
