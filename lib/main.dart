@@ -24,7 +24,7 @@ import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
-import 'package:kepler_app/tabs/news/news_data.dart';
+import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -338,7 +338,7 @@ class _KeplerAppState extends State<KeplerApp> {
     if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.notificationResponse != null && launchInfo.notificationResponse!.payload != null) {
       switch (launchInfo.notificationResponse!.payload!) {
         case newsNotificationKey:
-          startingNavPageIDs = [PageIDs.news];
+          startingNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
           break;
         case stuPlanNotificationKey:
           startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];

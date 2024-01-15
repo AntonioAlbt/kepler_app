@@ -223,6 +223,7 @@ class LernSaxScreenMain extends StatefulWidget {
 }
 
 const lernSaxAGBLink = "https://www.lernsax.de/wws/1491042.php";
+const lernSaxDSELink = "https://www.lernsax.de/wws/1494114.php";
 class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
   late TextEditingController _mailController;
   String? _mailError;
@@ -356,7 +357,19 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                     ),
                 ),
                 const TextSpan(
-                  text: " von LernSax zu.",
+                  text: " und der "
+                ),
+                TextSpan(
+                  text: "Datenschutzerklärung",
+                  style: link,
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () => launchUrl(
+                      Uri.parse(lernSaxAGBLink),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                ),
+                const TextSpan(
+                  text: " von LernSax zu. Hinweis: Diese App ist in keiner Weise mit LernSax, WebWeaver, DigiOnline GmbH oder dem Freistaat Sachsen assoziiert.",
                 ),
               ],
             ),

@@ -63,7 +63,7 @@ void initializeNotifications() {
         case newsNotificationKey:
           if (globalScaffoldKey?.currentContext == null) return;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [PageIDs.news];
+            Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
           });
           break;
         case stuPlanNotificationKey:

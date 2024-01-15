@@ -140,6 +140,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
       mailsSlice = mailLsts.sublist(0, min(3, mailLsts.length));
     }
 
+    if (!mounted) return;
     setState(() {
       loading = false;
       folderId = inbox.id;

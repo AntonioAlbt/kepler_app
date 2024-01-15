@@ -13,8 +13,9 @@ class HomeWidgetBase extends StatelessWidget {
   final Color? titleColor;
   final String? switchId;
   final String id;
+  final bool? overrideShowIcons;
 
-  const HomeWidgetBase({super.key, this.title, required this.color, this.titleColor, required this.id, required this.child, this.switchId});
+  const HomeWidgetBase({super.key, this.title, required this.color, this.titleColor, required this.id, required this.child, this.switchId, this.overrideShowIcons});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,7 @@ class HomeWidgetBase extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (Provider.of<Preferences>(context).showHomeWidgetEditOptions && Provider.of<AppState>(context).userType != UserType.nobody) Align(
+                          if (Provider.of<Preferences>(context).showHomeWidgetEditOptions && Provider.of<AppState>(context).userType != UserType.nobody && overrideShowIcons != false) Align(
                             alignment: AlignmentDirectional.topEnd,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,

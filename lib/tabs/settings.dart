@@ -27,7 +27,7 @@ class SettingsTab extends StatefulWidget {
 
 final _startPageMap = {
   PageIDs.home: "Startseite",
-  PageIDs.news: "Kepler-News",
+  NewsPageIDs.news: "Kepler-News",
   StuPlanPageIDs.yours: "Persönlicher Stundenplan",
   StuPlanPageIDs.all: "Alle Vertretungen",
   LernSaxPageIDs.notifications: "LernSax: Benachrichtigungen",

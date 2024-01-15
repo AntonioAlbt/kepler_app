@@ -23,8 +23,8 @@ import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
-import 'package:kepler_app/tabs/news/news.dart';
 import 'package:kepler_app/tabs/pendel.dart';
+import 'package:kepler_app/tabs/school/school.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +33,6 @@ import 'package:provider/provider.dart';
 // all IDs should be lowercase letters only, and definitely not include "." (the dot)
 class PageIDs {
   static const home = "home";
-  static const news = "news";
   static const foodOrder = "foodOrder";
   static const pendel = "pendel";
   static const ffjkg = "ffjkg";
@@ -63,9 +62,15 @@ class LernSaxPageIDs {
   static const openInBrowser = "inbrowser";
 }
 
+class NewsPageIDs {
+  static const main = "nwmain";
+  static const news = "news";
+  static const calendar = "calendar";
+}
+
 final tabs = {
   PageIDs.home: const HomepageTab(),
-  PageIDs.news: const NewsTab(),
+  NewsPageIDs.main: const SchoolTab(),
   StuPlanPageIDs.main: const HourtableTab(),
   LernSaxPageIDs.main: const LernSaxTab(),
   PageIDs.foodOrder: const MealOrderingTab(),
@@ -97,10 +102,25 @@ final destinations = [
     ],
   ),
   const NavEntryData(
-    id: PageIDs.news,
-    icon: Icon(Icons.newspaper_outlined),
-    label: Text("Kepler-News"),
-    selectedIcon: Icon(Icons.newspaper),
+    id: NewsPageIDs.main,
+    icon: Icon(MdiIcons.newspaperVariantMultipleOutline),
+    label: Text("Neuigkeiten"),
+    selectedIcon: Icon(MdiIcons.newspaperVariantMultiple),
+    redirectTo: [NewsPageIDs.main, NewsPageIDs.news],
+    children: [
+      NavEntryData(
+        id: NewsPageIDs.news,
+        icon: Icon(Icons.newspaper_outlined),
+        selectedIcon: Icon(Icons.newspaper),
+        label: Text("Kepler-News"),
+      ),
+      NavEntryData(
+        id: NewsPageIDs.calendar,
+        icon: Icon(Icons.calendar_month_outlined),
+        selectedIcon: Icon(Icons.calendar_month),
+        label: Text("Kepler-Kalender"),
+      ),
+    ],
   ),
   // if (kDebugMode) const NavEntryData(
   //   id: "locked_test_teacher",

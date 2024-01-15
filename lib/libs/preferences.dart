@@ -98,6 +98,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
       case LernSaxPageIDs.notifications:
       case LernSaxPageIDs.emails:
         return [LernSaxPageIDs.main, startNavPage];
+
+      case NewsPageIDs.news:
+      case NewsPageIDs.calendar:
+        return [NewsPageIDs.main, startNavPage];
       
       // app versions older than 1.3.3 (25) used to set this for "your stuplan"
       case StuPlanPageIDs.main:

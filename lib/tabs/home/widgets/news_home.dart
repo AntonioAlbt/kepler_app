@@ -4,8 +4,8 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
-import 'package:kepler_app/tabs/news/news_data.dart';
-import 'package:kepler_app/tabs/news/news_view.dart';
+import 'package:kepler_app/tabs/school/news_data.dart';
+import 'package:kepler_app/tabs/school/news_view.dart';
 import 'package:provider/provider.dart';
 
 class HomeNewsWidget extends StatefulWidget {
@@ -41,7 +41,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
                   ],
                 ),
                 onTap: () {
-                  Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [PageIDs.news];
+                  Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
                 },
                 visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
               ),
