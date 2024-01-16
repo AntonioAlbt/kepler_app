@@ -7,6 +7,8 @@ import "package:flutter/foundation.dart";
 import "package:http/http.dart" as http;
 import 'package:crypto/crypto.dart' as crypto;
 import "package:intl/intl.dart";
+import "package:kepler_app/libs/indiware.dart";
+import "package:kepler_app/libs/state.dart";
 import "package:kepler_app/main.dart";
 import "package:kepler_app/tabs/lernsax/ls_data.dart";
 import "package:sentry_flutter/sentry_flutter.dart";
@@ -55,6 +57,7 @@ bool toBool(dynamic input) => (input is num && input > 0) || (input is bool && i
 
 /// returns: isOnline, data
 Future<(bool, Map<String, dynamic>?)> auth(String mail, String token, {int? id}) async {
+  if (mail == lernSaxDemoModeMail) return (true, call(method: "beta"));
   final (online, res) = (await api([call(method: "get_nonce", id: 1)]));
   if (!online) return (false, null);
   final nonce = res[0]["result"];
@@ -81,6 +84,7 @@ Future<(bool, Map<String, dynamic>?)> auth(String mail, String token, {int? id})
 
 /// returns: isOnline, data
 Future<(bool, String)> newSession(String mail, String token, int durationSeconds) async {
+  if (mail == lernSaxDemoModeMail) return (true, "");
   final (online1, authres) = await auth(mail, token);
   if (!online1 || authres == null) return (false, "");
   final (online2, res) = await api([
@@ -142,6 +146,7 @@ enum MOJKGResult {
 
 /// returns: isOnline, data
 Future<(bool, MOJKGResult)> isMemberOfJKG(String mail, String password) async {
+  if (mail == lernSaxDemoModeMail) return (false, MOJKGResult.allGood);
   late final dynamic res;
   try {
     final (online, resInner) = await api([
@@ -188,6 +193,7 @@ MOJKGResult _processMemberResponse(res) {
 
 /// returns: isOnline, data
 Future<(bool, String?)> registerApp(String mail, String password) async {
+  if (mail == lernSaxDemoModeMail) return (true, "demotesttoken");
   try {
     final deviceModel = (Platform.isAndroid)
         ? (await DeviceInfoPlugin().androidInfo).model
@@ -224,6 +230,7 @@ Future<(bool, String?)> registerApp(String mail, String password) async {
 
 /// returns: isOnline, data
 Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) async {
+  if (login == lernSaxDemoModeMail) return (true, true);
   try {
     final (online1, authres) = await auth(login, token, id: 1);
     if (!online1 || authres == null) return (false, null);
@@ -242,6 +249,7 @@ Future<(bool, bool?)> confirmLernSaxCredentials(String login, String token) asyn
 
 /// returns: isOnline, data
 Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { String? targetUrlPath, String? targetLogin, String? targetObject }) async {
+  if (login == lernSaxDemoModeMail) return (true, "https://lernsax.de");
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -269,6 +277,22 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { Stri
 
 /// returns: isOnline, data
 Future<(bool, List<LSNotification>?)> getNotifications(String login, String token, {String? startId}) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSNotification(
+        id: "153",
+        date: DateTime.now(),
+        messageTypeId: "0",
+        message: "Neue Nachricht von hallo-beta@jkgc.lernsax.de",
+        fromUserLogin: "hallo-beta@jkgc.lernsax.de",
+        fromUserName: "Hallo Beta",
+        fromGroupLogin: "",
+        fromGroupName: "",
+        unread: false,
+        object: "messenger",
+      ),
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -307,6 +331,11 @@ Future<(bool, List<LSNotification>?)> getNotifications(String login, String toke
 
 /// returns: isOnline, data
 Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? classLogin}) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSTask(id: "1", startDate: DateTime.now(), dueDate: DateTime.now().add(const Duration(hours: 1)), classLogin: classLogin, title: "Aufgabe 1", description: "Im Demo-Modus können Aufgaben nicht abgeschlossen werden.", completed: false, createdByLogin: "ersteller@jkgc.lernsax.de", createdByName: "Ersteller", createdAt: DateTime.now())
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -340,6 +369,11 @@ Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? clas
 
 /// returns: isOnline, data
 Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSMembership(login: "kurs1@jkgc.lernsax.de", name: "Kurs", baseRights: ["all"], memberRights: ["all"], effectiveRights: ["all", "tasks"], type: MembershipType.group)
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -369,6 +403,9 @@ Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String tok
 
 /// returns: isOnline, data
 Future<(bool, bool?)> isTeacher(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
   try {
     final (online, memberships) = await getGroupsAndClasses(login, token);
     if (!online) return (false, null);
@@ -384,6 +421,9 @@ Future<(bool, bool?)> isTeacher(String login, String token) async {
 
 /// returns: isOnline, data
 Future<(bool, bool?)> unregisterApp(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
   try {
     final (online, authres) = await auth(login, token);
     if (!online) return (false, null);
@@ -403,6 +443,9 @@ Future<(bool, bool?)> unregisterApp(String login, String token) async {
 
 /// returns: isOnline, data
 Future<(bool, LSAppData?)> getLernSaxAppDataJson(String login, String token, bool forTeachers) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, LSAppData(host: indiwareDemoHost, user: "", password: "", lastUpdate: "", isTeacherData: false));
+  }
   try {
     final (online1, res) = await api([
       await useSession(login, token),
@@ -472,6 +515,11 @@ Future<(bool, LSAppData?)> getLernSaxAppDataJson(String login, String token, boo
 
 /// returns: isOnline, data
 Future<(bool, List<LSMailFolder>?)> getMailFolders(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSMailFolder(id: "1", name: "Posteingang", isInbox: true, isTrash: false, isDrafts: false, isSent: false, lastModified: DateTime.now()),
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -498,6 +546,24 @@ Future<(bool, List<LSMailFolder>?)> getMailFolders(String login, String token) a
 
 /// returns: isOnline, data
 Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token, { required String folderId, int? offset, int? limit, bool isDraftsFolder = false, bool isSentFolder = false }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSMailListing(
+        id: 1,
+        subject: "Wichtige Email",
+        isUnread: true,
+        isFlagged: false,
+        isAnswered: false,
+        isDeleted: false,
+        date: DateTime.now(),
+        size: (1024 * 12.53).round(),
+        addressed: [LSMailAddressable(address: login, name: "Demo Tester")],
+        isDraft: false,
+        isSent: false,
+        folderId: folderId,
+      ),
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -537,6 +603,26 @@ Future<(bool, List<LSMailListing>?)> getMailListings(String login, String token,
 
 /// returns: isOnline, data
 Future<(bool, LSMail?)> getMail(String login, String token, { required String folderId, required int mailId, bool peek = false }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true,
+      LSMail(
+        id: 1,
+        subject: "Wichtige Email",
+        isUnread: false,
+        isFlagged: false,
+        isAnswered: false,
+        isDeleted: false,
+        date: DateTime.now().subtract(const Duration(days: 1)),
+        size: (1024 * 12.53).round(),
+        bodyPlain: "Hallo!\n\nDies ist eine wichtige Email. Sie ist aber nicht in der App beantwortbar.",
+        from: [LSMailAddressable(address: "sender@jkgc.lernsax.de", name: "Absender")],
+        to: [LSMailAddressable(address: lernSaxDemoModeMail, name: "Demo Sender")],
+        replyTo: [],
+        attachments: [],
+        folderId: folderId,
+      ),
+    );
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -579,6 +665,9 @@ Future<(bool, LSMail?)> getMail(String login, String token, { required String fo
 
 /// returns: isOnline, data
 Future<(bool, LSMailState?)> getMailState(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, LSMailState(usageBytes: (1024 * 1024 * 123), freeBytes: (1024 * 1024 * 153), limitBytes: (1024 * 1024 * 100), unreadMessages: 1, mode: LSMailMode.platform));
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -603,6 +692,9 @@ Future<(bool, LSMailState?)> getMailState(String login, String token) async {
 }
 
 Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String token, { required String folderId, required int mailId, required String attachmentId }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, const LSSessionFile(downloadUrl: "https://lernsax.de", id: "1", name: "demo", size: (1024 * 1024)));
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -634,6 +726,9 @@ Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String to
 }
 
 Future<(bool, LSTask?)> modifyTask(String login, String token, { required String id, required String? classLogin, required bool completed }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, LSTask(id: id, startDate: DateTime.now(), dueDate: DateTime.now().add(const Duration(hours: 1)), classLogin: classLogin, title: "Aufgabe 1", description: "Aufgabe", completed: completed, createdByLogin: "sesjfui@jkgc.lernsax.de", createdByName: "Ersteller", createdAt: DateTime.now()));
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -671,6 +766,11 @@ Future<(bool, LSTask?)> modifyTask(String login, String token, { required String
 
 /// info: classLogin is ignored! I don't know how to check notifications for specific classes currently
 Future<(bool, List<LSNotifSettings>?)> getNotificationSettings(String login, String token, { String? classLogin }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSNotifSettings(id: 1, classLogin: classLogin, name: "all", object: "messager", enabledFacilities: ["push"], disabledFacilities: []),
+    ]);
+  }
   try {
     final (online, res) = await api([
       await useSession(login, token),
@@ -702,6 +802,9 @@ int _bti(bool val) => val ? 1 : 0;
 /// info: classLogin is ignored! I don't know how to modify notifications for specific classes currently
 /// returns: isOnline, successful
 Future<(bool, bool)> setNotificationSettings(String login, String token, { String? classLogin, required List<LSNotifSettings> data }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
   try {
     final (online, _) = await api([
       await useSession(login, token),

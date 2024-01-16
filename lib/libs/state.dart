@@ -16,6 +16,8 @@ const securePrefs = FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
 
+const lernSaxDemoModeMail = "jkgappdemo@jkgc.lernsax.de";
+
 class CredentialStore extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
   bool loaded = false;

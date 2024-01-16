@@ -6,6 +6,7 @@ import 'package:xml/xml.dart';
 import 'package:http/http.dart' as http;
 
 const baseUrl = "https://plan.kepler-chemnitz.de/stuplanindiware";
+const indiwareDemoHost = "demo";
 
 const sUrlDPath = "/VplanonlineS";
 const sUrlMPath = "/VmobilS";
@@ -285,12 +286,14 @@ Future<(XmlDocument?, bool)> _fetch(Uri url, String user, String password) async
 
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getKlassenXML(String host, String user, String password) async {
+  if (host == indiwareDemoHost) return (null, true);
   final xml = await _fetch(sUrlMKlXmlUrl(host), user, password);
   return xml;
 }
 
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getLehrerXML(String host, String user, String password) async {
+  if (host == indiwareDemoHost) return (null, false);
   final xml = await _fetch(lUrlMLeXmlUrl(host), user, password);
   return xml;
 }
@@ -400,6 +403,7 @@ VPLeData xmlToLeData(XmlDocument leData) {
 
 /// returns (data, isOnline)
 Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, String password) async {
+  if (host == indiwareDemoHost) return (null, false);
   final (xml, online) = await getKlassenXML(host, username, password);
   if (xml == null) return (null, online);
   return (xmlToKlData(xml), online);
@@ -407,6 +411,7 @@ Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, Stri
 
 /// returns (data, isOnline)
 Future<(VPKlData?, bool)> getStuPlanDataForDate(String host, String username, String password, DateTime date) async {
+  if (host == indiwareDemoHost) return (null, false);
   final (xml, online) = await getKlXMLForDate(host, username, password, date);
   if (xml == null) return (null, online);
   return (xmlToKlData(xml), online);
@@ -414,6 +419,7 @@ Future<(VPKlData?, bool)> getStuPlanDataForDate(String host, String username, St
 
 /// returns (data, isOnline)
 Future<(VPLeData?, bool)> getLehrerXmlLeData(String host, String username, String password) async {
+  if (host == indiwareDemoHost) return (null, false);
   final (xml, online) = await getLehrerXML(host, username, password);
   if (xml == null) return (null, online);
   return (xmlToLeData(xml), online);
@@ -421,6 +427,7 @@ Future<(VPLeData?, bool)> getLehrerXmlLeData(String host, String username, Strin
 
 /// returns (data, isOnline)
 Future<(VPLeData?, bool)> getLehPlanDataForDate(String host, String username, String password, DateTime date) async {
+  if (host == indiwareDemoHost) return (null, false);
   final (xml, online) = await getLeXMLForDate(host, username, password, date);
   if (xml == null) return (null, online);
   return (xmlToLeData(xml), online);

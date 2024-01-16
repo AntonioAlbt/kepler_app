@@ -721,6 +721,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   Future<bool?> tryLoadStuPlanLoginFromLSDataFile() async {
     final creds = Provider.of<CredentialStore>(context, listen: false);
     if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return null;
+    if (creds.lernSaxLogin == lernSaxDemoModeMail) return true;
     // ignore the online bool because it doesn't matter - I don't show any actual error message to the user
     final (_, teacher) = await isTeacher(creds.lernSaxLogin!, creds.lernSaxToken!);
     if (teacher == null) return null;

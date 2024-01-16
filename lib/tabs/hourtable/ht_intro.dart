@@ -115,11 +115,111 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
 
   Future<void> _loadData() async {
     final creds = Provider.of<CredentialStore>(context, listen: false);
+    final spdata = Provider.of<StuPlanData>(context, listen: false);
     setState(() {
       _loading = true;
       _error = null;
     });
-    final spdata = Provider.of<StuPlanData>(context, listen: false);
+    if (creds.lernSaxLogin == lernSaxDemoModeMail) {
+      spdata.loadDataFromKlData(
+        VPKlData(
+          header: const VPHeader(lastUpdated: "Datum", dataDate: "", filename: "Plan2022202.xml"),
+          holidays: const VPHolidays(holidayDateStrings: ["240105"]),
+          classes: [
+            VPClass(
+              className: "Demo",
+              hourBlocks: [VPHourBlock(startTime: HMTime(10, 00), endTime: HMTime(12, 00), blockStartLesson: 1)],
+              courses: [
+                const VPClassCourse(teacherCode: "Sei", courseName: "Info"),
+                const VPClassCourse(teacherCode: "Hal", courseName: "Ph"),
+                const VPClassCourse(teacherCode: "Jul", courseName: "Ma"),
+              ],
+              subjects: [
+                const VPClassSubject(teacherCode: "Sei", subjectCode: "Info", subjectID: 1),
+                const VPClassSubject(teacherCode: "Hal", subjectCode: "Ph", subjectID: 2),
+                const VPClassSubject(teacherCode: "Jul", subjectCode: "Ma", subjectID: 3),
+              ],
+              lessons: [
+                VPLesson(
+                  schoolHour: 1,
+                  startTime: HMTime(7, 35),
+                  endTime: HMTime(8, 20),
+                  subjectCode: "De",
+                  subjectChanged: true,
+                  teacherCode: "Kol",
+                  teacherChanged: true,
+                  roomCodes: ["404"],
+                  roomChanged: false,
+                  subjectID: 3,
+                  infoText: "Mathe fällt aus",
+                ),
+                VPLesson(
+                  schoolHour: 2,
+                  startTime: HMTime(8, 30),
+                  endTime: HMTime(9, 15),
+                  subjectCode: "Info",
+                  subjectChanged: false,
+                  teacherCode: "Sei",
+                  teacherChanged: false,
+                  roomCodes: ["202"],
+                  roomChanged: false,
+                  subjectID: 1,
+                  infoText: "",
+                ),
+                VPLesson(
+                  schoolHour: 3,
+                  startTime: HMTime(9, 15),
+                  endTime: HMTime(10, 0),
+                  subjectCode: "Info",
+                  subjectChanged: false,
+                  teacherCode: "Sei",
+                  teacherChanged: false,
+                  roomCodes: ["202"],
+                  roomChanged: false,
+                  subjectID: 1,
+                  infoText: "",
+                ),
+                VPLesson(
+                  schoolHour: 4,
+                  startTime: HMTime(10, 30),
+                  endTime: HMTime(11, 15),
+                  subjectCode: "Ph",
+                  subjectChanged: false,
+                  teacherCode: "Hej",
+                  teacherChanged: true,
+                  roomCodes: ["115"],
+                  roomChanged: true,
+                  subjectID: 2,
+                  infoText: "",
+                ),
+                VPLesson(
+                  schoolHour: 5,
+                  startTime: HMTime(11, 15),
+                  endTime: HMTime(12, 00),
+                  subjectCode: "Ph",
+                  subjectChanged: false,
+                  teacherCode: "Hej",
+                  teacherChanged: true,
+                  roomCodes: ["115"],
+                  roomChanged: true,
+                  subjectID: 2,
+                  infoText: "",
+                ),
+              ],
+            ),
+          ],
+          additionalInfo: [
+            "Dies ist eine Demo.",
+            "Hier wären Infos zur Schule.",
+          ],
+        ),
+      );
+      setState(() {
+        _loading = false;
+        _error = null;
+      });
+      return;
+    }
     if (widget.teacherMode) {
       try {
         final (data, online) = await getLehrerXmlLeData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);

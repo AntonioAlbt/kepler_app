@@ -102,6 +102,11 @@ class NewsCache extends SerializableObject with ChangeNotifier {
     if (sort) old.sort((a, b) => b.startDate != null ? (a.startDate?.compareTo(b.startDate!) ?? 0) : 0);
     calData = old;
   }
+
+  void clearData() {
+    newsData = [];
+    calData = [];
+  }
 }
 
 bool _isSameMonth(DateTime one, DateTime two) => one.year == two.year && one.month == two.month;

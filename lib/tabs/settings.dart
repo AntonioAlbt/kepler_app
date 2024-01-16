@@ -123,8 +123,8 @@ class _SettingsTabState extends State<SettingsTab> {
                               }
                               if (!mounted) return;
 
-                              showLoginScreenAgain(closeable: false);
                               Navigator.pop(context);
+                              showLoginScreenAgain(closeable: false);
                             }();
                           },
                           child: const Text("Ja, abmelden"),

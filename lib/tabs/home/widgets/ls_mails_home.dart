@@ -130,7 +130,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
     mailsSlice = mails?.sublist(0, min(3, mails.length));
 
     if (mailsSlice?.isEmpty ?? true) {
-      final (online, mailLsts) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: inbox.id);
+      final (online, mailLsts) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken ?? "", folderId: inbox.id);
       if (!online || mailLsts == null) {
         mailsSlice = null;
         return;

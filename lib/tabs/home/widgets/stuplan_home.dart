@@ -87,10 +87,21 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                     initialData: null,
                     builder: (context, datasn) {
                       forceRefresh = false;
+                      var dataP = datasn.data;
                       if (datasn.error != null) {
-                        return const Text("Fehler beim Laden der Daten.");
+                        if (creds.lernSaxLogin == lernSaxDemoModeMail) {
+                          dataP = (const VPKlData(
+                            additionalInfo: [],
+                            classes: [VPClass(className: "Demo", hourBlocks: [], courses: [], subjects: [], lessons: [
+                              VPLesson(schoolHour: 1, startTime: null, endTime: null, subjectCode: "De", subjectChanged: true, teacherCode: "Kol", teacherChanged: true, roomCodes: ["404"], roomChanged: false, subjectID: 1, infoText: "Mathe fällt aus")
+                            ])],
+                            header: VPHeader(lastUpdated: "", dataDate: "", filename: ""),
+                            holidays: VPHolidays(holidayDateStrings: []),
+                          ), true);
+                        } else {
+                          return const Text("Fehler beim Laden der Daten.");
+                        }
                       }
-                      final dataP = datasn.data;
                       final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
                         ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
                         .where((e) => stdata.selectedCourseIDs.contains(e.subjectID)).toList();

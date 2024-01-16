@@ -138,6 +138,20 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     availableTeachers = data.teachers.map((e) => e.teacherCode).toList();
     lastAvailTeachersUpdate = DateTime.now();
   }
+
+  void clearData() {
+    availableClasses = [];
+    availableSubjects = {};
+    availableTeachers = [];
+    holidayDates = [];
+    lastAvailClassesUpdate = DateTime(1900);
+    lastAvailSubjectsUpdate = DateTime(1900);
+    lastAvailTeachersUpdate = DateTime(1900);
+    lastHolidayDatesUpdate = DateTime(1900);
+    selectedClassName = null;
+    selectedCourseIDs = [];
+    selectedTeacherName = null;
+  }
 }
 
 /// VPClassSubject, but serializable

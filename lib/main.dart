@@ -125,8 +125,19 @@ void main() async {
 
 void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
   final ctx = globalScaffoldContext;
+
+  if (Provider.of<CredentialStore>(ctx, listen: false).lernSaxLogin == lernSaxDemoModeMail) {
+    showDialog(context: ctx, builder: (ctx) => const AlertDialog(
+      title: Text("Demo-Login"),
+      content: Text("Da der Demo-Login verwendet wurde, muss die App zum Abmelden neu installiert werden."),
+    ));
+    return;
+  }
+
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
+    // Provider.of<NewsCache>(ctx, listen: false).clearData();
+    // Provider.of<StuPlanData>(ctx, listen: false).clearData();
     Provider.of<InternalState>(ctx, listen: false).introShown = false;
     Provider.of<Preferences>(ctx, listen: false).startNavPage = PageIDs.home;
   }
@@ -325,7 +336,7 @@ class _KeplerAppState extends State<KeplerApp> {
     }
 
     final vpUser = _credStore.vpUser, vpPass = _credStore.vpPassword, vpHost = _credStore.vpHost ?? baseUrl;
-    if (vpUser != null && vpPass != null) {
+    if (vpUser != null && vpPass != null && vpHost != indiwareDemoHost) {
       output ??= await checkAndUpdateSPMetaData(vpHost, vpUser, vpPass, utype, _stuPlanData);
     }
 
