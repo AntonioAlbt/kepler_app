@@ -70,10 +70,10 @@ Future<void> loadAndPrepareApp() async {
   );
   // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
   if (Platform.isAndroid && !((await getNotifLaunchInfo())?.didNotificationLaunchApp ?? false)) {
-    try {
-      // add this because users on previous versions of the app with the old "fetch_news" task will have both running
-      Workmanager().cancelByUniqueName("fetch_news");
-    } on Exception catch (_) {}
+    // try {
+    //   // add this because users on previous versions of the app with the old "fetch_news" task will have both running
+    //   Workmanager().cancelByUniqueName("fetch_news");
+    // } on Exception catch (_) {}
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
@@ -403,6 +403,9 @@ class _KeplerAppState extends State<KeplerApp> {
       ],
       child: Consumer<AppState>(builder: (context, state, __) {
         final index = state.selectedNavPageIDs;
+        // PopScopes are weird in comparison to WillPopScope-s, if anyone wants to update them anyway, have fun
+        // maybe helpful for async: https://stackoverflow.com/questions/77500680/willpopscope-is-deprecated-after-flutter-3-12
+        // ignore: deprecated_member_use
         return WillPopScope(
           onWillPop: () async {
             if (state.infoScreen != null) {
@@ -415,6 +418,7 @@ class _KeplerAppState extends State<KeplerApp> {
           },
           child: Stack(
             children: [
+              // ignore: deprecated_member_use
               WillPopScope(
                 onWillPop: () async {
                   if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {

@@ -121,6 +121,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
       _error = null;
     });
     if (creds.lernSaxLogin == lernSaxDemoModeMail) {
+      await Future.delayed(const Duration(milliseconds: 100)); // not elegant, but avoids state change conflicts
       spdata.loadDataFromKlData(
         VPKlData(
           header: const VPHeader(lastUpdated: "Datum", dataDate: "", filename: "Plan2022202.xml"),
@@ -214,6 +215,7 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
           ],
         ),
       );
+      spdata.selectedClassName ??= spdata.availableClasses!.first;
       setState(() {
         _loading = false;
         _error = null;

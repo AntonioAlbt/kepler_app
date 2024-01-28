@@ -319,7 +319,6 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
           // don't show this again because the user already agreed
           if (!widget.again) RichText(
             textAlign: TextAlign.center,
-            textScaleFactor: 1,
             text: TextSpan(
               style: DefaultTextStyle.of(context).style,
               children: [
@@ -364,7 +363,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                   style: link,
                   recognizer: TapGestureRecognizer()
                     ..onTap = () => launchUrl(
-                      Uri.parse(lernSaxAGBLink),
+                      Uri.parse(lernSaxDSELink),
                       mode: LaunchMode.externalApplication,
                     ),
                 ),

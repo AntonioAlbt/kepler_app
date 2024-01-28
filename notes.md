@@ -1,3 +1,9 @@
+# Hinweis
+
+Diese Notizen sind nicht aktuell und größere Teile passen nicht mehr zum Quelltext. Sie sind als archiviert zu betrachten.
+
+---
+
 # Interessantes an der App
 
 Soll zur Organisation meiner BeLL-Arbeit dienen.
