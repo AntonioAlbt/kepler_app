@@ -58,11 +58,11 @@ jobs:
           java-version: '11'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.9'
+          flutter-version: '3.16.9'
       - run: |
-          flutter --disable-telemetry
+          flutter --disable-analytics
           flutter pub get
-        name: flutter pub get (and disable telemetry)
+        name: flutter pub get (and disable analytics)
       - run: |
           cp lib/libs/sentry_dsn.example.dart lib/libs/sentry_dsn.dart
           sed -i "s|https://_@_.ingest.sentry.io/_|$SENTRY_DSN|g" lib/libs/sentry_dsn.dart
