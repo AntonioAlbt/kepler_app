@@ -6,6 +6,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/tabs/home/widgets/calendar_home.dart';
 import 'package:kepler_app/tabs/home/widgets/foucault_home.dart';
 import 'package:kepler_app/tabs/home/widgets/ls_link_home.dart';
 import 'package:kepler_app/tabs/home/widgets/ls_mails_home.dart';
@@ -30,10 +31,11 @@ final homeWidgetKeyMap = {
   "lernsax_notifs": ("LernSax: Benachrichtigungen", const HomeLSNotifsWidget(id: "lernsax_notifs")),
   "lernsax_mails": ("LernSax: E-Mails", const HomeLSMailsWidget(id: "lernsax_mails")),
   "lernsax_tasks": ("LernSax: Aufgaben", const HomeLSTasksWidget(id: "lernsax_tasks")),
+  "calendar": ("Kepler-Kalender", const HomeCalendarWidget(id: "calendar")),
   "foucault": ("Foucaultsches Pendel", const HomePendulumWidget(id: "foucault")),
 };
 
-final widgetsForNotLoggedIn = ["news", "stuplan", "foucault"];
+final widgetsForNotLoggedIn = ["news", "calendar", "stuplan", "foucault"];
 
 class _HomepageTabState extends State<HomepageTab> {
   @override

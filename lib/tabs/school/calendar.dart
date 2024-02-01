@@ -11,6 +11,8 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+DateTime? globalCalendarNextDateToHighlightOnOpen;
+
 class CalendarTab extends StatefulWidget {
   const CalendarTab({super.key});
 
@@ -43,58 +45,13 @@ class _CalendarTabState extends State<CalendarTab> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CalendarDatePicker2(
-            config: CalendarDatePicker2Config(
-              firstDayOfWeek: 1,
-              dayBuilder: ({required date, decoration, isDisabled, isSelected, isToday, textStyle}) {
-                final evtCount = _getDateEventCount(date);
-                return Row(
-                  children: [
-                    const Spacer(),
-                    AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        decoration: decoration,
-                        child: Center(
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Text(
-                                  MaterialLocalizations.of(context).formatDecimal(date.day),
-                                  style: textStyle,
-                                ),
-                              ),
-                              if (evtCount > 0) Transform.scale(
-                                scale: .99,
-                                child: Center(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.fromBorderSide(BorderSide(color: (isToday ?? false) ? Colors.green : (date.isBefore(DateTime.now()) ? keplerColorOrange : keplerColorYellow), width: 3))
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                  ],
-                );
-              },
-            ),
-            value: [_selectedDate],
-            onValueChanged: (selected) => setState(() => _selectedDate = selected.first!),
+          SchoolCalendar(
             onDisplayedMonthChanged: (date) {
-              setState(() {
-                _displayedMonthDate = date;
-                _selectedDate = null;
-              });
+              setState(() => _displayedMonthDate = date);
               _loadData();
             },
-            displayedMonthDate: _displayedMonthDate,
+            onSelectedDateChanged: (date) => setState(() => _selectedDate = date),
+            firstSelectedDate: _selectedDate ?? DateTime.now(),
           ),
           if (_selectedDate != null) CalendarDateShowcase(date: _selectedDate!),
         ],
@@ -102,13 +59,14 @@ class _CalendarTabState extends State<CalendarTab> {
     );
   }
 
-  int _getDateEventCount(DateTime date) {
-    return Provider.of<NewsCache>(context, listen: false).getCalEntryDataForDay(date).length;
-  }
-
   @override
   void initState() {
     super.initState();
+    if (globalCalendarNextDateToHighlightOnOpen != null) {
+      _selectedDate = globalCalendarNextDateToHighlightOnOpen;
+      _displayedMonthDate = globalCalendarNextDateToHighlightOnOpen ?? DateTime.now();
+      globalCalendarNextDateToHighlightOnOpen = null;
+    }
     _loadData();
   }
 
@@ -124,6 +82,92 @@ class _CalendarTabState extends State<CalendarTab> {
       if (data == null) return;
       Provider.of<NewsCache>(context, listen: false).replaceMonthInCalData(_displayedMonthDate, data);
     });
+  }
+}
+
+class SchoolCalendar extends StatefulWidget {
+  final DateTime firstSelectedDate;
+  final void Function(DateTime? newDate) onSelectedDateChanged;
+  final void Function(DateTime newMonth) onDisplayedMonthChanged;
+  final bool singleMonth;
+
+  const SchoolCalendar({super.key, required this.onSelectedDateChanged, required this.onDisplayedMonthChanged, this.singleMonth = false, required this.firstSelectedDate});
+
+  @override
+  State<SchoolCalendar> createState() => _SchoolCalendarState();
+}
+
+class _SchoolCalendarState extends State<SchoolCalendar> {
+  DateTime? _selectedDate;
+  DateTime _displayedMonthDate = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    return CalendarDatePicker2(
+      config: CalendarDatePicker2Config(
+        nextMonthIcon: widget.singleMonth ? const SizedBox.shrink() : null,
+        lastMonthIcon: widget.singleMonth ? const SizedBox.shrink() : null,
+        firstDayOfWeek: 1,
+        dayBuilder: ({required date, decoration, isDisabled, isSelected, isToday, textStyle}) {
+          final evtCount = Provider.of<NewsCache>(context, listen: false).getCalEntryDataForDay(date).length;
+          return Row(
+            children: [
+              const Spacer(),
+              AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  decoration: decoration,
+                  child: Center(
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Text(
+                            MaterialLocalizations.of(context).formatDecimal(date.day),
+                            style: textStyle,
+                          ),
+                        ),
+                        if (evtCount > 0) Transform.scale(
+                          scale: .99,
+                          child: Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.fromBorderSide(BorderSide(color: (isToday ?? false) ? Colors.green : (date.isBefore(DateTime.now()) ? keplerColorOrange : keplerColorYellow), width: 3))
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+            ],
+          );
+        },
+      ),
+      value: [_selectedDate],
+      onValueChanged: (selected) {
+        setState(() => _selectedDate = selected.first!);
+        widget.onSelectedDateChanged(selected.first!);
+      },
+      onDisplayedMonthChanged: (date) {
+        setState(() {
+          _displayedMonthDate = date;
+          _selectedDate = null;
+        });
+        widget.onDisplayedMonthChanged(date);
+        widget.onSelectedDateChanged(null);
+      },
+      displayedMonthDate: _displayedMonthDate,
+    );
+  }
+
+  @override
+  void initState() {
+    _selectedDate = widget.firstSelectedDate;
+    super.initState();
   }
 }
 
