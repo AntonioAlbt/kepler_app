@@ -36,7 +36,8 @@ class HomeCalendarWidgetState extends State<HomeCalendarWidget> {
         : SchoolCalendar(
           singleMonth: true,
           onDisplayedMonthChanged: (newMonth) {},
-          firstSelectedDate: DateTime.now(),
+          selectedDate: null,
+          displayedMonthDate: DateTime.now(),
           onSelectedDateChanged: (newDate) {
             globalCalendarNextDateToHighlightOnOpen = newDate;
             Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [NewsPageIDs.main, NewsPageIDs.calendar];

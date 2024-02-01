@@ -51,7 +51,8 @@ class _CalendarTabState extends State<CalendarTab> {
               _loadData();
             },
             onSelectedDateChanged: (date) => setState(() => _selectedDate = date),
-            firstSelectedDate: _selectedDate ?? DateTime.now(),
+            selectedDate: _selectedDate,
+            displayedMonthDate: _displayedMonthDate,
           ),
           if (_selectedDate != null) CalendarDateShowcase(date: _selectedDate!),
         ],
@@ -86,21 +87,19 @@ class _CalendarTabState extends State<CalendarTab> {
 }
 
 class SchoolCalendar extends StatefulWidget {
-  final DateTime firstSelectedDate;
+  final DateTime? selectedDate;
+  final DateTime displayedMonthDate;
   final void Function(DateTime? newDate) onSelectedDateChanged;
   final void Function(DateTime newMonth) onDisplayedMonthChanged;
   final bool singleMonth;
 
-  const SchoolCalendar({super.key, required this.onSelectedDateChanged, required this.onDisplayedMonthChanged, this.singleMonth = false, required this.firstSelectedDate});
+  const SchoolCalendar({super.key, required this.onSelectedDateChanged, required this.onDisplayedMonthChanged, this.singleMonth = false, required this.selectedDate, required this.displayedMonthDate});
 
   @override
   State<SchoolCalendar> createState() => _SchoolCalendarState();
 }
 
 class _SchoolCalendarState extends State<SchoolCalendar> {
-  DateTime? _selectedDate;
-  DateTime _displayedMonthDate = DateTime.now();
-
   @override
   Widget build(BuildContext context) {
     return CalendarDatePicker2(
@@ -147,27 +146,15 @@ class _SchoolCalendarState extends State<SchoolCalendar> {
           );
         },
       ),
-      value: [_selectedDate],
+      value: [widget.selectedDate],
       onValueChanged: (selected) {
-        setState(() => _selectedDate = selected.first!);
         widget.onSelectedDateChanged(selected.first!);
       },
       onDisplayedMonthChanged: (date) {
-        setState(() {
-          _displayedMonthDate = date;
-          _selectedDate = null;
-        });
         widget.onDisplayedMonthChanged(date);
-        widget.onSelectedDateChanged(null);
       },
-      displayedMonthDate: _displayedMonthDate,
+      displayedMonthDate: widget.displayedMonthDate,
     );
-  }
-
-  @override
-  void initState() {
-    _selectedDate = widget.firstSelectedDate;
-    super.initState();
   }
 }
 
