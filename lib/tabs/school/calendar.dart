@@ -47,7 +47,10 @@ class _CalendarTabState extends State<CalendarTab> {
         children: [
           SchoolCalendar(
             onDisplayedMonthChanged: (date) {
-              setState(() => _displayedMonthDate = date);
+              setState(() {
+                _displayedMonthDate = date;
+                _selectedDate = null;
+              });
               _loadData();
             },
             onSelectedDateChanged: (date) => setState(() => _selectedDate = date),
@@ -168,6 +171,7 @@ class CalendarDateShowcase extends StatefulWidget {
 }
 
 final _niceDateFormat = DateFormat("dd.MM.yyyy");
+final _niceShortDateFormat = DateFormat("dd.MM.");
 class _CalendarDateShowcaseState extends State<CalendarDateShowcase> {
   @override
   Widget build(BuildContext context) {
@@ -189,7 +193,7 @@ class _CalendarDateShowcaseState extends State<CalendarDateShowcase> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      "Am ${widget.date.day}.${widget.date.month}. finden am JKG keine Veranstaltungen statt.",
+                      "Am ${_niceShortDateFormat.format(widget.date)} finden am JKG keine Veranstaltungen statt.",
                       style: const TextStyle(fontSize: 16),
                       textAlign: TextAlign.center,
                     ),

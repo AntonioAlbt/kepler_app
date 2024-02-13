@@ -20,7 +20,7 @@ class HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   Widget build(BuildContext context) {
     return HomeWidgetBase(
       id: widget.id,
-      color: colorWithLightness(keplerColorBlue, hasDarkTheme(context) ? .2 : .8),
+      color: colorWithLightness(keplerColorBlue, hasDarkTheme(context) ? .15 : .8),
       title: const Text("Kepler-Kalender"),
       titleColor: Theme.of(context).cardColor,
       child: FutureBuilder(

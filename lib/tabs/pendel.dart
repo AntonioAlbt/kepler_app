@@ -8,10 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/preferences.dart';
-import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/libs/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 const pendelInfoUrl = "https://pendel.vlant.de";
 const pendelDataUrl = "https://pendel.vlant.de/logging";
@@ -221,23 +220,11 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: ElevatedButton(
-                onPressed: () => launchUrl(Uri.parse(pendelInfoUrl), mode: LaunchMode.externalApplication).onError((_, __) {
-                  showSnackBar(text: "Fehler beim Öffnen.");
-                  return false;
-                }),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(child: Text("Mehr Infos zum Pendel")),
-                    Flexible(child: Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.open_in_new, size: 16),
-                    ))
-                  ],
-                ),
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: OpenLinkButton(
+                label: "Mehr Infos zum Pendel",
+                link: pendelInfoUrl,
               ),
             ),
             if (kDebugFeatures) Padding(

@@ -291,7 +291,6 @@ class _TheDrawerState extends State<TheDrawer> {
       .map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values
       .toList().cast<Widget>();
     widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
-    const divisor = 2;
     return Drawer(
       child: ListView(
         controller: _controller,
@@ -302,48 +301,7 @@ class _TheDrawerState extends State<TheDrawer> {
             child: Row(
               children: [
                 Flexible(
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 50/divisor,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: keplerColorYellow,
-                            border: Border.all(width: 2),
-                          ),
-                          width: 200/divisor,
-                          height: 200/divisor,
-                        ),
-                      ),
-                      Positioned(
-                        top: 100/divisor,
-                        left: 160/divisor,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: keplerColorBlue,
-                          border: Border.all(width: 2),
-                          ),
-                          width: 115/divisor,
-                          height: 115/divisor,
-                        ),
-                      ),
-                      Positioned(
-                        top: 110/divisor,
-                        left: 30/divisor,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: keplerColorOrange,
-                          border: Border.all(width: 2),
-                          ),
-                          width: 140/divisor,
-                          height: 140/divisor,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: Image.asset("assets/JKGLogo.png"),
                 ),
                 const Center(
                   child: SizedBox(
