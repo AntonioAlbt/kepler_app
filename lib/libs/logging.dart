@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
@@ -90,6 +91,8 @@ class KeplerLogging {
     logger = Logger(
       printer: CustomPrinter(),
       output: FileOutput(file.absolute.path),
+      filter: ProductionFilter(),
+      level: Level.debug,
     );
     _fileUpdated = DateTime.now();
   }
@@ -222,8 +225,10 @@ class _LogViewPageState extends State<LogViewPage> {
           Wrap(
             children: [
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: logViewerPageBuilder));
+                onPressed: () async {
+                  Clipboard.setData(ClipboardData(text: await widget.logFile.readAsString()));
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kopiert."), duration: Duration(seconds: 1)));
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -253,7 +258,7 @@ class _LogViewPageState extends State<LogViewPage> {
                               Future<String> copyFile() async {
                                 final oldDir = "${(await getTemporaryDirectory()).absolute.path}/share";
                                 await Directory(oldDir).create(recursive: true);
-                                final path = "$oldDir/Kepler-App-Log-${widget.logFile.path.split("/").last}.txt";
+                                final path = "$oldDir/Kepler-App-Log-${widget.logFile.path.split("/").last.replaceAll(".log", "")}.txt";
                                 await widget.logFile.copy(path);
                                 return path;
                               }
@@ -290,20 +295,23 @@ class _LogViewPageState extends State<LogViewPage> {
             ],
           ),
           Expanded(
-            child: FutureBuilder(
-              future: widget.logFile.readAsString(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) return const Center(child: Text("Fehler beim Lesen."));
-                return SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: SelectableText(
-                      parseLog(snapshot.data ?? "keine Daten"),
+            child: SizedBox(
+              width: double.infinity,
+              child: FutureBuilder(
+                future: widget.logFile.readAsString(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                  if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) return const Center(child: Text("Fehler beim Lesen."));
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: SelectableText(
+                        parseLog(snapshot.data ?? "keine Daten"),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ],

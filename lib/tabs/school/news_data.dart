@@ -251,9 +251,10 @@ Future<(bool, List<CalendarEntryData>?)> loadCalendarEntries(DateTime month) asy
         endDate: evtData.containsKey("end_date") ? DateTime.parse(evtData["end_date"]) : null,
       ));
     }
+    logDebug("cal-data", "loaded ${out.length} events from ${res.request?.url.toString()}");
     return (true, out);
   } catch (e, s) {
-    logCatch("news-data", e, s);
+    logCatch("cal-data", e, s);
     log("", error: e, stackTrace: s);
     return (true, null);
   }

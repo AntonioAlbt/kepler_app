@@ -286,6 +286,7 @@ Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
     final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);
     // the values should already be double-s, but just to be safe, convert them anyway
     // the api is sometimes unreliable
+    logDebug("pendel", "fetched pendel data from $pendelDataUrl");
     return (
       DateTime.tryParse(res["date"]?.toString() ?? "-")?.toLocal(),
       double.tryParse(res["angle"]?.toString() ?? "-"),
