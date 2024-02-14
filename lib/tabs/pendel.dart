@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
@@ -293,6 +294,7 @@ Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
       double.tryParse(res["ram"]?.toString() ?? "-"),
     );
   } catch (e, s) {
+    logCatch("pendel", e, s);
     if (kDebugFeatures) {
       return (DateTime(2020, 3, 11), 66.66, 31.2, 9.2314, 15.309);
     }

@@ -6,9 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:universal_feed/universal_feed.dart';
 
@@ -59,7 +58,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
       _serializer.deserialize(json, this);
     } catch (e, s) {
       log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
-      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
+      logCatch("news_data", e, s);
       return;
     }
     loaded = true;
@@ -142,7 +141,8 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
   final http.Response res;
   try {
     res = await http.get(Uri.parse(keplerNewsURL.replaceAll("{page}", "${page + 1}")));
-  } catch (_) {
+  } catch (e, s) {
+    logCatch("news-data", e, s);
     return null;
   }
   if (res.statusCode == 404) {
@@ -233,7 +233,8 @@ Future<(bool, List<CalendarEntryData>?)> loadCalendarEntries(DateTime month) asy
   final http.Response res;
   try {
     res = await http.get(Uri.parse("$keplerEvtApiURL/events?start_date=${calApiDateFormat.format(startDate)}&end_date=${calApiDateFormat.format(endDate)}"));
-  } catch (_) {
+  } catch (e, s) {
+    logCatch("news-data", e, s);
     return (false, null);
   }
 
@@ -252,6 +253,7 @@ Future<(bool, List<CalendarEntryData>?)> loadCalendarEntries(DateTime month) asy
     }
     return (true, out);
   } catch (e, s) {
+    logCatch("news-data", e, s);
     log("", error: e, stackTrace: s);
     return (true, null);
   }

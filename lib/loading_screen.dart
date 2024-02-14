@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -174,11 +173,11 @@ class _LoadingScreenState extends State<LoadingScreen>
         }
         Future.delayed(const Duration(seconds: 14)).then((_) {
           if (!mounted) return;
-          if (globalSentryEnabled) Sentry.captureException("LoadingError: long loading time, ~ 15s");
+          logWarn("loading", "LoadingError: long loading time, ~ 15s");
         });
         Future.delayed(const Duration(milliseconds: 24050)).then((_) {
           if (!mounted) return;
-          if (globalSentryEnabled) Sentry.captureException("LoadingError: extremely long loading time, = 25s");
+          logWarn("loading", "LoadingError: extremely long loading time, = 25s");
         });
       }
     });

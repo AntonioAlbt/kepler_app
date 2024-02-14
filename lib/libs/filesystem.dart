@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:kepler_app/libs/logging.dart';
 import 'package:path_provider/path_provider.dart';
 
 Future<String> get cacheDirPath async => (await getApplicationCacheDirectory()).path;
@@ -16,7 +17,8 @@ Future<bool> writeFileBin(String fn, List<int> data) async {
     sink.add(data);
     sink.close();
     return true;
-  } catch (_) {
+  } catch (e, s) {
+    logDebug("filesystem", "$e:\n$s");
     return false;
   }
 }
@@ -27,7 +29,8 @@ Future<List<int>?> readFileBin(String fn) async {
   final file = File(fn);
   try {
     return await file.readAsBytes();
-  } catch (_) {
+  } catch (e, s) {
+    logDebug("filesystem", "$e:\n$s");
     return null;
   }
 }

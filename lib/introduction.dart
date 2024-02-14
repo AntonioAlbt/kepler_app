@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
 
 import 'package:kepler_app/libs/preferences.dart';
@@ -13,10 +13,9 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/privacy_policy.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, if (kSentryEnabled && !kIsBetaVersion) sentryAcceptanceScreen, finishScreen];
+final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
 final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
 final loginAgainScreensUncloseable = [lernSaxLoginAgainScreen(false), stuPlanLoginAgainScreen, finishScreen];
 
@@ -60,50 +59,6 @@ const notificationInfoScreen = InfoScreen(
   infoText: NotifInfoScreenMain(),
   closeable: false,
   infoImage: Icon(Icons.notifications_active, size: 48),
-);
-
-final sentryAcceptanceScreen = InfoScreen(
-  infoTitle: const Text("Zustimmung zur Datenanalyse"),
-  closeable: false,
-  infoText: Consumer<Preferences>(
-    builder: (context, prefs, _) {
-      final sie = prefs.preferredPronoun == Pronoun.sie;
-      return Column(
-        children: [
-          Text("Damit wir die App weiter verbessern und Fehler schnell beheben können, würden wir ${sie ? "Sie" : "Dich"} bitten, der Verarbeitung ${sie ? "Ihrer" : "Deiner"} Daten zu Analysezwecken zuzustimmen."),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: CheckboxListTile(
-              value: prefs.sentryEnabled,
-              title: const Text("Datenverarbeitung durch Sentry.io für Fehleraufzeichnung erlauben"),
-              onChanged: (val) {
-                if (val == null) return;
-                prefs.sentryEnabled = val;
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => infoScreenState.next(),
-            child: const TextWithArrowForward(text: "Fortfahren"),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: GestureDetector(
-              onTap: () => launchUrl(Uri.parse("https://sentry.io/privacy/"), mode: LaunchMode.externalApplication).catchError((_) {
-                showSnackBar(text: "Fehler beim Öffnen.");
-                return false;
-              }),
-              child: const Text(
-                "Datenschutzerklärung von Sentry",
-                style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-              ),
-            ),
-          ),
-        ],
-      );
-    },
-  ),
-  infoImage: const Icon(Icons.info, size: 48),
 );
 
 final finishScreen = InfoScreen(
@@ -305,7 +260,8 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 
                         infoScreenState.next();
                       });
-                    } catch (_) {
+                    } catch (e, s) {
+                      logCatch("ls-intro", e, s);
                       showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
                     }
                   } else {
@@ -438,7 +394,8 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                                     }
                                     Navigator.pop(context);
                                   });
-                                } catch (_) {
+                                } catch (e, s) {
+                                  logCatch("ls-intro", e, s);
                                   Navigator.pop(context);
                                 }
                               });
@@ -593,11 +550,6 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                 ],
               );
             }
-            if (datasn.data == false) {
-              // notify the maintainer of the sentry account that something is wrong
-              // but don't do anything else, just fallback to the user input
-              if (globalSentryEnabled) Sentry.captureException("LSDataError: lernsax indiware auth data isn't working");
-            }
             return Column(
               children: [
                 const Text("Leider konnten die Daten nicht automatisch von LernSax abgefragt werden.\n"),
@@ -684,7 +636,8 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
       }
       if (lres.statusCode != 200) return "Fehler #LP${lres.statusCode}. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
       return null;
-    } catch (_) {
+    } catch (e, s) {
+      logCatch("sp-intro", e, s);
       return "Fehler bei der Verbindung zum Vertretungsplan. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.";
     } finally {
       setState(() => _loading = false);
@@ -731,7 +684,8 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
       final lres = await authRequest(Uri.parse("${data.host}$lUrlMLeXmlPath"), data.user, data.password);
       if (lres!.statusCode != 200) throw Exception();
       return true;
-    } catch (_) {
+    } catch (e, s) {
+      logCatch("ls-intro", e, s);
       final sres = await authRequest(Uri.parse("${data.host}$sUrlMKlXmlPath"), data.user, data.password);
       final success = sres!.statusCode == 200;
       if (success) {

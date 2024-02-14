@@ -4,18 +4,16 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
-import 'package:kepler_app/libs/sentry_dsn.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
@@ -26,7 +24,6 @@ import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -39,9 +36,6 @@ final _stuPlanData = StuPlanData();
 final _lernSaxData = LernSaxData();
 
 final ConfettiController globalConfettiController = ConfettiController();
-
-/// is necessary for codeblocks that aren't supposed to require passing the preferences value along every time
-var globalSentryEnabled = kIsBetaVersion && kSentryEnabled;
 
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
@@ -102,25 +96,17 @@ Future<void> prepareApp() async {
   final sprefs = sharedPreferences;
   if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
   await IndiwareDataManager.createDataDirIfNecessary();
-  if (kSentryEnabled) globalSentryEnabled = _prefs.sentryEnabled;
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   initializeDateFormatting();
+
+  await KeplerLogging.initLogging();
+  logInfo("startup", "--- INIT ---");
+
   await prepareApp();
-  appRunner() => runApp(const MyApp());
-  if (kDebugMode || !kSentryEnabled || !_prefs.sentryEnabled) {
-    appRunner();
-  } else {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = sentryDSN;
-        options.tracesSampleRate = 0.5;
-      },
-      appRunner: appRunner,
-    );
-  }
+  runApp(const MyApp());
 }
 
 void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
@@ -191,7 +177,8 @@ Future<UserType?> checkIndiwareData(String host, String username, String passwor
     }
     if (lres.statusCode != 200) return null;
     return UserType.teacher;
-  } catch (_) {
+  } catch (e, s) {
+    logCatch("indiware-check", e, s);
     return null;
   }
 }
@@ -516,20 +503,6 @@ class _KeplerAppState extends State<KeplerApp> {
         } else {
           showSnackBar(text: text);
         }
-      }
-      
-      if (kIsBetaVersion && kSentryEnabled && !_internalState.infosShown.contains("beta_sentry_info")) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          showDialog(context: globalScaffoldContext, builder: (ctx) => AlertDialog(
-            title: const Text("Hinweis zur Datenerfassung"),
-            content: const Text("In dieser Beta-Version der App wird Sentry.io zur Fehlererfassung verwendet. Durch die Nutzung wird die Zustimmung erteilt."),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
-              TextButton(onPressed: () => SystemNavigator.pop(), child: const Text("App beenden")),
-            ],
-          ));
-          _internalState.addInfoShown("beta_sentry_info");
-        });
       }
     });
     super.initState();

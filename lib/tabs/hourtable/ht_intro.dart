@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -235,7 +236,8 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
         spdata.loadDataFromLeData(data);
         spdata.selectedTeacherName ??= spdata.availableTeachers!.first;
         setState(() => _loading = false);
-      } catch (_) {
+      } catch (e, s) {
+        logCatch("ht-intro", e, s);
         setState(() {
           _error = "Fehler bei der Abfrage der Lehrer. Bitte später erneut probieren.";
           _loading = false;
@@ -254,7 +256,8 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
         spdata.loadDataFromKlData(data);
         spdata.selectedClassName ??= spdata.availableClasses!.first;
         setState(() => _loading = false);
-      } catch (_) {
+      } catch (e, s) {
+        logCatch("ht-intro", e, s);
         setState(() {
           _loading = false;
           _error = "Fehler bei der Abfrage der Klassen. Bitte später erneut probieren.";

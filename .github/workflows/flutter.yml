@@ -29,11 +29,6 @@ on:
         required: true
         type: boolean
         default: false
-      sentry:
-        description: "let sentry (able to) be enabled"
-        required: true
-        type: boolean
-        default: false
       debugNotifyData:
         description: "add notifications debug data - will spam notifications every 2 hours"
         required: true
@@ -64,12 +59,6 @@ jobs:
           flutter pub get
         name: flutter pub get (and disable analytics)
       - run: |
-          cp lib/libs/sentry_dsn.example.dart lib/libs/sentry_dsn.dart
-          sed -i "s|https://_@_.ingest.sentry.io/_|$SENTRY_DSN|g" lib/libs/sentry_dsn.dart
-        env:
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        name: Setup Sentry
-      - run: |
           cp android/app/signing/key.properties.example android/app/signing/key.properties
           sed -i "s|<storepassword>|$STPW|g" android/app/signing/key.properties
           sed -i "s|<keypassword>|$KPW|g" android/app/signing/key.properties
@@ -84,14 +73,13 @@ jobs:
           FP: "signing/keystore.jks"
         name: Setup APK signing
       - run: flutter analyze
-      - run: flutter build apk --release --dart-define=beta=$BETA --dart-define=debug_features=$DEBUG --dart-define=sentry_enabled=$SENTRY --dart-define=debug_notif_data=$DEBUGNOTIF
+      - run: flutter build apk --release --dart-define=beta=$BETA --dart-define=debug_features=$DEBUG --dart-define=debug_notif_data=$DEBUGNOTIF
         env:
           BETA: ${{ inputs.beta }}
           DEBUG: ${{ inputs.debugFeatures }}
-          SENTRY: ${{ inputs.sentry }}
           DEBUGNOTIF: ${{ inputs.debugNotifyData }}
         if: ${{ github.event_name == 'workflow_dispatch' }}
-      - run: flutter build apk --release --dart-define=beta=true --dart-define=sentry_enabled=true
+      - run: flutter build apk --release --dart-define=beta=true
         if: ${{ github.event_name != 'workflow_dispatch' }}
       - name: Publish new release
         uses: softprops/action-gh-release@v1

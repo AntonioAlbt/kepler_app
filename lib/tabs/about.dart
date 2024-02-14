@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/privacy_policy.dart';
@@ -90,6 +91,30 @@ class _AboutTabState extends State<AboutTab> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Image.asset("assets/logo${hasDarkTheme(context) ? "_light" : ""}.png", scale: 4),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Divider(indent: 32, endIndent: 32),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: logViewerPageBuilder));
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(flex: 0, child: Text("Debug-Aufzeichnungen ansehen")),
+                      Flexible(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.bug_report, size: 16),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

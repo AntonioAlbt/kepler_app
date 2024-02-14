@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -37,6 +38,7 @@ void taskCallbackDispatcher() {
       try {
         await runNewsFetchTask();
       } catch (e, s) {
+        logCatch("nw-tasks", e, s);
         if (kDebugMode) print("$e - $s");
         return false;
       }
@@ -45,6 +47,7 @@ void taskCallbackDispatcher() {
       try {
         await runStuPlanFetchTask();
       } catch (e, s) {
+        logCatch("sp-tasks", e, s);
         if (kDebugMode) print("$e - $s");
         return false;
       }
@@ -85,6 +88,8 @@ Future<void> runNewsFetchTask() async {
     
     newsCache.addNewsData(newNews);
   }
+
+  logDebug("nw-notif", "Neue Benachrichtigung für Kepler-News: ${newNews.length} neue Nachricht(en)");
 
   sendNotification(
     title: "Neue Kepler-News",
@@ -138,6 +143,8 @@ Future<void> runStuPlanFetchTask() async {
 
   initializeDateFormatting();
   final dateFormat = DateFormat("EE", "de-DE");
+
+  logDebug("sp-notif", "Neue Benachrichtigung für Stundenplanänderungen: ${differentLessons.length} neue Änderung(en)");
 
   sendNotification(
     title: "Neue Änderungen im Stundenplan",

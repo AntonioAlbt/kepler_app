@@ -4,8 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:enough_serialization/enough_serialization.dart';
-import 'package:kepler_app/main.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:synchronized/synchronized.dart';
 
 const lernSaxDataPrefsKey = "lernsaxdata";
@@ -116,7 +115,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
       _serializer.deserialize(json, this);
     } catch (e, s) {
       log("Error while decoding json for LernSaxData from file:", error: e, stackTrace: s);
-      if (globalSentryEnabled) Sentry.captureException(e, stackTrace: s);
+      logCatch("ls_data", e, s);
       return;
     }
     loaded = true;

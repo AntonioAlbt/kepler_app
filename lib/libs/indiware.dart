@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:intl/intl.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:xml/xml.dart';
 import 'package:http/http.dart' as http;
 
@@ -269,13 +270,15 @@ Future<http.Response?> authRequest(Uri url, String user, String password) async 
       "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}",
       "User-Agent": "KeplerApp/0.1 (info: a.albert@gamer153.dev)"
     }).timeout(const Duration(seconds: 5));
-  } catch (_) {
+  } catch (e, s) {
+    logCatch("indiware", e, s);
     return null;
   }
 }
 
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> _fetch(Uri url, String user, String password) async {
+  logDebug("indiware", "fetching ${url.toString()}");
   final res = await authRequest(url, user, password);
   if (res == null) return (null, false);
   if (res.statusCode == 401) throw StateError("authentication failed");

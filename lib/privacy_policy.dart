@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kepler_app/build_vars.dart';
 
 const privacyPolicyString = """
 Hinweis: Alle Daten werden ausschließlich lokal gespeichert. Datenschutz steht in der App an höchster Stelle.
@@ -56,33 +55,13 @@ Rechte der betroffenen Personen aus der DSGVO: Ihnen stehen als Betroffene nach 
     Beschwerde bei Aufsichtsbehörde: Sie haben unbeschadet eines anderweitigen verwaltungsrechtlichen oder gerichtlichen Rechtsbehelfs das Recht auf Beschwerde bei einer Aufsichtsbehörde, insbesondere in dem Mitgliedstaat ihres gewöhnlichen Aufenthaltsorts, ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes, wenn Sie der Ansicht sind, dass die Verarbeitung der Sie betreffenden personenbezogenen Daten gegen die Vorgaben der DSGVO verstößt.
 """;
 
-const betaPrivacyPolicyString = """
-Achtung! Diese Version der App ist eine Beta-Version!
-Zur Erfassung von evtl. Fehlern und Problemen wird Sentry verwendet.
-Dabei werden Daten zum Gerät und andere Metadaten übermittelt.
-Datenschutzerklärung von Sentry: https://sentry.io/privacy/
-
-Für die Verwendung von nur nötigen Daten ist die Installation der Release-Version nötig.
-
-
-Verantwortlicher:
-Antonio Albert, Kurs 12de3
-Johannes-Kepler-Gymnasium
-Humboldtplatz 1
-09130 Chemnitz
-E-Mail-Adresse: a.albert@gamer153.dev
-
-Achtung: Die vollständige Datenschutzerklärung für die Beta-Version ist per Mail an a.albert@gamer153.dev erhaltbar.
-Alle gesendeten Mails an diese E-Mail-Adresse dazu werden sofort nach Beantwortung gelöscht.
-""";
-
 class PrivacyPolicy extends StatelessWidget {
   const PrivacyPolicy({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
-      child: Text(kIsBetaVersion ? betaPrivacyPolicyString : privacyPolicyString),
+      child: Text(privacyPolicyString),
     );
   }
 }

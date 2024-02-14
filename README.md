@@ -9,11 +9,7 @@ Notizen von mir zu dem interessanten Zeug (Code) findest du [hier](notes.md).
 Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dabei gibt es diese Konstanten:
 
 - `beta` = ist Build eine Beta-Version (Standard: `false`)
-  - falls `sentry_enabled`, wird Sentry für Entwicklerzwecke zwingend aktiviert (Standard: `false`)
   - Schrift "BETA-VERSION" wird auf Ladebildschirm angezeigt
-- `sentry_enabled` = ist Sentry verfügbar (nimmt an, dass `sentryDSN` in `libs/sentry_dsn.dart` gültig ist!)
-  - wenn aktiviert, werden Daten an Sentry übermittelt
-  - Einstellung zu Sentry wird verfügbar und Hinweis/InfoScreen wird angezeigt
 - `debug_features` = sollen Debug-Features aktiv und sichtbar sein (Standard: `kDebugMode`)
   - freies Skippen durch InfoScreens
   - Intro neu zeigen vom Home -> NavBar Action
@@ -28,8 +24,8 @@ Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dab
 
 Zum Aktivieren beim App-Build `--dart-define=<varname>=[true|false]` an `flutter run` oder `flutter build` übergeben, z.B.:
 
-- `flutter build apk --dart-define=beta=true --dart-define=sentry_enabled=true`
-  - &rarr; Android APK als Beta mit Sentry zwingend aktiviert
+- `flutter build apk --dart-define=beta=true`
+  - &rarr; Android APK als Beta
 - `flutter build ipa --dart-define=debug_features=true`
   - &rarr; Apple Build mit Debug Features aktiviert
 
