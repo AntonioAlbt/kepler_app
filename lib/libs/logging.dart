@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:kepler_app/libs/filesystem.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -73,6 +76,11 @@ class KeplerLogging {
   static DateTime? _fileUpdated;
 
   static void log({String? subTag, required Level level, required String message}) {
+    if (!loggingEnabled) {
+      if (kDebugMode) print("ignored log (logging disabled): $level - ${"${subTag != null ? "($subTag) " : ""}$message"}");
+      return;
+    }
+
     logger?.log(level, "${subTag != null ? "($subTag) " : ""}$message");
 
     if (_fileUpdated?.day != DateTime.now().day) initLogging();
@@ -98,13 +106,7 @@ class KeplerLogging {
   }
 
   static Future<Directory> getPlatformSpecificLoggingDir() async {
-    if (Platform.isAndroid) {
-      return Directory("${(await getExternalStorageDirectory())!.absolute.path}/$logDir");
-    } else if (Platform.isIOS) {
-      return Directory("${(await getApplicationSupportDirectory()).absolute.path}/$logDir");
-    } else {
-      return Directory("/tmp/kepler_app/$logDir");
-    }
+    return Directory("${await appDataDirPath}/$logDir");
   }
 
   static DateTime getDateFromFileName(String fileName) => fnDateFormat.parse(fileName.substring(0, fileName.length - logFileEnding.length + 1));
@@ -118,6 +120,30 @@ class KeplerLogging {
       if ((await f.stat()).type == FileSystemEntityType.file) out.add(File(f.absolute.path));
     }
     return out;
+  }
+
+  static Future<List<DateTime>> deleteLogsOlderThan(DateTime time) async {
+    final deleted = <DateTime>[];
+    for (final file in await getAllLogFiles()) {
+      final date = getDateFromFile(file);
+      if (date.isBefore(time)) {
+        await file.delete();
+        deleted.add(date);
+      }
+    }
+    return deleted;
+  }
+
+  static void registerFlutterErrorHandling() {
+    FlutterError.onError = (error) {
+      logCatch("flutter-error", error.exception, error.stack ?? StackTrace.empty);
+      FlutterError.presentError(error);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      logCatch("platform-dispatcher-error", error, stack);
+      if (!loggingEnabled) debugPrintStack(label: error.toString(), stackTrace: stack);
+      return true;
+    };
   }
 }
 
@@ -141,10 +167,11 @@ void logError(String? subTag, String message) => KeplerLogging.log(
   subTag: subTag,
   message: message,
 );
+String limitStringLength(String input, int maxLength, [String? trailing]) => input.length > maxLength ? input.substring(0, maxLength) + (trailing ?? "") : input;
 void logCatch(String? subTag, Object error, StackTrace stack) => KeplerLogging.log(
   level: Level.error,
   subTag: subTag,
-  message: "$error:\n$stack",
+  message: limitStringLength("$error:\n$stack", 5000, "..."),
 );
 
 Widget logViewerPageBuilder(BuildContext context) {
@@ -163,10 +190,30 @@ class _LogListViewerPageState extends State<LogListViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Debug-Aufzeichnungen")),
+      appBar: AppBar(title: const Text("Debug-Aufzeichnungen"), actions: [
+        IconButton(
+          onPressed: () {
+            showDialog(context: context, builder: (ctx2) => AlertDialog(
+              title: const Text("Wirklich alle löschen?"),
+              content: const Text("Sollen alle Aufzeichnungen wirklich permanent gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden."),
+              actions: [
+                TextButton(onPressed: () async {
+                  Navigator.pop(ctx2);
+                  Navigator.pop(context);
+                  await KeplerLogging.getAllLogFiles().then((files) => Future.wait(files.map((file) => file.delete())));
+                }, child: const Text("Ja")),
+                TextButton(onPressed: () {
+                  Navigator.pop(ctx2);
+                }, child: const Text("Nein, abbrechen")),
+              ],
+            ));
+          },
+          icon: const Icon(Icons.delete),
+        ),
+      ]),
       body: FutureBuilder(
         future: KeplerLogging.getAllLogFiles(),
-        builder: (context, snapshot) {
+        builder: (ctx1, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
           if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) return const Center(child: Text("Fehler beim Lesen."));
           return ListView(
@@ -181,6 +228,23 @@ class _LogListViewerPageState extends State<LogListViewerPage> {
                     return const Text("... Zeilen");
                   }
                 },
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => showDialog(context: ctx1, builder: (ctx2) => AlertDialog(
+                  title: const Text("Wirklich löschen?"),
+                  content: Text("Soll die Datei vom ${_outDF.format(KeplerLogging.getDateFromFile(e))} wirklich permanent gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden."),
+                  actions: [
+                    TextButton(onPressed: () {
+                      e.delete();
+                      Navigator.pop(ctx2);
+                      Navigator.pop(context);
+                    }, child: const Text("Ja")),
+                    TextButton(onPressed: () {
+                      Navigator.pop(ctx2);
+                    }, child: const Text("Nein, abbrechen")),
+                  ],
+                )),
               ),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: logViewBuilder(e))),
             )).toList(),

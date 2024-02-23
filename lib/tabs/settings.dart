@@ -135,7 +135,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 SettingsTile.navigation(
                   title: const Text("Widget-Reihenfolge ändern"),
                   description: const Text("Reihenfolge der Informationsblöcke auf der Startseite ändern"),
-                  onPressed: (_) => openReorderHomeWidgetDialog(context),
+                  onPressed: (_) => openReorderHomeWidgetDialog(),
                   enabled: userType != UserType.nobody,
                 ),
               ],
@@ -235,12 +235,51 @@ class _SettingsTabState extends State<SettingsTab> {
               tiles: [
                 SettingsTile.switchTile(
                   initialValue: prefs.confettiEnabled,
-                  onToggle: (val) {
-                    return prefs.confettiEnabled = val;
-                  },
-                  title: const Text("Konfetti aktivieren"),
+                  onToggle: (val) => prefs.confettiEnabled = val,
+                  title: const Text("🎉 Konfetti aktivieren 🎉"),
                   description: const Text("z.B. bei Ausfall oder schulfreien Tagen"),
                   enabled: userType != UserType.nobody,
+                ),
+              ],
+            ),
+            SettingsSection(
+              title: const Text("Debug-Aufzeichnungen"),
+              tiles: [
+                SettingsTile.switchTile(
+                  initialValue: prefs.loggingEnabled,
+                  onToggle: (val) {
+                    if (val) {
+                      prefs.loggingEnabled = true;
+                      return;
+                    }
+                    showDialog(context: context, builder: (ctx) => AlertDialog(
+                      title: const Text("Wirklich ändern?"),
+                      content: const Text("Soll diese Einstellung wirklich geändert werden? Die Debug-Aufzeichnungen werden dann zukünftig nicht mehr gespeichert, und können nicht zur Fehlerbehebung genutzt werden."),
+                      actions: [
+                        TextButton(onPressed: () {
+                          prefs.loggingEnabled = false;
+                          Navigator.pop(ctx);
+                        }, child: const Text("Bestätigen")),
+                        TextButton(onPressed: () {
+                          Navigator.pop(ctx);
+                        }, child: const Text("Abbrechen")),
+                      ],
+                    ));
+                  },
+                  title: const Text("Aufzeichnungen aktivieren"),
+                  description: Selector<Preferences, bool>(
+                    selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
+                    builder: (context, sie, _) => Text("Nur ändern, wenn ${sie ? "Sie wissen, was Sie tuen!" : "Du weißt, was du tust!"}"),
+                  ),
+                ),
+                selectionSettingsTile(
+                  "${prefs.logRetentionDays} Tage",
+                  [ "3 Tage", "7 Tage", "14 Tage", "30 Tage", "90 Tage", "180 Tage" ],
+                  "Speicherdauer für Aufzeichnungen",
+                  (val) {
+                    prefs.logRetentionDays = int.parse(val.split(" Tage")[0]);
+                  },
+                  disabled: prefs.loggingEnabled == false,
                 ),
               ],
             ),

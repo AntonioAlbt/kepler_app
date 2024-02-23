@@ -54,7 +54,7 @@ class _HomepageTabState extends State<HomepageTab> {
                   )),
                   if (prefs.hiddenHomeScreenWidgets.length == homeWidgetKeyMap.keys.length) const Text("Alle Widgets sind ausgeblendet."),
                   TextButton(
-                    onPressed: Provider.of<AppState>(context).userType == UserType.nobody ? null : () => openReorderHomeWidgetDialog(context),
+                    onPressed: Provider.of<AppState>(context).userType == UserType.nobody ? null : () => openReorderHomeWidgetDialog(),
                     child: const Text("Ausgeblendete Widgets verwalten"),
                   ),
                   if (kDebugFeatures) ElevatedButton(
@@ -107,8 +107,8 @@ class _HomepageTabState extends State<HomepageTab> {
   }
 }
 
-Future<void> openReorderHomeWidgetDialog(BuildContext baseContext) => showDialog(context: baseContext, builder: (context) {
-  if (Provider.of<AppState>(baseContext, listen: false).userType == UserType.nobody) {
+Future<void> openReorderHomeWidgetDialog() => showDialog(context: globalScaffoldContext, builder: (context) {
+  if (Provider.of<AppState>(globalScaffoldContext, listen: false).userType == UserType.nobody) {
     return AlertDialog(title: const Text("Fehler"), content: const Text("Anmeldung erforderlich."), actions: [
       TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
     ]);

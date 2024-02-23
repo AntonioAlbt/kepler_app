@@ -89,6 +89,8 @@ Future<void> loadAndPrepareApp() async {
 
   initializeNotifications();
   if (!_prefs.enableInfiniteStuPlanScrolling) await IndiwareDataManager.removeOldCacheFiles();
+  final del = await KeplerLogging.deleteLogsOlderThan(DateTime.now().subtract(Duration(days: _prefs.logRetentionDays)));
+  if (kDebugMode) print("deleted logs for the following days: $del");
 }
 
 Future<void> prepareApp() async {
@@ -103,7 +105,8 @@ void main() async {
   initializeDateFormatting();
 
   await KeplerLogging.initLogging();
-  logInfo("startup", "--- INIT ---");
+  logInfo("startup", "--- LOG INIT ---");
+  KeplerLogging.registerFlutterErrorHandling();
 
   await prepareApp();
   runApp(const MyApp());

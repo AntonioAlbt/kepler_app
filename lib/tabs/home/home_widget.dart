@@ -58,7 +58,7 @@ class HomeWidgetBase extends StatelessWidget {
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.swap_vert),
-                                  onPressed: () => openReorderHomeWidgetDialog(context),
+                                  onPressed: () => openReorderHomeWidgetDialog(),
                                   visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                                   iconSize: 20,
                                 ),

@@ -11,6 +11,9 @@ const prefsPrefKey = "user_preferences";
 
 bool? deviceInDarkMode;
 
+bool _loggingEnabled = true;
+bool get loggingEnabled => _loggingEnabled;
+
 enum Pronoun {
   du,
   sie;
@@ -134,6 +137,15 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get showHomeWidgetEditOptions => attributes["show_home_weo"] ?? true;
   set showHomeWidgetEditOptions(bool val) => setSaveNotify("show_home_weo", val);
 
+  int get logRetentionDays => attributes["log_retention_days"] ?? 90;
+  set logRetentionDays(int val) => setSaveNotify("log_retention_days", val);
+
+  bool get loggingEnabled => attributes["logging_enabled"] ?? true;
+  set loggingEnabled(bool val) {
+    setSaveNotify("logging_enabled", val);
+    _loggingEnabled = val;
+  }
+
   bool loaded = false;
 
   Future<void> save() async {
@@ -143,6 +155,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   void loadFromJson(String json) {
     _serializer.deserialize(json, this);
     loaded = true;
+    _loggingEnabled = loggingEnabled;
   }
 
   Preferences() {
