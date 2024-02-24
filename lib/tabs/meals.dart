@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:appcheck/appcheck.dart';
-import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,8 +21,9 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
     try {
       await AppCheck.checkAvailability(androidAppId);
       return true;
-    } catch (e, s) {
-      logCatch("dls-app-avail", e, s);
+    } catch (_) {
+      // this exception is expected, don't log it
+      // logCatch("dls-app-avail", e, s);
       return false;
     }
   }

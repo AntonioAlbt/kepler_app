@@ -130,8 +130,8 @@ Future<(bool, dynamic)> api(List<Map<String, dynamic>> data) async {
       body: jsonEncode(data),
     )
     .then((res) => (true, jsonDecode(utf8.decode(res.bodyBytes))))
-    .catchError((e) {
-      logCatch("ls-api", e, StackTrace.current);
+    .onError((e, s) {
+      logCatch("ls-api", e ?? "null", s);
       return (false, null);
     });
 }
