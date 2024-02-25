@@ -1,9 +1,44 @@
+// kepler_app: app for pupils, teachers and parents of pupils of the JKG
+// Copyright (c) 2023-2024 Antonio Albert
+
+// This file is part of kepler_app.
+
+// kepler_app is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// kepler_app is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with kepler_app.  If not, see <http://www.gnu.org/licenses/>.
+
+// Diese Datei ist Teil von kepler_app.
+
+// kepler_app ist Freie Software: Sie können es unter den Bedingungen
+// der GNU General Public License, wie von der Free Software Foundation,
+// Version 3 der Lizenz oder (nach Ihrer Wahl) jeder neueren
+// veröffentlichten Version, weiter verteilen und/oder modifizieren.
+
+// kepler_app wird in der Hoffnung, dass es nützlich sein wird, aber
+// OHNE JEDE GEWÄHRLEISTUNG, bereitgestellt; sogar ohne die implizite
+// Gewährleistung der MARKTFÄHIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK.
+// Siehe die GNU General Public License für weitere Details.
+
+// Sie sollten eine Kopie der GNU General Public License zusammen mit
+// kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
+
 import 'dart:io';
 import 'dart:math';
 
+import 'package:appcheck/appcheck.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
@@ -103,6 +138,7 @@ Future<void> prepareApp() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   initializeDateFormatting();
+  // LicenseRegistry.addLicense(() => Stream.value(const LicenseEntryWithLineBreaks(["kepler_app"], gplv3LicenseText)));
 
   await KeplerLogging.initLogging();
   logInfo("startup", "--- LOG INIT ---");
@@ -164,6 +200,8 @@ class KeplerApp extends StatefulWidget {
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
 BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
+
+final absolutelyTopKeyForToplevelDialogsOnly = GlobalKey();
 
 // const _loadingAnimationDuration = 1000;
 
@@ -360,7 +398,7 @@ class _KeplerAppState extends State<KeplerApp> {
   @override
   Widget build(BuildContext context) {
     final mainWidget = MultiProvider(
-      key: const Key("mainWidget"),
+      key: absolutelyTopKeyForToplevelDialogsOnly,//const Key("mainWidget"),
       providers: [
         ChangeNotifierProvider(
           create: (_) => _appState
@@ -497,6 +535,27 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
+  static const oldAndroidPkgId = "dev.gamer153.kepler_app";
+  void checkAndNotifyForOldPkgId() async {
+    if (!Platform.isAndroid) return;
+    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final res = await AppCheck.checkAvailability(oldAndroidPkgId);
+      if (res == null) throw Exception();
+      
+      showDialog(context: absolutelyTopKeyForToplevelDialogsOnly.currentContext!, builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text("Alte App-Version gefunden!"),
+          content: const Text("Die Paket-ID der App hat sich mit Version 2.0.0 geändert - dadurch sind alle Daten weg, und die App ist jetzt zweimal installiert. Bitte deinstalliere die alte Variante der App (bis Version 1.8.3).\n\nDu kannst die App erst verwenden, nachdem die alte Version entfernt ist."),
+          actions: [
+            TextButton(onPressed: () => SystemNavigator.pop(), child: const Text("Ok, ich deinstalliere die alte Version")),
+          ],
+        ),
+      ));
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     _load().then((text) {
@@ -507,6 +566,8 @@ class _KeplerAppState extends State<KeplerApp> {
           showSnackBar(text: text);
         }
       }
+      
+      checkAndNotifyForOldPkgId();
     });
     super.initState();
   }

@@ -29,7 +29,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "dev.gamer153.kepler_app"
+    namespace "de.keplerchemnitz.kepler_app"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -50,7 +50,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "dev.gamer153.kepler_app"
+        applicationId "de.keplerchemnitz.kepler_app"
         
         minSdkVersion 21
         targetSdkVersion 34

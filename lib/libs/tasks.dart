@@ -1,3 +1,36 @@
+// kepler_app: app for pupils, teachers and parents of pupils of the JKG
+// Copyright (c) 2023-2024 Antonio Albert
+
+// This file is part of kepler_app.
+
+// kepler_app is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// kepler_app is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with kepler_app.  If not, see <http://www.gnu.org/licenses/>.
+
+// Diese Datei ist Teil von kepler_app.
+
+// kepler_app ist Freie Software: Sie können es unter den Bedingungen
+// der GNU General Public License, wie von der Free Software Foundation,
+// Version 3 der Lizenz oder (nach Ihrer Wahl) jeder neueren
+// veröffentlichten Version, weiter verteilen und/oder modifizieren.
+
+// kepler_app wird in der Hoffnung, dass es nützlich sein wird, aber
+// OHNE JEDE GEWÄHRLEISTUNG, bereitgestellt; sogar ohne die implizite
+// Gewährleistung der MARKTFÄHIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK.
+// Siehe die GNU General Public License für weitere Details.
+
+// Sie sollten eine Kopie der GNU General Public License zusammen mit
+// kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
+
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -192,7 +225,7 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
       final oldKlasse = oldDatas[date]?.classes.cast<VPClass?>().firstWhere((c) => c!.className == klasse.className, orElse: () => null);
       for (var lesson in klasse.lessons) {
         if (lesson.startTime == null || lesson.endTime == null) continue;
-        if (!selectedCourseIds.contains(lesson.subjectID)) continue;
+        if (!selectedCourseIds.contains(lesson.subjectID) && lesson.subjectID != null) continue;
         final multipleInHour = (oldKlasse?.lessons.where((l) => l.schoolHour == lesson.schoolHour).length ?? 0) > 1;
         final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == lesson.schoolHour && (multipleInHour ? l.subjectID == lesson.subjectID : true), orElse: () => null);
         if (oldLesson == null) {

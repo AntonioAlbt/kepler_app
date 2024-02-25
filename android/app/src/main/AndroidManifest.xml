@@ -34,6 +34,7 @@
     <queries>
         <package android:name="biz.dls_gmbh.guten.appetit" />
         <package android:name="de.digionline.lernsax" />
+        <package android:name="dev.gamer153.kepler_app" />
     </queries>
 
     <uses-permission android:name="android.permission.INTERNET" />

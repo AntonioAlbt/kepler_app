@@ -4,6 +4,8 @@ Hi! Dieses Repo enthält den kompletten Quellcode für die Kepler-App, die Über
 
 Notizen von mir zu dem interessanten Zeug (Code) findest du [hier](notes.md).
 
+Die Kepler-App ist lizensiert unter der GPLv3 (GNU Public License Version 3), siehe [LICENSE](LICENSE).
+
 ## Build-Varianten
 
 Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dabei gibt es diese Konstanten:
