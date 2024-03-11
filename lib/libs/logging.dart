@@ -327,7 +327,7 @@ class _LogViewPageState extends State<LogViewPage> {
                 onPressed: () async {
                   Clipboard.setData(ClipboardData(text: await widget.logFile.readAsString()));
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kopiert."), duration: Duration(seconds: 1)));
+                  ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text("Kopiert."), duration: Duration(seconds: 1)));
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,

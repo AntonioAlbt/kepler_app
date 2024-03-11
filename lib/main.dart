@@ -271,6 +271,7 @@ Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vp
       if (rawData != null) {
         final data = xmlToKlData(rawData);
         stuPlanData.holidayDates = data.holidays.holidayDates;
+        stuPlanData.lastHolidayDatesUpdate = DateTime.now();
         IndiwareDataManager.setKlassenXmlData(rawData);
       } else {
         output ??= "Hinweis: Die Liste der schulfreien Tage ist nicht mehr aktuell. Bitte mit dem Internet verbinden.";

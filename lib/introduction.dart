@@ -719,7 +719,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
       if (lres!.statusCode != 200) throw Exception("no");
       return true;
     } catch (e, s) {
-      if (e.toString() != "no") logCatch("ls-intro", e, s);
+      if (!e.toString().endsWith(" no")) logCatch("ls-intro", e, s);
       final sres = await authRequest(Uri.parse("${data.host}$sUrlMKlXmlPath"), data.user, data.password);
       final success = sres!.statusCode == 200;
       if (success) {

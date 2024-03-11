@@ -139,7 +139,7 @@ class _SettingsTabState extends State<SettingsTab> {
                               }
                               if (!mounted) return;
 
-                              Navigator.pop(context);
+                              Navigator.pop(this.context);
                               showLoginScreenAgain(closeable: false);
                             }();
                           },
