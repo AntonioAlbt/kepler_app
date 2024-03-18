@@ -611,9 +611,15 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       final list = _buildAllReplacesLessonList();
                       if (list.isEmpty) {
                         return Center(
-                          child: Text(
-                            isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
-                            style: const TextStyle(fontSize: 18),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isOnline != false ? "Keine Daten verfügbar" : "Keine Verbindung zum Server",
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                              const Text("oder keine Änderungen."),
+                            ],
                           ),
                         );
                       }
