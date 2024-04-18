@@ -67,10 +67,24 @@ class _FFJKGTabState extends State<FFJKGTab> {
           OpenLinkButton(
             label: "Mitglied werden!",
             link: "https://www.kepler-chemnitz.de/mitgliedsantrag/",
+            infront: Icon(Icons.person, size: 18),
           ),
+          Divider(),
           OpenLinkButton(
             label: "Ansprechpartner der Schule",
             link: "https://www.kepler-chemnitz.de/ansprechpartner/",
+          ),
+          OpenLinkButton(
+            label: "Schließfach online bestellen",
+            link: "https://www.kepler-chemnitz.de/foerderverein/schliessfach-online-bestellen/",
+          ),
+          OpenLinkButton(
+            label: "Bestellung Hausaufgabenheft",
+            link: "https://www.kepler-chemnitz.de/bestellung-hausaufgabenheft/",
+          ),
+          OpenLinkButton(
+            label: "Weihnachtskonzert DVD bestellen",
+            link: "https://www.kepler-chemnitz.de/unser-weihnachtskonzert-2023-in-der-st-petrikirche-chemnitz-auf-dvd/",
           ),
         ],
       ),
