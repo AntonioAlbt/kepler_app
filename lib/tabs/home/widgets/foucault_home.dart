@@ -62,75 +62,82 @@ class HomePendulumWidget extends StatelessWidget {
               builder: (context) {
                 final (_, angle, _, _, _) = datasn.data!;
                 return Column(
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    Stack(
-                      alignment: AlignmentDirectional.center,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: hasDarkTheme(context) ? colorWithLightness(Colors.grey.shade900, .2) : Colors.grey.shade300,
+                    Flexible(
+                      flex: 4,
+                      child: Stack(
+                        alignment: AlignmentDirectional.center,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: hasDarkTheme(context) ? colorWithLightness(Colors.grey.shade900, .2) : Colors.grey.shade300,
+                            ),
+                            width: 175,
+                            height: 100,
                           ),
-                          width: 175,
-                          height: 100,
-                        ),
-                        SizedBox(
-                          width: 175,
-                          child: LayoutBuilder(
-                            builder: (BuildContext context, BoxConstraints constraints) {
-                              final boxWidth = constraints.constrainWidth();
-                              const dashWidth = 3.0;
-                              const dashHeight = 2.0;
-                              final dashCount = (boxWidth / (2 * dashWidth)).floor();
-                              return Flex(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                direction: Axis.horizontal,
-                                children: List.generate(dashCount, (_) {
-                                  return SizedBox(
-                                    width: dashWidth,
-                                    height: dashHeight,
-                                    child: DecoratedBox(
-                                      decoration: BoxDecoration(color: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey),
-                                    ),
-                                  );
-                                }),
-                              );
-                            },
+                          SizedBox(
+                            width: 175,
+                            child: LayoutBuilder(
+                              builder: (BuildContext context, BoxConstraints constraints) {
+                                final boxWidth = constraints.constrainWidth();
+                                const dashWidth = 3.0;
+                                const dashHeight = 2.0;
+                                final dashCount = (boxWidth / (2 * dashWidth)).floor();
+                                return Flex(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  direction: Axis.horizontal,
+                                  children: List.generate(dashCount, (_) {
+                                    return SizedBox(
+                                      width: dashWidth,
+                                      height: dashHeight,
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(color: hasDarkTheme(context) ? Colors.grey.shade700 : Colors.grey),
+                                      ),
+                                    );
+                                  }),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                        Center(
-                          child: Transform.rotate(
-                            // + 90 is needed to change 0° to mean horizontal line
-                            angle: (pi / 180.0) * ((angle ?? 0) + 90),
+                          Center(
+                            child: Transform.rotate(
+                              // + 90 is needed to change 0° to mean horizontal line
+                              angle: (pi / 180.0) * ((angle ?? 0) + 90),
+                              child: Container(
+                                height: 90,
+                                width: 5,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                          Center(
                             child: Container(
-                              height: 90,
-                              width: 5,
-                              color: Colors.blue,
+                              decoration: BoxDecoration(
+                                color: hasDarkTheme(context) ? Colors.white : Colors.black,
+                              ),
+                              width: 10,
+                              height: 2,
                             ),
                           ),
-                        ),
-                        Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: hasDarkTheme(context) ? Colors.white : Colors.black,
+                          Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: hasDarkTheme(context) ? Colors.white : Colors.black,
+                              ),
+                              width: 2,
+                              height: 10,
                             ),
-                            width: 10,
-                            height: 2,
                           ),
-                        ),
-                        Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: hasDarkTheme(context) ? Colors.white : Colors.black,
-                            ),
-                            width: 2,
-                            height: 10,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text("Winkel: ${formatForDisplay(angle, 0, " °", "unbekannt")}"),
+                    Flexible(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text("Winkel: ${formatForDisplay(angle, 0, " °", "unbekannt")}"),
+                      ),
                     ),
                   ],
                 );

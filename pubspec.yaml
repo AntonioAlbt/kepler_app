@@ -50,7 +50,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.0.2+47
+version: 2.0.3+48
 
 environment:
   sdk: '^3.0.0'
@@ -75,15 +75,15 @@ dependencies:
   path_provider: ^2.1.2
   http: ^1.2.0
   intl: ^0.18.0
-  device_info_plus: ^9.1.2
+  device_info_plus: ^10.1.0
   flutter_keyboard_visibility: ^6.0.0
   permission_handler: ^11.3.0
   scroll_to_index: ^3.0.1
-  package_info_plus: ^5.0.1
+  package_info_plus: ^7.0.0
   logger: ^2.1.0
 
   # notification lib
-  flutter_local_notifications: ^16.3.2
+  flutter_local_notifications: ^17.0.1
 
   # icon lib
   material_design_icons_flutter: ^6.0.7296
@@ -106,7 +106,7 @@ dependencies:
   lazy_load_scrollview: ^1.3.0
   html_unescape: ^2.0.0
   webview_flutter: ^4.7.0
-  share_plus: ^7.2.2
+  share_plus: ^8.0.3
 
   # libs for lernsax
   crypto: ^3.0.3
