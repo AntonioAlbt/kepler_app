@@ -68,8 +68,8 @@ class _FeedbackTabState extends State<FeedbackTab> {
                 child: OpenLinkButton(
                   label: "App im ${(Platform.isIOS) ? 'App Store' : 'Play Store'} bewerten",
                   link: Platform.isAndroid
-                          ? "https://play.google.com/store/apps/details?id=de.kepler-chemnitz.kepler_app"
-                          : "https://apps.apple.com/404",
+                          ? "https://play.google.com/store/apps/details?id=de.keplerchemnitz.kepler_app"
+                          : "https://apps.apple.com/de/app/kepler-app/id6499428205",
                 ),
               ),
               const Padding(

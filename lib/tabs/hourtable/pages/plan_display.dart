@@ -765,7 +765,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     final stdata = Provider.of<StuPlanData>(context, listen: false);
     final prefs = Provider.of<Preferences>(context, listen: false);
     if ((creds.vpUser == null || creds.vpPassword == null) && creds.lernSaxLogin != lernSaxDemoModeMail) {
-      state.selectedNavPageIDs = [PageIDs.home];
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        state.selectedNavPageIDs = [PageIDs.home];
+      });
       showSnackBar(text: "Fehler bei der Datenabfrage. Bitte erneut anmelden.", error: true);
       return false;
     }

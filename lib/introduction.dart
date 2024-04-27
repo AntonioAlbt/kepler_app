@@ -43,7 +43,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
-import 'package:kepler_app/privacy_policy.dart';
+import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -318,19 +318,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                   text: "Datenschutzbestimmungen",
                   style: link,
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () => showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Datenschutzerklärung der Kepler-App"),
-                            content: const PrivacyPolicy(),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text("Schließen"),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ..onTap = () => launchUrl(Uri.parse(keplerAppDSELink), mode: LaunchMode.externalApplication),
                 ),
                 const TextSpan(
                   text: " dieser App und den ",
