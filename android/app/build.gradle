@@ -38,12 +38,12 @@ android {
         // for flutter_local_notifications
         coreLibraryDesugaringEnabled true
         
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     sourceSets {
@@ -83,8 +83,5 @@ flutter {
 
 dependencies {
     // for flutter_local_notifications
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-    // necessary with coreLibraryDesugaringEnabled as fix for: https://github.com/flutter/flutter/issues/110658
-    implementation 'androidx.window:window:1.0.0'
-    implementation 'androidx.window:window-java:1.0.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }

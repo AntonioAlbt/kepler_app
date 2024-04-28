@@ -2,6 +2,8 @@
 
 Diese Notizen sind nicht aktuell und größere Teile passen nicht mehr zum Quelltext. Sie sind als archiviert zu betrachten.
 
+Wichtig: Damit der Google Play Pre-Launch Report keine Fehler hat, wurde die Fehlerbehebung aus [diesem Flutter-Issue](https://github.com/flutter/flutter/issues/141949#issuecomment-1944922176) umgesetzt. Beim Updaten beachten!
+
 ---
 
 # Interessantes an der App
