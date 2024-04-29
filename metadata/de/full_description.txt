@@ -1,0 +1,14 @@
+Die Kepler-App ist die ultimative Übersichts-App für alle Schüler, Eltern und Lehrer des JKGs. Sie bietet viele Funktionen, die nicht nur über den Schulalltag informieren, sondern direkten Zugriff auf alle Informationen, die man braucht, erlauben:
+
+- Vertretungsplan-Ansicht mit interessanten und hilfreichen Übersichten, wie:
+   - Dein/Ihr Stundenplan (mit Klassen- und Fachwahl)
+   - Klassenpläne
+   - Raumpläne
+   - Freie Zimmer
+   - für Lehrer Lehrerpläne und Aufsichten
+- Kepler-News-Übersicht und Kalender mit wichtigen schulischen Ereignissen
+- LernSax-Integration, um neue Benachrichtigungen und Emails mit einem Tippen abzufragen
+- Benachrichtigungen, um über Stundenplanänderungen und neue Kepler-News schnellstens informiert zu werden
+
+Dabei ist auch Datenschutz von hoher Priorität: alle Daten, wie Emails oder Stundenpläne, werden nur lokal gespeichert.
+Außerdem ist für alle diese Funktionen lediglich das einmalige Anmelden mit dem eigenen LernSax-Konto vonnöten.

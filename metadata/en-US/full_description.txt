@@ -1,0 +1,17 @@
+Warning! This app is only available in German. There are no translations available.
+Changelogs are only offered in German.
+
+The Kepler app is the ultimate overview app for all JKG students, parents and teachers. It offers many functions that not only provide information about everyday school life, but also allow direct access to all the information you need:
+
+- Substitute schedule view with interesting and helpful overviews, such as:
+   - Your timetable (with class and subject selection)
+   - Class plans
+   - Room plans
+   - Free rooms
+   - for teachers Teacher plans and supervision information
+- Kepler news overview and calendar with important school events
+- LernSax integration to check new notifications and emails with one tap
+- Notifications to be informed about timetable changes and new Kepler news as quickly as possible
+
+Data protection is also a high priority: all data, such as emails or timetables, are only stored locally.
+In addition, all these functions only require a one-time login with your own LernSax account.
