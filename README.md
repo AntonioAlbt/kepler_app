@@ -1,8 +1,46 @@
 # Die Kepler-App
 
-Hi! Dieses Repo enthält den kompletten Quellcode für die Kepler-App, die Übersichts-App für Schüler des JKGs.
+## Neu: verfügbar in Stores!
 
-Notizen von mir zu dem interessanten Zeug (Code) findest du [hier](notes.md).
+<table>
+  <tr>
+    <td>
+<a href='https://play.google.com/store/apps/details?id=de.keplerchemnitz.kepler_app'><img alt='Jetzt bei Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/de_badge_web_generic.png' height="75"/>
+</a></td>
+    <td>
+<a href="https://apps.apple.com/de/app/kepler-app/id6499428205"><img src="https://svgshare.com/i/15nS.svg" alt="d" height="56" />
+</a></td>
+    <td>
+<a href="https://f-droid.org/packages/de.keplerchemnitz.kepler_app">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-de.png"
+    alt="Jetzt auf F-Droid"
+    height="80">
+</a></td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://play.google.com/store/apps/details?id=de.keplerchemnitz.kepler_app">Link: Android (Play Store)</a>
+    </td>
+    <td>
+      <a href="https://apps.apple.com/de/app/kepler-app/id6499428205">Link: iOS (App Store)</a>
+    </td>
+    <td>
+      <a href="https://f-droid.org/packages/de.keplerchemnitz.kepler_app">Link: Android (F-Droid)</a>
+    </td>
+  </tr>
+</table>
+
+Hinweis: Die Android-Veröffentlichungen werden mit drei verschiedenen Zertifikaten bereitgestellt:
+
+1. Google Play (im Play Store)
+2. F-Droid (in F-Droid)
+3. GitHub-Releases
+
+Beim Wechseln zwischen den Varianten muss die App immer deinstalliert werden, wobei alle Daten verloren gehen.
+
+---
+
+Hi! Dieses Repo enthält den kompletten Quellcode für die Kepler-App, die Übersichts-App für Schüler des JKGs.
 
 Die Kepler-App ist lizensiert unter der GPLv3 (GNU Public License Version 3), siehe [LICENSE](LICENSE).
 
@@ -32,3 +70,8 @@ Zum Aktivieren beim App-Build `--dart-define=<varname>=[true|false]` an `flutter
   - &rarr; Apple Build mit Debug Features aktiviert
 
 Wenn ein ungültiger Wert übergeben wird, wird der Standardwert genommen.
+
+<small>
+Google Play und das Google Play-Logo sind Markenzeichen von Google LLC.
+Apple und App Store sind Markenzeichen von Apple Inc.
+</small>
