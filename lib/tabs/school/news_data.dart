@@ -274,12 +274,13 @@ Future<(bool, List<CalendarEntryData>?)> loadCalendarEntries(DateTime month) asy
   try {
     final out = <CalendarEntryData>[];
     for (final evtData in ((jsonDecode(res.body) as Map<String, dynamic>)["events"] as List<dynamic>).cast<Map<String, dynamic>>()) {
+      final venueData = evtData["venue"]; // can be null, List or Map
       out.add(CalendarEntryData(
         title: evtData["title"],
         description: evtData["description"],
         link: evtData["url"],
         organizerName: ((evtData["organizer"] as List<dynamic>).firstOrNull as Map<String, dynamic>?)?["organizer"],
-        venueName: evtData["venue"]?["venue"],
+        venueName: (venueData is Map ? venueData["venue"] : null),
         startDate: evtData.containsKey("start_date") ? DateTime.parse(evtData["start_date"]) : null,
         endDate: evtData.containsKey("end_date") ? DateTime.parse(evtData["end_date"]) : null,
       ));

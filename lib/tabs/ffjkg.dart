@@ -33,6 +33,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FFJKGTab extends StatefulWidget {
   const FFJKGTab({super.key});
@@ -90,4 +91,12 @@ class _FFJKGTabState extends State<FFJKGTab> {
       ),
     );
   }
+}
+
+Future<bool> ffjkgSchoolReprOpen(BuildContext _) async {
+  launchUrl(
+    Uri.parse("https://www.kepler-chemnitz.de/ansprechpartner/"),
+    mode: LaunchMode.externalApplication,
+  );
+  return false;
 }

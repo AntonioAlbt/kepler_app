@@ -101,6 +101,12 @@ class NewsPageIDs {
   static const calendar = "calendar";
 }
 
+class FFJKGPageIDs {
+  static const main = "ffjkgmain";
+  static const ffjkg = "ffjkg";
+  static const representatives = "reprslnk";
+}
+
 final tabs = {
   PageIDs.home: const HomepageTab(),
   NewsPageIDs.main: const SchoolTab(),
@@ -108,7 +114,7 @@ final tabs = {
   LernSaxPageIDs.main: const LernSaxTab(),
   PageIDs.foodOrder: const MealOrderingTab(),
   PageIDs.pendel: PendelInfoTab(),
-  PageIDs.ffjkg: const FFJKGTab(),
+  FFJKGPageIDs.main: const FFJKGTab(),
   PageIDs.settings: const SettingsTab(),
   PageIDs.feedback: const FeedbackTab(),
   PageIDs.about: const AboutTab(),
@@ -336,10 +342,32 @@ final destinations = [
     ],
   ),
   const NavEntryData(
-    id: PageIDs.ffjkg,
+    id: FFJKGPageIDs.main,
     icon: Icon(Icons.diversity_1_outlined),
     label: Text("Förderverein (FFJKG)"),
     selectedIcon: Icon(Icons.diversity_1),
+    visibleFor: [UserType.nobody, UserType.pupil, UserType.teacher],
+  ),
+  const NavEntryData(
+    visibleFor: [UserType.parent],
+    id: FFJKGPageIDs.main,
+    icon: Icon(Icons.diversity_1_outlined),
+    label: Text("Ansprechpartner & Förderverein", style: TextStyle(fontSize: 14)),
+    selectedIcon: Icon(Icons.diversity_1),
+    children: [
+      NavEntryData(
+        id: FFJKGPageIDs.representatives,
+        icon: Icon(Icons.person_pin),
+        label: Text("Ansprechpartner der Schule"),
+        externalLink: true,
+        onTryOpen: ffjkgSchoolReprOpen,
+      ),
+      NavEntryData(
+        id: FFJKGPageIDs.ffjkg,
+        icon: Icon(Icons.diversity_3),
+        label: Text("Förderverein (FFJKG)"),
+      ),
+    ],
   ),
   const NavEntryData(
     id: PageIDs.settings,
