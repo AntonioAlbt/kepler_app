@@ -47,6 +47,15 @@ import 'package:universal_feed/universal_feed.dart';
 const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 const keplerEvtApiURL = "https://www.kepler-chemnitz.de/wp-json/tribe/events/v1";
 
+// the news data sometimes has these in it - so I'm just replacing them when loading
+final List<String> controlCharacters = (){
+  final out = <String>[];
+  for (var i = 0; i < 32; i++) {
+    out.add(String.fromCharCode(i));
+  }
+  return out;
+}();
+
 Future<String> get newsCacheDataFilePath async => "${await cacheDirPath}/$newsCachePrefKey-data.json";
 class NewsCache extends SerializableObject with ChangeNotifier {
   NewsCache() {
@@ -88,7 +97,11 @@ class NewsCache extends SerializableObject with ChangeNotifier {
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
     try {
-      _serializer.deserialize(json, this);
+      String finalJson = json;
+      for (var char in controlCharacters) {
+        finalJson = finalJson.replaceAll(char, "");
+      }
+      _serializer.deserialize(finalJson, this);
     } catch (e, s) {
       log("Error while decoding json for NewsCache from file:", error: e, stackTrace: s);
       logCatch("news_data", e, s);
