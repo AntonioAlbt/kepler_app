@@ -87,7 +87,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                         const Expanded(flex: 1, child: Text("Absender:")),
                         Expanded(
                           flex: 3,
-                          child: SelectableText.rich(
+                          child: Text.rich(
                             TextSpan(
                               children: [
                                 ...mailData!.from.map((addr) => createLSMailAddressableSpan(addr, mailData!.from.last == addr)),
@@ -106,7 +106,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                         Expanded(flex: 1, child: Text("${(widget.listing.isDraft) ? "Geplante${mailData!.to.length == 1 ? "r" : ""} " : ""}Empfänger: ")),
                         Expanded(
                           flex: 3,
-                          child: SelectableText.rich(
+                          child: Text.rich(
                             TextSpan(
                               children: [
                                 ...mailData!.to.map((addr) => createLSMailAddressableSpan(addr, mailData!.to.last == addr))
@@ -171,7 +171,10 @@ class _MailDetailPageState extends State<MailDetailPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: SelectableText(mailData!.subject, style: Theme.of(context).textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline)),
+                    child: Text(
+                      mailData!.subject,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(decoration: TextDecoration.underline),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),

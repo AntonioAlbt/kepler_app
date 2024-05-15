@@ -268,6 +268,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 if (_mailError != null || _pwError != null) return;
                 final mail = _mailController.text;
                 final pw = _pwController.text;
+                // close the keyboard when tapping the button
                 FocusScope.of(context).unfocus();
                 runLogin(mail, pw, sie).then((error) {
                   if (error == null) {
@@ -305,7 +306,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
               child: const TextWithArrowForward(text: "Einloggen"),
             ),
           ),
-          // don't show this again because the user already agreed
+          // don't show this again because the user already agreed - set to true when re-logging
           if (!widget.again) RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
@@ -474,7 +475,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     if (_mailController.text.trim() == "" && _triedToEnter) {
       return "Keine E-Mail-Adresse angegeben.";
     } else if (_triedToEnter) {
-      RegExp regex = RegExp(r"^[a-z]*[0-9]*(?:.(?:" + parentTypeEndings.join("|") + r"))?@jkgc\.lernsax\.de$", multiLine: true, caseSensitive: false);
+      RegExp regex = RegExp(r"^[a-z]*[0-9]*(?:.(?:" + parentTypeEndings.join("|") + r"))?@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
       if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
     }
     return null;
