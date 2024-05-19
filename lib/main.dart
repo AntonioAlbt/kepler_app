@@ -106,7 +106,7 @@ Future<void> loadAndPrepareApp() async {
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
-      frequency: const Duration(hours: 2),
+      frequency: const Duration(hours: 5),
       existingWorkPolicy: ExistingWorkPolicy.replace,
       initialDelay: const Duration(seconds: 5),
       constraints: Constraints(networkType: NetworkType.connected),
