@@ -1118,7 +1118,7 @@ class LessonListContainer extends StatelessWidget {
           if (lessons!.isEmpty) {
             return const Center(
               child: Text(
-                "Heute kein Unterricht.",
+                "Heute ist keine Schule.",
                 style: TextStyle(fontSize: 18),
               ),
             );
