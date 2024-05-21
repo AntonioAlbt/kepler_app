@@ -671,7 +671,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   //   color: Colors.grey.shade800
                   // ),
                   borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.background,
+                  color: Theme.of(context).colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
                       color: hasDarkTheme(context)
@@ -721,7 +721,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   //   color: Colors.grey.shade800
                   // ),
                   borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.background,
+                  color: Theme.of(context).colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
                       color: hasDarkTheme(context)
@@ -1076,7 +1076,7 @@ class SPListContainer extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
-                  color: color ?? Theme.of(context).colorScheme.background,
+                  color: color ?? Theme.of(context).colorScheme.surface,
                 ),
                 child: subChild,
               ),

@@ -61,6 +61,7 @@ Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dab
 - `debug_notif_data` = sollen Testdaten für Benachrichtungen angezeigt werden (Standard: `false`)
   - fügt jedes Mal beim Ausführen des Hintergrund-Tasks Testdaten an
   - zeigt damit jedes Mal zwei Benachrichtigungen (Stundenplan-Änderungen und neue News) an
+- `creds_debug` = sollen Debugausgaben zu Stundenplan-Anmeldedaten zum Log hinzugefügt werden (Standard: `false`)
 
 Zum Aktivieren beim App-Build `--dart-define=<varname>=[true|false]` an `flutter run` oder `flutter build` übergeben, z.B.:
 

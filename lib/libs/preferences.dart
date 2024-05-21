@@ -44,7 +44,7 @@ const prefsPrefKey = "user_preferences";
 
 bool? deviceInDarkMode;
 
-bool _loggingEnabled = false;
+bool _loggingEnabled = true;
 bool get loggingEnabled => _loggingEnabled;
 
 enum Pronoun {

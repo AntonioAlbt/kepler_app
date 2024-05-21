@@ -40,6 +40,7 @@ import "package:flutter/foundation.dart";
 import "package:http/http.dart" as http;
 import 'package:crypto/crypto.dart' as crypto;
 import "package:intl/intl.dart";
+import "package:kepler_app/build_vars.dart";
 import "package:kepler_app/libs/indiware.dart";
 import "package:kepler_app/libs/logging.dart";
 import "package:kepler_app/libs/state.dart";
@@ -538,6 +539,7 @@ Future<(bool, LSAppData?)> getLernSaxAppDataJson(String login, String token, boo
     final dataStr = utf8.decode(base64Decode(res3[0]["result"]["file"]["data"]));
     final data = jsonDecode(dataStr);
 
+    if (kCredsDebug) logCatch("ls-creds-debug", "read json for LSAppData (file id: $fileId - contents: $data)", StackTrace.current);
     return (true, LSAppData(
       lastUpdate: data["letztes_update"],
       host: data["indiware"]["host"],

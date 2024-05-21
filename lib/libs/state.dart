@@ -34,9 +34,11 @@
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart' as indiware show baseUrl;
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,19 +67,31 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   }
 
   String? get lernSaxLogin => attributes["lern_sax_login"] ?? "";
-  set lernSaxLogin(String? login) => _setSaveNotify("lern_sax_login", login);
+  set lernSaxLogin(String? login) {
+    if (kCredsDebug) logCatch("creds-debug", "lernSaxLogin changed to ${login == null ? "null" : "value with len ${login.length}"}", StackTrace.current);
+    _setSaveNotify("lern_sax_login", login);
+  }
 
   String? get lernSaxToken => attributes["lern_sax_token"];
-  set lernSaxToken(String? token) => _setSaveNotify("lern_sax_token", token);
+  set lernSaxToken(String? token) {
+    if (kCredsDebug) logCatch("creds-debug", "lernSaxToken changed to ${token == null ? "null" : "value with len ${token.length}"}", StackTrace.current);
+    _setSaveNotify("lern_sax_token", token);
+  }
 
   String? get vpHost => attributes["vp_host"] ?? indiware.baseUrl;
   set vpHost(String? host) => _setSaveNotify("vp_host", host);
 
   String? get vpUser => attributes["vp_user"];
-  set vpUser(String? user) => _setSaveNotify("vp_user", user);
+  set vpUser(String? user) {
+    if (kCredsDebug) logCatch("creds-debug", "vpUser changed to ${user == null ? "null" : "value with len ${user.length}"}", StackTrace.current);
+    _setSaveNotify("vp_user", user);
+  }
 
   String? get vpPassword => attributes["vp_password"];
-  set vpPassword(String? password) => _setSaveNotify("vp_password", password);
+  set vpPassword(String? password) {
+    if (kCredsDebug) logCatch("creds-debug", "vpPassword changed to ${password == null ? "null" : "value with len ${password.length}"}", StackTrace.current);
+    _setSaveNotify("vp_password", password);
+  }
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
