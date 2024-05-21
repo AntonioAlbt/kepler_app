@@ -745,6 +745,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ),
             ),
           ),
+      //const FloatingActionButton.small(onPressed: null)
       ],
     );
   }

@@ -50,7 +50,7 @@ class YourPlanPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stdata = Provider.of<StuPlanData>(context);
-    return Column(
+    return Scaffold (body: Column(
       children: [
         Flexible(
           child: Padding(
@@ -63,6 +63,12 @@ class YourPlanPage extends StatelessWidget {
           ),
         ),
       ],
+    ),
+    floatingActionButton: const FloatingActionButton.small(
+      onPressed: yourStuPlanRefreshAction,
+      child: Icon(Icons.refresh),
+    ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 }

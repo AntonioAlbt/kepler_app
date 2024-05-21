@@ -201,6 +201,7 @@ final destinations = [
               return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
             },
           ),
+          const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.text_snippet)),
           const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
           const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
