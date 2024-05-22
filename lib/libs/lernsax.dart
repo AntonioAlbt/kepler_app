@@ -219,7 +219,7 @@ MOJKGResult _processMemberResponse(res) {
         return MOJKGResult.otherError;
       }
     } else {
-      if (response["user"]["base_user"]["login"] == keplerBaseUser) {
+      if ((response["member"] as List<dynamic>).any((entry) => entry["login"] == keplerBaseUser)) {
         return MOJKGResult.allGood;
       } else {
         return MOJKGResult.noJKGMember;
