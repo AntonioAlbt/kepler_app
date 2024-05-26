@@ -187,6 +187,12 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     }
   }
 
+  final yourPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
+
+  void yourStuPlanRefreshAction() {
+    yourPlanDisplayKey.currentState?.forceRefreshData();
+  }
+
   bool isSameDate(DateTime one, DateTime two) => one.day == two.day && one.month == two.month && one.year == two.year;
 
   @override
@@ -299,6 +305,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                   allRooms: widget.allRooms,
                   onSwipeRight: () => (canGoBack() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoBack() : null,
                   onSwipeLeft: () => (canGoForward() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoForward() : null,
+                  onSwipeDown: () => yourStuPlanRefreshAction,
                   schoolHolidayList: holidayDates,
                 ),
               ),
@@ -330,6 +337,7 @@ class StuPlanDayDisplay extends StatefulWidget {
   final List<String>? allRooms;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
+  final void Function()? onSwipeDown;
   final List<DateTime>? schoolHolidayList;
   const StuPlanDayDisplay(
       {super.key,
@@ -342,6 +350,7 @@ class StuPlanDayDisplay extends StatefulWidget {
       this.allRooms,
       this.onSwipeLeft,
       this.onSwipeRight,
+      this.onSwipeDown,
       this.schoolHolidayList});
 
   @override
@@ -578,6 +587,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     showBorder: true,
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
+                    onSwipeDown: widget.onSwipeDown,
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -607,6 +617,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   ? SPListContainer(
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
+                    onSwipeDown: widget.onSwipeDown,
                     child: () {
                       final list = _buildAllReplacesLessonList();
                       if (list.isEmpty) {
@@ -633,6 +644,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   ? SPListContainer(
                       onSwipeLeft: widget.onSwipeLeft,
                       onSwipeRight: widget.onSwipeRight,
+                      onSwipeDown: widget.onSwipeDown,
                       child: () {
                         final list = _buildFreeRoomList();
                         if (list.isEmpty) {
@@ -656,6 +668,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     widget.selected,
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
+                    onSwipeDown: widget.onSwipeDown,
                     isOnline: isOnline,
                   ),
           ),
@@ -1029,7 +1042,8 @@ class SPListContainer extends StatelessWidget {
   final Color? color;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
-  const SPListContainer({super.key, this.showBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight});
+  final void Function()? onSwipeDown;
+  const SPListContainer({super.key, this.showBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight, this.onSwipeDown});
 
   @override
   Widget build(BuildContext context) {
@@ -1038,7 +1052,14 @@ class SPListContainer extends StatelessWidget {
         final d = details.primaryVelocity ?? 0;
         if (d > 500) onSwipeRight?.call();
         if (d < -500) onSwipeLeft?.call();
+        },
+      onVerticalDragEnd: (details) {
+        final e = details.primaryVelocity ?? 0;
+        if (e > 100) onSwipeDown?.call();
       },
+      /*onVerticalDragEnd: (details) {
+        onSwipeDown?.call();
+      },*/
       child: Consumer<Preferences>(
         builder: (context, prefs, subChild) {
           return Container(
@@ -1098,14 +1119,16 @@ class LessonListContainer extends StatelessWidget {
   final String className;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
+  final void Function()? onSwipeDown;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
+  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.onSwipeDown, this.isOnline});
 
   @override
   Widget build(BuildContext context) {
     return SPListContainer(
         onSwipeLeft: onSwipeLeft,
         onSwipeRight: onSwipeRight,
+        onSwipeDown: onSwipeDown,
         showBorder: lessons != null,
         child: () {
           if (lessons == null) {
@@ -1125,9 +1148,12 @@ class LessonListContainer extends StatelessWidget {
             );
           }
           final stdata = Provider.of<StuPlanData>(context, listen: false);
+          final prefs = Provider.of<Preferences>(context, listen: false);
           return Padding(
+
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ListView.separated(
+             reverse: (prefs.reverseSPEnabled),
               itemCount: lessons!.length,
               itemBuilder: (context, index) => LessonDisplay(
                 considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),

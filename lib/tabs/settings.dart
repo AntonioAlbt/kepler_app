@@ -273,6 +273,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("z.B. bei Ausfall oder schulfreien Tagen"),
                   enabled: userType != UserType.nobody,
                 ),
+                SettingsTile.switchTile(
+                    initialValue: prefs.reverseSPEnabled,
+                    onToggle: (val) => prefs.reverseSPEnabled = val,
+                    title: const Text("Umgekehrten Stundenplan aktivieren"),
+                    description: const Text("die erste Stunde steht dann ganz unten, die letzte ganz oben"),
+                    enabled: userType != UserType.nobody,
+                )
               ],
             ),
             SettingsSection(
