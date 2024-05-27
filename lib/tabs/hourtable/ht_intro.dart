@@ -34,6 +34,7 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -258,6 +259,13 @@ class _ClassSelectScreenState extends State<ClassSelectScreen> {
     }
     if (widget.teacherMode) {
       try {
+        if (creds.vpHost == null || creds.vpUser == null || creds.vpPassword == null) {
+          final (online, lsdata) = await getLernSaxAppDataJson(creds.lernSaxLogin!, creds.lernSaxToken!, widget.teacherMode);
+          if (!online || lsdata == null) throw Exception("error when loading data from lernsax${!online ? " (not online)" : ""}");
+          creds.vpHost = lsdata.host;
+          creds.vpUser = lsdata.user;
+          creds.vpPassword = lsdata.password;
+        }
         final (data, online) = await getLehrerXmlLeData(creds.vpHost!, creds.vpUser!, creds.vpPassword!);
         if (data == null) {
           setState(() {
