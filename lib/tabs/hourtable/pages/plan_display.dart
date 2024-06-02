@@ -657,6 +657,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
+                    widgetmode: widget.mode,
                   ),
           ),
         ),
@@ -1098,7 +1099,8 @@ class LessonListContainer extends StatelessWidget {
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
+  final SPDisplayMode? widgetmode;
+  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.widgetmode});
 
   @override
   Widget build(BuildContext context) {
@@ -1116,10 +1118,16 @@ class LessonListContainer extends StatelessWidget {
             );
           }
           if (lessons!.isEmpty) {
-            return const Center(
-              child: Text(
-                "Heute ist keine Schule.",
-                style: TextStyle(fontSize: 18),
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Heute kein Unterricht${widgetmode == SPDisplayMode.roomPlan ? " in diesem Raum" : widgetmode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+                    style: const TextStyle(fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                ]
               ),
             );
           }
