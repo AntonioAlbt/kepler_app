@@ -32,11 +32,13 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const keplerAppDSELink = "https://www.kepler-chemnitz.de/materialis/datenschutzerklaerung-kepler-app/";
@@ -147,6 +149,27 @@ class _AboutTabState extends State<AboutTab> {
                         child: Padding(
                           padding: EdgeInsets.only(left: 4),
                           child: Icon(Icons.bug_report, size: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (kDebugFeatures) Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Provider.of<InternalState>(context, listen: false).lastChangelogShown = 0;
+                    showSnackBar(text: "Zurückgesetzt.");
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(flex: 0, child: Text("Changelog-Version zurücksetzen")),
+                      Flexible(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.timer, size: 16),
                         ),
                       ),
                     ],
