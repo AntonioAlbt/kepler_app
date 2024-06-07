@@ -41,6 +41,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
@@ -1040,47 +1041,52 @@ class SPListContainer extends StatelessWidget {
       },
       child: Consumer<Preferences>(
         builder: (context, prefs, subChild) {
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              gradient: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null && prefs.stuPlanDataAvailableBorderWidth > 0) ?
-                LinearGradient(
-                  colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : null,
-              border: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor == null && prefs.stuPlanDataAvailableBorderWidth > 0)
-                ? Border.all(
-                    // color: hasDarkTheme(context)
-                    //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
-                    //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
-                    color: prefs.stuPlanDataAvailableBorderColor,
-                    width: prefs.stuPlanDataAvailableBorderWidth)
-                : null,
-              boxShadow: (shadow) ? [
-                BoxShadow(
-                  color: hasDarkTheme(context)
-                      ? Colors.black45
-                      : Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: const Offset(0, 3),
-                )
-              ] : null,
-            ),
-            child: Padding(
-              padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
-              child: Container(
+          return RainbowWrapper(
+            variant: RainbowVariant.dark,
+            builder: (context, rcolor) {
+              return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
-                  color: color ?? Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: (showBorder && (prefs.stuPlanDataAvailableBorderGradientColor != null && rcolor == null) && prefs.stuPlanDataAvailableBorderWidth > 0) ?
+                    LinearGradient(
+                      colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    )
+                  : null,
+                  border: (showBorder && (prefs.stuPlanDataAvailableBorderGradientColor == null || rcolor != null) && prefs.stuPlanDataAvailableBorderWidth > 0)
+                    ? Border.all(
+                        // color: hasDarkTheme(context)
+                        //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
+                        //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
+                        color: rcolor ?? prefs.stuPlanDataAvailableBorderColor,
+                        width: prefs.stuPlanDataAvailableBorderWidth)
+                    : null,
+                  boxShadow: (shadow) ? [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black45
+                          : Colors.grey.withOpacity(0.5),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ] : null,
                 ),
-                child: subChild,
-              ),
-            ),
+                child: Padding(
+                  padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
+                      color: color ?? Theme.of(context).colorScheme.surface,
+                    ),
+                    child: subChild,
+                  ),
+                ),
+              );
+            }
           );
         },
         child: Padding(

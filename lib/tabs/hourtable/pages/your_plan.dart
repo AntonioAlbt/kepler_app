@@ -36,6 +36,7 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
@@ -50,17 +51,22 @@ class YourPlanPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stdata = Provider.of<StuPlanData>(context);
-    return Column(
+    return Stack(
       children: [
-        Flexible(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: StuPlanDisplay(
-              key: yourPlanDisplayKey,
-              selected: Provider.of<AppState>(context).userType == UserType.teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!,
-              mode: SPDisplayMode.yourPlan,
+        RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+        Column(
+          children: [
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: StuPlanDisplay(
+                  key: yourPlanDisplayKey,
+                  selected: Provider.of<AppState>(context).userType == UserType.teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!,
+                  mode: SPDisplayMode.yourPlan,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

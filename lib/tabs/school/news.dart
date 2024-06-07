@@ -37,6 +37,7 @@ import 'package:html_unescape/html_unescape.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/school/news_view.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -225,98 +226,102 @@ class NewsEntry extends StatelessWidget with SerializableObject {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: color,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: ListTile(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    WidgetSpan(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 3),
-                        child: Transform.translate(
-                          offset: const Offset(0, -2),
-                          child: Icon(MdiIcons.calendar,
-                              size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
+    return RainbowWrapper(
+      builder: (context, rcolor) {
+        return Card(
+          color: rcolor != null ? Color.alphaBlend(rcolor.withOpacity(.5), color) : color,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: ListTile(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        WidgetSpan(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 3),
+                            child: Transform.translate(
+                              offset: const Offset(0, -2),
+                              child: Icon(MdiIcons.calendar,
+                                  size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
+                            ),
+                          ),
                         ),
-                      ),
+                        TextSpan(
+                          text: DateFormat.yMMMMd("de-DE").format(data.createdDate),
+                          style: TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
+                        ),
+                      ],
                     ),
-                    TextSpan(
-                      text: DateFormat.yMMMMd("de-DE").format(data.createdDate),
-                      style: TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                HtmlUnescape().convert(data.title),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: DefaultTextStyle(
-                  style: Theme.of(context).textTheme.bodyMedium!,
-                  child: Text(
-                    HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 3,
-                    textAlign: TextAlign.justify,
                   ),
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    WidgetSpan(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 3),
-                        child: Transform.translate(
-                          offset: const Offset(0, -2),
-                          child: Icon(MdiIcons.formatListText,
-                              size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
+                  Text(
+                    HtmlUnescape().convert(data.title),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: DefaultTextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium!,
+                      child: Text(
+                        HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 3,
+                        textAlign: TextAlign.justify,
+                      ),
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        WidgetSpan(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 3),
+                            child: Transform.translate(
+                              offset: const Offset(0, -2),
+                              child: Icon(MdiIcons.formatListText,
+                                  size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
+                            ),
+                          ),
                         ),
-                      ),
+                        TextSpan(
+                          text: data.categories?.join(", ") ?? "Keine",
+                          style:
+                              TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
+                        ),
+                        const WidgetSpan(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 4, right: 1),
+                            child: Icon(MdiIcons.accountEdit, size: 14),
+                          )
+                        ),
+                        TextSpan(
+                          text: "${data.writer}",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[(prefs.darkTheme) ? 400 : 600]
+                          ),
+                        )
+                      ]
                     ),
-                    TextSpan(
-                      text: data.categories?.join(", ") ?? "Keine",
-                      style:
-                          TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
-                    ),
-                    const WidgetSpan(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 4, right: 1),
-                        child: Icon(MdiIcons.accountEdit, size: 14),
-                      )
-                    ),
-                    TextSpan(
-                      text: "${data.writer}",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[(prefs.darkTheme) ? 400 : 600]
-                      ),
-                    )
-                  ]
-                ),
+                  ),
+                ],
               ),
-            ],
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NewsView(
+                      newsLink: Uri.parse(data.link),
+                      newsTitle: data.title,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => NewsView(
-                  newsLink: Uri.parse(data.link),
-                  newsTitle: data.title,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+        );
+      }
     );
   }
 }

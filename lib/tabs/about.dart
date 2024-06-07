@@ -34,14 +34,18 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/logging.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const keplerAppDSELink = "https://www.kepler-chemnitz.de/materialis/datenschutzerklaerung-kepler-app/";
+
+const rainbowScale = 2.0;
 
 class AboutTab extends StatefulWidget {
   const AboutTab({super.key});
@@ -53,130 +57,180 @@ class AboutTab extends StatefulWidget {
 class _AboutTabState extends State<AboutTab> {
   @override
   Widget build(BuildContext context) {
+    final rainbow = Provider.of<Preferences>(context, listen: false).rainbowModeEnabled;
     return Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Die Kepler-App", style: Theme.of(context).textTheme.bodyLarge),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: FutureBuilder(
-                  future: PackageInfo.fromPlatform(),
-                  builder: (context, datasn) {
-                    if (!datasn.hasData) return const Text("App-Version: unbekannt");
-                    return Text(
-                      "erstellt 2023/24 von A. Albert\nApp-Version: ${datasn.data?.version} (${datasn.data?.buildNumber})",
-                      textAlign: TextAlign.center,
-                    );
-                  }
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    launchUrl(
-                      Uri.parse("mailto:a.albert@gamer153.dev"),
-                      mode: LaunchMode.externalApplication,
-                    ).catchError((_) {
-                      showSnackBar(text: "Keine Anwendung für E-Mails gefunden.");
-                      return false;
-                    });
-                  },
-                  child: const Text("Kontaktieren"),
-                ),
-              ),
-              const OpenLinkButton(
-                label: "Zum GitHub-Repo (Quelltext ansehen)",
-                link: "https://github.com/AntonioAlbt/kepler_app",
-              ),
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text(
-                  "Diese App ist unter der GPLv3 lizensiert. Der Quelltext ist somit frei verfügbar und Änderungen sind erlaubt, solange der veränderte Quelltext bereitgestellt wird.",
-                  style: TextStyle(
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  PackageInfo.fromPlatform().then((data) => showLicensePage(
-                        context: context,
-                        applicationName: data.appName,
-                        applicationVersion: data.version,
-                        // applicationIcon: Image.asset("assets/JKGLogo.png", width: 200),
-                        applicationLegalese: "Diese App ist unter der GPLv3 lizensiert. Für den Lizenztext siehe den Eintrag kepler_app."
-                      ));
-                },
-                child: const Text("Open-Source-Lizenzen anzeigen"),
-              ),
-              const OpenLinkButton(
-                label: "Datenschutzerklärung anzeigen",
-                link: keplerAppDSELink,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    launchUrl(Uri.parse("https://vlant.de"), mode: LaunchMode.externalApplication);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Image.asset("assets/logo${hasDarkTheme(context) ? "_light" : ""}.png", scale: 4),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Die Kepler-App", style: Theme.of(context).textTheme.bodyLarge),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: FutureBuilder(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, datasn) {
+                      if (!datasn.hasData) return const Text("App-Version: unbekannt");
+                      return Text(
+                        "erstellt 2023/24 von Antonio Albert\nApp-Version: ${datasn.data?.version} (${datasn.data?.buildNumber})",
+                        textAlign: TextAlign.center,
+                      );
+                    }
                   ),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: Divider(indent: 32, endIndent: 32),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: ElevatedButton(
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      launchUrl(
+                        Uri.parse("mailto:a.albert@gamer153.dev"),
+                        mode: LaunchMode.externalApplication,
+                      ).catchError((_) {
+                        showSnackBar(text: "Keine Anwendung für E-Mails gefunden.");
+                        return false;
+                      });
+                    },
+                    child: const Text("Kontaktieren"),
+                  ),
+                ),
+                const OpenLinkButton(
+                  label: "Zum GitHub-Repo (Quelltext ansehen)",
+                  link: "https://github.com/AntonioAlbt/kepler_app",
+                ),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Diese App ist unter der GPLv3 lizensiert. Der Quelltext ist somit frei verfügbar und Änderungen sind erlaubt, solange der veränderte Quelltext bereitgestellt wird.",
+                    style: TextStyle(
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ElevatedButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: logViewerPageBuilder));
+                    PackageInfo.fromPlatform().then((data) => showLicensePage(
+                          context: context,
+                          applicationName: data.appName,
+                          applicationVersion: data.version,
+                          // applicationIcon: Image.asset("assets/JKGLogo.png", width: 200),
+                          applicationLegalese: "Diese App ist unter der GPLv3 lizensiert. Für den Lizenztext siehe den Eintrag kepler_app."
+                        ));
                   },
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(flex: 0, child: Text("Debug-Aufzeichnungen ansehen")),
-                      Flexible(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Icon(Icons.bug_report, size: 16),
+                  child: const Text("Open-Source-Lizenzen anzeigen"),
+                ),
+                const OpenLinkButton(
+                  label: "Datenschutzerklärung anzeigen",
+                  link: keplerAppDSELink,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      launchUrl(Uri.parse("https://vlant.de"), mode: LaunchMode.externalApplication);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Image.asset("assets/logo${hasDarkTheme(context) ? "_light" : ""}.png", scale: 4),
+                    ),
+                  ),
+                ),
+                // RawRainbowWrapper(
+                //   builder: (context, value) {
+                //     if (value != null) {
+                //       double wrap(double val) {
+                //         if (val > 1) {
+                //           return val - 1;
+                //         } else if (val < 0) {
+                //           return val + 1;
+                //         } else {
+                //           return val;
+                //         }
+                //       }
+                //       return Padding(
+                //         padding: const EdgeInsets.only(top: 16),
+                //         child: Container(
+                //           decoration: BoxDecoration(border: Border.all(width: 2)),
+                //           child: Column(
+                //             children: List.generate(rainbowColors.length, (i) => Container(
+                //               height: 5,
+                //               width: 50,
+                //               color: RainbowColorTween(rainbowColors + [Colors.red]).lerp(wrap((1/6)*i + value)),
+                //             )),
+                //           ),
+                //         ),
+                //       );
+                //     } else {
+                //       return const SizedBox.shrink();
+                //     }
+                //   }
+                // ),
+                if (rainbow) Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Container(
+                    decoration: BoxDecoration(border: Border.all(width: 2)),
+                    child: Column(
+                      children: List.generate(rainbowColors.length, (i) => Container(
+                        height: 20/6*rainbowScale,
+                        width: 30*rainbowScale,
+                        color: rainbowColors[i],
+                      )),
+                    ),
+                  ),
+                ),
+                if (rainbow) const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text("🏳️‍🌈 Regenbogenmodus aktiviert 🏳️‍🌈", style: TextStyle(fontStyle: FontStyle.italic)),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: Divider(indent: 32, endIndent: 32),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: logViewerPageBuilder));
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(flex: 0, child: Text("Debug-Aufzeichnungen ansehen")),
+                        Flexible(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(Icons.bug_report, size: 16),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              if (kDebugFeatures) Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Provider.of<InternalState>(context, listen: false).lastChangelogShown = 0;
-                    showSnackBar(text: "Zurückgesetzt.");
-                  },
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(flex: 0, child: Text("Changelog-Version zurücksetzen")),
-                      Flexible(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 4),
-                          child: Icon(Icons.timer, size: 16),
+                if (kDebugFeatures) Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Provider.of<InternalState>(context, listen: false).lastChangelogShown = 0;
+                      showSnackBar(text: "Zurückgesetzt.");
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(flex: 0, child: Text("Changelog-Version zurücksetzen")),
+                        Flexible(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Icon(Icons.timer, size: 16),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

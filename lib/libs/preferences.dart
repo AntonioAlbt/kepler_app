@@ -151,6 +151,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);
 
+  bool get rainbowModeEnabled => attributes["rainbow_enabled"] ?? false;
+  set rainbowModeEnabled(bool val) => setSaveNotify("rainbow_enabled", val);
+
   List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
   void addEnabledNotif(String val) {

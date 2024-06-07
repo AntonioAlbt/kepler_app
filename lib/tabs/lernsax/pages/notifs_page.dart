@@ -38,6 +38,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -91,17 +92,21 @@ class LSNotificationPageState extends State<LSNotificationPage> {
             ),
           );
         }
-        return ListView.separated(
-          shrinkWrap: true,
-          itemCount: lsdata.notifications!.length,
-          itemBuilder: (context, i) {
-            final notif = lsdata.notifications![i];
-            return Padding(
-              padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
-              child: LSNotificationTile(notif: notif),
+        return RainbowWrapper(
+          builder: (context, color) {
+            return ListView.separated(
+              shrinkWrap: true,
+              itemCount: lsdata.notifications!.length,
+              itemBuilder: (context, i) {
+                final notif = lsdata.notifications![i];
+                return Padding(
+                  padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
+                  child: LSNotificationTile(notif: notif, iconColor: color),
+                );
+              },
+              separatorBuilder: (context, i) => const Divider(),
             );
-          },
-          separatorBuilder: (context, i) => const Divider(),
+          }
         );
       }
     );
@@ -149,10 +154,12 @@ class LSNotificationTile extends StatelessWidget {
     super.key,
     required this.notif,
     this.darkerClock = false,
+    this.iconColor,
   });
 
   final LSNotification notif;
   final bool darkerClock;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +177,7 @@ class LSNotificationTile extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                Icon(MdiIcons.clock, size: 16, color: darkerClock ? Colors.grey.shade900 : Colors.grey),
+                Icon(MdiIcons.clock, size: 16, color: iconColor ?? (darkerClock ? Colors.grey.shade900 : Colors.grey)),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(lernSaxTimeFormatWithSeconds.format(notif.date)),
@@ -180,7 +187,7 @@ class LSNotificationTile extends StatelessWidget {
           ),
           Row(
             children: [
-              Icon(iconObjectMap[notif.object]),
+              Icon(iconObjectMap[notif.object], color: iconColor),
               Flexible(child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(notif.message),
@@ -192,16 +199,16 @@ class LSNotificationTile extends StatelessWidget {
             padding: const EdgeInsets.only(left: 8, top: 4),
             child: Row(
               children: [
-                if (notif.hasGroupName) const Icon(MdiIcons.humanMaleBoard),
+                if (notif.hasGroupName) Icon(MdiIcons.humanMaleBoard, color: iconColor),
                 if (notif.hasGroupName) Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: Text("${notif.fromGroupName}"),
                   ),
                 ),
-                if (notif.hasUserData) const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
-                  child: Icon(MdiIcons.account),
+                if (notif.hasUserData) Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Icon(MdiIcons.account, color: iconColor),
                 ),
                 if (notif.hasUserData) Flexible(
                   child: Padding(
@@ -216,7 +223,7 @@ class LSNotificationTile extends StatelessWidget {
             padding: const EdgeInsets.only(left: 8, top: 4),
             child: Row(
               children: [
-                Icon(notif.object == "mail" ? MdiIcons.inboxArrowDown : MdiIcons.formatListText),
+                Icon(notif.object == "mail" ? MdiIcons.inboxArrowDown : MdiIcons.formatListText, color: iconColor),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 4),

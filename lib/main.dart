@@ -308,8 +308,10 @@ class _OnStartLoaderState extends State<OnStartLoader> {
     final internal = Provider.of<InternalState>(context, listen: false);
     final version = await PackageInfo.fromPlatform();
     final currentVersion = int.parse(version.buildNumber);
+    // only show changelog for updates, not for features existing on installation
+    if (internal.lastChangelogShown < 0) internal.lastChangelogShown = currentVersion;
     final lastVersion = internal.lastChangelogShown;
-    if (currentVersion > lastVersion && mounted) {
+    if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
       showDialog(context: context, builder: (ctx) => getChangelogDialog(currentVersion, lastVersion, ctx) ?? const AlertDialog());
       internal.lastChangelogShown = currentVersion;
     }

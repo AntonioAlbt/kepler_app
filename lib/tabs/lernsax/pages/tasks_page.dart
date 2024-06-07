@@ -38,6 +38,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
@@ -616,20 +617,39 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
           children: [
             Padding(
               padding: const EdgeInsets.all(4.0),
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (_, __) => Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _getColor(),
-                      width: 2,
-                    ),
-                    color: (!widget.enabled) ? (hasDarkTheme(context) ? Colors.grey.shade800 : Colors.grey.shade200) : null,
-                  ),
-                  width: 20,
-                  height: 20,
-                ),
+              child: RainbowWrapper(
+                builder: (context, color) {
+                  if (color == null) {
+                    return AnimatedBuilder(
+                      animation: _controller,
+                      builder: (_, __) => Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _getColor(),
+                            width: 2,
+                          ),
+                          color: (!widget.enabled) ? (hasDarkTheme(context) ? Colors.grey.shade800 : Colors.grey.shade200) : null,
+                        ),
+                        width: 20,
+                        height: 20,
+                      ),
+                    );
+                  } else {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: color,
+                          width: 2,
+                        ),
+                        color: (!widget.enabled) ? (hasDarkTheme(context) ? Colors.grey.shade800 : Colors.grey.shade200) : null,
+                      ),
+                      width: 20,
+                      height: 20,
+                    );
+                  }
+                }
               ),
             ),
             Padding(
@@ -637,16 +657,31 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
               child: Center(
                 child: ScaleTransition(
                   scale: _controller,
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (_, __) => Icon(
-                      Icons.check,
-                      size: 16,
-                      grade: 200,
-                      weight: 700,
-                      opticalSize: 20,
-                      color: _getColor(),
-                    ),
+                  child: RainbowWrapper(
+                    builder: (context, color) {
+                      if (color == null) {
+                        return AnimatedBuilder(
+                          animation: _controller,
+                          builder: (_, __) => Icon(
+                            Icons.check,
+                            size: 16,
+                            grade: 200,
+                            weight: 700,
+                            opticalSize: 20,
+                            color: _getColor(),
+                          ),
+                        );
+                      } else {
+                        return Icon(
+                          Icons.check,
+                          size: 16,
+                          grade: 200,
+                          weight: 700,
+                          opticalSize: 20,
+                          color: color,
+                        );
+                      }
+                    }
                   ),
                 ),
               ),

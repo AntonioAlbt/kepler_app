@@ -17,12 +17,10 @@ class CLEntry {
 }
 
 final versionChanges = {
-  //// wrote this whole system for this, but then decided that some parents/students might overreact when seeing this (specifically this "🏳️‍🌈") >:(
-  //// even though itd be fitting in june
-  // 58: CLEntry(
-  //   title: "🏳️‍🌈 Regenbogen-Modus hinzugefügt",
-  //   descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen den Regenbogen-Modus der App aktivieren. Dabei werden verschiedene Farben der App zu Regenbogenfarben geändert.",
-  // ),
+  58: CLEntry(
+    title: "Farbanimationen hinzugefügt",
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen (Kategorie \"Lustiges\") den Regenbogen-Modus der App aktivieren. Dabei werden verschiedene Oberflächen der App mit einer Regenbogen-Farbanimation versehen.",
+  ),
 };
 
 List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {
@@ -49,8 +47,8 @@ Widget? getChangelogDialog(int currentVersion, int lastVersion, BuildContext ctx
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text("Diese Info wird nur einmal angezeigt."),
           ...computeChangelog(currentVersion, lastVersion).map((e) => e.generateTile(sie)),
+          const Text("Diese Info wird nur einmal angezeigt."),
         ],
       ),
     ),

@@ -44,6 +44,7 @@ import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:provider/provider.dart';
 
 const pendelInfoUrl = "https://pendel.vlant.de";
@@ -149,12 +150,17 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                           //   width: 250,
                           //   height: 250,
                           // ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: hasDarkTheme(context) ? colorWithLightness(Colors.grey.shade900, .2) : Colors.grey.shade300,
-                            ),
-                            width: 350,
-                            height: 200,
+                          RainbowWrapper(
+                            builder: (context, color) {
+                              final bgCol = hasDarkTheme(context) ? colorWithLightness(Colors.grey.shade900, .2) : Colors.grey.shade300;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: color != null ? Color.alphaBlend(color.withOpacity(.25), bgCol) : bgCol,
+                                ),
+                                width: 350,
+                                height: 200,
+                              );
+                            }
                           ),
                           SizedBox(
                             width: 300,
@@ -187,18 +193,31 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                               child: AnimatedBuilder(
                                 animation: _controller,
                                 builder: (context, _) {
-                                  return Container(
-                                    // color: hasDarkTheme(context) ? Colors.blue.shade300 : Colors.blue.shade800,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        stops: [0, max(0, _controller.value - .3), _controller.value, _controller.value + .3, 2],
-                                        begin: AlignmentDirectional.topCenter,
-                                        end: AlignmentDirectional.bottomCenter,
-                                        colors: [Colors.blue.shade300, Colors.blue.shade300, Colors.blue.shade900, Colors.blue.shade300, Colors.blue.shade300],
-                                      ),
-                                    ),
-                                    width: 5,
-                                    height: 190,
+                                  return Rainbow2Wrapper(
+                                    variant2: RainbowVariant.dark,
+                                    builder: (context, color, color2) {
+                                      return Container(
+                                        // color: hasDarkTheme(context) ? Colors.blue.shade300 : Colors.blue.shade800,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            stops: [0, max(0, _controller.value - .3), _controller.value, _controller.value + .3, 2],
+                                            begin: AlignmentDirectional.topCenter,
+                                            end: AlignmentDirectional.bottomCenter,
+                                            colors: (color == null || color2 == null)
+                                                    ? [
+                                                        Colors.blue.shade300,
+                                                        Colors.blue.shade300,
+                                                        Colors.blue.shade900,
+                                                        Colors.blue.shade300,
+                                                        Colors.blue.shade300
+                                                      ]
+                                                    : [color, color, color2, color, color],
+                                          ),
+                                        ),
+                                        width: 5,
+                                        height: 190,
+                                      );
+                                    }
                                   );
                                 }
                               ),

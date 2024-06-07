@@ -40,6 +40,7 @@ import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
@@ -276,82 +277,86 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                   ),
                 ),
               ),
-              if (mails.isNotEmpty) Expanded(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: mails.length + 1,
-                  itemBuilder: (context, i) {
-                    if (i == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Builder(
-                          builder: (context) {
-                            final online = mailData?.$1 ?? false, data = mailData?.$2;
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                              child: (mailData == null) ?
-                                const Column(
-                                  children: [
-                                    Text("Lädt Status..."),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: SizedBox(
-                                        height: 3,
-                                        width: 250,
-                                        child: LinearProgressIndicator(),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : (!online) ?
-                                const Text("Keine Verbindung zu LernSax möglich.")
-                              : (data == null) ?
-                                const Text("Fehler beim Laden der E-Mail-Daten.")
-                              : Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Row(
+              if (mails.isNotEmpty) RainbowWrapper(
+                builder: (context, color) {
+                  return Expanded(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: mails.length + 1,
+                      itemBuilder: (context, i) {
+                        if (i == 0) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Builder(
+                              builder: (context) {
+                                final online = mailData?.$1 ?? false, data = mailData?.$2;
+                                return Padding(
+                                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                                  child: (mailData == null) ?
+                                    const Column(
                                       children: [
-                                        const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                        Text("Lädt Status..."),
                                         Padding(
-                                          padding: const EdgeInsets.only(left: 4),
-                                          child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (widget.selectedFolder.isInbox) Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Row(
-                                      children: [
-                                        const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 4),
-                                          child: Text(
-                                            "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
-                                            style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                          padding: EdgeInsets.all(8.0),
+                                          child: SizedBox(
+                                            height: 3,
+                                            width: 250,
+                                            child: LinearProgressIndicator(),
                                           ),
                                         ),
                                       ],
-                                    ),
+                                    )
+                                  : (!online) ?
+                                    const Text("Keine Verbindung zu LernSax möglich.")
+                                  : (data == null) ?
+                                    const Text("Fehler beim Laden der E-Mail-Daten.")
+                                  : Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 4),
+                                        child: Row(
+                                          children: [
+                                            const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 4),
+                                              child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (widget.selectedFolder.isInbox) Padding(
+                                        padding: const EdgeInsets.only(bottom: 4),
+                                        child: Row(
+                                          children: [
+                                            const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 4),
+                                              child: Text(
+                                                "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
+                                                style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }
-                    final mail = mails[i - 1];
-                    // TODO - future: long press actions -> delete mail, move to other folder, ...
-                    return Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: LSMailTile(mail: mail, folderId: widget.selectedFolder.id),
-                    );
-                  },
-                  separatorBuilder: (context, i) => const Divider(),
-                ),
+                                );
+                              },
+                            ),
+                          );
+                        }
+                        final mail = mails[i - 1];
+                        // TODO - future: long press actions -> delete mail, move to other folder, ...
+                        return Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: LSMailTile(mail: mail, folderId: widget.selectedFolder.id, iconColor: color),
+                        );
+                      },
+                      separatorBuilder: (context, i) => const Divider(),
+                    ),
+                  );
+                }
               ),
             ],
           ),
@@ -410,11 +415,13 @@ class LSMailTile extends StatelessWidget {
     required this.mail,
     required this.folderId,
     this.darkerIcons = false,
+    this.iconColor,
   });
 
   final LSMailListing mail;
   final String folderId;
   final bool darkerIcons;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -434,13 +441,13 @@ class LSMailTile extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                Icon(MdiIcons.clock, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
+                Icon(MdiIcons.clock, size: 16, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(lernSaxTimeFormat.format(mail.date)),
                 ),
                 const Spacer(),
-                Icon(MdiIcons.file, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
+                Icon(MdiIcons.file, size: 16, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
@@ -450,7 +457,7 @@ class LSMailTile extends StatelessWidget {
                     triggerMode: TooltipTriggerMode.tap,
                     message: "E-Mail ist offline verfügbar",
                     child: CircleAvatar(
-                      backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : (darkerIcons ? Colors.grey.shade900 : Colors.grey),
+                      backgroundColor: iconColor ?? (hasDarkTheme(context) ? Colors.grey.shade700 : (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
                       radius: 8,
                       child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
                     ),
@@ -460,7 +467,7 @@ class LSMailTile extends StatelessWidget {
           ),
           Row(
             children: [
-              const SizedBox(width: 28, child: Icon(Icons.mail)),
+              SizedBox(width: 28, child: Icon(Icons.mail, color: iconColor)),
               Flexible(
                   child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -475,7 +482,7 @@ class LSMailTile extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Row(
               children: [
-                const SizedBox(width: 28, child: Icon(MdiIcons.account)),
+                SizedBox(width: 28, child: Icon(MdiIcons.account, color: iconColor)),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 4),
@@ -500,7 +507,7 @@ class LSMailTile extends StatelessWidget {
               ],
             ),
           ),
-          AttachmentAmountDisplay(folderId: folderId, mailId: mail.id, isDraft: mail.isDraft),
+          AttachmentAmountDisplay(folderId: folderId, mailId: mail.id, isDraft: mail.isDraft, iconColor: iconColor),
         ],
       ),
     );
@@ -511,8 +518,9 @@ class AttachmentAmountDisplay extends StatefulWidget {
   final String folderId;
   final int mailId;
   final bool isDraft;
+  final Color? iconColor;
 
-  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft});
+  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft, this.iconColor});
 
   @override
   State<AttachmentAmountDisplay> createState() => _AttachmentAmountDisplayState();
@@ -535,7 +543,7 @@ class _AttachmentAmountDisplayState extends State<AttachmentAmountDisplay> {
             width: 28,
             child: Transform.rotate(
               angle: 15,
-              child: const Icon(Icons.attach_file, size: 20),
+              child: Icon(Icons.attach_file, size: 20, color: widget.iconColor),
             ),
           ),
           Flexible(
