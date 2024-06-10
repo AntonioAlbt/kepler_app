@@ -105,6 +105,20 @@ bool shouldStuPlanAutoReload(BuildContext context)
   => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&
     !isSameDay((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
 
+String getDayDescription(DateTime date) {
+  final today = DateTime.now();
+  final diffToToday = date.difference(today);
+  if (today.day == date.day && today.month == date.month && today.year == date.year) {
+    return "Heute";
+  } else if (diffToToday.inDays == 0) {
+    return "Morgen";
+  } else if (diffToToday.inDays == 1) {
+    return "Übermorgen";
+  } else {
+    return "Am ${DateFormat("dd.MM.").format(date)}";
+  }
+}
+
 class StuPlanDisplayState extends State<StuPlanDisplay> {
   final format = DateFormat("EEEEE, dd.MM.", "de-DE");
   late DateTime currentDate;
@@ -583,9 +597,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "Heute ist keine Schule.",
-                            style: TextStyle(fontSize: 18),
+                          Text(
+                            "${getDayDescription(widget.date)} ist keine Schule.",
+                            style: const TextStyle(fontSize: 18),
                           ),
                           const Padding(
                             padding: EdgeInsets.only(top: 16),
@@ -655,6 +669,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   : LessonListContainer(
                     lessons,
                     widget.selected,
+                    widget.date,
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
@@ -1101,10 +1116,11 @@ class SPListContainer extends StatelessWidget {
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
   final String className;
+  final DateTime date;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
 
   @override
   Widget build(BuildContext context) {
@@ -1122,10 +1138,10 @@ class LessonListContainer extends StatelessWidget {
             );
           }
           if (lessons!.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                "Heute ist keine Schule.",
-                style: TextStyle(fontSize: 18),
+                "${getDayDescription(date)} ist keine Schule.",
+                style: const TextStyle(fontSize: 18),
               ),
             );
           }
