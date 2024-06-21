@@ -234,3 +234,123 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
     ],
   );
 }
+
+Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
+  return AlertDialog(
+    title: Text("Infos zur Klausur in ${exam.subject}"),
+    content: DefaultTextStyle.merge(
+      style: const TextStyle(fontSize: 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (exam.begin != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.clock, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: exam.begin),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.hour != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.timelineClock, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: "${exam.hour}. Stunde"),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.duration != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.clockStart, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: "${exam.duration} min"),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.year != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.accountGroup, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: "Jahrgang ${exam.year}"),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.subject != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(Icons.school, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: exam.subject),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.teacher != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: exam.teacher),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (exam.info != "") Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: exam.info),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text("Schließen"),
+      ),
+    ],
+  );
+}

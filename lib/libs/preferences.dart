@@ -107,6 +107,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   double get stuPlanDataAvailableBorderWidth => attributes["sp_border_width"] ?? 3;
   set stuPlanDataAvailableBorderWidth(double val) => setSaveNotify("sp_border_width", val);
+  
+  bool get stuPlanShowExams => attributes["sp_show_exams"] ?? false;
+  set stuPlanShowExams(bool val) => setSaveNotify("sp_show_exams", val);
 
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);

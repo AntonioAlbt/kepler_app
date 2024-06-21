@@ -21,6 +21,10 @@ final versionChanges = {
     title: "Farbanimationen hinzugefügt",
     descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen (Kategorie \"Lustiges\") den Regenbogen-Modus der App aktivieren. Dabei werden verschiedene Oberflächen der App mit einer Regenbogen-Farbanimation versehen.",
   ),
+  59: const CLEntry(
+    title: "Klausurenanzeige hinzugefügt",
+    description: "In der persönlichen Stundenplanansicht werden jetzt für Schüler in Jahrgang 11 und 12 automatisch eingetragene Klausuren angezeigt. Dies kann in den Einstellungen angepasst werden."
+  ),
 };
 
 List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {

@@ -250,6 +250,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("Unendlich Tage zurück- und vorblättern ermöglichen + Aktion zum Zurückspringen"),
                   enabled: userType != UserType.nobody,
                 ),
+                rainbowSwitchTile(
+                  initialValue: prefs.stuPlanShowExams,
+                  onToggle: (val) => prefs.stuPlanShowExams = val,
+                  title: const Text("Klausuren anzeigen"),
+                  description: const Text("zeigt Klausuren für alle Klassen an, falls vorhanden"),
+                  enabled: userType != UserType.nobody,
+                ),
               ],
             ),
             SettingsSection(

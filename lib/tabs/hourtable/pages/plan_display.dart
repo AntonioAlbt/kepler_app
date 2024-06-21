@@ -45,7 +45,7 @@ import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
-    show generateLessonInfoDialog;
+    show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -369,6 +369,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   List<VPLesson>? lessons;
   /// only gets loaded with changed class lessons if `allReplacesMode`
   Map<String, List<VPLesson>>? changedClassLessons;
+  /// only gets loaded with exam data if user enables showing exam
+  List<VPExam>? exams;
   /// gets loaded whatever mode is active
   String? lastUpdated;
   /// gets loaded when no special mode is selected
@@ -724,6 +726,61 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ),
             ),
           ),
+        if (exams != null &&
+            (exams?.isEmpty == false) &&
+            Provider.of<Preferences>(context, listen: false).stuPlanShowExams &&
+            widget.showInfo)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .2),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // border: Border.all(
+                  //   color: Colors.grey.shade800
+                  // ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black26
+                          : Colors.grey.withOpacity(0.24),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          "Klausuren ${getDayDescription(widget.date).toLowerCase()}",
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: exams!.length,
+                        itemBuilder: (context, index) {
+                          if (exams!.length - 1 < index) return null;
+                          final exam = exams![index];
+                          return ExamDisplay(exam: exam, previousYear: (index > 0) ? exams![index - 1].year : null);
+                        },
+                        separatorBuilder: (context, i) => Divider(indent: (exams!.length > 1 && exams![i].year == exams![i + 1].year) ? 70 : 0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         if (additionalInfo != null &&
             (additionalInfo?.isEmpty == false) &&
             widget.showInfo)
@@ -903,6 +960,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       setState(() => _loading = false);
       return true;
     }
+    Future<(List<VPExam>?, bool)> getExamData() {
+      if (creds.lernSaxLogin == lernSaxDemoModeMail) return Future.value((<VPExam>[], true));
+      return IndiwareDataManager.getExamDataForDate(widget.date, creds.vpHost!, creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh);
+    }
 
     switch (widget.mode) {
       case SPDisplayMode.yourPlan:
@@ -920,6 +981,11 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               .where((element) => stdata.selectedCourseIDs.contains(element.subjectID) || element.subjectID == null)
               .toList();
           additionalInfo = data?.additionalInfo;
+          if (prefs.stuPlanShowExams) {
+            final (edata, _) = await getExamData();
+            if (!mounted) return false;
+            exams = edata;
+          }
         } else if (user == UserType.teacher) {
           final (data, online) = await getLeData();
           if (!mounted) return false;
@@ -1244,6 +1310,61 @@ class LessonDisplay extends StatelessWidget {
                   Flexible(
                     child: Text(
                       lesson.infoText,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExamDisplay extends StatelessWidget {
+  final VPExam exam;
+  final String? previousYear;
+
+  const ExamDisplay({super.key, required this.exam, required this.previousYear});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle.merge(
+      style: const TextStyle(
+        fontSize: 18,
+        height: 0,
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showDialog(
+                context: context,
+                builder: (dialogCtx) => generateExamInfoDialog(dialogCtx, exam)),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: (previousYear != exam.year)
+                      ? Text("JG ${exam.year}", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20))
+                      : const SizedBox.shrink(),
+                ),
+                SizedBox(width: 30, child: Text("${exam.hour}. ")),
+                Text(
+                  exam.subject,
+                ),
+                const Spacer(),
+                Text("bei ${exam.teacher}", style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            if (exam.info != "")
+              Row(
+                children: [
+                  const SizedBox(width: 25),
+                  Flexible(
+                    child: Text(
+                      exam.info,
                       style: const TextStyle(fontSize: 15),
                     ),
                   ),

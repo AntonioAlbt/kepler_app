@@ -403,6 +403,15 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
                 ),
               ),
             ),
+            if (stdata.selectedClassName?.contains("-") != true) Consumer<Preferences>(
+              builder: (context, prefs, _) {
+                return CheckboxListTile.adaptive(
+                  value: prefs.stuPlanShowExams,
+                  onChanged: (val) => prefs.stuPlanShowExams = val!,
+                  title: const Text("Infos zu Klausuren anzeigen"),
+                );
+              }
+            ),
             Padding(
               padding: const EdgeInsets.all(8),
               child: Row(
@@ -454,6 +463,8 @@ class _SubjectSelectScreenState extends State<SubjectSelectScreen> {
         stdata.selectedCourseIDs = [];
         stdata.selectedCourseIDs = stdata.availableClassSubjects!.map((e) => e.subjectID).toList();
       }
+      final cname = stdata.selectedClassName;
+      if (cname != null) Provider.of<Preferences>(context, listen: false).stuPlanShowExams = !cname.contains("-");
     });
   }
 
