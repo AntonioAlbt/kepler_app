@@ -51,14 +51,16 @@ extension StringExtension on String {
   String stripHtmlIfNeeded() => replaceAll(RegExp(r"<[^>]*>|&[^;]+;"), " ");
 }
 
+final newsTabKey = GlobalKey<NewsTabState>();
+
 class NewsTab extends StatefulWidget {
-  const NewsTab({super.key});
+  NewsTab() : super(key: newsTabKey);
 
   @override
-  State<NewsTab> createState() => _NewsTabState();
+  State<NewsTab> createState() => NewsTabState();
 }
 
-class _NewsTabState extends State<NewsTab> {
+class NewsTabState extends State<NewsTab> {
   double opacity = 0;
   int lastNewsPage = 0;
   bool noMoreNews = false;
@@ -74,6 +76,10 @@ class _NewsTabState extends State<NewsTab> {
       lastNewsPage = 0;
     });
     return _loadMoreNews();
+  }
+
+  void reload() {
+    if (!loading) _resetNews();
   }
 
   @override
@@ -152,6 +158,7 @@ class _NewsTabState extends State<NewsTab> {
       final newStartNews = await loadAllNewNews(_newsCache.newsData.first.link);
       if (newStartNews != null) _newsCache.insertNewsData(0, newStartNews);
     }
+    if (!mounted) return;
     if (lastNewsPage > 50) {
       setState(() {
         noMoreNews = true;
@@ -324,4 +331,8 @@ class NewsEntry extends StatelessWidget with SerializableObject {
       }
     );
   }
+}
+
+void newsTabRefreshAction() {
+  newsTabKey.currentState?.reload();
 }

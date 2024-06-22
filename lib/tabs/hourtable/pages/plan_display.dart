@@ -31,6 +31,8 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -679,6 +681,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
                     fullLessonListForDate: allLessonsForDate,
+                    onRefresh: () async {
+                      showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
+                    },
                   ),
           ),
         ),
@@ -1198,8 +1203,9 @@ class LessonListContainer extends StatelessWidget {
   final DateTime date;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
+  final Future<void> Function() onRefresh;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, required this.fullLessonListForDate});
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, required this.fullLessonListForDate, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -1227,23 +1233,26 @@ class LessonListContainer extends StatelessWidget {
           final stdata = Provider.of<StuPlanData>(context, listen: false);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.separated(
-              itemCount: lessons!.length,
-              itemBuilder: (context, index) => LessonDisplay(
-                considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
-                index > 0
-                    ? lessons!.elementAtOrNull(index - 1)?.schoolHour
-                    : null,
-                fullLessonListForDate != null ? lessons![index].hasLastRoomUsageFromList(fullLessonListForDate!) : false,
-                subject: stdata.availableSubjects[className]
-                    ?.cast<VPCSubjectS?>()
-                    .firstWhere(
-                      (s) => s!.subjectID == lessons![index].subjectID,
-                      orElse: () => null,
-                    ),
-                classNameToReplace: className,
+            child: RefreshIndicator(
+              onRefresh: onRefresh,
+              child: ListView.separated(
+                itemCount: lessons!.length,
+                itemBuilder: (context, index) => LessonDisplay(
+                  considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
+                  index > 0
+                      ? lessons!.elementAtOrNull(index - 1)?.schoolHour
+                      : null,
+                  fullLessonListForDate != null ? lessons![index].hasLastRoomUsageFromList(fullLessonListForDate!) : false,
+                  subject: stdata.availableSubjects[className]
+                      ?.cast<VPCSubjectS?>()
+                      .firstWhere(
+                        (s) => s!.subjectID == lessons![index].subjectID,
+                        orElse: () => null,
+                      ),
+                  classNameToReplace: className,
+                ),
+                separatorBuilder: (context, index) => const Divider(height: 24),
               ),
-              separatorBuilder: (context, index) => const Divider(height: 24),
             ),
           );
         }());

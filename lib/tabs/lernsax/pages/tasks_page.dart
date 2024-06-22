@@ -241,19 +241,22 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
               ),
             ),
             if (tasks.isNotEmpty) Expanded(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: tasks.length,
-                itemBuilder: (context, i) {
-                  final task = tasks[i];
-                  return Padding(
-                    padding: (i > 0)
-                        ? const EdgeInsets.symmetric(horizontal: 4)
-                        : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
-                    child: LSTaskEntry(task: task, online: _connected),
-                  );
-                },
-                separatorBuilder: (context, i) => const Divider(),
+              child: RefreshIndicator(
+                onRefresh: loadTasksForSelectedClass,
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: tasks.length,
+                  itemBuilder: (context, i) {
+                    final task = tasks[i];
+                    return Padding(
+                      padding: (i > 0)
+                          ? const EdgeInsets.symmetric(horizontal: 4)
+                          : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
+                      child: LSTaskEntry(task: task, online: _connected),
+                    );
+                  },
+                  separatorBuilder: (context, i) => const Divider(),
+                ),
               ),
             ),
           ],

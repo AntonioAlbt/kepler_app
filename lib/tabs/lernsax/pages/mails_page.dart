@@ -280,80 +280,83 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
               if (mails.isNotEmpty) RainbowWrapper(
                 builder: (context, color) {
                   return Expanded(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: mails.length + 1,
-                      itemBuilder: (context, i) {
-                        if (i == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Builder(
-                              builder: (context) {
-                                final online = mailData?.$1 ?? false, data = mailData?.$2;
-                                return Padding(
-                                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                                  child: (mailData == null) ?
-                                    const Column(
+                    child: RefreshIndicator(
+                      onRefresh: () async => widget.controller?.onForceRefresh?.call(),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: mails.length + 1,
+                        itemBuilder: (context, i) {
+                          if (i == 0) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Builder(
+                                builder: (context) {
+                                  final online = mailData?.$1 ?? false, data = mailData?.$2;
+                                  return Padding(
+                                    padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                                    child: (mailData == null) ?
+                                      const Column(
+                                        children: [
+                                          Text("Lädt Status..."),
+                                          Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: SizedBox(
+                                              height: 3,
+                                              width: 250,
+                                              child: LinearProgressIndicator(),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : (!online) ?
+                                      const Text("Keine Verbindung zu LernSax möglich.")
+                                    : (data == null) ?
+                                      const Text("Fehler beim Laden der E-Mail-Daten.")
+                                    : Column(
                                       children: [
-                                        Text("Lädt Status..."),
                                         Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: SizedBox(
-                                            height: 3,
-                                            width: 250,
-                                            child: LinearProgressIndicator(),
+                                          padding: const EdgeInsets.only(bottom: 4),
+                                          child: Row(
+                                            children: [
+                                              const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: 4),
+                                                child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (widget.selectedFolder.isInbox) Padding(
+                                          padding: const EdgeInsets.only(bottom: 4),
+                                          child: Row(
+                                            children: [
+                                              const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: 4),
+                                                child: Text(
+                                                  "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
+                                                  style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
-                                    )
-                                  : (!online) ?
-                                    const Text("Keine Verbindung zu LernSax möglich.")
-                                  : (data == null) ?
-                                    const Text("Fehler beim Laden der E-Mail-Daten.")
-                                  : Column(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
-                                        child: Row(
-                                          children: [
-                                            const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 4),
-                                              child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (widget.selectedFolder.isInbox) Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
-                                        child: Row(
-                                          children: [
-                                            const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 4),
-                                              child: Text(
-                                                "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
-                                                style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }
+                          final mail = mails[i - 1];
+                          // TODO - future: long press actions -> delete mail, move to other folder, ...
+                          return Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: LSMailTile(mail: mail, folderId: widget.selectedFolder.id, iconColor: color),
                           );
-                        }
-                        final mail = mails[i - 1];
-                        // TODO - future: long press actions -> delete mail, move to other folder, ...
-                        return Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: LSMailTile(mail: mail, folderId: widget.selectedFolder.id, iconColor: color),
-                        );
-                      },
-                      separatorBuilder: (context, i) => const Divider(),
+                        },
+                        separatorBuilder: (context, i) => const Divider(),
+                      ),
                     ),
                   );
                 }

@@ -94,17 +94,20 @@ class LSNotificationPageState extends State<LSNotificationPage> {
         }
         return RainbowWrapper(
           builder: (context, color) {
-            return ListView.separated(
-              shrinkWrap: true,
-              itemCount: lsdata.notifications!.length,
-              itemBuilder: (context, i) {
-                final notif = lsdata.notifications![i];
-                return Padding(
-                  padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
-                  child: LSNotificationTile(notif: notif, iconColor: color),
-                );
-              },
-              separatorBuilder: (context, i) => const Divider(),
+            return RefreshIndicator(
+              onRefresh: loadData,
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: lsdata.notifications!.length,
+                itemBuilder: (context, i) {
+                  final notif = lsdata.notifications![i];
+                  return Padding(
+                    padding: (i > 0) ? const EdgeInsets.symmetric(horizontal: 4) : const EdgeInsets.only(top: 8, bottom: 4, left: 4, right: 4),
+                    child: LSNotificationTile(notif: notif, iconColor: color),
+                  );
+                },
+                separatorBuilder: (context, i) => const Divider(),
+              ),
             );
           }
         );

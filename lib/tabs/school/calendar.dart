@@ -46,14 +46,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 DateTime? globalCalendarNextDateToHighlightOnOpen;
 
+final calendarTabKey = GlobalKey<CalendarTabState>();
+
 class CalendarTab extends StatefulWidget {
-  const CalendarTab({super.key});
+  CalendarTab() : super(key: calendarTabKey);
 
   @override
-  State<CalendarTab> createState() => _CalendarTabState();
+  State<CalendarTab> createState() => CalendarTabState();
 }
 
-class _CalendarTabState extends State<CalendarTab> {
+class CalendarTabState extends State<CalendarTab> {
   DateTime? _selectedDate = DateTime.now();
   DateTime _displayedMonthDate = DateTime.now();
   bool _loading = true;
@@ -74,24 +76,27 @@ class _CalendarTabState extends State<CalendarTab> {
         ),
       );
     }
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SchoolCalendar(
-            onDisplayedMonthChanged: (date) {
-              setState(() {
-                _displayedMonthDate = date;
-                _selectedDate = null;
-              });
-              _loadData();
-            },
-            onSelectedDateChanged: (date) => setState(() => _selectedDate = date),
-            selectedDate: _selectedDate,
-            displayedMonthDate: _displayedMonthDate,
-          ),
-          if (_selectedDate != null) CalendarDateShowcase(date: _selectedDate!),
-        ],
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SchoolCalendar(
+              onDisplayedMonthChanged: (date) {
+                setState(() {
+                  _displayedMonthDate = date;
+                  _selectedDate = null;
+                });
+                _loadData();
+              },
+              onSelectedDateChanged: (date) => setState(() => _selectedDate = date),
+              selectedDate: _selectedDate,
+              displayedMonthDate: _displayedMonthDate,
+            ),
+            if (_selectedDate != null) CalendarDateShowcase(date: _selectedDate!),
+          ],
+        ),
       ),
     );
   }
@@ -107,18 +112,20 @@ class _CalendarTabState extends State<CalendarTab> {
     _loadData();
   }
 
-  void _loadData() {
+  Future<void> _loadData() async {
     setState(() => _loading = true);
-    loadCalendarEntries(_displayedMonthDate).then((out) {
-      final (online, data) = out;
-      setState(() => _loading = false);
-      if (!online) {
-        showSnackBar(text: "Keine Internetverbindung.");
-        return;
-      }
-      if (data == null) return;
-      Provider.of<NewsCache>(context, listen: false).replaceMonthInCalData(_displayedMonthDate, data);
-    });
+    final (online, data) = await loadCalendarEntries(_displayedMonthDate);
+    setState(() => _loading = false);
+    if (!online) {
+      showSnackBar(text: "Keine Internetverbindung.");
+      return;
+    }
+    if (data == null) return;
+    Provider.of<NewsCache>(context, listen: false).replaceMonthInCalData(_displayedMonthDate, data);
+  }
+
+  void reload() {
+    if (!_loading) _loadData();
   }
 }
 
@@ -305,4 +312,8 @@ class _CalendarDateShowcaseState extends State<CalendarDateShowcase> {
       ),
     );
   }
+}
+
+void calendarTabRefreshAction() {
+  calendarTabKey.currentState?.reload();
 }

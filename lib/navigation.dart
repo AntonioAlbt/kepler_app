@@ -57,6 +57,8 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/pendel.dart';
+import 'package:kepler_app/tabs/school/calendar.dart';
+import 'package:kepler_app/tabs/school/news.dart';
 import 'package:kepler_app/tabs/school/school.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -152,12 +154,18 @@ final destinations = [
         icon: Icon(Icons.newspaper_outlined),
         selectedIcon: Icon(Icons.newspaper),
         label: Text("Kepler-News"),
+        navbarActions: [
+          IconButton(onPressed: newsTabRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
       NavEntryData(
         id: NewsPageIDs.calendar,
         icon: Icon(Icons.calendar_month_outlined),
         selectedIcon: Icon(Icons.calendar_month),
         label: Text("Kepler-Kalender"),
+        navbarActions: [
+          IconButton(onPressed: calendarTabRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
     ],
   ),
