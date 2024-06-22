@@ -255,6 +255,15 @@ class VPLesson { // "<Std>"
       infoText: infoText ?? this.infoText,
     );
   }
+
+  /// warning! because lessons don't contain date information, this compares against all lessons in the list
+  /// (not only lessons on the same date)
+  /// also, because lessons can use multiple rooms, this checks all rooms against all rooms in all other lessons
+  bool hasLastRoomUsageFromList(List<VPLesson> lessons) {
+    if (roomCodes.contains("") || roomCodes.contains("---") || roomCodes.isEmpty) return false;
+    // true if no lesson is after current lesson and also uses any of the current lessons rooms
+    return !lessons.any((lesson) => lesson.schoolHour > schoolHour && roomCodes.any((rc) => lesson.roomCodes.contains(rc)));
+  }
 }
 
 const cancellationALaLernSax = "Aufgaben in LernSax bearbeiten";

@@ -122,7 +122,7 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
   return true;
 }
 
-Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace) {
+Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
     content: DefaultTextStyle.merge(
@@ -209,17 +209,27 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
               ),
             ),
           ),
-          if (lesson.infoText != "") Flexible(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
-                    const TextSpan(text: " "),
-                    TextSpan(text: lesson.infoText),
-                  ],
-                ),
+          if (lastRoomUsageInDay) Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const WidgetSpan(child: Icon(Icons.last_page, color: Colors.grey)),
+                  const TextSpan(text: " "),
+                  TextSpan(text: "${lesson.roomCodes.length == 1 ? "Der Raum" : "Mind. einer der Räume"} wird das letzte Mal für den Tag verwendet."),
+                ],
+              ),
+            ),
+          ),
+          if (lesson.infoText != "") Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                  const TextSpan(text: " "),
+                  TextSpan(text: lesson.infoText),
+                ],
               ),
             ),
           ),

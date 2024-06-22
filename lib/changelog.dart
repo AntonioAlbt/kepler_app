@@ -25,6 +25,10 @@ final versionChanges = {
     title: "Klausurenanzeige hinzugefügt",
     description: "In der persönlichen Stundenplanansicht werden jetzt für Schüler in Jahrgang 11 und 12 automatisch eingetragene Klausuren angezeigt. Dies kann in den Einstellungen angepasst werden."
   ),
+  60: const CLEntry(
+    title: "Letzte Raumverwendungen markiert",
+    description: "In Stundenplanansichten wird die letze Verwendung eines Raumes an einem Tag mit einem neuen Icon hervorgehoben.",
+  ),
 };
 
 List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {

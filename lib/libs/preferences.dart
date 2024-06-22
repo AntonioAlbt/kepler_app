@@ -111,6 +111,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get stuPlanShowExams => attributes["sp_show_exams"] ?? false;
   set stuPlanShowExams(bool val) => setSaveNotify("sp_show_exams", val);
 
+  bool get stuPlanShowLastRoomUsage => attributes["sp_show_lru"] ?? true;
+  set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
+
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);

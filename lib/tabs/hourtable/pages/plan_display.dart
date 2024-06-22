@@ -367,6 +367,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   bool _loading = true;
   /// gets selected lessons loaded when no special mode selected, if `freeRoomsMode` gets loaded all lessons for all classes, otherwise is null
   List<VPLesson>? lessons;
+  /// gets loaded with all lessons for determining last room usage
+  List<VPLesson>? allLessonsForDate;
   /// only gets loaded with changed class lessons if `allReplacesMode`
   Map<String, List<VPLesson>>? changedClassLessons;
   /// only gets loaded with exam data if user enables showing exam
@@ -407,6 +409,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           child: LessonDisplay(
               considerLernSaxCancellationForLesson(lessons[i], consider),
               (i > 0) ? lessons[i - 1].schoolHour : null,
+              lessons[i].hasLastRoomUsageFromList(lessons),
               classNameToReplace: clName,
               subject: stdata.availableSubjects[clName]
                 ?.cast<VPCSubjectS?>()
@@ -675,6 +678,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
+                    fullLessonListForDate: allLessonsForDate,
                   ),
           ),
         ),
@@ -980,6 +984,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               // include lessons with subjectID == null, because they are usually important changed lessons for every pupil
               .where((element) => stdata.selectedCourseIDs.contains(element.subjectID) || element.subjectID == null)
               .toList();
+          allLessonsForDate = data?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = data?.additionalInfo;
           if (prefs.stuPlanShowExams) {
             final (edata, _) = await getExamData();
@@ -995,6 +1000,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
               orElse: () => null);
           lessons = teacher?.lessons;
+          allLessonsForDate = data?.teachers?.expand((cl) => cl.lessons)?.toList();
           supervisions = teacher?.supervisions;
           additionalInfo = data?.additionalInfo;
         }
@@ -1020,6 +1026,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       le.roomChanged ||
                       le.infoText != "")
                   .toList()));
+          allLessonsForDate = klData?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = klData?.additionalInfo;
         } else if (user == UserType.teacher) {
           final (leData, online) = await getLeData();
@@ -1035,6 +1042,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       le.roomChanged ||
                       le.infoText != "")
                   .toList()));
+          allLessonsForDate = leData?.teachers?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = leData?.additionalInfo;
         }
         break;
@@ -1048,6 +1056,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .firstWhere((cl) => cl?.className == widget.selected,
                 orElse: () => null)
             ?.lessons;
+        allLessonsForDate = klData?.classes?.expand((cl) => cl.lessons)?.toList();
         additionalInfo = klData?.additionalInfo;
         break;
       case SPDisplayMode.freeRooms:
@@ -1061,6 +1070,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         lessons = klData?.classes
             .map((e) => e.lessons)
             .fold([], (prev, ls) => prev!..addAll(ls));
+        // dont load allLessonsForDate because it isn't displayed in this plan
         break;
       case SPDisplayMode.roomPlan:
         final (klData, online) = await getKlData();
@@ -1073,6 +1083,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .where((l) => l.roomCodes.contains(widget.selected))
             .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCodes != l.roomCodes) ? false : true) : true)
             .toList();
+        // dont load allLessonsForDate because last room usage doesn't matter anyway (it's kinda obvious)
         break;
       case SPDisplayMode.teacherPlan:
         final (leData, online) = await getLeData();
@@ -1082,6 +1093,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         lessons = leData?.teachers.cast<VPTeacher?>()
           .firstWhere((le) => le?.teacherCode == widget.selected, orElse: () => null)
           ?.lessons;
+        allLessonsForDate = leData?.teachers?.expand((cl) => cl.lessons)?.toList();
         additionalInfo = leData?.additionalInfo;
         break;
       default:
@@ -1181,12 +1193,13 @@ class SPListContainer extends StatelessWidget {
 
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
+  final List<VPLesson>? fullLessonListForDate;
   final String className;
   final DateTime date;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline});
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, required this.fullLessonListForDate});
 
   @override
   Widget build(BuildContext context) {
@@ -1221,6 +1234,7 @@ class LessonListContainer extends StatelessWidget {
                 index > 0
                     ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                     : null,
+                fullLessonListForDate != null ? lessons![index].hasLastRoomUsageFromList(fullLessonListForDate!) : false,
                 subject: stdata.availableSubjects[className]
                     ?.cast<VPCSubjectS?>()
                     .firstWhere(
@@ -1242,7 +1256,9 @@ class LessonDisplay extends StatelessWidget {
   final bool showInfoDialog;
   final VPCSubjectS? subject;
   final String? classNameToReplace;
-  const LessonDisplay(this.lesson, this.previousLessonHour,
+  final bool lastRoomUsageInDay;
+
+  const LessonDisplay(this.lesson, this.previousLessonHour, this.lastRoomUsageInDay,
       {super.key, this.showInfoDialog = true, this.subject, this.classNameToReplace});
 
   @override
@@ -1257,7 +1273,7 @@ class LessonDisplay extends StatelessWidget {
         onTap: (showInfoDialog)
             ? () => showDialog(
                 context: context,
-                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace))
+                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace, lastRoomUsageInDay))
             : null,
         child: Column(
           children: [
@@ -1294,11 +1310,23 @@ class LessonDisplay extends StatelessWidget {
                     ),
                   ),
                 const Spacer(),
+                if (lastRoomUsageInDay && Provider.of<Preferences>(context, listen: false).stuPlanShowLastRoomUsage) Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Tooltip(
+                    enableTapToDismiss: true,
+                    triggerMode: TooltipTriggerMode.tap,
+                    message: lesson.roomCodes.length == 1 ? "laut Plan letzte Verwendung des Raumes" : "laut Plan letzte Verwendung einer der gelisteten Räume",
+                    showDuration: const Duration(seconds: 2),
+                    child: const Icon(Icons.last_page, size: 20, color: Colors.black),
+                  ),
+                ),
                 Text(
                   lesson.roomCodes.join(", "),
                   style: TextStyle(
                     color: (lesson.roomChanged) ? Colors.red : null,
                     fontWeight: (lesson.roomChanged) ? FontWeight.bold : FontWeight.w500,
+                    // decoration: (lastRoomUsageInDay) ? TextDecoration.underline : null,
+                    // decorationThickness: (lastRoomUsageInDay) ? 1.5 : null,
                   ),
                 ),
               ],

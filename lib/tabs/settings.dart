@@ -257,6 +257,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("zeigt Klausuren für alle Klassen an, falls vorhanden"),
                   enabled: userType != UserType.nobody,
                 ),
+                rainbowSwitchTile(
+                  initialValue: prefs.stuPlanShowLastRoomUsage,
+                  onToggle: (val) => prefs.stuPlanShowLastRoomUsage = val,
+                  title: const Text("Icon für Räume mit letzter Verwendung"),
+                  description: const Text("Stunden mit Räumen, die am ausgewählten Tag das letzte Mal verwendet werden, bekommen ein besonderes Icon"),
+                  enabled: userType != UserType.nobody,
+                ),
               ],
             ),
             SettingsSection(
