@@ -31,9 +31,6 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
-import 'dart:io';
-
-import 'package:appcheck/appcheck.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
@@ -41,13 +38,12 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/rainbow.dart';
-import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mail_write_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
@@ -236,34 +232,13 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
           );
         }
         return Scaffold(
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              showDialog(context: context, builder: (context) => AlertDialog(
-                title: const Text("E-Mail schreiben"),
-                content: const Text("E-Mails können aktuell nur in LernSax Messenger verfasst werden."), // TODO - future: add a basic email writer with just a mail, subject and text input
-                actions: [
-                  FutureBuilder(
-                    future: AppCheck.checkAvailability(lernSaxMsgrAndroidPkg).catchError((_) => null),
-                    builder: (context, datasn) {
-                      return TextButton(
-                        onPressed: () {
-                          if (Platform.isAndroid) {
-                            AppCheck.launchApp(lernSaxMsgrAndroidPkg).catchError((_) => launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg")).catchError((_) {
-                              showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", error: true);
-                              return false;
-                            }));
-                          } else if (Platform.isIOS) {
-                            launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"), mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        child: Text("Jetzt ${Platform.isIOS ? "öffnen/installieren" : datasn.data != null ? "öffnen" : "installieren"}"),
-                      );
-                    },
-                  ),
-                ],
-              ));
+              Navigator.push(context, MaterialPageRoute(builder: mailWritePageBuilder));
             },
-            child: const Icon(Icons.edit_note),
+            icon: const Icon(Icons.edit_note),
+            label: const Text("E-Mail verfassen"),
+            heroTag: UniqueKey(),
           ),
           body: Column(
             children: [
@@ -318,7 +293,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                           padding: const EdgeInsets.only(bottom: 4),
                                           child: Row(
                                             children: [
-                                              const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                              Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
                                               Padding(
                                                 padding: const EdgeInsets.only(left: 4),
                                                 child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
@@ -330,7 +305,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                                           padding: const EdgeInsets.only(bottom: 4),
                                           child: Row(
                                             children: [
-                                              const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
+                                              Icon(MdiIcons.mail, size: 16, color: Colors.grey),
                                               Padding(
                                                 padding: const EdgeInsets.only(left: 4),
                                                 child: Text(
@@ -502,6 +477,7 @@ class LSMailTile extends StatelessWidget {
                               darkerIcon: darkerIcons,
                             );
                           }),
+                          if (mail.addressed.isEmpty) const TextSpan(text: "niemanden", style: TextStyle(fontStyle: FontStyle.italic)),
                         ],
                       ),
                     ),

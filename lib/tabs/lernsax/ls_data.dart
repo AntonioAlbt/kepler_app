@@ -484,7 +484,7 @@ class LSMailAddressable extends SerializableObject {
   }
 
   static List<LSMailAddressable> fromLSApiDataList(List<dynamic> val)
-    => val.cast<Map<String, dynamic>>().map((val) => LSMailAddressable.fromLSApiData(val.cast())).toList();
+    => val.cast<Map<String, dynamic>>().where((val) => val["addr"] != null && val["name"] != null).map((val) => LSMailAddressable.fromLSApiData(val.cast())).toList();
 
   @override
   String toString() {

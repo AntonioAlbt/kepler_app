@@ -191,7 +191,7 @@ class _SchoolCalendarState extends State<SchoolCalendar> {
       ),
       value: [widget.selectedDate],
       onValueChanged: (selected) {
-        widget.onSelectedDateChanged(selected.first!);
+        widget.onSelectedDateChanged(selected.firstOrNull);
       },
       onDisplayedMonthChanged: (date) {
         widget.onDisplayedMonthChanged(date);
@@ -263,7 +263,7 @@ class _CalendarDateShowcaseState extends State<CalendarDateShowcase> {
                         padding: const EdgeInsets.only(left: 24, top: 4),
                         child: Row(
                           children: [
-                            const Icon(MdiIcons.clock),
+                            Icon(MdiIcons.clock),
                             Text(" ab ${DateFormat("HH:mm").format(dt.startDate!)} Uhr${dt.endDate != null ? " bis ${DateFormat("HH:mm").format(dt.endDate!)} Uhr" : ""}"),
                           ],
                         ),

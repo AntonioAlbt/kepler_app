@@ -39,6 +39,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mail_write_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -169,6 +170,23 @@ class _MailDetailPageState extends State<MailDetailPage> {
                     padding: EdgeInsets.only(bottom: 4),
                     child: Divider(),
                   ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Provider.of<AppState>(context, listen: false).clearInfoScreen();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (ctx) => MailWritePage(
+                            to: mailData!.to.map((to) => to.address).toList(),
+                            subject: mailData!.subject,
+                            mail: mailData!.bodyPlain,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit),
+                    label: const Text("Bearbeiten und senden"),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
@@ -178,49 +196,52 @@ class _MailDetailPageState extends State<MailDetailPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: SelectableLinkify(
-                      // needed to show the real context menu like on a normal selectabletext, it somehow doesn't show otherwise
-                      contextMenuBuilder: const SelectableText("").contextMenuBuilder,
-                      // change order so emails get linkified first, is needed because of looseUrl
-                      linkifiers: const [EmailLinkifier(), UrlLinkifier()],
-                      options: const LinkifyOptions(looseUrl: true, defaultToHttps: true),
-                      onOpen: (link) {
-                        if (link.text.contains("@")) {
-                          showDialog(context: context, builder: (context) => AlertDialog(
-                            content: Text("E-Mail-Adresse: ${link.text}", style: const TextStyle(fontSize: 18)),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  launchUrl(Uri.parse(link.url), mode: LaunchMode.externalNonBrowserApplication).catchError((_) {
-                                    showSnackBar(text: "Keine App für E-Mails gefunden.");
-                                    return false;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: const Text("E-Mail senden"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Clipboard.setData(ClipboardData(text: link.text));
-                                  Navigator.pop(context);
-                                },
-                                child: const Text("Kopieren"),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("Schließen"),
-                              ),
-                            ],
-                          ));
-                          return;
-                        }
-                        try {
-                          launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
-                        } on Exception catch (_) {
-                          showSnackBar(text: "Keine App zum Öffnen dieses Links gefunden.");
-                        }
-                      },
-                      text: mailData!.bodyPlain,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SelectableLinkify(
+                        // needed to show the real context menu like on a normal selectabletext, it somehow doesn't show otherwise
+                        contextMenuBuilder: const SelectableText("").contextMenuBuilder,
+                        // change order so emails get linkified first, is needed because of looseUrl
+                        linkifiers: const [EmailLinkifier(), UrlLinkifier()],
+                        options: const LinkifyOptions(looseUrl: true, defaultToHttps: true),
+                        onOpen: (link) {
+                          if (link.text.contains("@")) {
+                            showDialog(context: context, builder: (context) => AlertDialog(
+                              content: Text("E-Mail-Adresse: ${link.text}", style: const TextStyle(fontSize: 18)),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    launchUrl(Uri.parse(link.url), mode: LaunchMode.externalNonBrowserApplication).catchError((_) {
+                                      showSnackBar(text: "Keine App für E-Mails gefunden.");
+                                      return false;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("E-Mail senden"),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: link.text));
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("Kopieren"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text("Schließen"),
+                                ),
+                              ],
+                            ));
+                            return;
+                          }
+                          try {
+                            launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+                          } on Exception catch (_) {
+                            showSnackBar(text: "Keine App zum Öffnen dieses Links gefunden.");
+                          }
+                        },
+                        text: mailData!.bodyPlain,
+                      ),
                     ),
                   ),
                 ],

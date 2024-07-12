@@ -91,7 +91,7 @@ class HomeWidgetBase extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (switchId != null) IconButton(
-                                      icon: const Icon(MdiIcons.swapHorizontal, size: 16),
+                                      icon: Icon(MdiIcons.swapHorizontal, size: 16),
                                       onPressed: () {},
                                     ),
                                     IconButton(
@@ -103,7 +103,7 @@ class HomeWidgetBase extends StatelessWidget {
                                     Consumer<Preferences>(
                                       builder: (context, prefs, _) {
                                         return IconButton(
-                                          icon: const Icon(MdiIcons.eyeOff),
+                                          icon: Icon(MdiIcons.eyeOff),
                                           onPressed: () {
                                             showDialog(context: context, builder: (context) => AlertDialog(
                                               title: const Text("Ausblenden?"),

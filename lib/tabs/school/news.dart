@@ -296,9 +296,9 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                           style:
                               TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
                         ),
-                        const WidgetSpan(
+                        WidgetSpan(
                           child: Padding(
-                            padding: EdgeInsets.only(left: 4, right: 1),
+                            padding: const EdgeInsets.only(left: 4, right: 1),
                             child: Icon(MdiIcons.accountEdit, size: 14),
                           )
                         ),

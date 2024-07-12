@@ -172,7 +172,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: (lesson.teacherCode == "") ? "---" : lesson.teacherCode),
                     if (lesson.teacherChanged) const TextSpan(text: ", "),
@@ -195,7 +195,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.door, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.door, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: (lesson.roomCodes.isEmpty) ? "---" : lesson.roomCodes.join(", ")),
                     if (lesson.roomChanged) const TextSpan(text: ", "),
@@ -226,7 +226,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
             child: Text.rich(
               TextSpan(
                 children: [
-                  const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                  WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
                   const TextSpan(text: " "),
                   TextSpan(text: lesson.infoText),
                 ],
@@ -261,7 +261,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.clock, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.clock, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: exam.begin),
                   ],
@@ -275,7 +275,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.timelineClock, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.timelineClock, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: "${exam.hour}. Stunde"),
                   ],
@@ -289,7 +289,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.clockStart, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.clockStart, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: "${exam.duration} min"),
                   ],
@@ -303,7 +303,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.accountGroup, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.accountGroup, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: "Jahrgang ${exam.year}"),
                   ],
@@ -331,7 +331,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.humanMaleBoard, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: exam.teacher),
                   ],
@@ -345,7 +345,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                    WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
                     const TextSpan(text: " "),
                     TextSpan(text: exam.info),
                   ],

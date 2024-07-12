@@ -692,7 +692,7 @@ Future<(bool, LSMail?)> getMail(String login, String token, { required String fo
       size: data["size"],
       bodyPlain: data["body_plain"],
       from: LSMailAddressable.fromLSApiDataList(data["from"]),
-      to: LSMailAddressable.fromLSApiDataList(data["to"]),
+      to: data["to"] == null ? [] : LSMailAddressable.fromLSApiDataList(data["to"]),
       replyTo: data.containsKey("reply_to") ? LSMailAddressable.fromLSApiDataList(data["reply_to"]) : [],
       attachments: data.containsKey("files") ? LSMailAttachment.fromLSApiDataList(data["files"]) : [],
       folderId: folderId,
@@ -867,6 +867,86 @@ Future<(bool, bool)> setNotificationSettings(String login, String token, { Strin
     // this doesn't return anything, because no call has an id set
     // if (res[0]["result"]["return"] != "OK") return (true, false);
     return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+enum LSMailReferenceMode { forwarded, answered }
+
+/// returns: isOnline, success
+Future<(bool, bool)> sendMail(
+  String login,
+  String token, {
+  required String subject,
+  required List<String> to,
+  String? text,
+  List<String>? cc,
+  List<String>? bcc,
+  List<String>? sessionFiles,
+  String? referenceMsgFolderId,
+  int? referenceMsgId,
+  LSMailReferenceMode? referenceMode,
+}) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "send_mail", id: 1, params: {
+        "subject": subject,
+        "to": to.join(","),
+        if (text != null) "text": text,
+        if (cc != null) "cc": cc.join(","),
+        if (bcc != null) "bcc": bcc.join(","),
+        if (sessionFiles != null) "import_session_files": sessionFiles,
+        if (referenceMsgFolderId != null) "reference_folder_id": referenceMsgFolderId,
+        if (referenceMsgId != null) "reference_message_id": referenceMsgId,
+        if (referenceMode != null) "reference_mode": referenceMode.name,
+      }),
+    ]);
+    if (!online) return (false, false);
+    return (true, res[0]["result"]["return"] == "OK");
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+/// returns: isOnline, success
+Future<(bool, bool)> saveDraft(
+  String login,
+  String token, {
+  required String subject,
+  required List<String> to,
+  String? bodyPlain,
+  List<String>? cc,
+  List<String>? bcc,
+  List<String>? sessionFiles,
+}) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(method: "save_draft", id: 1, params: {
+        "subject": subject,
+        "to": to.join(","),
+        if (bodyPlain != null) "body_plain": bodyPlain,
+        if (cc != null) "cc": cc.join(","),
+        if (bcc != null) "bcc": bcc.join(","),
+        if (sessionFiles != null) "import_session_files": sessionFiles,
+      }),
+    ]);
+    if (!online) return (false, false);
+    return (true, res[0]["result"]["return"] == "OK");
   } catch (e, s) {
     logCatch("lernsax", e, s);
     if (kDebugMode) log("", error: e, stackTrace: s);
