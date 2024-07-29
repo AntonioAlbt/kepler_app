@@ -953,3 +953,34 @@ Future<(bool, bool)> saveDraft(
     return (true, false);
   }
 }
+
+/// returns: isOnline, data
+Future<(bool, List<LSMailAddressable>?)> getAllUsersInSchool(String login, String token) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, [
+      LSMailAddressable(address: lernSaxDemoModeMail, name: "Demo-Benutzer"),
+    ]);
+  }
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("members", login: keplerBaseUser),
+      call(method: "get_users", id: 1),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    final userList = res[0]["result"]["users"] as List<dynamic>;
+    final list = <LSMailAddressable>[];
+    for (final u in userList) {
+      list.add(LSMailAddressable(
+        name: u["name_hr"],
+        address: u["login"],
+      ));
+    }
+    return (true, list);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}

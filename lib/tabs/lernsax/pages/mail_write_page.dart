@@ -39,6 +39,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/tabs/lernsax/pick_member_dialog.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -72,7 +73,7 @@ class _MailWritePageState extends State<MailWritePage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.only(left: 8, top: 8),
             child: Row(
               children: [
                 Padding(
@@ -125,26 +126,43 @@ class _MailWritePageState extends State<MailWritePage> {
             ),
             validateInput: true,
             validateInputMethod: (input) => mailRegex.hasMatch(input) ? null : "Ungültige Email.",
-            trailingChip: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(MdiIcons.inboxArrowDown),
-                    ),
-                  ),
-                ),
-                const Text("an: "),
-              ],
-            ),
+            leadingChips: const [
+              Text("an: "),
+            ],
             chipIfEmpty: const Text("keine Empfänger hinzugefügt"),
+            trailingChips: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final toAdd = await showDialog<List<String>>(
+                    context: context,
+                    builder: (ctx) => const LSPickMemberDialog(),
+                  );
+                  if (toAdd == null) return;
+                  
+                  final list = recvKey.currentState!.chips;
+                  final newList = [...{...list, ...toAdd}];
+                  recvKey.currentState!.chips.clear();
+                  recvKey.currentState!.chips.addAll(newList);
+                  setState(() {});
+                },
+                label: const Text("Von LernSax hinzufügen"),
+                icon: const Icon(Icons.mail, size: 18),
+              ),
+            ],
+            icon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(MdiIcons.inboxArrowDown),
+                ),
+              ),
+            ),
+            maxHeight: MediaQuery.sizeOf(context).height * .15,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
@@ -264,6 +282,7 @@ class _MailWritePageState extends State<MailWritePage> {
     if (widget.to != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         recvKey.currentState!.chips.addAll(widget.to!);
+        setState(() {});
       });
     }
     if (widget.subject != null) _subjectInputCtrl.text = widget.subject!;

@@ -29,6 +29,10 @@ final versionChanges = {
     title: "Letzte Raumverwendungen markiert",
     description: "In Stundenplanansichten wird die letze Verwendung eines Raumes an einem Tag mit einem neuen Icon hervorgehoben.",
   ),
+  62: const CLEntry(
+    title: "E-Mails senden ist jetzt möglich!",
+    description: "Mit der Kepler-App können jetzt auch LernSax-E-Mails verschickt werden.",
+  ),
 };
 
 List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {
