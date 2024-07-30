@@ -122,7 +122,7 @@ String getDayDescription(DateTime date) {
 }
 
 class StuPlanDisplayState extends State<StuPlanDisplay> {
-  final format = DateFormat("EEEEE, dd.MM.", "de-DE");
+  final format = DateFormat("EEEE, dd.MM.", "de-DE");
   late DateTime currentDate;
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();

@@ -52,7 +52,7 @@ String appId() => (Platform.isIOS) ? appleAppId : androidAppId;
 class _MealOrderingTabState extends State<MealOrderingTab> {
   Future<bool> hasDLSApp() async {
     try {
-      await AppCheck.checkAvailability(androidAppId);
+      await AppCheck().checkAvailability(androidAppId);
       return true;
     } catch (_) {
       // this exception is expected, don't log it
@@ -94,7 +94,7 @@ class _MealOrderingTabState extends State<MealOrderingTab> {
                 final hasApp = snapshot.data;
                 if (hasApp == null) return;
                 if (hasApp) {
-                  AppCheck.launchApp(appId());
+                  AppCheck().launchApp(appId());
                 } else {
                   launchUrl(Uri.parse("market://details?id=$androidAppId")).catchError((e) {
                     showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", clear: true, error: true);

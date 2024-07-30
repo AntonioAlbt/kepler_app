@@ -580,7 +580,7 @@ class _KeplerAppState extends State<KeplerApp> {
     if (!Platform.isAndroid) return;
     await Future.delayed(const Duration(seconds: 1));
     try {
-      final res = await AppCheck.checkAvailability(oldAndroidPkgId);
+      final res = await AppCheck().checkAvailability(oldAndroidPkgId);
       if (res == null) throw Exception();
       
       showDialog(context: absolutelyTopKeyForToplevelDialogsOnly.currentContext!, builder: (ctx) => PopScope(

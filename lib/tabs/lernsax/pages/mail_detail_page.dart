@@ -57,6 +57,7 @@ class MailDetailPage extends StatefulWidget {
 class _MailDetailPageState extends State<MailDetailPage> {
   bool _loading = true;
   LSMail? mailData;
+  bool isDraftMail = false;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +171,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                     padding: EdgeInsets.only(bottom: 4),
                     child: Divider(),
                   ),
-                  ElevatedButton.icon(
+                  if (isDraftMail) ElevatedButton.icon(
                     onPressed: () {
                       Provider.of<AppState>(context, listen: false).clearInfoScreen();
                       Navigator.push(
@@ -180,6 +181,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             to: mailData!.to.map((to) => to.address).toList(),
                             subject: mailData!.subject,
                             mail: mailData!.bodyPlain,
+                            reference: mailData!,
+                            referenceMode: LSMWPReferenceMode.draftToDelete,
                           ),
                         ),
                       );
@@ -211,11 +214,15 @@ class _MailDetailPageState extends State<MailDetailPage> {
                               actions: [
                                 TextButton(
                                   onPressed: () {
-                                    launchUrl(Uri.parse(link.url), mode: LaunchMode.externalNonBrowserApplication).catchError((_) {
-                                      showSnackBar(text: "Keine App für E-Mails gefunden.");
-                                      return false;
-                                    });
                                     Navigator.pop(context);
+                                    Navigator.push(
+                                      globalScaffoldContext,
+                                      MaterialPageRoute(
+                                        builder: (ctx) => MailWritePage(
+                                          to: [link.text],
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: const Text("E-Mail senden"),
                                 ),
@@ -282,6 +289,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
         mailData = mailDataLive;
       }
     }
+    isDraftMail = widget.listing.isDraft;
     setState(() => _loading = false);
   }
 }

@@ -49,37 +49,39 @@ class _LSPickMemberDialogState extends State<LSPickMemberDialog> {
               ),
             ),
           ),
-          SizedBox(
-            width: MediaQuery.sizeOf(context).width,
-            height: MediaQuery.sizeOf(context).height * .5,
-            // child: ListView.builder(
-            //   itemBuilder: (context, i) => CheckboxListTile(
-            //     value: selectedMails.contains(data[i].address),
-            //     onChanged: (select) {
-            //       if (select == true) {
-            //         setState(() => selectedMails.add(data[i].address));
-            //       } else {
-            //         setState(() => selectedMails.remove(data[i].address));
-            //       }
-            //     },
-            //     title: Text(data[i].name),
-            //     subtitle: Text(data[i].address),
-            //   ),
-            //   itemCount: data.length,
-            // ),
-            child: ListView(
-              children: data.where((element) => _searchText == "" || element.address.toLowerCase().startsWith(_searchText.toLowerCase()) || element.name.toLowerCase().startsWith(_searchText.toLowerCase())).map((d) => CheckboxListTile(
-                value: selectedMails.contains(d.address),
-                onChanged: (select) {
-                  if (select == true) {
-                    setState(() => selectedMails.add(d.address));
-                  } else {
-                    setState(() => selectedMails.remove(d.address));
-                  }
-                },
-                title: Text(d.name),
-                subtitle: Text(d.address),
-              )).toList(),
+          Expanded(
+            child: SizedBox(
+              width: MediaQuery.sizeOf(context).width,
+              height: MediaQuery.sizeOf(context).height * .5,
+              // child: ListView.builder(
+              //   itemBuilder: (context, i) => CheckboxListTile(
+              //     value: selectedMails.contains(data[i].address),
+              //     onChanged: (select) {
+              //       if (select == true) {
+              //         setState(() => selectedMails.add(data[i].address));
+              //       } else {
+              //         setState(() => selectedMails.remove(data[i].address));
+              //       }
+              //     },
+              //     title: Text(data[i].name),
+              //     subtitle: Text(data[i].address),
+              //   ),
+              //   itemCount: data.length,
+              // ),
+              child: ListView(
+                children: data.where((element) => _searchText == "" || element.address.toLowerCase().startsWith(_searchText.toLowerCase()) || element.name.toLowerCase().startsWith(_searchText.toLowerCase())).map((d) => CheckboxListTile(
+                  value: selectedMails.contains(d.address),
+                  onChanged: (select) {
+                    if (select == true) {
+                      setState(() => selectedMails.add(d.address));
+                    } else {
+                      setState(() => selectedMails.remove(d.address));
+                    }
+                  },
+                  title: Text(d.name),
+                  subtitle: Text(d.address),
+                )).toList(),
+              ),
             ),
           ),
           const Padding(

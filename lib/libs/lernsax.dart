@@ -984,3 +984,59 @@ Future<(bool, List<LSMailAddressable>?)> getAllUsersInSchool(String login, Strin
     return (true, null);
   }
 }
+
+/// this method also needs to be used to move a mail to trash
+Future<(bool, bool)> moveMailToFolder(String login, String token, { required String folderId, required int mailId, required String targetFolderId }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(
+        method: "move_message",
+        id: 1,
+        params: {
+          "folder_id": folderId,
+          "message_id": mailId,
+          "target_folder_id": targetFolderId,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+Future<(bool, bool)> deleteMail(String login, String token, { required String folderId, required int mailId }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await api([
+      await useSession(login, token),
+      focus("mailbox"),
+      call(
+        method: "delete_message",
+        id: 1,
+        params: {
+          "folder_id": folderId,
+          "message_id": mailId,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
