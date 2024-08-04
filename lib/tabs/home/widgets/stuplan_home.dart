@@ -141,6 +141,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       return SPWidgetList(
                         stillLoading: datasn.connectionState != ConnectionState.done,
                         lessons: lessons?.map((lesson) => considerLernSaxCancellationForLesson(lesson, considerIt)).toList(),
+                        fullLessonList: dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
+                          ?.lessons?.map((l) => considerLernSaxCancellationForLesson(l, considerIt)).toList(),
                         onRefresh: () => setState(() => forceRefresh = true),
                         isOnline: dataP?.$2 ?? false,
                         isSchoolHoliday: stdata.checkIfHoliday(date),
@@ -165,6 +167,8 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         stillLoading: datasn.connectionState != ConnectionState.done,
                         lessons: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
                           .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
+                        fullLessonList: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
+                          .lessons,
                         onRefresh: () => setState(() => forceRefresh = true),
                         isOnline: data?.$2 ?? false,
                         isSchoolHoliday: stdata.checkIfHoliday(date),
@@ -232,11 +236,12 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
 
 class SPWidgetList extends StatelessWidget {
   final List<VPLesson>? lessons;
+  final List<VPLesson>? fullLessonList;
   final VoidCallback? onRefresh;
   final bool stillLoading;
   final bool isOnline;
   final bool isSchoolHoliday;
-  const SPWidgetList({super.key, required this.lessons, this.onRefresh, this.stillLoading = false, this.isOnline = false, required this.isSchoolHoliday});
+  const SPWidgetList({super.key, required this.lessons, this.fullLessonList, this.onRefresh, this.stillLoading = false, this.isOnline = false, required this.isSchoolHoliday});
 
   @override
   Widget build(BuildContext context) {
@@ -348,6 +353,7 @@ class SPWidgetList extends StatelessWidget {
                         index > 0
                             ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                             : null,
+                        false
                       ),
                       separatorBuilder: (context, index) => const Divider(height: 24),
                     ),

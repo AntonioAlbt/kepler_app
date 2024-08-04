@@ -108,6 +108,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
   double get stuPlanDataAvailableBorderWidth => attributes["sp_border_width"] ?? 3;
   set stuPlanDataAvailableBorderWidth(double val) => setSaveNotify("sp_border_width", val);
 
+  bool get stuPlanShowExams => attributes["sp_show_exams"] ?? false;
+  set stuPlanShowExams(bool val) => setSaveNotify("sp_show_exams", val);
+
+  bool get stuPlanShowLastRoomUsage => attributes["sp_show_lru"] ?? true;
+  set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
+
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);
@@ -150,6 +156,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);
+
+  bool get rainbowModeEnabled => attributes["rainbow_enabled"] ?? false;
+  set rainbowModeEnabled(bool val) => setSaveNotify("rainbow_enabled", val);
 
   bool get reverseSPEnabled => attributes["reverse_sp_enabled"] ?? false;
   set reverseSPEnabled(bool val) => setSaveNotify("reverse_sp_enabled", val);

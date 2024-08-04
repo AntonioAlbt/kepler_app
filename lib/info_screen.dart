@@ -176,11 +176,13 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                         FloatingActionButton.small(
                           onPressed: () => infoScreenState.previous(),
                           backgroundColor: Colors.red.shade800,
+                          heroTag: UniqueKey(),
                           child: const Icon(Icons.arrow_back),
                         ),
                         FloatingActionButton.small(
                           onPressed: () => infoScreenState.next(),
                           backgroundColor: Colors.red.shade800,
+                          heroTag: UniqueKey(),
                           child: const Icon(Icons.arrow_forward),
                         ),
                       ],

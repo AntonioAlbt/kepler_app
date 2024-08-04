@@ -255,6 +255,15 @@ class VPLesson { // "<Std>"
       infoText: infoText ?? this.infoText,
     );
   }
+
+  /// warning! because lessons don't contain date information, this compares against all lessons in the list
+  /// (not only lessons on the same date)
+  /// also, because lessons can use multiple rooms, this checks all rooms against all rooms in all other lessons
+  bool hasLastRoomUsageFromList(List<VPLesson> lessons) {
+    if (roomCodes.contains("") || roomCodes.contains("---") || roomCodes.isEmpty) return false;
+    // true if no lesson is after current lesson and also uses any of the current lessons rooms
+    return !lessons.any((lesson) => lesson.schoolHour > schoolHour && roomCodes.any((rc) => lesson.roomCodes.contains(rc)));
+  }
 }
 
 const cancellationALaLernSax = "Aufgaben in LernSax bearbeiten";
@@ -467,4 +476,105 @@ Future<(VPLeData?, bool)> getLehPlanDataForDate(String host, String username, St
   final (xml, online) = await getLeXMLForDate(host, username, password, date);
   if (xml == null) return (null, online);
   return (xmlToLeData(xml), online);
+}
+
+// --- desktop data fetching ---
+
+class VPKLDesktopData {
+  final XmlElement? header;
+  final XmlElement? holidays;
+  final XmlElement? teacherWatch;
+  final XmlElement? footer;
+  final XmlElement? mainInfo;
+  final List<VPExam>? exams;
+
+  const VPKLDesktopData({
+    required this.header,
+    required this.holidays,
+    required this.teacherWatch,
+    required this.footer,
+    required this.mainInfo,
+    required this.exams,
+  });
+}
+
+class VPExam extends SerializableObject {
+  String get year => attributes["year"];
+  set year(String val) => attributes["year"] = val;
+
+  String get subject => attributes["subject"];
+  set subject(String val) => attributes["subject"] = val;
+
+  String get teacher => attributes["teacher"];
+  set teacher(String val) => attributes["teacher"] = val;
+
+  String get hour => attributes["hour"];
+  set hour(String val) => attributes["hour"] = val;
+
+  String get begin => attributes["begin"];
+  set begin(String val) => attributes["begin"] = val;
+
+  String get duration => attributes["duration"];
+  set duration(String val) => attributes["duration"] = val;
+
+  String get info => attributes["info"];
+  set info(String val) => attributes["info"] = val;
+
+  VPExam({
+    required String year,
+    required String subject,
+    required String teacher,
+    required String hour,
+    required String begin,
+    required String duration,
+    required String info,
+  }) {
+    this.year = year;
+    this.subject = subject;
+    this.teacher = teacher;
+    this.hour = hour;
+    this.begin = begin;
+    this.duration = duration;
+    this.info = info;
+  }
+
+  VPExam.fromData(Map<String, dynamic> data) {
+    year = data["year"];
+    subject = data["subject"];
+    teacher = data["teacher"];
+    hour = data["hour"];
+    begin = data["begin"];
+    duration = data["duration"];
+    info = data["info"];
+  }
+}
+
+Future<(XmlDocument?, bool)> getKlDesktopXMLForDate(String host, String user, String password, DateTime date)
+  => _fetch(Uri.parse("$host$sUrlDPath/vdaten/VplanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
+
+VPKLDesktopData xmlToKlDesktopData(XmlDocument doc) {
+  final xml = doc.rootElement;
+  return VPKLDesktopData(
+    header: xml.getElement("kopf"),
+    holidays: xml.getElement("freietage"),
+    teacherWatch: xml.getElement("aufsichten"),
+    footer: xml.getElement("fuss"),
+    mainInfo: xml.getElement("haupt"),
+    exams: xml.getElement("klausuren")?.childElements.map((el) => VPExam(
+      year: el.getElement("jahrgang")?.innerText ?? "",
+      subject: el.getElement("kurs")?.innerText ?? "",
+      teacher: el.getElement("kursleiter")?.innerText ?? "",
+      duration: el.getElement("dauer")?.innerText ?? "",
+      begin: el.getElement("beginn")?.innerText ?? "",
+      hour: el.getElement("stunde")?.innerText ?? "",
+      info: el.getElement("kinfo")?.innerText ?? "",
+    )).toList(),
+  );
+}
+
+Future<(List<VPExam>?, bool)> getExamRawDataForDate(String host, String username, String password, DateTime date) async {
+  if (host == indiwareDemoHost) return (null, false);
+  final (xml, online) = await getKlDesktopXMLForDate(host, username, password, date);
+  if (xml == null) return (null, online);
+  return (xmlToKlDesktopData(xml).exams, online);
 }

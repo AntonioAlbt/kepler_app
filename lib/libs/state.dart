@@ -197,6 +197,9 @@ class InternalState extends SerializableObject with ChangeNotifier {
   DateTime? get lastStuPlanAutoReload => (attributes.containsKey("last_sp_auto_rl") && attributes["last_sp_auto_rl"] != null) ? DateTime.parse(attributes["last_sp_auto_rl"]) : null;
   set lastStuPlanAutoReload(DateTime? val) => _setSaveNotify("last_sp_auto_rl", val?.toIso8601String());
 
+  int get lastChangelogShown => attributes["last_cl_shown"] ?? -1;
+  set lastChangelogShown(int val) => _setSaveNotify("last_cl_shown", val);
+
   bool loaded = false;
 
   Future<void> save() async {

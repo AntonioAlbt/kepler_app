@@ -31,22 +31,22 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
-import 'dart:io';
-
-import 'package:appcheck/appcheck.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/tabs/lernsax/lernsax.dart';
+import 'package:kepler_app/main.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
+import 'package:kepler_app/tabs/lernsax/pages/mail_write_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
@@ -235,34 +235,13 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
           );
         }
         return Scaffold(
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              showDialog(context: context, builder: (context) => AlertDialog(
-                title: const Text("E-Mail schreiben"),
-                content: const Text("E-Mails können aktuell nur in LernSax Messenger verfasst werden."), // TODO - future: add a basic email writer with just a mail, subject and text input
-                actions: [
-                  FutureBuilder(
-                    future: AppCheck.checkAvailability(lernSaxMsgrAndroidPkg).catchError((_) => null),
-                    builder: (context, datasn) {
-                      return TextButton(
-                        onPressed: () {
-                          if (Platform.isAndroid) {
-                            AppCheck.launchApp(lernSaxMsgrAndroidPkg).catchError((_) => launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg")).catchError((_) {
-                              showSnackBar(text: "Keine App zum Installieren von Apps gefunden.", error: true);
-                              return false;
-                            }));
-                          } else if (Platform.isIOS) {
-                            launchUrl(Uri.parse("https://apps.apple.com/de/app/id$lernSaxMsgrAppleAppId"), mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        child: Text("Jetzt ${Platform.isIOS ? "öffnen/installieren" : datasn.data != null ? "öffnen" : "installieren"}"),
-                      );
-                    },
-                  ),
-                ],
-              ));
+              Navigator.push(context, MaterialPageRoute(builder: mailWritePageBuilder));
             },
-            child: const Icon(Icons.edit_note),
+            icon: const Icon(Icons.edit_note),
+            label: const Text("E-Mail verfassen"),
+            heroTag: UniqueKey(),
           ),
           body: Column(
             children: [
@@ -276,82 +255,103 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                   ),
                 ),
               ),
-              if (mails.isNotEmpty) Expanded(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: mails.length + 1,
-                  itemBuilder: (context, i) {
-                    if (i == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Builder(
-                          builder: (context) {
-                            final online = mailData?.$1 ?? false, data = mailData?.$2;
+              if (mails.isNotEmpty) RainbowWrapper(
+                builder: (context, color) {
+                  return Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async => widget.controller?.onForceRefresh?.call(),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: mails.length + 1,
+                        itemBuilder: (context, i) {
+                          if (i == 0) {
                             return Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
-                              child: (mailData == null) ?
-                                const Column(
-                                  children: [
-                                    Text("Lädt Status..."),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: SizedBox(
-                                        height: 3,
-                                        width: 250,
-                                        child: LinearProgressIndicator(),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : (!online) ?
-                                const Text("Keine Verbindung zu LernSax möglich.")
-                              : (data == null) ?
-                                const Text("Fehler beim Laden der E-Mail-Daten.")
-                              : Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Row(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Builder(
+                                builder: (context) {
+                                  final online = mailData?.$1 ?? false, data = mailData?.$2;
+                                  return Padding(
+                                    padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
+                                    child: Column(
                                       children: [
-                                        const Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 4),
-                                          child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
+                                        (mailData == null) ?
+                                          const Column(
+                                            children: [
+                                              Text("Lädt Status..."),
+                                              Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: SizedBox(
+                                                  height: 3,
+                                                  width: 250,
+                                                  child: LinearProgressIndicator(),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : (!online) ?
+                                          const Text("Keine Verbindung zu LernSax möglich.")
+                                        : (data == null) ?
+                                          const Text("Fehler beim Laden der E-Mail-Daten.")
+                                        : Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 4),
+                                              child: Row(
+                                                children: [
+                                                  Icon(MdiIcons.fileCabinet, size: 16, color: Colors.grey),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 4),
+                                                    child: Text("${(data.usageBytes / 1024 / 1024).round()} MB von ${(data.limitBytes / 1024 / 1024).round()} MB belegt (${(data.freeBytes / 1024 / 1024).round()} MB frei)"),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (widget.selectedFolder.isInbox) Padding(
+                                              padding: const EdgeInsets.only(bottom: 4),
+                                              child: Row(
+                                                children: [
+                                                  Icon(MdiIcons.mail, size: 16, color: Colors.grey),
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 4),
+                                                    child: Text(
+                                                      "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
+                                                      style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text("Für Aktionen lange auf E-Mail gedrückt halten.", textAlign: TextAlign.left, style: TextStyle(fontWeight: FontWeight.w500)),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  if (widget.selectedFolder.isInbox) Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Row(
-                                      children: [
-                                        const Icon(MdiIcons.mail, size: 16, color: Colors.grey),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 4),
-                                          child: Text(
-                                            "${data.unreadMessages} ungelesene Nachricht${data.unreadMessages == 1 ? "" : "en"}",
-                                            style: TextStyle(fontWeight: (data.unreadMessages > 0) ? FontWeight.bold : null),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  );
+                                },
                               ),
                             );
-                          },
-                        ),
-                      );
-                    }
-                    final mail = mails[i - 1];
-                    // TODO - future: long press actions -> delete mail, move to other folder, ...
-                    return Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: LSMailTile(mail: mail, folderId: widget.selectedFolder.id),
-                    );
-                  },
-                  separatorBuilder: (context, i) => const Divider(),
-                ),
+                          }
+                          final mail = mails[i - 1];
+                          return Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: LSMailTile(
+                              mail: mail,
+                              folderId: widget.selectedFolder.id,
+                              iconColor: color,
+                              onAfterSuccessfulMailAction: () {
+                                widget.controller?.onForceRefresh?.call();
+                              },
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, i) => const Divider(),
+                      ),
+                    ),
+                  );
+                }
               ),
             ],
           ),
@@ -404,104 +404,238 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
   }
 }
 
+enum LSMailAction { delete, move, forward, respond }
+
 class LSMailTile extends StatelessWidget {
   const LSMailTile({
     super.key,
     required this.mail,
     required this.folderId,
+    required this.onAfterSuccessfulMailAction,
     this.darkerIcons = false,
+    this.iconColor,
   });
 
   final LSMailListing mail;
   final String folderId;
   final bool darkerIcons;
+  final Color? iconColor;
+  final void Function()? onAfterSuccessfulMailAction;
 
   @override
   Widget build(BuildContext context) {
     final lsdata = Provider.of<LernSaxData>(context);
     final lernSaxLogin = Provider.of<CredentialStore>(context, listen: false).lernSaxLogin;
-    return TextButton(
-      style: TextButton.styleFrom(
-        textStyle: Theme.of(context).textTheme.bodyMedium,
-        foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Icon(MdiIcons.clock, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(lernSaxTimeFormat.format(mail.date)),
+    return GestureDetector(
+      onLongPressStart: (details) {
+        final overlay = Overlay.of(context).context.findRenderObject();
+        showMenu(
+          context: context,
+          position: RelativeRect.fromRect(
+            details.globalPosition & const Size(40, 40), // smaller rect, the touch area
+            Offset.zero & overlay!.semanticBounds.size, // Bigger rect, the entire screen
+          ),
+          items: [
+            // you dont really need this, i dont know anyone who uses folders for mails on lernsax
+            // const PopupMenuItem(
+            //   value: LSMailAction.move,
+            //   child: ListTile(
+            //     leading: Icon(Icons.folder_copy),
+            //     title: Text("Verschieben"),
+            //   ),
+            // ),
+            const PopupMenuItem(
+              value: LSMailAction.respond,
+              child: ListTile(
+                leading: Icon(Icons.send_rounded),
+                title: Text("Antworten"),
+              ),
+            ),
+            const PopupMenuItem(
+              value: LSMailAction.forward,
+              child: ListTile(
+                leading: Icon(Icons.forward_rounded),
+                title: Text("Weiterleiten"),
+              ),
+            ),
+            const PopupMenuItem(
+              value: LSMailAction.delete,
+              child: ListTile(
+                leading: Icon(Icons.delete),
+                title: Text("Löschen"),
+              ),
+            ),
+          ],
+          popUpAnimationStyle: AnimationStyle(
+            duration: const Duration(milliseconds: 200),
+          ),
+        ).then((action) async {
+          if (action == null) return;
+          switch (action) {
+            case LSMailAction.delete:
+              final trashFolder = Provider.of<LernSaxData>(globalScaffoldContext, listen: false).mailFolders?.cast<LSMailFolder?>().firstWhere((f) => f!.isTrash == true, orElse: () => null);
+              if (trashFolder == null) {
+                showSnackBar(text: "Fehler beim Abfragen der Ordnerliste von LernSax.");
+                return;
+              }
+              final alrInTrash = mail.folderId == trashFolder.id;
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(alrInTrash ? "Endgültig löschen?" : "In Papierkorb verschieben?"),
+                  content: Text("E-Mail \"${mail.subject}\" von ${mail.addressed.map((m) => m.address).join(", ")} wirklich ${alrInTrash ? "endgültig löschen? Dies kann nicht rückgängig gemacht werden!" : "in den Papierkorb verschieben? Dort wird sie nach einiger Zeit automatisch gelöscht."}"),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Abbrechen")),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Ja, ${alrInTrash ? "löschen" : "verschieben"}")),
+                  ],
                 ),
-                const Spacer(),
-                Icon(MdiIcons.file, size: 16, color: darkerIcons ? Colors.grey.shade900 : Colors.grey),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
-                ),
-                if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
-                  Tooltip(
-                    triggerMode: TooltipTriggerMode.tap,
-                    message: "E-Mail ist offline verfügbar",
-                    child: CircleAvatar(
-                      backgroundColor: hasDarkTheme(context) ? Colors.grey.shade700 : (darkerIcons ? Colors.grey.shade900 : Colors.grey),
-                      radius: 8,
-                      child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
-                    ),
+              ).then((selected) {
+                if (selected == true) {
+                  final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                  (
+                    alrInTrash ?
+                    lernsax.deleteMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id)
+                    :
+                    lernsax.moveMailToFolder(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id, targetFolderId: trashFolder.id)
+                  ).then((data) {
+                    final (online, success) = data;
+                    if (!online) {
+                      showSnackBar(text: "Fehler bei der Verbindung mit LernSax.");
+                    } else if (!success) {
+                      showSnackBar(text: "Fehler beim ${alrInTrash ? "Auslöschen der E-Mail" : "Verschieben der E-Mail in den Müll"}.");
+                    } else {
+                      showSnackBar(text: "E-Mail erfolgreich ${alrInTrash ? "endgültig gelöscht" : "in den Papierkorb verschoben"}.");
+                      onAfterSuccessfulMailAction?.call();
+                    }
+                  });
+                }
+              });
+              break;
+            case LSMailAction.forward:
+            case LSMailAction.respond:
+              late LSMail mailData;
+              final creds = Provider.of<CredentialStore>(context, listen: false);
+              final lsdata = Provider.of<LernSaxData>(context, listen: false);
+
+              final mailDataCached = lsdata.getCachedMail(mail.folderId, mail.id);
+              if (mailDataCached != null && !mail.isDraft) {
+                mailData = mailDataCached;
+              } else {
+                final (online, mailDataLive) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id);
+                if (!online) {
+                  showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                  return;
+                } else if (mailDataLive == null) {
+                  showSnackBar(textGen: (sie) => "Fehler beim Abfragen der E-Mail. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
+                  return;
+                } else {
+                  if (!mail.isDraft) lsdata.addMailToCache(mailDataLive);
+                  mailData = mailDataLive;
+                }
+              }
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (ctx) => MailWritePage(
+                    subject: "${action == LSMailAction.forward ? "Fwd" : "Re"}: ${mail.subject}",
+                    mail: (action == LSMailAction.forward) ?
+                      "gesendet von ${mail.addressed.map((e) => e.address).join(", ")}:\n\n${mailData.bodyPlain}" :
+                      "\n\n> -----Original Message-----\n> From: ${mailData.from.map((m) => "\"${m.name}\" <${m.address}>").join(", ")}\n> Sent: ${DateFormat("dd.MM.yyyy HH:mm").format(mailData.date)}\n> To: ${mailData.to.map((m) => m.address).join(", ")}\n> Subject: ${mailData.subject}\n> \n> ${joinWithOptions(mailData.bodyPlain.split("\n"), "\n> ", "")}",
+                    reference: mailData,
+                    referenceMode: action == LSMailAction.forward ? LSMWPReferenceMode.forwarded : LSMWPReferenceMode.answered,
+                    to: action == LSMailAction.respond ? mailData.from.map((m) => m.address).toList() : null,
                   ),
+                ),
+              );
+            default:
+          }
+        });
+      },
+      child: TextButton(
+        style: TextButton.styleFrom(
+          textStyle: Theme.of(context).textTheme.bodyMedium,
+          foregroundColor: Theme.of(context).textTheme.bodyMedium!.color,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Icon(MdiIcons.clock, size: 16, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(lernSaxTimeFormat.format(mail.date)),
+                  ),
+                  const Spacer(),
+                  Icon(MdiIcons.file, size: 16, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
+                  ),
+                  if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
+                    Tooltip(
+                      triggerMode: TooltipTriggerMode.tap,
+                      message: "E-Mail ist offline verfügbar",
+                      child: CircleAvatar(
+                        backgroundColor: iconColor ?? (hasDarkTheme(context) ? Colors.grey.shade700 : (darkerIcons ? Colors.grey.shade900 : Colors.grey)),
+                        radius: 8,
+                        child: const Icon(Icons.file_download_done, color: Colors.white, size: 12),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                SizedBox(width: 28, child: Icon(Icons.mail, color: iconColor)),
+                Flexible(
+                    child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    mail.subject,
+                    style: (mail.isUnread && !mail.isDraft) ? const TextStyle(fontWeight: FontWeight.bold) : null,
+                  ),
+                )),
               ],
             ),
-          ),
-          Row(
-            children: [
-              const SizedBox(width: 28, child: Icon(Icons.mail)),
-              Flexible(
-                  child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  mail.subject,
-                  style: (mail.isUnread) ? const TextStyle(fontWeight: FontWeight.bold) : null,
-                ),
-              )),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                const SizedBox(width: 28, child: Icon(MdiIcons.account)),
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(text: "${mail.isDraft || mail.isSent ? "an" : "von"} "),
-                          ...mail.addressed.map((addr) {
-                            final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
-                            return createLSMailAddressableSpan(
-                              (addr.address == lernSaxLogin) ? LSMailAddressable(address: addr.address, name: mail.isDraft || mail.isSent ? (sie ? "Sie" : "Dich") : (sie ? "Ihnen" : "Dir")) : addr,
-                              mail.addressed.last == addr,
-                              translate: const Offset(0, 2),
-                              darkerIcon: darkerIcons,
-                            );
-                          }),
-                        ],
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  SizedBox(width: 28, child: Icon(MdiIcons.account, color: iconColor)),
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: "${mail.isDraft || mail.isSent ? "an" : "von"} "),
+                            ...mail.addressed.map((addr) {
+                              final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+                              return createLSMailAddressableSpan(
+                                (addr.address == lernSaxLogin) ? LSMailAddressable(address: addr.address, name: mail.isDraft || mail.isSent ? (sie ? "Sie" : "Dich") : (sie ? "Ihnen" : "Dir")) : addr,
+                                mail.addressed.last == addr,
+                                translate: const Offset(0, 2),
+                                darkerIcon: darkerIcons,
+                              );
+                            }),
+                            if (mail.addressed.isEmpty) const TextSpan(text: "niemanden", style: TextStyle(fontStyle: FontStyle.italic)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          AttachmentAmountDisplay(folderId: folderId, mailId: mail.id, isDraft: mail.isDraft),
-        ],
+            AttachmentAmountDisplay(folderId: folderId, mailId: mail.id, isDraft: mail.isDraft, iconColor: iconColor),
+          ],
+        ),
       ),
     );
   }
@@ -511,8 +645,9 @@ class AttachmentAmountDisplay extends StatefulWidget {
   final String folderId;
   final int mailId;
   final bool isDraft;
+  final Color? iconColor;
 
-  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft});
+  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft, this.iconColor});
 
   @override
   State<AttachmentAmountDisplay> createState() => _AttachmentAmountDisplayState();
@@ -535,7 +670,7 @@ class _AttachmentAmountDisplayState extends State<AttachmentAmountDisplay> {
             width: 28,
             child: Transform.rotate(
               angle: 15,
-              child: const Icon(Icons.attach_file, size: 20),
+              child: Icon(Icons.attach_file, size: 20, color: widget.iconColor),
             ),
           ),
           Flexible(

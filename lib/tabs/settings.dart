@@ -42,6 +42,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
@@ -158,7 +159,7 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Startseite"),
               tiles: [
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.showHomeWidgetEditOptions && userType != UserType.nobody,
                   onToggle: (val) => prefs.showHomeWidgetEditOptions = val,
                   title: const Text("Bearbeiten-Knöpfe anzeigen"),
@@ -182,7 +183,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   onPressed: (_) => yourStuPlanEditAction(),
                   enabled: userType != UserType.nobody,
                 ),
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.reloadStuPlanAutoOnceDaily,
                   onToggle: (val) => prefs.reloadStuPlanAutoOnceDaily = val,
                   title: const Text("Beim Öffnen automatisch aktualisieren"),
@@ -228,25 +229,39 @@ class _SettingsTabState extends State<SettingsTab> {
                   },
                   disabled: userType == UserType.nobody,
                 ),
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation,
                   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
                   title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
                   description: const Text("auch wenn das kein richtiger Ausfall ist"),
                   enabled: userType != UserType.nobody,
                 ),
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
                   onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
                   title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
                   description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
                   enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
                 ),
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.enableInfiniteStuPlanScrolling,
                   onToggle: (val) => prefs.enableInfiniteStuPlanScrolling = val,
                   title: const Text("Unendlich blättern"),
                   description: const Text("Unendlich Tage zurück- und vorblättern ermöglichen + Aktion zum Zurückspringen"),
+                  enabled: userType != UserType.nobody,
+                ),
+                rainbowSwitchTile(
+                  initialValue: prefs.stuPlanShowExams,
+                  onToggle: (val) => prefs.stuPlanShowExams = val,
+                  title: const Text("Klausuren anzeigen"),
+                  description: const Text("zeigt Klausuren für alle Klassen an, falls vorhanden"),
+                  enabled: userType != UserType.nobody,
+                ),
+                rainbowSwitchTile(
+                  initialValue: prefs.stuPlanShowLastRoomUsage,
+                  onToggle: (val) => prefs.stuPlanShowLastRoomUsage = val,
+                  title: const Text("Icon für Räume mit letzter Verwendung"),
+                  description: const Text("Stunden mit Räumen, die am ausgewählten Tag das letzte Mal verwendet werden, bekommen ein besonderes Icon"),
                   enabled: userType != UserType.nobody,
                 ),
               ],
@@ -254,7 +269,7 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("LernSax"),
               tiles: [
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.lernSaxAutoLoadMailOnScrollBy,
                   onToggle: (val) => prefs.lernSaxAutoLoadMailOnScrollBy = val,
                   title: const Text("LernSax-Mails beim ersten Vorbeiscrollen einmalig herunterladen"),
@@ -266,14 +281,21 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Lustiges"),
               tiles: [
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.confettiEnabled,
                   onToggle: (val) => prefs.confettiEnabled = val,
                   title: const Text("🎉 Konfetti aktivieren 🎉"),
                   description: const Text("z.B. bei Ausfall oder schulfreien Tagen"),
                   enabled: userType != UserType.nobody,
                 ),
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
+                  initialValue: prefs.rainbowModeEnabled,
+                  onToggle: (val) => prefs.rainbowModeEnabled = val,
+                  title: const Text("🏳️‍🌈 Regenbogenmodus aktivieren"),
+                  description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
+                  // enabled: userType != UserType.nobody,
+                ),
+                rainboeSwitchTile(
                     initialValue: prefs.reverseSPEnabled,
                     onToggle: (val) => prefs.reverseSPEnabled = val,
                     title: const Text("Umgekehrten Stundenplan aktivieren"),
@@ -285,7 +307,7 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Debug-Aufzeichnungen"),
               tiles: [
-                SettingsTile.switchTile(
+                rainbowSwitchTile(
                   initialValue: prefs.loggingEnabled,
                   onToggle: (val) {
                     if (val) {
@@ -309,7 +331,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("Aufzeichnungen aktivieren"),
                   description: Selector<Preferences, bool>(
                     selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
-                    builder: (context, sie, _) => Text("Nur ändern, wenn ${sie ? "Sie wissen, was Sie tuen!" : "Du weißt, was du tust!"}"),
+                    builder: (context, sie, _) => Text("Nur ändern, wenn ${sie ? "Sie wissen, was Sie tun!" : "Du weißt, was du tust!"}"),
                   ),
                 ),
                 selectionSettingsTile(
@@ -370,6 +392,38 @@ SettingsTile notificationSettingsTile<T>(List<T> selected, List<T> values, Strin
       builder: (ctx) => NotificationSettingsDialog(selected: selected, values: values, title: title, updateData: updateData),
     ),
     enabled: !disabled,
+  );
+}
+
+CustomSettingsTile rainbowSwitchTile({
+  required bool? initialValue,
+  required dynamic Function(bool)? onToggle,
+  Color? activeSwitchColor,
+  Widget? leading,
+  Widget? trailing,
+  required Widget title,
+  Widget? description,
+  dynamic Function(BuildContext)? onPressed,
+  bool enabled = true,
+  Key? key,
+}) {
+  return CustomSettingsTile(
+    child: RainbowWrapper(
+      builder: (context, rcolor) {
+        return SettingsTile.switchTile(
+          initialValue: initialValue,
+          onToggle: onToggle,
+          activeSwitchColor: rcolor ?? activeSwitchColor,
+          leading: leading,
+          trailing: trailing,
+          title: title,
+          description: description,
+          onPressed: onPressed,
+          enabled: enabled,
+          key: key,
+        );
+      }
+    ),
   );
 }
 
@@ -668,5 +722,16 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
         ],
       ),
     );
+  }
+}
+
+class CustomSettingsTile extends AbstractSettingsTile {
+  final Widget child;
+
+  const CustomSettingsTile({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return child;
   }
 }

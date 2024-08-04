@@ -103,7 +103,12 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
             children: separatedListViewWithDividers(
               mailsSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: LSMailTile(mail: data, folderId: folderId!, darkerIcons: !hasDarkTheme(context)),
+                child: LSMailTile(
+                  mail: data,
+                  folderId: folderId!,
+                  darkerIcons: !hasDarkTheme(context),
+                  onAfterSuccessfulMailAction: loadData,
+                ),
               )).toList()
                 ..add(
                   ListTile(
