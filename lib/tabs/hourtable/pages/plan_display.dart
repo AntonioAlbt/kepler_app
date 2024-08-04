@@ -1206,8 +1206,8 @@ class LessonListContainer extends StatelessWidget {
   final void Function()? onSwipeRight;
   final Future<void> Function() onRefresh;
   final bool? isOnline;
-  final SPDisplayMode? displayMode;
-  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.displayMode, required this.fullLessonListForDate, required this.onRefresh});
+  final SPDisplayMode? mode;
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.mode, required this.fullLessonListForDate, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -1230,7 +1230,7 @@ class LessonListContainer extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "${getDayDescription(date)} kein Unterricht${widgetmode == SPDisplayMode.roomPlan ? " in diesem Raum" : widgetmode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+                    "${getDayDescription(date)} kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
                     style: const TextStyle(fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
