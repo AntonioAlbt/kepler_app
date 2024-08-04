@@ -295,7 +295,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
                   // enabled: userType != UserType.nobody,
                 ),
-                rainboeSwitchTile(
+                rainbowSwitchTile(
                     initialValue: prefs.reverseSPEnabled,
                     onToggle: (val) => prefs.reverseSPEnabled = val,
                     title: const Text("Umgekehrten Stundenplan aktivieren"),
