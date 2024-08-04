@@ -40,6 +40,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:kepler_app/changelog.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
@@ -58,6 +59,7 @@ import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -281,6 +283,41 @@ Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vp
   return output;
 }
 
+class OnStartLoader extends StatefulWidget {
+  final Widget child;
+
+  const OnStartLoader({super.key, required this.child});
+
+  @override
+  State<OnStartLoader> createState() => _OnStartLoaderState();
+}
+
+class _OnStartLoaderState extends State<OnStartLoader> {
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    final internal = Provider.of<InternalState>(context, listen: false);
+    final version = await PackageInfo.fromPlatform();
+    final currentVersion = int.parse(version.buildNumber);
+    // only show changelog for updates, not for features existing on installation
+    if (internal.lastChangelogShown < 0) internal.lastChangelogShown = currentVersion;
+    final lastVersion = internal.lastChangelogShown;
+    if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
+      showDialog(context: context, builder: (ctx) => getChangelogDialog(currentVersion, lastVersion, ctx) ?? const AlertDialog());
+      internal.lastChangelogShown = currentVersion;
+    }
+  }
+}
+
 class _KeplerAppState extends State<KeplerApp> {
   UserType utype = UserType.nobody;
   bool isStuplanInvalid = false;
@@ -434,76 +471,78 @@ class _KeplerAppState extends State<KeplerApp> {
         final index = state.selectedNavPageIDs;
         // PopScopes are weird in comparison to WillPopScope-s, if anyone wants to update them anyway, have fun
         // maybe helpful for async: https://stackoverflow.com/questions/77500680/willpopscope-is-deprecated-after-flutter-3-12
-        // ignore: deprecated_member_use
-        return WillPopScope(
-          onWillPop: () async {
-            if (state.infoScreen != null) {
-              if (infoScreenState.tryCloseCurrentScreen()) {
-                state.clearInfoScreen();
+        return OnStartLoader(
+          // ignore: deprecated_member_use
+          child: WillPopScope(
+            onWillPop: () async {
+              if (state.infoScreen != null) {
+                if (infoScreenState.tryCloseCurrentScreen()) {
+                  state.clearInfoScreen();
+                }
+                return false;
               }
-              return false;
-            }
-            return true;
-          },
-          child: Stack(
-            children: [
-              // ignore: deprecated_member_use
-              WillPopScope(
-                onWillPop: () async {
-                  if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {
-                    _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
-                    return false;
-                  } else {
-                    return true;
-                  }
-                },
-                child: Scaffold(
-                  key: globalScaffoldKey,
-                  appBar: AppBar(
-                    title: (index.first == PageIDs.home) ? const Text("Kepler-App")
-                      : currentlySelectedNavEntry(context)?.label,
-                    scrolledUnderElevation: 5,
-                    elevation: 5,
-                    // this is so the two appbars in that page seem like theyre one
-                    shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans, LernSaxPageIDs.tasks].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
-                    actions: currentlySelectedNavEntry(context)?.navbarActions,
+              return true;
+            },
+            child: Stack(
+              children: [
+                // ignore: deprecated_member_use
+                WillPopScope(
+                  onWillPop: () async {
+                    if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {
+                      _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
+                      return false;
+                    } else {
+                      return true;
+                    }
+                  },
+                  child: Scaffold(
+                    key: globalScaffoldKey,
+                    appBar: AppBar(
+                      title: (index.first == PageIDs.home) ? const Text("Kepler-App")
+                        : currentlySelectedNavEntry(context)?.label,
+                      scrolledUnderElevation: 5,
+                      elevation: 5,
+                      // this is so the two appbars in that page seem like theyre one
+                      shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans, LernSaxPageIDs.tasks].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
+                      actions: currentlySelectedNavEntry(context)?.navbarActions,
+                    ),
+                    drawer: TheDrawer(
+                      selectedIndex: index.join("."),
+                      onDestinationSelected: (val) {
+                        state.selectedNavPageIDs = val.split(".");
+                      },
+                      entries: destinations,
+                      dividers: const [6],
+                    ),
+                    body: tabs[index.first] ?? const Text("Unbekannte Seite."),
                   ),
-                  drawer: TheDrawer(
-                    selectedIndex: index.join("."),
-                    onDestinationSelected: (val) {
-                      state.selectedNavPageIDs = val.split(".");
-                    },
-                    entries: destinations,
-                    dividers: const [6],
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: globalConfettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    blastDirection: pi * 0.5,
+                    colors: const [
+                      Colors.red,
+                      Colors.orange,
+                      Colors.yellow,
+                      Colors.green,
+                      Colors.blue,
+                      Colors.purple,
+                    ],
+                    numberOfParticles: 2,
+                    emissionFrequency: 0.5,
+                    gravity: 0.7,
+                    shouldLoop: true,
                   ),
-                  body: tabs[index.first] ?? const Text("Unbekannte Seite."),
                 ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: globalConfettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  blastDirection: pi * 0.5,
-                  colors: const [
-                    Colors.red,
-                    Colors.orange,
-                    Colors.yellow,
-                    Colors.green,
-                    Colors.blue,
-                    Colors.purple,
-                  ],
-                  numberOfParticles: 2,
-                  emissionFrequency: 0.5,
-                  gravity: 0.7,
-                  shouldLoop: true,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  child: state.infoScreen,
                 ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 100),
-                child: state.infoScreen,
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }),
@@ -541,7 +580,7 @@ class _KeplerAppState extends State<KeplerApp> {
     if (!Platform.isAndroid) return;
     await Future.delayed(const Duration(seconds: 1));
     try {
-      final res = await AppCheck.checkAvailability(oldAndroidPkgId);
+      final res = await AppCheck().checkAvailability(oldAndroidPkgId);
       if (res == null) throw Exception();
       
       showDialog(context: absolutelyTopKeyForToplevelDialogsOnly.currentContext!, builder: (ctx) => PopScope(

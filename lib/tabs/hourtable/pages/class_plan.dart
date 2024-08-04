@@ -33,6 +33,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
@@ -53,37 +54,42 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
   @override
   Widget build(BuildContext context) {
     return Consumer<StuPlanData>(
-      builder: (context, stdata, _) => Column(
+      builder: (context, stdata, _) => Stack(
         children: [
-          SizedBox(
-            height: 50,
-            child: AppBar(
-              scrolledUnderElevation: 5,
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-              elevation: 5,
-              bottom: PreferredSize(
-                preferredSize: const Size(100, 50),
-                child: DropdownButton<String>(
-                  items: stdata.availableClasses!.map((e) => classNameToDropdownItem(e, false)).toList(),
-                  onChanged: (val) {
-                    setState(() => selectedClass = val!);
-                    Provider.of<InternalState>(context, listen: false).lastSelectedClassPlan = val!;
-                  },
-                  value: selectedClass,
+          RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+          Column(
+            children: [
+              SizedBox(
+                height: 50,
+                child: AppBar(
+                  scrolledUnderElevation: 5,
+                  backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+                  elevation: 5,
+                  bottom: PreferredSize(
+                    preferredSize: const Size(100, 50),
+                    child: DropdownButton<String>(
+                      items: stdata.availableClasses!.map((e) => classNameToDropdownItem(e, false)).toList(),
+                      onChanged: (val) {
+                        setState(() => selectedClass = val!);
+                        Provider.of<InternalState>(context, listen: false).lastSelectedClassPlan = val!;
+                      },
+                      value: selectedClass,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: StuPlanDisplay(
-                key: classPlanDisplayKey,
-                selected: selectedClass,
-                mode: SPDisplayMode.classPlan,
-                showInfo: false,
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: StuPlanDisplay(
+                    key: classPlanDisplayKey,
+                    selected: selectedClass,
+                    mode: SPDisplayMode.classPlan,
+                    showInfo: false,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

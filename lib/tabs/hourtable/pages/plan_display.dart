@@ -31,6 +31,8 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -41,10 +43,11 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
-    show generateLessonInfoDialog;
+    show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -104,8 +107,22 @@ bool shouldStuPlanAutoReload(BuildContext context)
   => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&
     !isSameDay((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
 
+String getDayDescription(DateTime date) {
+  final today = DateTime.now();
+  final diffToToday = date.difference(today);
+  if (today.day == date.day && today.month == date.month && today.year == date.year) {
+    return "Heute";
+  } else if (diffToToday.inDays == 0) {
+    return "Morgen";
+  } else if (diffToToday.inDays == 1) {
+    return "Übermorgen";
+  } else {
+    return "Am ${DateFormat("dd.MM.").format(date)}";
+  }
+}
+
 class StuPlanDisplayState extends State<StuPlanDisplay> {
-  final format = DateFormat("EEEEE, dd.MM.", "de-DE");
+  final format = DateFormat("EEEE, dd.MM.", "de-DE");
   late DateTime currentDate;
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
@@ -352,8 +369,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   bool _loading = true;
   /// gets selected lessons loaded when no special mode selected, if `freeRoomsMode` gets loaded all lessons for all classes, otherwise is null
   List<VPLesson>? lessons;
+  /// gets loaded with all lessons for determining last room usage
+  List<VPLesson>? allLessonsForDate;
   /// only gets loaded with changed class lessons if `allReplacesMode`
   Map<String, List<VPLesson>>? changedClassLessons;
+  /// only gets loaded with exam data if user enables showing exam
+  List<VPExam>? exams;
   /// gets loaded whatever mode is active
   String? lastUpdated;
   /// gets loaded when no special mode is selected
@@ -390,6 +411,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           child: LessonDisplay(
               considerLernSaxCancellationForLesson(lessons[i], consider),
               (i > 0) ? lessons[i - 1].schoolHour : null,
+              lessons[i].hasLastRoomUsageFromList(lessons),
               classNameToReplace: clName,
               subject: stdata.availableSubjects[clName]
                 ?.cast<VPCSubjectS?>()
@@ -582,9 +604,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "Heute ist keine Schule.",
-                            style: TextStyle(fontSize: 18),
+                          Text(
+                            "${getDayDescription(widget.date)} ist keine Schule.",
+                            style: const TextStyle(fontSize: 18),
                           ),
                           const Padding(
                             padding: EdgeInsets.only(top: 16),
@@ -654,10 +676,15 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   : LessonListContainer(
                     lessons,
                     widget.selected,
+                    widget.date,
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
-                    widgetmode: widget.mode,
+                    mode: widget.mode,
+                    fullLessonListForDate: allLessonsForDate,
+                    onRefresh: () async {
+                      showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
+                    },
                   ),
           ),
         ),
@@ -704,6 +731,61 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         ],
                       );
                     },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (exams != null &&
+            (exams?.isEmpty == false) &&
+            Provider.of<Preferences>(context, listen: false).stuPlanShowExams &&
+            widget.showInfo)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .2),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // border: Border.all(
+                  //   color: Colors.grey.shade800
+                  // ),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black26
+                          : Colors.grey.withOpacity(0.24),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          "Klausuren ${getDayDescription(widget.date).toLowerCase()}",
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: exams!.length,
+                        itemBuilder: (context, index) {
+                          if (exams!.length - 1 < index) return null;
+                          final exam = exams![index];
+                          return ExamDisplay(exam: exam, previousYear: (index > 0) ? exams![index - 1].year : null);
+                        },
+                        separatorBuilder: (context, i) => Divider(indent: (exams!.length > 1 && exams![i].year == exams![i + 1].year) ? 70 : 0),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -888,6 +970,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       setState(() => _loading = false);
       return true;
     }
+    Future<(List<VPExam>?, bool)> getExamData() {
+      if (creds.lernSaxLogin == lernSaxDemoModeMail) return Future.value((<VPExam>[], true));
+      return IndiwareDataManager.getExamDataForDate(widget.date, creds.vpHost!, creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh);
+    }
 
     switch (widget.mode) {
       case SPDisplayMode.yourPlan:
@@ -904,7 +990,13 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               // include lessons with subjectID == null, because they are usually important changed lessons for every pupil
               .where((element) => stdata.selectedCourseIDs.contains(element.subjectID) || element.subjectID == null)
               .toList();
+          allLessonsForDate = data?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = data?.additionalInfo;
+          if (prefs.stuPlanShowExams) {
+            final (edata, _) = await getExamData();
+            if (!mounted) return false;
+            exams = edata;
+          }
         } else if (user == UserType.teacher) {
           final (data, online) = await getLeData();
           if (!mounted) return false;
@@ -914,6 +1006,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               (cl) => cl?.teacherCode == stdata.selectedTeacherName!,
               orElse: () => null);
           lessons = teacher?.lessons;
+          allLessonsForDate = data?.teachers?.expand((cl) => cl.lessons)?.toList();
           supervisions = teacher?.supervisions;
           additionalInfo = data?.additionalInfo;
         }
@@ -939,6 +1032,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       le.roomChanged ||
                       le.infoText != "")
                   .toList()));
+          allLessonsForDate = klData?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = klData?.additionalInfo;
         } else if (user == UserType.teacher) {
           final (leData, online) = await getLeData();
@@ -954,6 +1048,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       le.roomChanged ||
                       le.infoText != "")
                   .toList()));
+          allLessonsForDate = leData?.teachers?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = leData?.additionalInfo;
         }
         break;
@@ -967,6 +1062,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .firstWhere((cl) => cl?.className == widget.selected,
                 orElse: () => null)
             ?.lessons;
+        allLessonsForDate = klData?.classes?.expand((cl) => cl.lessons)?.toList();
         additionalInfo = klData?.additionalInfo;
         break;
       case SPDisplayMode.freeRooms:
@@ -980,6 +1076,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         lessons = klData?.classes
             .map((e) => e.lessons)
             .fold([], (prev, ls) => prev!..addAll(ls));
+        // dont load allLessonsForDate because it isn't displayed in this plan
         break;
       case SPDisplayMode.roomPlan:
         final (klData, online) = await getKlData();
@@ -992,6 +1089,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             .where((l) => l.roomCodes.contains(widget.selected))
             .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCodes != l.roomCodes) ? false : true) : true)
             .toList();
+        // dont load allLessonsForDate because last room usage doesn't matter anyway (it's kinda obvious)
         break;
       case SPDisplayMode.teacherPlan:
         final (leData, online) = await getLeData();
@@ -1001,6 +1099,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         lessons = leData?.teachers.cast<VPTeacher?>()
           .firstWhere((le) => le?.teacherCode == widget.selected, orElse: () => null)
           ?.lessons;
+        allLessonsForDate = leData?.teachers?.expand((cl) => cl.lessons)?.toList();
         additionalInfo = leData?.additionalInfo;
         break;
       default:
@@ -1041,47 +1140,52 @@ class SPListContainer extends StatelessWidget {
       },
       child: Consumer<Preferences>(
         builder: (context, prefs, subChild) {
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              gradient: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null && prefs.stuPlanDataAvailableBorderWidth > 0) ?
-                LinearGradient(
-                  colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : null,
-              border: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor == null && prefs.stuPlanDataAvailableBorderWidth > 0)
-                ? Border.all(
-                    // color: hasDarkTheme(context)
-                    //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
-                    //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
-                    color: prefs.stuPlanDataAvailableBorderColor,
-                    width: prefs.stuPlanDataAvailableBorderWidth)
-                : null,
-              boxShadow: (shadow) ? [
-                BoxShadow(
-                  color: hasDarkTheme(context)
-                      ? Colors.black45
-                      : Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: const Offset(0, 3),
-                )
-              ] : null,
-            ),
-            child: Padding(
-              padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
-              child: Container(
+          return RainbowWrapper(
+            variant: RainbowVariant.dark,
+            builder: (context, rcolor) {
+              return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
-                  color: color ?? Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: (showBorder && (prefs.stuPlanDataAvailableBorderGradientColor != null && rcolor == null) && prefs.stuPlanDataAvailableBorderWidth > 0) ?
+                    LinearGradient(
+                      colors: [prefs.stuPlanDataAvailableBorderColor, prefs.stuPlanDataAvailableBorderGradientColor!],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    )
+                  : null,
+                  border: (showBorder && (prefs.stuPlanDataAvailableBorderGradientColor == null || rcolor != null) && prefs.stuPlanDataAvailableBorderWidth > 0)
+                    ? Border.all(
+                        // color: hasDarkTheme(context)
+                        //     ? (prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue)
+                        //     : colorWithLightness((prefs.stuPlanDataAvailableBorderColor ?? keplerColorBlue), .4),
+                        color: rcolor ?? prefs.stuPlanDataAvailableBorderColor,
+                        width: prefs.stuPlanDataAvailableBorderWidth)
+                    : null,
+                  boxShadow: (shadow) ? [
+                    BoxShadow(
+                      color: hasDarkTheme(context)
+                          ? Colors.black45
+                          : Colors.grey.withOpacity(0.5),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    )
+                  ] : null,
                 ),
-                child: subChild,
-              ),
-            ),
+                child: Padding(
+                  padding: (showBorder && prefs.stuPlanDataAvailableBorderGradientColor != null) ? EdgeInsets.all(prefs.stuPlanDataAvailableBorderWidth) : EdgeInsets.zero,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
+                      color: color ?? Theme.of(context).colorScheme.surface,
+                    ),
+                    child: subChild,
+                  ),
+                ),
+              );
+            }
           );
         },
         child: Padding(
@@ -1095,12 +1199,15 @@ class SPListContainer extends StatelessWidget {
 
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
+  final List<VPLesson>? fullLessonListForDate;
   final String className;
+  final DateTime date;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
+  final Future<void> Function() onRefresh;
   final bool? isOnline;
-  final SPDisplayMode? widgetmode;
-  const LessonListContainer(this.lessons, this.className, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.widgetmode});
+  final SPDisplayMode? displayMode;
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.displayMode, required this.fullLessonListForDate, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -1123,7 +1230,7 @@ class LessonListContainer extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Heute kein Unterricht${widgetmode == SPDisplayMode.roomPlan ? " in diesem Raum" : widgetmode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+                    "${getDayDescription(date)} kein Unterricht${widgetmode == SPDisplayMode.roomPlan ? " in diesem Raum" : widgetmode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
                     style: const TextStyle(fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
@@ -1134,22 +1241,26 @@ class LessonListContainer extends StatelessWidget {
           final stdata = Provider.of<StuPlanData>(context, listen: false);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.separated(
-              itemCount: lessons!.length,
-              itemBuilder: (context, index) => LessonDisplay(
-                considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
-                index > 0
-                    ? lessons!.elementAtOrNull(index - 1)?.schoolHour
-                    : null,
-                subject: stdata.availableSubjects[className]
-                    ?.cast<VPCSubjectS?>()
-                    .firstWhere(
-                      (s) => s!.subjectID == lessons![index].subjectID,
-                      orElse: () => null,
-                    ),
-                classNameToReplace: className,
+            child: RefreshIndicator(
+              onRefresh: onRefresh,
+              child: ListView.separated(
+                itemCount: lessons!.length,
+                itemBuilder: (context, index) => LessonDisplay(
+                  considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
+                  index > 0
+                      ? lessons!.elementAtOrNull(index - 1)?.schoolHour
+                      : null,
+                  fullLessonListForDate != null ? lessons![index].hasLastRoomUsageFromList(fullLessonListForDate!) : false,
+                  subject: stdata.availableSubjects[className]
+                      ?.cast<VPCSubjectS?>()
+                      .firstWhere(
+                        (s) => s!.subjectID == lessons![index].subjectID,
+                        orElse: () => null,
+                      ),
+                  classNameToReplace: className,
+                ),
+                separatorBuilder: (context, index) => const Divider(height: 24),
               ),
-              separatorBuilder: (context, index) => const Divider(height: 24),
             ),
           );
         }());
@@ -1162,7 +1273,9 @@ class LessonDisplay extends StatelessWidget {
   final bool showInfoDialog;
   final VPCSubjectS? subject;
   final String? classNameToReplace;
-  const LessonDisplay(this.lesson, this.previousLessonHour,
+  final bool lastRoomUsageInDay;
+
+  const LessonDisplay(this.lesson, this.previousLessonHour, this.lastRoomUsageInDay,
       {super.key, this.showInfoDialog = true, this.subject, this.classNameToReplace});
 
   @override
@@ -1177,7 +1290,7 @@ class LessonDisplay extends StatelessWidget {
         onTap: (showInfoDialog)
             ? () => showDialog(
                 context: context,
-                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace))
+                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace, lastRoomUsageInDay))
             : null,
         child: Column(
           children: [
@@ -1214,11 +1327,23 @@ class LessonDisplay extends StatelessWidget {
                     ),
                   ),
                 const Spacer(),
+                if (lastRoomUsageInDay && Provider.of<Preferences>(context, listen: false).stuPlanShowLastRoomUsage) Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Tooltip(
+                    enableTapToDismiss: true,
+                    triggerMode: TooltipTriggerMode.tap,
+                    message: lesson.roomCodes.length == 1 ? "laut Plan letzte Verwendung des Raumes" : "laut Plan letzte Verwendung einer der gelisteten Räume",
+                    showDuration: const Duration(seconds: 2),
+                    child: const Icon(Icons.last_page, size: 20, color: Colors.black),
+                  ),
+                ),
                 Text(
                   lesson.roomCodes.join(", "),
                   style: TextStyle(
                     color: (lesson.roomChanged) ? Colors.red : null,
                     fontWeight: (lesson.roomChanged) ? FontWeight.bold : FontWeight.w500,
+                    // decoration: (lastRoomUsageInDay) ? TextDecoration.underline : null,
+                    // decorationThickness: (lastRoomUsageInDay) ? 1.5 : null,
                   ),
                 ),
               ],
@@ -1230,6 +1355,61 @@ class LessonDisplay extends StatelessWidget {
                   Flexible(
                     child: Text(
                       lesson.infoText,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExamDisplay extends StatelessWidget {
+  final VPExam exam;
+  final String? previousYear;
+
+  const ExamDisplay({super.key, required this.exam, required this.previousYear});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle.merge(
+      style: const TextStyle(
+        fontSize: 18,
+        height: 0,
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showDialog(
+                context: context,
+                builder: (dialogCtx) => generateExamInfoDialog(dialogCtx, exam)),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: (previousYear != exam.year)
+                      ? Text("JG ${exam.year}", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20))
+                      : const SizedBox.shrink(),
+                ),
+                SizedBox(width: 30, child: Text("${exam.hour}. ")),
+                Text(
+                  exam.subject,
+                ),
+                const Spacer(),
+                Text("bei ${exam.teacher}", style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            if (exam.info != "")
+              Row(
+                children: [
+                  const SizedBox(width: 25),
+                  Flexible(
+                    child: Text(
+                      exam.info,
                       style: const TextStyle(fontSize: 15),
                     ),
                   ),

@@ -60,11 +60,11 @@ class _NewsViewState extends State<NewsView> {
         backgroundColor: (hasDarkTheme(context)) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
           IconButton(
-            icon: const Icon(MdiIcons.web),
+            icon: Icon(MdiIcons.web),
             onPressed: () => launchUrl(widget.newsLink, mode: LaunchMode.externalApplication),
           ),
           IconButton(
-            icon: const Icon(MdiIcons.shareVariant),
+            icon: Icon(MdiIcons.shareVariant),
             onPressed: () => Share.share(widget.newsLink.toString(), sharePositionOrigin: const Rect.fromLTRB(0, 0, 0, 0)),
           ),
         ],

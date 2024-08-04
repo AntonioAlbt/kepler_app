@@ -157,7 +157,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
     final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
     bool appInstalled = false;
     try {
-      await AppCheck.checkAvailability(lernSaxMsgrAndroidPkg);
+      await AppCheck().checkAvailability(lernSaxMsgrAndroidPkg);
       appInstalled = true; // will only ever happen on android because the checker only works for android
     } catch (_) {}
     // ignore: use_build_context_synchronously
@@ -184,7 +184,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
 
   if (Platform.isAndroid) {
     try {
-      await AppCheck.launchApp(lernSaxMsgrAndroidPkg);
+      await AppCheck().launchApp(lernSaxMsgrAndroidPkg);
     } catch (_) {
       try {
         await launchUrl(Uri.parse("market://details?id=$lernSaxMsgrAndroidPkg"));

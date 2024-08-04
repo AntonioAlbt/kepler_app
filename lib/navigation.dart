@@ -57,6 +57,8 @@ import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:kepler_app/tabs/meals.dart';
 import 'package:kepler_app/tabs/pendel.dart';
+import 'package:kepler_app/tabs/school/calendar.dart';
+import 'package:kepler_app/tabs/school/news.dart';
 import 'package:kepler_app/tabs/school/school.dart';
 import 'package:kepler_app/tabs/settings.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -140,24 +142,30 @@ final destinations = [
       ),
     ],
   ),
-  const NavEntryData(
+  NavEntryData(
     id: NewsPageIDs.main,
     icon: Icon(MdiIcons.newspaperVariantMultipleOutline),
-    label: Text("Neuigkeiten"),
+    label: const Text("Neuigkeiten"),
     selectedIcon: Icon(MdiIcons.newspaperVariantMultiple),
     redirectTo: [NewsPageIDs.main, NewsPageIDs.news],
     children: [
-      NavEntryData(
+      const NavEntryData(
         id: NewsPageIDs.news,
         icon: Icon(Icons.newspaper_outlined),
         selectedIcon: Icon(Icons.newspaper),
         label: Text("Kepler-News"),
+        navbarActions: [
+          IconButton(onPressed: newsTabRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
-      NavEntryData(
+      const NavEntryData(
         id: NewsPageIDs.calendar,
         icon: Icon(Icons.calendar_month_outlined),
         selectedIcon: Icon(Icons.calendar_month),
         label: Text("Kepler-Kalender"),
+        navbarActions: [
+          IconButton(onPressed: calendarTabRefreshAction, icon: Icon(Icons.refresh)),
+        ],
       ),
     ],
   ),
@@ -206,14 +214,14 @@ final destinations = [
         ],
         onTryOpen: stuPlanShowInfoDialog,
       ),
-      const NavEntryData(
+      NavEntryData(
         id: StuPlanPageIDs.teacherPlan,
         icon: Icon(MdiIcons.humanMaleBoard),
-        label: Text("Lehrerpläne"),
+        label: const Text("Lehrerpläne"),
         selectedIcon: Icon(MdiIcons.humanMaleBoard),
         visibleFor: [UserType.teacher],
         navbarActions: [
-          IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
+          const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
         onTryOpen: stuPlanShowInfoDialog,
       ),
@@ -247,34 +255,34 @@ final destinations = [
         ],
         onTryOpen: stuPlanShowInfoDialog,
       ),
-      const NavEntryData(
+      NavEntryData(
         id: StuPlanPageIDs.roomPlans,
         icon: Icon(MdiIcons.doorClosed),
-        label: Text("Raumpläne"),
+        label: const Text("Raumpläne"),
         selectedIcon: Icon(MdiIcons.doorOpen),
         navbarActions: [
-          IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
+          const IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
         ],
         onTryOpen: stuPlanShowInfoDialog,
       ),
     ],
   ),
-  const NavEntryData(
+  NavEntryData(
     id: LernSaxPageIDs.main,
-    icon: Icon(Icons.laptop_outlined),
-    label: Text("LernSax"),
-    selectedIcon: Icon(Icons.laptop),
+    icon: const Icon(Icons.laptop_outlined),
+    label: const Text("LernSax"),
+    selectedIcon: const Icon(Icons.laptop),
     lockedFor: [UserType.nobody],
     redirectTo: [LernSaxPageIDs.main, LernSaxPageIDs.notifications],
     children: [
       NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
         icon: Icon(MdiIcons.web),
-        label: Text("Im Browser öffnen"),
+        label: const Text("Im Browser öffnen"),
         externalLink: true,
         onTryOpen: lernSaxOpenInBrowser,
       ),
-      NavEntryData(
+      const NavEntryData(
         id: LernSaxPageIDs.notifications,
         icon: Icon(Icons.notifications_none),
         selectedIcon: Icon(Icons.notifications),
@@ -283,7 +291,7 @@ final destinations = [
           IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      NavEntryData(
+      const NavEntryData(
         id: LernSaxPageIDs.tasks,
         icon: Icon(Icons.task_alt),
         label: Text("Aufgaben"),
@@ -291,7 +299,7 @@ final destinations = [
           IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      NavEntryData(
+      const NavEntryData(
         id: LernSaxPageIDs.emails,
         icon: Icon(Icons.mail_outlined),
         selectedIcon: Icon(Icons.mail),
@@ -300,7 +308,7 @@ final destinations = [
           IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
-      NavEntryData(
+      const NavEntryData(
         id: LernSaxPageIDs.files,
         icon: Icon(Icons.folder_copy_outlined),
         // selectedIcon: Icon(Icons.folder_copy),
@@ -312,11 +320,11 @@ final destinations = [
         id: LernSaxPageIDs.messageBoard,
         icon: Icon(MdiIcons.bulletinBoard),
         // selectedIcon: Icon(MdiIcons.bulletinBoard),
-        label: Text("Nachrichten"),
+        label: const Text("Nachrichten"),
         externalLink: true,
         onTryOpen: lernSaxOpenInOfficialApp,
       ),
-      NavEntryData(
+      const NavEntryData(
         id: LernSaxPageIDs.chats,
         icon: Icon(Icons.chat_bubble_outline),
         selectedIcon: Icon(Icons.chat_bubble),

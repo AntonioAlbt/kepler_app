@@ -235,6 +235,13 @@ class IndiwareDataManager {
     if (xml == null) return null;
     return xmlToKlData(XmlDocument.parse(xml));
   }
+  static Future<List<VPExam>?> getCachedExamDataForDate(DateTime date) async {
+    final json = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-exams.json");
+    if (json == null) return null;
+    final out = <VPExam>[];
+    Serializer().deserializeList(json, out, (data) => VPExam.fromData(data));
+    return out;
+  }
 
   static Future<void> setCachedKlDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml", data.toXmlString());
@@ -245,12 +252,15 @@ class IndiwareDataManager {
   static Future<void> setKlassenXmlData(XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml", data.toXmlString());
   }
+  static Future<void> setExamDataForDate(DateTime date, List<VPExam> exams) async {
+    await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-exams.json", Serializer().serializeList(exams));
+  }
 
   static Future<void> clearCachedData({ DateTime? excludeDate }) async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     for (var file in (await dir.list().toList())) {
       final name = file.path.split("/").last;
-      if (name.endsWith(".xml")) {
+      if (name.endsWith(".xml") || name.endsWith("-exams.json")) {
         // this will fail when we're in year 21xx
         // but that's a problem for future robot me
         // - actually, it won't be (anymore?). why did i write this???
@@ -295,6 +305,18 @@ class IndiwareDataManager {
     await setKlassenXmlData(real);
     return (xmlToKlData(real), online);
   }
+  /// returns (data, isOnline)
+  static Future<(List<VPExam>?, bool)> getExamDataForDate(
+      DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = await getCachedExamDataForDate(date);
+      if (cached != null) return (cached, false);
+    }
+    final (real, online) = await getExamRawDataForDate(host, username, password, date);
+    if (real == null) return (null, online);
+    await setExamDataForDate(date, real);
+    return (real, online);
+  }
 
   // now following: setup methods
 
@@ -308,7 +330,7 @@ class IndiwareDataManager {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     final thresholdDate = DateTime.now().subtract(const Duration(days: 3));
     for (final file in (await dir.list().toList())) {
-      final fnDateStr = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "");
+      final fnDateStr = file.path.split("/").last.replaceAll(RegExp(r"-le|-kl|\.xml"), "").replaceAll(RegExp(r"-exams.json"), "");
       if (fnDateStr == "Klassen") continue;
       final date = fnTimeFormat.parse(fnDateStr);
       if (kDebugMode) print("found stuplan data xml with date ${fnTimeFormat.format(date)}, will be deleted: ${date.isBefore(thresholdDate)} - threshold: ${fnTimeFormat.format(thresholdDate)}");

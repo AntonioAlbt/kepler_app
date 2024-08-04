@@ -51,8 +51,8 @@ class _SchoolTabState extends State<SchoolTab> {
     return Consumer<AppState>(
       builder: (context, state, _) {
         final navPage = state.selectedNavPageIDs.last;
-        if (navPage == NewsPageIDs.news) return const NewsTab();
-        if (navPage == NewsPageIDs.calendar) return const CalendarTab();
+        if (navPage == NewsPageIDs.news) return NewsTab();
+        if (navPage == NewsPageIDs.calendar) return CalendarTab();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
     );
