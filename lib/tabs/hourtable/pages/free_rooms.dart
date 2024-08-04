@@ -38,7 +38,7 @@ import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 /// all of this is subject to change because of building "updates"
 final allKeplerRooms = [
   "K08", "K10",
-  ...rooms("0", 4, 13, [5, 7]),
+  ...rooms("0", 4, 12, [5, 7]),
   ...rooms("1", 8, 16, [12, 14]),
   ...rooms("2", 1, 16, [6, 7, 12, 14]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
@@ -58,7 +58,7 @@ enum RoomType {
 }
 // this even more
 final specialRoomInfo = {
-  RoomType.compSci: ["K08", "K10", "013"],
+  RoomType.compSci: ["K08", "K10", "202"],
   RoomType.technic: ["004", "006"],
   RoomType.sports: ["TH", "Jb1", "Jb2"],
   RoomType.specialist: ["113", "115", "116", "213", "215", "313", "315"],

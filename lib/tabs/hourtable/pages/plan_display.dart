@@ -680,6 +680,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     onSwipeLeft: widget.onSwipeLeft,
                     onSwipeRight: widget.onSwipeRight,
                     isOnline: isOnline,
+                    mode: widget.mode,
                     fullLessonListForDate: allLessonsForDate,
                     onRefresh: () async {
                       showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
@@ -1206,7 +1207,8 @@ class LessonListContainer extends StatelessWidget {
   final void Function()? onSwipeRight;
   final Future<void> Function() onRefresh;
   final bool? isOnline;
-  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, required this.fullLessonListForDate, required this.onRefresh});
+  final SPDisplayMode? mode;
+  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.mode, required this.fullLessonListForDate, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -1225,9 +1227,15 @@ class LessonListContainer extends StatelessWidget {
           }
           if (lessons!.isEmpty) {
             return Center(
-              child: Text(
-                "${getDayDescription(date)} ist keine Schule.",
-                style: const TextStyle(fontSize: 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "${getDayDescription(date)} kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+                    style: const TextStyle(fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                ]
               ),
             );
           }
