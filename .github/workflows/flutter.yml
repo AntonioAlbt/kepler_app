@@ -9,8 +9,6 @@ on:
     paths-ignore:
       - '**.md'
       - 'lernsax_data/**'
-  pull_request:
-    branches: [main]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -53,7 +51,7 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.22.2'
       - run: |
           flutter --disable-analytics
           flutter pub get
@@ -82,19 +80,19 @@ jobs:
       - run: flutter build apk --release --dart-define=beta=true
         if: ${{ github.event_name != 'workflow_dispatch' }}
       - name: Publish new release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ inputs.releaseTag != '' }}
         with:
           files: "build/app/outputs/flutter-apk/app-release.apk"
           prerelease: ${{ inputs.beta || inputs.debugFeatures }}
           tag_name: ${{ inputs.releaseTag }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: BuiltAPK-Beta
           path: "build/app/outputs/flutter-apk/app-release.apk"
           retention-days: 14
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.beta }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: BuiltAPK
           path: "build/app/outputs/flutter-apk/app-release.apk"
