@@ -105,7 +105,14 @@ class _SettingsTabState extends State<SettingsTab> {
                 notificationSettingsTile(prefs.enabledNotifs.map((en) => _notifKeyMap[en]).where((e) => e != null).toList(), userType == UserType.nobody ? ["Neue Kepler-News"] : _notifKeyMap.values.toList(), "Benachrichtigungen", (selectedNow) {
                   prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
                 }),
-                selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key, disabled: userType == UserType.nobody),
+                selectionSettingsTile(
+                  _startPageMap[prefs.startNavPage],
+                  _startPageMap.values.toList(),
+                  "Seite, die beim Öffnen angezeigt wird",
+                  (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key,
+                  disabled: userType == UserType.nobody,
+                  addCommaAfterTitle: true,
+                ),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
@@ -345,12 +352,12 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 }
 
-SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false}) {
+SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false, bool addCommaAfterTitle = false}) {
   return SettingsTile.navigation(
     title: Text(title),
     value: Text(data.toString()),
     onPressed: (ctx) => showDialog(context: ctx, builder: (ctx) => AlertDialog(
-      title: Text("$title auswählen", style: const TextStyle(fontSize: 20)),
+      title: Text("$title${addCommaAfterTitle ? "," : ""} auswählen", style: const TextStyle(fontSize: 20)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

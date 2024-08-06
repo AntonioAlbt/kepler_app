@@ -1334,7 +1334,7 @@ class LessonDisplay extends StatelessWidget {
                     triggerMode: TooltipTriggerMode.tap,
                     message: lesson.roomCodes.length == 1 ? "laut Plan letzte Verwendung des Raumes" : "laut Plan letzte Verwendung einer der gelisteten Räume",
                     showDuration: const Duration(seconds: 2),
-                    child: const Icon(Icons.last_page, size: 20, color: Colors.black),
+                    child: Icon(Icons.last_page, size: 20, color: hasDarkTheme(context) ? Colors.white : Colors.black),
                   ),
                 ),
                 Text(
