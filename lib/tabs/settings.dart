@@ -294,13 +294,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("🏳️‍🌈 Regenbogenmodus aktivieren"),
                   description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
                   // enabled: userType != UserType.nobody,
-                ),
-                rainbowSwitchTile(
+                )//,
+                /*rainbowSwitchTile(
                   initialValue: prefs.aprilFoolsEnabled,
                   onToggle: (val) => prefs.aprilFoolsEnabled = val,
                   title: const Text("Aprilscherze aktivieren"),
                   description: const Text("nur am 1. April"),
-                )
+                )*/
 
               ],
             ),
