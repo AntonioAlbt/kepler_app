@@ -476,8 +476,9 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       return "Keine E-Mail-Adresse angegeben.";
     } else if (_triedToEnter) {
       // RegExp regex = RegExp(r"^[a-z]*[0-9]*(?:.(?:" + parentTypeEndings.join("|") + r"))?@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
-      RegExp regex = RegExp(r"^[a-z0-9.]+@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
-      if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
+      // RegExp regex = RegExp(r"^[a-z0-9.]+@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
+      // if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
+      if (!_mailController.text.endsWith(".lernsax.de")) return "Ungültige LernSax-E-Mail-Adresse.";
     }
     return null;
   }
