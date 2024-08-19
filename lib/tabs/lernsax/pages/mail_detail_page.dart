@@ -34,6 +34,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:intl/intl.dart';
+import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -189,6 +191,29 @@ class _MailDetailPageState extends State<MailDetailPage> {
                     },
                     icon: const Icon(Icons.edit),
                     label: const Text("Bearbeiten und senden"),
+                  ),
+                  if (!isDraftMail) Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (mailData == null) return;
+                        Provider.of<AppState>(context, listen: false).clearInfoScreen();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => MailWritePage(
+                              subject: "Re: ${mailData!.subject}",
+                              mail: "\n\n> -----Original Message-----\n> From: ${mailData!.from.map((m) => "\"${m.name}\" <${m.address}>").join(", ")}\n> Sent: ${DateFormat("dd.MM.yyyy HH:mm").format(mailData!.date)}\n> To: ${mailData!.to.map((m) => m.address).join(", ")}\n> Subject: ${mailData!.subject}\n> \n> ${joinWithOptions(mailData!.bodyPlain.split("\n"), "\n> ", "")}",
+                              reference: mailData,
+                              referenceMode: LSMWPReferenceMode.answered,
+                              to: mailData!.from.map((m) => m.address).toList(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text("Antworten"),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
