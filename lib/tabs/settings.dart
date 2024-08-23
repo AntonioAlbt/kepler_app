@@ -554,7 +554,7 @@ class ColorSelectSettingsTile extends AbstractSettingsTile {
                 ),
               ),
             ),
-            TextSpan(text: current != null ? " #${current.toString().substring(10, 10+6).toUpperCase()}" : "keine"),
+            TextSpan(text: current != null ? " #${current?.value.toRadixString(16).padLeft(8, '0')}" : "keine"),
           ],
         ),
       ),
