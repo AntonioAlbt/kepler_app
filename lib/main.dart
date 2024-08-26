@@ -471,6 +471,7 @@ class _KeplerAppState extends State<KeplerApp> {
         final index = state.selectedNavPageIDs;
         // PopScopes are weird in comparison to WillPopScope-s, if anyone wants to update them anyway, have fun
         // maybe helpful for async: https://stackoverflow.com/questions/77500680/willpopscope-is-deprecated-after-flutter-3-12
+        final selectedNavEntry = currentlySelectedNavEntry(context);
         return OnStartLoader(
           // ignore: deprecated_member_use
           child: WillPopScope(
@@ -499,12 +500,12 @@ class _KeplerAppState extends State<KeplerApp> {
                     key: globalScaffoldKey,
                     appBar: AppBar(
                       title: (index.first == PageIDs.home) ? const Text("Kepler-App")
-                        : currentlySelectedNavEntry(context)?.label,
+                        : selectedNavEntry?.label,
                       scrolledUnderElevation: 5,
                       elevation: 5,
                       // this is so the two appbars in that page seem like theyre one
                       shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans, LernSaxPageIDs.tasks].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
-                      actions: currentlySelectedNavEntry(context)?.navbarActions,
+                      actions: selectedNavEntry?.navbarActions,
                     ),
                     drawer: TheDrawer(
                       selectedIndex: index.join("."),

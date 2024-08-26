@@ -54,6 +54,11 @@ const securePrefs = FlutterSecureStorage(
 const lernSaxDemoModeMail = "jkgappdemo@jkgc.lernsax.de";
 
 class CredentialStore extends SerializableObject with ChangeNotifier {
+  CredentialStore() {
+    objectCreators["alt_ls_logins"] = (_) => <String>[];
+    objectCreators["alt_ls_tokens"] = (_) => <String>[];
+  }
+
   final _serializer = Serializer();
   bool loaded = false;
   Future<void> save() async {
@@ -78,6 +83,21 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     _setSaveNotify("lern_sax_token", token);
   }
 
+  List<String> get alternativeLSLogins => attributes["alt_ls_logins"] ?? [];
+  set alternativeLSLogins(List<String> list) {
+    _setSaveNotify("alt_ls_logins", list);
+  }
+
+  List<String> get alternativeLSTokens => attributes["alt_ls_tokens"] ?? [];
+  set alternativeLSTokens(List<String> list) {
+    _setSaveNotify("alt_ls_tokens", list);
+  }
+  
+  void addAlternativeLSUser(String login, String token) {
+    alternativeLSLogins = alternativeLSLogins..add(login);
+    alternativeLSTokens = alternativeLSTokens..add(token);
+  }
+
   String? get vpHost => attributes["vp_host"] ?? indiware.baseUrl;
   set vpHost(String? host) => _setSaveNotify("vp_host", host);
 
@@ -92,6 +112,8 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     if (kCredsDebug) logCatch("creds-debug", "vpPassword changed to ${password == null ? "null" : "value with len ${password.length}"}", StackTrace.current);
     _setSaveNotify("vp_password", password);
   }
+
+  // VP doesn't need alternative accounts, because it's the same
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {

@@ -122,6 +122,8 @@ final tabs = {
   PageIDs.about: const AboutTab(),
 };
 
+// var viewcount = 0;
+
 final destinations = [
   NavEntryData(
     id: PageIDs.home,
@@ -394,21 +396,45 @@ final destinations = [
     icon: Icon(Icons.info_outlined),
     label: Text("Über diese App"),
     selectedIcon: Icon(Icons.info),
-  )
+  ),
+  // NavEntryData(
+  //   id: PageIDs.about,
+  //   icon: const Icon(Icons.emoji_objects_outlined),
+  //   label: const Text("View Count"),
+  //   selectedIcon: const Icon(Icons.emoji_objects),
+  //   childrenBuilder: (ctx) {
+  //     viewcount += 1;
+  //     return List.generate(viewcount, (index) => NavEntryData(
+  //       id: "viewcount_$index",
+  //       icon: const Icon(Icons.emoji_objects_outlined),
+  //       label: Text("Count $index (${Provider.of<Preferences>(ctx, listen: false).preferredPronoun})"),
+  //       selectedIcon: const Icon(Icons.emoji_objects),
+  //     ));
+  //   }
+  // ),
 ];
-final flattenedDestinations = (){
-  recurseAdd(List<NavEntryData> list, NavEntryData toAdd) {
-    list.add(toAdd);
-    toAdd.children?.forEach((element) => recurseAdd(list, element));
-  }
-  final list = <NavEntryData>[];
-  for (final dest in destinations) {
-    recurseAdd(list, dest);
-  }
-  return list;
-}();
 
+/// mainly used to determine the title and navbar actions needed to display for the current page
 NavEntryData? currentlySelectedNavEntry(BuildContext context) {
-  final id = Provider.of<AppState>(context).selectedNavPageIDs.last;
-  return flattenedDestinations.cast<NavEntryData?>().firstWhere((element) => element!.id == id, orElse: () => null);
+  final id = Provider.of<AppState>(context).selectedNavPageIDs.join(".");
+  NavEntryData? search(NavEntryData entry, String idBase) {
+    // print("searching for $id in ${entry.id} -> $idBase${entry.id}");
+    if (id == "$idBase${entry.id}") {
+      return entry;
+    }
+    for (final child in entry.getChildren(context)) {
+      final result = search(child, "$idBase${entry.id}.");
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+  for (final entry in destinations) {
+    final result = search(entry, "");
+    if (result != null) {
+      return result;
+    }
+  }
+  return null;
 }

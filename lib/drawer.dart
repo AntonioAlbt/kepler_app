@@ -58,12 +58,41 @@ class NavEntryData {
   final Future<bool> Function(BuildContext context)? onTryExpand;
   final List<String>? redirectTo;
   final List<Widget>? navbarActions;
+  
+  final List<NavEntryData> Function(BuildContext context)? childrenBuilder;
 
-  bool get isParent => children != null ? children!.isNotEmpty : false;
+  // bool get isParent => children != null ? children!.isNotEmpty : false;
+  bool isParent(BuildContext ctx) => getChildren(ctx).isNotEmpty;
+  List<NavEntryData> getChildren(BuildContext ctx) {
+    if (children != null && children!.isNotEmpty) {
+      return children!;
+    } else if (childrenBuilder != null) {
+      final built = childrenBuilder!.call(ctx);
+      if (built.isNotEmpty) return built;
+    }
+
+    return [];
+  }
   bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
   bool shouldBeLocked(BuildContext ctx, UserType type) => (isLocked?.call(ctx) ?? false) || (lockedFor?.contains(type) ?? false);
 
-  const NavEntryData({required this.id, required this.icon, this.selectedIcon, required this.label, this.children, this.isVisible, this.visibleFor, this.isLocked, this.lockedFor, this.externalLink, this.onTryOpen, this.onTryExpand, this.redirectTo, this.navbarActions});
+  const NavEntryData({
+    required this.id,
+    required this.icon,
+    this.selectedIcon,
+    required this.label,
+    this.children,
+    this.isVisible,
+    this.visibleFor,
+    this.isLocked,
+    this.lockedFor,
+    this.externalLink,
+    this.onTryOpen,
+    this.onTryExpand,
+    this.redirectTo,
+    this.navbarActions,
+    this.childrenBuilder,
+  });
 }
 
 class NavEntry extends StatefulWidget {
@@ -298,7 +327,7 @@ class _TheDrawerState extends State<TheDrawer> {
         selected: selected,
         onSelect: () {
           widget.onDestinationSelected(entryData.redirectTo?.join(".") ?? selectionIndex);
-          if (!entryData.isParent) {
+          if (!entryData.isParent(context)) {
             Navigator.pop(context);
           }
         },
@@ -307,7 +336,7 @@ class _TheDrawerState extends State<TheDrawer> {
         layer: layer,
         locked: entryData.shouldBeLocked(context, userType),
         unlockedFor: UserType.values.where((val) => entryData.lockedFor?.contains(val) != true).toList(),
-        children: entryData.children
+        children: entryData.getChildren(context)
             ?.map((data) => (data.shouldBeVisible(context, userType))
                 ? dataToEntry(data, selectedIndex, layer + 1, selectionIndex, userType)
                 : null,
