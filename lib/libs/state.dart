@@ -83,7 +83,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     _setSaveNotify("lern_sax_token", token);
   }
 
-  List<String> get alternativeLSLogins => attributes["alt_ls_logins"] ?? [];
+  List<String> get alternativeLSLogins => attributes["alt_ls_logins"] ?? ["a.a"];
   set alternativeLSLogins(List<String> list) {
     _setSaveNotify("alt_ls_logins", list);
   }

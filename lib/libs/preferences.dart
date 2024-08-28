@@ -191,6 +191,18 @@ class Preferences extends SerializableObject with ChangeNotifier {
     _loggingEnabled = val;
   }
 
+  List<String> get stuPlanNames => attributes["stuplan_names"] ?? [];
+  set stuPlanNames(List<String> val) => setSaveNotify("stuplan_names", val);
+  void addStuPlanName(String val) {
+    stuPlanNames = stuPlanNames..add(val);
+  }
+  void setStuPlanName(int id, String val) {
+    stuPlanNames = stuPlanNames..[id] = val;
+  }
+  void removeStuPlanName(int id) {
+    stuPlanNames = stuPlanNames..removeAt(id);
+  }
+
   bool loaded = false;
 
   Future<void> save() async {
@@ -205,5 +217,6 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   Preferences() {
     objectCreators["time_to_next_plan"] = (_) => HMTime(14, 45);
+    objectCreators["stuplan_names"] = (_) => <String>[];
   }
 }

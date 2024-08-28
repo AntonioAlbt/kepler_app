@@ -135,7 +135,7 @@ class _MailWritePageState extends State<MailWritePage> {
                             text: "von: ",
                           ),
                           TextSpan(
-                            text: "${Provider.of<CredentialStore>(globalScaffoldContext).lernSaxLogin}",
+                            text: "${Provider.of<CredentialStore>(globalScaffoldContext, listen: false).lernSaxLogin}",
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),
@@ -318,7 +318,7 @@ class _MailWritePageState extends State<MailWritePage> {
                       }
                       if (!await showDialog(context: context, builder: (ctx) => AlertDialog(
                         title: const Text("Wirklich absenden?"),
-                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(globalScaffoldContext).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
+                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Ja, jetzt senden")),
                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Abbrechen")),

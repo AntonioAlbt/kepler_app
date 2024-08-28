@@ -51,7 +51,7 @@ void showSnackBarDirectly({ String? text, bool error = false, Widget? child, Str
       content: Builder(
         builder: (context) {
           // use the global scaffold context because this might be used by other pages
-          final prefs = Provider.of<Preferences>(globalScaffoldContext);
+          final prefs = Provider.of<Preferences>(globalScaffoldContext, listen: false);
           final errorStyle = TextStyle(color: (prefs.darkTheme) ? Colors.redAccent.shade700 : Colors.redAccent.shade200);
           if (text != null) {
             return Text(

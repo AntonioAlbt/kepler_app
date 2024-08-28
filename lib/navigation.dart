@@ -31,12 +31,15 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/kepler_app_custom_icons.dart';
+import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -45,6 +48,8 @@ import 'package:kepler_app/tabs/feedback.dart';
 import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
+import 'package:kepler_app/tabs/hourtable/ht_data.dart';
+import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
@@ -84,6 +89,7 @@ class StuPlanPageIDs {
   static const freeRooms = "freeRooms";
   static const teacherPlan = "teacherPlan";
   static const roomPlans = "roomPlan";
+  static const debug = "debug";
 }
 
 class LernSaxPageIDs {
@@ -191,83 +197,139 @@ final destinations = [
     onTryOpen: stuPlanOnTryOpenCallback,
     onTryExpand: stuPlanOnTryOpenCallback,
     lockedFor: [UserType.nobody],
-    redirectTo: [StuPlanPageIDs.main, StuPlanPageIDs.yours],
-    children: [
-      NavEntryData(
-        id: StuPlanPageIDs.yours,
-        icon: const Icon(Icons.list_alt_outlined),
-        label: Selector<Preferences, bool>(
-          selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-          builder: (ctx, sie, _) => Selector<AppState, UserType>(
-            selector: (ctx, state) => state.userType,
-            builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}"),
+    selectable: false,
+    childrenBuilder: (context) {
+      final list = [
+        NavEntryData(
+          id: StuPlanPageIDs.yours,
+          icon: const Icon(Icons.list_alt_outlined),
+          label: Selector<Preferences, bool>(
+            selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+            builder: (ctx, sie, _) => Selector<AppState, UserType>(
+              selector: (ctx, state) => state.userType,
+              builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}"),
+            ),
           ),
+          selectedIcon: const Icon(Icons.list_alt),
+          navbarActions: [
+            Consumer<Preferences>(
+              builder: (context, prefs, _) {
+                if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
+                return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
+              },
+            ),
+            const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
+            const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+          onTryOpen: stuPlanShowInfoDialog,
         ),
-        selectedIcon: const Icon(Icons.list_alt),
-        navbarActions: [
-          Consumer<Preferences>(
-            builder: (context, prefs, _) {
-              if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
-              return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
-            },
+        const NavEntryData(
+          id: StuPlanPageIDs.classPlans,
+          icon: Icon(Icons.groups_outlined),
+          label: Text("Klassenpläne"),
+          selectedIcon: Icon(Icons.groups),
+          navbarActions: [
+            IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+          onTryOpen: stuPlanShowInfoDialog,
+        ),
+        const NavEntryData(
+          id: StuPlanPageIDs.all,
+          icon: Icon(Icons.list_outlined),
+          label: Text("Alle Vertretungen"),
+          selectedIcon: Icon(Icons.list),
+          navbarActions: [
+            IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+          onTryOpen: stuPlanShowInfoDialog,
+        ),
+        const NavEntryData(
+          id: StuPlanPageIDs.freeRooms,
+          icon: Icon(Icons.door_back_door_outlined),
+          label: Text("Freie Zimmer"),
+          selectedIcon: Icon(Icons.door_back_door),
+          navbarActions: [
+            IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+          onTryOpen: stuPlanShowInfoDialog,
+        ),
+        NavEntryData(
+          id: StuPlanPageIDs.roomPlans,
+          icon: Icon(MdiIcons.doorClosed),
+          label: const Text("Raumpläne"),
+          selectedIcon: Icon(MdiIcons.doorOpen),
+          navbarActions: [
+            const IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+          onTryOpen: stuPlanShowInfoDialog,
+        ),
+        if (kDebugFeatures) const NavEntryData(
+          id: StuPlanPageIDs.debug,
+          icon: Icon(Icons.person_outline),
+          label: Text("Benutzerinfos"),
+          selectedIcon: Icon(Icons.person),
+          onTryOpen: stuPlanShowInfoDialog,
+        ),
+      ];
+      final stdata = Provider.of<StuPlanData>(context, listen: false);
+      final utype = Provider.of<AppState>(context, listen: false).userType;
+      final selected = utype == UserType.teacher ? stdata.selectedTeacherName : stdata.selectedClassName;
+      if (selected == null || (utype != UserType.teacher && stdata.selectedCourseIDs.isEmpty)) {
+        return [
+          const NavEntryData(
+            id: "sp_error",
+            icon: Icon(Icons.warning_rounded),
+            label: Text("Daten fehlen :("),
+            selectable: false,
           ),
-          const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
-          const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-      NavEntryData(
-        id: StuPlanPageIDs.teacherPlan,
-        icon: Icon(MdiIcons.humanMaleBoard),
-        label: const Text("Lehrerpläne"),
-        selectedIcon: Icon(MdiIcons.humanMaleBoard),
-        visibleFor: [UserType.teacher],
-        navbarActions: [
-          const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-      const NavEntryData(
-        id: StuPlanPageIDs.classPlans,
-        icon: Icon(Icons.groups_outlined),
-        label: Text("Klassenpläne"),
-        selectedIcon: Icon(Icons.groups),
-        navbarActions: [
-          IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-      const NavEntryData(
-        id: StuPlanPageIDs.all,
-        icon: Icon(Icons.list_outlined),
-        label: Text("Alle Vertretungen"),
-        selectedIcon: Icon(Icons.list),
-        navbarActions: [
-          IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-      const NavEntryData(
-        id: StuPlanPageIDs.freeRooms,
-        icon: Icon(Icons.door_back_door_outlined),
-        label: Text("Freie Zimmer"),
-        selectedIcon: Icon(Icons.door_back_door),
-        navbarActions: [
-          IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-      NavEntryData(
-        id: StuPlanPageIDs.roomPlans,
-        icon: Icon(MdiIcons.doorClosed),
-        label: const Text("Raumpläne"),
-        selectedIcon: Icon(MdiIcons.doorOpen),
-        navbarActions: [
-          const IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-        onTryOpen: stuPlanShowInfoDialog,
-      ),
-    ],
+        ];
+      }
+      mainUserList() {
+        if (utype == UserType.teacher) {
+          return [...list]..insert(1, 
+            NavEntryData(
+              id: StuPlanPageIDs.teacherPlan,
+              icon: Icon(MdiIcons.humanMaleBoard),
+              label: const Text("Lehrerpläne"),
+              selectedIcon: Icon(MdiIcons.humanMaleBoard),
+              navbarActions: [
+                const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
+              ],
+              onTryOpen: stuPlanShowInfoDialog,
+            ),
+          );
+        }
+        return list;
+      }
+      final addEntry = NavEntryData(
+        id: "sp_add",
+        icon: const Icon(Icons.add),
+        label: const Text("Stundenplan hinzufügen"),
+        onTryOpen: (ctx) async {
+          final success = await showDialog(
+            context: ctx,
+            builder: (ctx) => const AddNewStuPlanDialog(),
+          );
+          if (success) globalScaffoldState.closeDrawer();
+          return false;
+        },
+      );
+      if (stdata.altSelectedClassNames.isNotEmpty) {
+        return [selected, ...stdata.altSelectedClassNames].asMap().map((i, name) => MapEntry(i, NavEntryData(
+          id: base64UrlEncode(utf8.encode(name)),
+          icon: const Icon(Icons.group_outlined),
+          label: Text(utype == UserType.teacher ? name : name.contains("-") ? "Klasse $name" : "Jahrgang $name"),
+          children: i == 0
+            ? mainUserList()
+            : [...list/* , removeEntry(i, name) */],
+          selectedIcon: const Icon(Icons.group),
+          selectable: false,
+        ))).values.toList()..add(addEntry);
+      } else {
+        return mainUserList()..add(addEntry);
+      }
+      // TODO: only dynamically let user select class for "your stuplan" (it doesnt matter for everything else, but its currently repeated for each class)
+    }
   ),
   NavEntryData(
     id: LernSaxPageIDs.main,
@@ -275,66 +337,135 @@ final destinations = [
     label: const Text("LernSax"),
     selectedIcon: const Icon(Icons.laptop),
     lockedFor: [UserType.nobody],
-    redirectTo: [LernSaxPageIDs.main, LernSaxPageIDs.notifications],
-    children: [
-      NavEntryData(
-        id: LernSaxPageIDs.openInBrowser,
-        icon: Icon(MdiIcons.web),
-        label: const Text("Im Browser öffnen"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInBrowser,
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.notifications,
-        icon: Icon(Icons.notifications_none),
-        selectedIcon: Icon(Icons.notifications),
-        label: Text("Benachrichtigungen"),
-        navbarActions: [
-          IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.tasks,
-        icon: Icon(Icons.task_alt),
-        label: Text("Aufgaben"),
-        navbarActions: [
-          IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.emails,
-        icon: Icon(Icons.mail_outlined),
-        selectedIcon: Icon(Icons.mail),
-        label: Text("E-Mails"),
-        navbarActions: [
-          IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
-        ],
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.files,
-        icon: Icon(Icons.folder_copy_outlined),
-        // selectedIcon: Icon(Icons.folder_copy),
-        label: Text("Dateien"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInOfficialApp,
-      ),
-      NavEntryData(
-        id: LernSaxPageIDs.messageBoard,
-        icon: Icon(MdiIcons.bulletinBoard),
-        // selectedIcon: Icon(MdiIcons.bulletinBoard),
-        label: const Text("Nachrichten"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInOfficialApp,
-      ),
-      const NavEntryData(
-        id: LernSaxPageIDs.chats,
-        icon: Icon(Icons.chat_bubble_outline),
-        selectedIcon: Icon(Icons.chat_bubble),
-        label: Text("Messenger (Chats)"),
-        externalLink: true,
-        onTryOpen: lernSaxOpenInOfficialApp,
-      ),
-    ],
+    selectable: false,
+    childrenBuilder: (context) {
+      final list = [
+        NavEntryData(
+          id: LernSaxPageIDs.openInBrowser,
+          icon: Icon(MdiIcons.web),
+          label: const Text("Im Browser öffnen"),
+          externalLink: true,
+          onTryOpen: lernSaxOpenInBrowser,
+        ),
+        const NavEntryData(
+          id: LernSaxPageIDs.notifications,
+          icon: Icon(Icons.notifications_none),
+          selectedIcon: Icon(Icons.notifications),
+          label: Text("Benachrichtigungen"),
+          navbarActions: [
+            IconButton(onPressed: lernSaxNotifsRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+        ),
+        const NavEntryData(
+          id: LernSaxPageIDs.tasks,
+          icon: Icon(Icons.task_alt),
+          label: Text("Aufgaben"),
+          navbarActions: [
+            IconButton(onPressed: lernSaxTasksRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+        ),
+        const NavEntryData(
+          id: LernSaxPageIDs.emails,
+          icon: Icon(Icons.mail_outlined),
+          selectedIcon: Icon(Icons.mail),
+          label: Text("E-Mails"),
+          navbarActions: [
+            IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+        ),
+        const NavEntryData(
+          id: LernSaxPageIDs.files,
+          icon: Icon(Icons.folder_copy_outlined),
+          // selectedIcon: Icon(Icons.folder_copy),
+          label: Text("Dateien"),
+          externalLink: true,
+          onTryOpen: lernSaxOpenInOfficialApp,
+        ),
+        NavEntryData(
+          id: LernSaxPageIDs.messageBoard,
+          icon: Icon(MdiIcons.bulletinBoard),
+          // selectedIcon: Icon(MdiIcons.bulletinBoard),
+          label: const Text("Nachrichten"),
+          externalLink: true,
+          onTryOpen: lernSaxOpenInOfficialApp,
+        ),
+        const NavEntryData(
+          id: LernSaxPageIDs.chats,
+          icon: Icon(Icons.chat_bubble_outline),
+          selectedIcon: Icon(Icons.chat_bubble),
+          label: Text("Messenger (Chats)"),
+          externalLink: true,
+          onTryOpen: lernSaxOpenInOfficialApp,
+        ),
+      ];
+
+      final addEntry = NavEntryData(
+        id: "lernsax_add",
+        icon: const Icon(Icons.add),
+        label: const Text("LernSax-Konto hinzufügen"),
+        onTryOpen: (ctx) async {
+          // await showDialog(
+          //   context: ctx,
+          //   builder: (ctx) => const AddNewLernSaxDialog(),
+          // );
+          return false;
+        },
+      );
+
+      removeEntry(int uid, String login) => NavEntryData(
+        id: "ls_remove$uid",
+        icon: const Icon(Icons.remove),
+        label: const Text("Konto entfernen"),
+        onTryOpen: (ctx) async {
+          final remove = await showDialog(
+            context: ctx,
+            builder: (ctx) => AlertDialog(
+              title: const Text("Konto entfernen"),
+              content: Text("Möchtest du das Konto $login wirklich entfernen?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text("Abbrechen"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text("Entfernen"),
+                ),
+              ],
+            ),
+          );
+          if (!globalScaffoldContext.mounted) return false;
+          if (remove) {
+            final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+            final (login, token) = (creds.alternativeLSLogins[uid], creds.alternativeLSTokens[uid]);
+            try {
+              await unregisterApp(login, token);
+            } on Exception catch (_) {}
+            creds.alternativeLSLogins.removeAt(uid);
+            creds.alternativeLSTokens.removeAt(uid);
+            globalScaffoldState.closeDrawer();
+          }
+          return false;
+        },
+      );
+
+      final creds = Provider.of<CredentialStore>(context, listen: false);
+      final loginList = [creds.lernSaxLogin!, ...creds.alternativeLSLogins];
+      if (loginList.length > 1) {
+        return loginList.asMap().entries.map((entry) =>
+          NavEntryData(
+            id: base64UrlEncode(utf8.encode(entry.value)),
+            icon: const Icon(Icons.person_outline),
+            label: Text(entry.value),
+            children: [...list, removeEntry(entry.key, entry.value)],
+            selectedIcon: const Icon(Icons.person),
+            selectable: false,
+          )
+        ).toList()..add(addEntry);
+      } else {
+        return [...list, addEntry];
+      }
+    }
   ),
   const NavEntryData(
     id: PageIDs.foodOrder,
@@ -416,7 +547,7 @@ final destinations = [
 
 /// mainly used to determine the title and navbar actions needed to display for the current page
 NavEntryData? currentlySelectedNavEntry(BuildContext context) {
-  final id = Provider.of<AppState>(context).selectedNavPageIDs.join(".");
+  final id = Provider.of<AppState>(context, listen: false).selectedNavPageIDs.join(".");
   NavEntryData? search(NavEntryData entry, String idBase) {
     // print("searching for $id in ${entry.id} -> $idBase${entry.id}");
     if (id == "$idBase${entry.id}") {

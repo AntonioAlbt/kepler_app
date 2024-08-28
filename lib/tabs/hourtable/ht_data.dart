@@ -55,6 +55,9 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     objectCreators["selected_course_ids"] = (_) => <int>[];
 
     objectCreators["available_teachers"] = (_) => <String>[];
+
+    objectCreators["alt_selected_class_name"] = (_) => <String>[];
+    objectCreators["alt_selected_course_ids"] = (_) => <String>[];
   }
 
   Map<String, List<VPCSubjectS>> _jsonDataStrToMap(String json) {
@@ -93,7 +96,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   String? get selectedClassName => attributes["selected_class_name"];
   set selectedClassName(String? cn) => _setSaveNotify("selected_class_name", cn);
 
-  List<String> get altSelectedClassNames => attributes["alt_selected_class_name"];
+  List<String> get altSelectedClassNames => attributes["alt_selected_class_name"] ?? [];
   set altSelectedClassNames(List<String> cn) => _setSaveNotify("alt_selected_class_name", cn);
 
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
@@ -115,13 +118,13 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   List<String> get altSelectedCourseIDs => attributes["alt_selected_course_ids"] ?? [];
   set altSelectedCourseIDs(List<String> sc) => _setSaveNotify("alt_selected_course_ids", sc);
   void addSelectedCourseForAlt(int id, int alt) {
-    final l = altSelectedCourseIDs[alt].split("|").map((i) => int.parse(i)).toList();
+    final l = altSelectedCourseIDs[alt].split("|").where((s) => s != "").map((i) => int.parse(i)).toList();
     if (l.contains(id)) return;
     l.add(id);
     altSelectedCourseIDs[alt] = l.join("|");
   }
   void removeSelectedCourseForAlt(int id, int alt) {
-    final l = altSelectedCourseIDs[alt].split("|").map((i) => int.parse(i)).toList();
+    final l = altSelectedCourseIDs[alt].split("|").where((s) => s != "").map((i) => int.parse(i)).toList();
     l.remove(id);
     altSelectedCourseIDs[alt] = l.join("|");
   }

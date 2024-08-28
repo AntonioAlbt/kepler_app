@@ -52,6 +52,8 @@ class NavEntryData {
   final bool Function(BuildContext context)? isLocked;
   final List<UserType>? lockedFor;
   final bool? externalLink;
+  /// if false, will make it so on tap it only expands (if parent) and can't be selected
+  final bool? selectable;
   /// can also be used as "onTap", true or null means open new page, false means don't open new page
   final Future<bool> Function(BuildContext context)? onTryOpen;
   /// can also be used as "onTap" for expand arrow, true or null means expand children list, false means don't
@@ -87,6 +89,7 @@ class NavEntryData {
     this.isLocked,
     this.lockedFor,
     this.externalLink,
+    this.selectable,
     this.onTryOpen,
     this.onTryExpand,
     this.redirectTo,
@@ -101,6 +104,7 @@ class NavEntry extends StatefulWidget {
   final Widget? selectedIcon;
   final Widget label;
   final bool? externalLink;
+  final bool selectable;
   final Future<bool> Function(BuildContext context)? onTryOpen;
   final Future<bool> Function(BuildContext context)? onTryExpand;
   final bool selected;
@@ -113,7 +117,24 @@ class NavEntry extends StatefulWidget {
 
   bool get isParent => children != null ? children!.isNotEmpty : false;
 
-  const NavEntry({super.key, required this.id, required this.icon, this.selectedIcon, required this.label, required this.selected, required this.onSelect, required this.parentOfSelected, required this.layer, this.children, this.externalLink, this.onTryOpen, this.onTryExpand, required this.locked, required this.unlockedFor});
+  const NavEntry({
+    super.key,
+    required this.id,
+    required this.icon,
+    this.selectedIcon,
+    required this.label,
+    required this.selected,
+    required this.onSelect,
+    required this.parentOfSelected,
+    required this.layer,
+    this.children,
+    this.externalLink,
+    this.selectable = true,
+    this.onTryOpen,
+    this.onTryExpand,
+    required this.locked,
+    required this.unlockedFor,
+  });
 
   @override
   State<NavEntry> createState() => _NavEntryState();
@@ -225,6 +246,24 @@ class _NavEntryState extends State<NavEntry> {
                     showLockedDialog();
                     return;
                   }
+
+                  if (!widget.selectable && widget.isParent) { 
+                    if (!expanded) {
+                      final val = widget.onTryExpand?.call(context);
+                      if (val != null) {
+                        val.then((value) {
+                          if (!value) return;
+                          setState(() => expanded = !expanded);
+                          _drawerKey.currentState?.redraw();
+                        });
+                        return;
+                      }
+                    }
+                    setState(() => expanded = !expanded);
+                    _drawerKey.currentState?.redraw();
+                    return;
+                  }
+
                   final val = widget.onTryOpen?.call(context);
                   if (val != null) {
                     val.then((value) {
@@ -312,17 +351,18 @@ class _TheDrawerState extends State<TheDrawer> {
     final parentOfSelected = getParentSelectionIndices(selectedIndex).contains(selectionIndex);
     final selected = selectionIndex == selectedIndex;
     _lastId++;
-    _idMap[entryData.id] = _lastId;
+    _idMap[selectionIndex] = _lastId;
     return AutoScrollTag(
       controller: _controller,
-      index: _idMap[entryData.id]!,
-      key: ValueKey(entryData.id),
+      index: _idMap[selectionIndex]!,
+      key: ValueKey(selectionIndex),
       child: NavEntry(
         id: entryData.id,
         icon: entryData.icon,
         selectedIcon: entryData.selectedIcon,
         label: entryData.label,
         externalLink: entryData.externalLink,
+        selectable: entryData.selectable ?? true,
         parentOfSelected: parentOfSelected,
         selected: selected,
         onSelect: () {
@@ -392,8 +432,8 @@ class _TheDrawerState extends State<TheDrawer> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final id = _idMap[Provider.of<AppState>(context, listen: false).selectedNavPageIDs.last];
-      if (id != null) _controller.scrollToIndex(id, duration: const Duration(microseconds: 1), preferPosition: AutoScrollPosition.middle);
+      final id = _idMap[Provider.of<AppState>(context, listen: false).selectedNavPageIDs.join(".")];
+      if (id != null) _controller.scrollToIndex(id, duration: const Duration(milliseconds: 1), preferPosition: AutoScrollPosition.middle);
     });
   }
 }

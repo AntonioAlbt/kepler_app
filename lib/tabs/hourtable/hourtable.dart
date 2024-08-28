@@ -31,7 +31,10 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -83,6 +86,7 @@ class _HourtableTabState extends State<HourtableTab> {
           }
         }
         if (navPage == StuPlanPageIDs.roomPlans) return const RoomPlanPage();
+        if (kDebugFeatures && navPage == StuPlanPageIDs.debug) return Text("Debug: ${utf8.decode(base64Url.decode(state.selectedNavPageIDs[1]))}");
         return const Text("Unbekannter Plan gefordert. Bitte schließen und erneut probieren.");
       },
     );
