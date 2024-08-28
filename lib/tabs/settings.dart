@@ -236,20 +236,21 @@ class _SettingsTabState extends State<SettingsTab> {
                   },
                   disabled: userType == UserType.nobody,
                 ),
-                rainbowSwitchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation,
-                  onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
-                  title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
-                  description: const Text("auch wenn das kein richtiger Ausfall ist"),
-                  enabled: userType != UserType.nobody,
-                ),
-                rainbowSwitchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
-                  onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
-                  title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
-                  description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
-                  enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
-                ),
+                // wird nicht mehr so verwendet
+                // rainbowSwitchTile(
+                //   initialValue: prefs.considerLernSaxTasksAsCancellation,
+                //   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
+                //   title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
+                //   description: const Text("auch wenn das kein richtiger Ausfall ist"),
+                //   enabled: userType != UserType.nobody,
+                // ),
+                // rainbowSwitchTile(
+                //   initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
+                //   onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
+                //   title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
+                //   description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
+                //   enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
+                // ),
                 rainbowSwitchTile(
                   initialValue: prefs.enableInfiniteStuPlanScrolling,
                   onToggle: (val) => prefs.enableInfiniteStuPlanScrolling = val,
