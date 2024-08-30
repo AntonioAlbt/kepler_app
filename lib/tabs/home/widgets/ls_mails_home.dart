@@ -65,8 +65,8 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
       id: widget.id,
       color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 46, 129, 25), .1) : Colors.green.shade300,
       title: const Text("LernSax: E-Mails"),
-      child: Builder(
-        builder: (context) {
+      child: Consumer<CredentialStore>(
+        builder: (context, creds, _) {
           if (loading) {
             return const Center(
               child: Padding(
@@ -83,7 +83,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
               ),
             );
           }
-          if (mailsSlice == null) {
+          if (mailsSlice == null || creds.lernSaxLogin == null || creds.lernSaxToken == null) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
@@ -108,6 +108,9 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
                   folderId: folderId!,
                   darkerIcons: !hasDarkTheme(context),
                   onAfterSuccessfulMailAction: loadData,
+                  login: creds.lernSaxLogin!,
+                  token: creds.lernSaxToken!,
+                  alternative: false,
                 ),
               )).toList()
                 ..add(

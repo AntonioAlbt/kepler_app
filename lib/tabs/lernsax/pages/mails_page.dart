@@ -41,6 +41,7 @@ import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/rainbow.dart';
+import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_write_page.dart';
@@ -51,13 +52,17 @@ import 'package:provider/provider.dart';
 final lsMailPageKey = GlobalKey<_LSMailsPageState>();
 
 void lernSaxMailsRefreshAction() {
-  lsMailPageKey.currentState
-    ?..loadData(force: true)
-    ..dayDispController.onForceRefresh?.call();
+  lsMailPageKey.currentState?.refreshData(force: true);
 }
 
+String _lastLoadedLogin = "";
+
 class LSMailsPage extends StatefulWidget {
-  LSMailsPage() : super(key: lsMailPageKey);
+  final String login;
+  final String token;
+  final bool alternative;
+
+  LSMailsPage(this.login, this.token, this.alternative) : super(key: lsMailPageKey);
 
   @override
   State<LSMailsPage> createState() => _LSMailsPageState();
@@ -67,6 +72,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
   bool _loadingFolders = false;
   String? selectedFolderId;
   final LSMailDispController dayDispController = LSMailDispController();
+  var i = 0;
 
   String improveName(String oldName) {
     if (oldName == "INBOX") return "Posteingang";
@@ -76,6 +82,13 @@ class _LSMailsPageState extends State<LSMailsPage> {
   
   @override
   Widget build(BuildContext context) {
+    // nötig, weil Flutter den State für das Widget nicht neu initialisiert, da der gleiche GlobalKey verwendet wird
+    // (auch wenn sich die Argumente für den State ändern)
+    if (_lastLoadedLogin != widget.login) {
+      _lastLoadedLogin = widget.login;
+      selectedFolderId = null;
+      refreshData(force: true);
+    }
     if (_loadingFolders) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -83,7 +96,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
     }
     return Consumer<LernSaxData>(
       builder: (context, lsdata, child) {
-        if (lsdata.mailFolders == null) {
+        if (lsdata.mailFolders == null && !widget.alternative) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -108,7 +121,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
             ),
           );
         }
-        return Column(
+        Widget main(List<LSMailFolder> mailFolders) => Column(
           children: [
             SizedBox(
               height: 50,
@@ -125,17 +138,20 @@ class _LSMailsPageState extends State<LSMailsPage> {
                       setState(() => selectedFolderId = val);
                       Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder = val;
                     },
-                    value: selectedFolderId,
+                    value: selectedFolderId ?? mailFolders.first.id,
                   ),
                 ),
               ),
             ),
             Flexible(
-              child: (selectedFolderId != null)
+              child: (mailFolders.isNotEmpty)
                 ? LSMailDisplay(
-                    key: ValueKey(selectedFolderId),
-                    selectedFolder: lsdata.mailFolders!.firstWhere((f) => f.id == selectedFolderId),
+                    key: ValueKey(selectedFolderId ?? mailFolders.first.id),
+                    selectedFolder: mailFolders.firstWhere((f) => f.id == (selectedFolderId ?? mailFolders.first.id)),
                     controller: dayDispController,
+                    login: widget.login,
+                    token: widget.token,
+                    alternative: widget.alternative,
                   )
                 : const Center(
                     child: Padding(
@@ -147,23 +163,55 @@ class _LSMailsPageState extends State<LSMailsPage> {
             ),
           ],
         );
+        if (widget.alternative) {
+          return FutureBuilder(
+            key: ValueKey(i),
+            future: lernsax.getMailFolders(widget.login, widget.token),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              final (online, folders) = snapshot.data ?? (false, null);
+              if (snapshot.hasError || folders == null || !online) {
+                return LSAltNoConnection(login: widget.login);
+              }
+              i = 0;
+              return main(folders);
+            },
+          );
+        } else {
+          return main(lsdata.mailFolders!);
+        }
       }
     );
   }
 
   @override
   void initState() {
-    loadData().then((folderIds) {
-      final prev = Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder;
-      if (prev != null && folderIds != null && folderIds.contains(prev)) {
-        setState(() => selectedFolderId = prev);
-      } else if (folderIds != null) {
-        setState(() => selectedFolderId = folderIds.first);
-      } else {
-        setState(() => selectedFolderId = null);
-      }
-    });
+    refreshData();
+    if (_lastLoadedLogin == "") _lastLoadedLogin = widget.login;
     super.initState();
+  }
+  
+  Future<void> refreshData({ bool force = false }) async {
+    if (widget.alternative) {
+      setState(() => i++);
+      return;
+    }
+
+    final folderIds = await loadData(force: force);
+    // ignore: use_build_context_synchronously
+    final prev = Provider.of<InternalState>(globalScaffoldContext, listen: false).lastSelectedLSMailFolder;
+    if (prev != null && folderIds != null && folderIds.contains(prev)) {
+      setState(() => selectedFolderId = prev);
+    } else if (folderIds != null) {
+      setState(() => selectedFolderId = folderIds.first);
+    } else {
+      setState(() => selectedFolderId = null);
+    }
+    dayDispController.onForceRefresh?.call();
   }
 
   Future<List<String>?> loadData({ bool force = false }) async {
@@ -198,8 +246,11 @@ class LSMailDispController {
 class LSMailDisplay extends StatefulWidget {
   final LSMailFolder selectedFolder;
   final LSMailDispController? controller;
+  final String login;
+  final String token;
+  final bool alternative;
 
-  const LSMailDisplay({super.key, required this.selectedFolder, this.controller});
+  const LSMailDisplay({super.key, required this.selectedFolder, this.controller, required this.login, required this.token, required this.alternative});
 
   @override
   State<LSMailDisplay> createState() => _LSMailDisplayState();
@@ -208,6 +259,7 @@ class LSMailDisplay extends StatefulWidget {
 class _LSMailDisplayState extends State<LSMailDisplay> {
   bool _loading = true;
   (bool, LSMailState?)? mailData;
+  List<LSMailListing>? mailListings;
   
   @override
   Widget build(BuildContext context) {
@@ -221,10 +273,11 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
         ),
       );
     }
-    return Consumer3<LernSaxData, InternalState, CredentialStore>(
-      builder: (context, lsdata, istate, creds, _) {
-        final mails = lsdata.mailListings?.where((e) => e.folderId == widget.selectedFolder.id).toList();
+    return Consumer2<InternalState, CredentialStore>(
+      builder: (context, istate, creds, _) {
+        final mails = mailListings?.where((e) => e.folderId == widget.selectedFolder.id).toList();
         if (mails == null) {
+          if (widget.alternative) return LSAltNoConnection(login: widget.login);
           return const Center(
             child: Text(
               "E-Mails konnten nicht abgefragt werden.",
@@ -344,6 +397,9 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                               onAfterSuccessfulMailAction: () {
                                 widget.controller?.onForceRefresh?.call();
                               },
+                              login: widget.login,
+                              token: widget.token,
+                              alternative: widget.alternative,
                             ),
                           );
                         },
@@ -368,35 +424,45 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
   }
 
   Future<void> loadMailsInSelectedFolder() async {
+    if (!mounted) return;
     setState(() => _loading = true);
-    final creds = Provider.of<CredentialStore>(context, listen: false);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
     // TODO - future: use limit, offset (offset = 0 -> newest messages) and "total_messages" to only get new emails on load
     // this might require an additional request with limit = 0 and offset = 0 to get the new total_messages and then load the new ones
-    final (online, data) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.selectedFolder.id, isDraftsFolder: widget.selectedFolder.isDrafts, isSentFolder: widget.selectedFolder.isSent);
-    final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24 && lsdata.mailListings != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
-    if (!online) {
-      showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
-    } else if (data == null) {
-      showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
+    var (online, data) = await lernsax.getMailListings(widget.login, widget.token, folderId: widget.selectedFolder.id, isDraftsFolder: widget.selectedFolder.isDrafts, isSentFolder: widget.selectedFolder.isSent);
+    if (!widget.alternative) {
+      final text = (online == false && lsdata.lastMailListingsUpdateDiff.inHours >= 24 && lsdata.mailListings != null) ? " Hinweis: Die Daten sind älter als 24 Stunden. Es könnten neue E-Mails verfügbar sein." : "";
+      if (!online) {
+        showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?$text", error: true, clear: true);
+        if (lsdata.mailListings != null) data = lsdata.mailListings;
+      } else if (data == null) {
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.$text", error: true, clear: true);
+      } else {
+        lsdata.mailListings = data;
+        lsdata.lastMailListingsUpdate = DateTime.now();
+        // showSnackBar(text: "Erfolgreich aktualisiert.");
+      }
     } else {
-      lsdata.mailListings = data;
-      lsdata.lastMailListingsUpdate = DateTime.now();
-      // showSnackBar(text: "Erfolgreich aktualisiert.");
+      if (!online) {
+        showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+      } else if (data == null) {
+        showSnackBar(textGen: (sie) => "Fehler beim Abfragen der E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
+      }
     }
     loadMailState();
+    if (!mounted) return;
     setState(() {
       _loading = false;
+      mailListings = data;
     });
   }
 
   Future<void> loadMailState() async {
     if (!mounted) return;
-    final creds = Provider.of<CredentialStore>(context, listen: false);
     setState(() {
       mailData = null;
     });
-    final newMailData = await lernsax.getMailState(creds.lernSaxLogin!, creds.lernSaxToken!);
+    final newMailData = await lernsax.getMailState(widget.login, widget.token);
     if (!mounted) return;
     setState(() {
       mailData = newMailData;
@@ -414,6 +480,9 @@ class LSMailTile extends StatelessWidget {
     required this.onAfterSuccessfulMailAction,
     this.darkerIcons = false,
     this.iconColor,
+    required this.login,
+    required this.token,
+    required this.alternative,
   });
 
   final LSMailListing mail;
@@ -421,6 +490,9 @@ class LSMailTile extends StatelessWidget {
   final bool darkerIcons;
   final Color? iconColor;
   final void Function()? onAfterSuccessfulMailAction;
+  final String login;
+  final String token;
+  final bool alternative;
 
   @override
   Widget build(BuildContext context) {
@@ -473,11 +545,13 @@ class LSMailTile extends StatelessWidget {
           if (action == null) return;
           switch (action) {
             case LSMailAction.delete:
-              final trashFolder = Provider.of<LernSaxData>(globalScaffoldContext, listen: false).mailFolders?.cast<LSMailFolder?>().firstWhere((f) => f!.isTrash == true, orElse: () => null);
+              // ignore: use_build_context_synchronously
+              final trashFolder = (alternative ? (await lernsax.getMailFolders(login, token)).$2 : Provider.of<LernSaxData>(globalScaffoldContext, listen: false).mailFolders)?.cast<LSMailFolder?>().firstWhere((f) => f!.isTrash == true, orElse: () => null);
               if (trashFolder == null) {
                 showSnackBar(text: "Fehler beim Abfragen der Ordnerliste von LernSax.");
                 return;
               }
+              if (!context.mounted) return;
               final alrInTrash = mail.folderId == trashFolder.id;
               showDialog(
                 context: context,
@@ -491,12 +565,11 @@ class LSMailTile extends StatelessWidget {
                 ),
               ).then((selected) {
                 if (selected == true) {
-                  final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
                   (
                     alrInTrash ?
-                    lernsax.deleteMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id)
+                    lernsax.deleteMail(login, token, folderId: mail.folderId, mailId: mail.id)
                     :
-                    lernsax.moveMailToFolder(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id, targetFolderId: trashFolder.id)
+                    lernsax.moveMailToFolder(login, token, folderId: mail.folderId, mailId: mail.id, targetFolderId: trashFolder.id)
                   ).then((data) {
                     final (online, success) = data;
                     if (!online) {
@@ -514,14 +587,13 @@ class LSMailTile extends StatelessWidget {
             case LSMailAction.forward:
             case LSMailAction.respond:
               late LSMail mailData;
-              final creds = Provider.of<CredentialStore>(context, listen: false);
               final lsdata = Provider.of<LernSaxData>(context, listen: false);
 
               final mailDataCached = lsdata.getCachedMail(mail.folderId, mail.id);
-              if (mailDataCached != null && !mail.isDraft) {
+              if (mailDataCached != null && !mail.isDraft && !alternative) {
                 mailData = mailDataCached;
               } else {
-                final (online, mailDataLive) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: mail.folderId, mailId: mail.id);
+                final (online, mailDataLive) = await lernsax.getMail(login, token, folderId: mail.folderId, mailId: mail.id);
                 if (!online) {
                   showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
                   return;
@@ -529,7 +601,7 @@ class LSMailTile extends StatelessWidget {
                   showSnackBar(textGen: (sie) => "Fehler beim Abfragen der E-Mail. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
                   return;
                 } else {
-                  if (!mail.isDraft) lsdata.addMailToCache(mailDataLive);
+                  if (!mail.isDraft && !alternative) lsdata.addMailToCache(mailDataLive);
                   mailData = mailDataLive;
                 }
               }
@@ -559,7 +631,7 @@ class LSMailTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail))]),
+        onPressed: () => Provider.of<AppState>(context, listen: false).infoScreen = InfoScreenDisplay(infoScreens: [InfoScreen(customScreen: MailDetailPage(listing: mail, login: login, token: token, alternative: alternative))]),
         child: Column(
           children: [
             Padding(
@@ -577,7 +649,7 @@ class LSMailTile extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text("${(mail.size / 1024 * 100).round() / 100} KB"),
                   ),
-                  if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty)
+                  if (lsdata.mailCache.where((m) => m.id == mail.id && m.folderId == mail.folderId).isNotEmpty && !alternative)
                     Tooltip(
                       triggerMode: TooltipTriggerMode.tap,
                       message: "E-Mail ist offline verfügbar",
@@ -633,7 +705,15 @@ class LSMailTile extends StatelessWidget {
                 ],
               ),
             ),
-            AttachmentAmountDisplay(folderId: folderId, mailId: mail.id, isDraft: mail.isDraft, iconColor: iconColor),
+            AttachmentAmountDisplay(
+              folderId: folderId,
+              mailId: mail.id,
+              isDraft: mail.isDraft,
+              iconColor: iconColor,
+              login: login,
+              token: token,
+              alternative: alternative,
+            ),
           ],
         ),
       ),
@@ -646,8 +726,11 @@ class AttachmentAmountDisplay extends StatefulWidget {
   final int mailId;
   final bool isDraft;
   final Color? iconColor;
+  final String login;
+  final String token;
+  final bool alternative;
 
-  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft, this.iconColor});
+  const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft, this.iconColor, required this.login, required this.token, required this.alternative});
 
   @override
   State<AttachmentAmountDisplay> createState() => _AttachmentAmountDisplayState();
@@ -696,10 +779,9 @@ class _AttachmentAmountDisplayState extends State<AttachmentAmountDisplay> {
 
   Future<void> _loadAttachmentInfo() async {
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
-    final creds = Provider.of<CredentialStore>(context, listen: false);
 
     final cachedMail = lsdata.getCachedMail(widget.folderId, widget.mailId);
-    if (cachedMail != null) {
+    if (cachedMail != null && !widget.alternative && !widget.isDraft) {
       if (!mounted) return;
       setState(() {
         attachmentAmount = cachedMail.attachments.length;
@@ -707,9 +789,9 @@ class _AttachmentAmountDisplayState extends State<AttachmentAmountDisplay> {
       });
     // only load data from the Neuland if the user enabled it
     } else if (Provider.of<Preferences>(context, listen: false).lernSaxAutoLoadMailOnScrollBy) {
-      final (online, mail) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.folderId, mailId: widget.mailId, peek: true);
+      final (online, mail) = await lernsax.getMail(widget.login, widget.token, folderId: widget.folderId, mailId: widget.mailId, peek: true);
       if (!online || mail == null) return;
-      if (!widget.isDraft) lsdata.addMailToCache(mail);
+      if (!widget.isDraft && !widget.alternative) lsdata.addMailToCache(mail);
       if (!mounted) return;
       setState(() {
         attachmentAmount = mail.attachments.length;

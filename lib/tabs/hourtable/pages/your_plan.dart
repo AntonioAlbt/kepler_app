@@ -83,7 +83,7 @@ class YourPlanPageState extends State<YourPlanPage> {
                               if (stdata.altSelectedClassNames.isEmpty) const IconButton(icon: Icon(Icons.abc, size: 20, color: Colors.transparent), onPressed: null),
                                DropdownButton<(int, String)>(
                                 items: ([mainSelected, ...stdata.altSelectedClassNames].asMap().entries.map(
-                                  (e) => classNameToIndexedDropdownItem(e.value, false, e.key, e.key == 0 ? " (Hauptnutzer)" : null)
+                                  (e) => classNameToIndexedDropdownItem(e.value, false, e.key, e.key == 0 ? " (primär)" : null)
                                 ).toList()..add(
                                   const DropdownMenuItem(
                                     value: (-153, "add"),
@@ -140,8 +140,7 @@ class YourPlanPageState extends State<YourPlanPage> {
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        stdata.altSelectedClassNames.removeAt(selected.$1 - 1);
-                                        stdata.altSelectedCourseIDs.removeAt(selected.$1 - 1);
+                                        stdata.removeAltSelection(selected.$1 - 1);
                                         if (!context.mounted) return;
                                         setState(() {
                                           selected = (0, mainSelected);

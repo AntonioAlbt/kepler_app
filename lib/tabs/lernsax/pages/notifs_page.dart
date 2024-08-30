@@ -54,7 +54,11 @@ void lernSaxNotifsRefreshAction() {
 }
 
 class LSNotificationPage extends StatefulWidget {
-  LSNotificationPage() : super(key: lsNotifPageKey);
+  final String login;
+  final String token;
+  final bool alternative;
+
+  LSNotificationPage(this.login, this.token, this.alternative) : super(key: lsNotifPageKey);
 
   @override
   State<LSNotificationPage> createState() => LSNotificationPageState();

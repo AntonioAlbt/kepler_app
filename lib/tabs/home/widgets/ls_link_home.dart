@@ -36,6 +36,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
+import 'package:provider/provider.dart';
 
 class HomeLSLinkWidget extends StatelessWidget {
   final String id;
@@ -51,7 +52,8 @@ class HomeLSLinkWidget extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(backgroundColor: hasDarkTheme(context) ? const Color.fromARGB(255, 10, 36, 11) : Colors.green.shade100, foregroundColor: hasDarkTheme(context) ? Colors.white : const Color.fromARGB(255, 20, 67, 23)),
         onPressed: (){
-          lernSaxOpenInBrowser(context);
+          final creds = Provider.of<CredentialStore>(context, listen: false);
+          lernSaxOpenInBrowser(context, creds.lernSaxLogin!, creds.lernSaxToken!);
         },
         child: const Row(
           mainAxisSize: MainAxisSize.min,

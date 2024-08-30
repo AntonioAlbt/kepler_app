@@ -101,6 +101,10 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   void setSelectedClassForAlt(int alt, String selected) {
     altSelectedClassNames = altSelectedClassNames..[alt] = selected;
   }
+  void removeAltSelection(int alt) {
+    altSelectedClassNames = altSelectedClassNames..removeAt(alt);
+    altSelectedCourseIDs = altSelectedCourseIDs..removeAt(alt);
+  }
 
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
   set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);

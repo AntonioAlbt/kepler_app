@@ -97,6 +97,10 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     alternativeLSLogins = alternativeLSLogins..add(login);
     alternativeLSTokens = alternativeLSTokens..add(token);
   }
+  void removeAlternativeLSUser(int index) {
+    alternativeLSLogins = alternativeLSLogins..removeAt(index);
+    alternativeLSTokens = alternativeLSTokens..removeAt(index);
+  }
 
   String? get vpHost => attributes["vp_host"] ?? indiware.baseUrl;
   set vpHost(String? host) => _setSaveNotify("vp_host", host);

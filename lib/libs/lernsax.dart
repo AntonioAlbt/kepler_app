@@ -130,20 +130,20 @@ Future<(bool, String)> newSession(String mail, String token, int durationSeconds
   return (true, result["session_id"] as String);
 }
 
-String _currentSessionId = "";
-DateTime _lastSessionUpdate = DateTime(1900);
 const _timeTilRefresh = Duration(minutes: 15);
 String durform(Duration dur) => "${dur.inMinutes.abs()}m${dur.inSeconds % 60}s";
+/// login => (session_id, last_update)
+final _sessionMap = <String, (String, DateTime)>{};
 /// returns: isOnline, data
 Future<(bool, String)> session(String mail, String token) async {
-  if (kDebugMode) print("[LS-AuthDebug] current sesh: $_currentSessionId, last update: ${DateFormat.Hms().format(_lastSessionUpdate)}, time to update: ${durform(_lastSessionUpdate.difference(DateTime.now().subtract(_timeTilRefresh)))}, update now: ${_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh}");
-  if (_lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh) {
+  final (currentSessionId, lastSessionUpdate) = _sessionMap[mail] ?? ("", DateTime(1900));
+  if (kDebugMode) print("[LS-AuthDebug] current sesh: $currentSessionId ($mail), last update: ${DateFormat.Hms().format(lastSessionUpdate)}, time to update: ${durform(lastSessionUpdate.difference(DateTime.now().subtract(_timeTilRefresh)))}, update now: ${lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh}");
+  if (lastSessionUpdate.difference(DateTime.now()).abs() >= _timeTilRefresh) {
     final (online, newSesId) = await newSession(mail, token, (_timeTilRefresh + const Duration(seconds: 30)).inSeconds);
     if (!online) return (false, "");
-    _currentSessionId = newSesId;
-    _lastSessionUpdate = DateTime.now();
+    _sessionMap[mail] = (newSesId, DateTime.now());
   }
-  return (true, _currentSessionId);
+  return (true, _sessionMap[mail]!.$1);
 }
 
 // this never needs an ID, because the response from the API for set_session doesn't contain the login information

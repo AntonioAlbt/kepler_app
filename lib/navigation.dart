@@ -41,6 +41,7 @@ import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/kepler_app_custom_icons.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/about.dart';
@@ -294,14 +295,14 @@ final destinations = [
     lockedFor: [UserType.nobody],
     selectable: false,
     childrenBuilder: (context) {
+      NavEntryData lernSaxOpenInBrowserEntry(String login, String token) => NavEntryData(
+        id: LernSaxPageIDs.openInBrowser,
+        icon: Icon(MdiIcons.web),
+        label: const Text("Im Browser öffnen"),
+        externalLink: true,
+        onTryOpen: (context) => lernSaxOpenInBrowser(context, login, token),
+      );
       final list = [
-        NavEntryData(
-          id: LernSaxPageIDs.openInBrowser,
-          icon: Icon(MdiIcons.web),
-          label: const Text("Im Browser öffnen"),
-          externalLink: true,
-          onTryOpen: lernSaxOpenInBrowser,
-        ),
         const NavEntryData(
           id: LernSaxPageIDs.notifications,
           icon: Icon(Icons.notifications_none),
@@ -328,6 +329,8 @@ final destinations = [
             IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
           ],
         ),
+      ];
+      final openInAppList = [
         const NavEntryData(
           id: LernSaxPageIDs.files,
           icon: Icon(Icons.folder_copy_outlined),
@@ -354,29 +357,45 @@ final destinations = [
         ),
       ];
 
-      // final addEntry = NavEntryData(
-      //   id: "lernsax_add",
-      //   icon: const Icon(Icons.add),
-      //   label: const Text("LernSax-Konto hinzufügen"),
-      //   onTryOpen: (ctx) async {
-      //     // await showDialog(
-      //     //   context: ctx,
-      //     //   builder: (ctx) => const AddNewLernSaxDialog(),
-      //     // );
-      //     return false;
-      //   },
-      // );
+      final addEntry = NavEntryData(
+        id: "lernsax_add",
+        icon: const Icon(Icons.add),
+        label: const Text("LernSax-Konto hinzufügen"),
+        onTryOpen: (ctx) async {
+          await showDialog(
+            context: ctx,
+            builder: (ctx) => AlertDialog(
+              title: const Text("LernSax-Konto hinzufügen"),
+              content: LernSaxScreenMain(
+                onRegistered: (mail, token, context) {
+                  final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                  creds.addAlternativeLSUser(mail, token);
+                  Navigator.pop(context);
+                  showSnackBar(text: "LernSax-Konto erfolgreich hinzugefügt.");
+                  globalScaffoldState.closeDrawer();
+                },
+                onNonLogin: (_) {},
+                allowNotLogin: false,
+                again: true,
+                extraPadding: false,
+                additionalAccount: true,
+              ),
+            ),
+          );
+          return false;
+        },
+      );
 
       removeEntry(int uid, String login) => NavEntryData(
         id: "ls_remove$uid",
         icon: const Icon(Icons.remove),
-        label: const Text("Konto entfernen"),
+        label: const Text("Abmelden"),
         onTryOpen: (ctx) async {
           final remove = await showDialog(
             context: ctx,
             builder: (ctx) => AlertDialog(
-              title: const Text("Konto entfernen"),
-              content: Text("Konto mit Login $login wirklich entfernen?"),
+              title: const Text("Abmelden"),
+              content: Text("Wirklich Konto $login in der App abmelden?"),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
@@ -384,20 +403,21 @@ final destinations = [
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text("Entfernen"),
+                  child: const Text("Ja, abmelden"),
                 ),
               ],
             ),
           );
           if (!globalScaffoldContext.mounted) return false;
-          if (remove) {
+          if (remove == true) {
             final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
-            final (login, token) = (creds.alternativeLSLogins[uid], creds.alternativeLSTokens[uid]);
+            final (login, token) = (creds.alternativeLSLogins[uid - 1], creds.alternativeLSTokens[uid - 1]);
             try {
-              await unregisterApp(login, token);
+              // nicht awaiten, damit es einfach im Hintergrund passiert
+              // oder fehlschlägt (ist auch egal)
+              unregisterApp(login, token);
             } on Exception catch (_) {}
-            creds.alternativeLSLogins.removeAt(uid);
-            creds.alternativeLSTokens.removeAt(uid);
+            creds.removeAlternativeLSUser(uid - 1);
             globalScaffoldState.closeDrawer();
           }
           return false;
@@ -405,21 +425,25 @@ final destinations = [
       );
 
       final creds = Provider.of<CredentialStore>(context, listen: false);
+      if (creds.lernSaxLogin == null || creds.lernSaxToken == null) {
+        return [
+          const NavEntryData(id: "ls_no", icon: Icon(Icons.abc), label: Text("Nicht angemeldet.")),
+        ];
+      }
       final loginList = [creds.lernSaxLogin!, ...creds.alternativeLSLogins];
       if (loginList.length > 1) {
         return loginList.asMap().entries.map((entry) =>
           NavEntryData(
-            id: base64UrlEncode(utf8.encode(entry.value)),
+            id: "lslogin:${base64UrlEncode(utf8.encode(entry.value))}",
             icon: const Icon(Icons.person_outline),
-            label: Text(entry.value),
-            children: [...list, removeEntry(entry.key, entry.value)],
+            label: Text(entry.value + (entry.key == 0 ? " (primär)" : "")),
+            children: [lernSaxOpenInBrowserEntry(entry.value, entry.key == 0 ? creds.lernSaxToken! : creds.alternativeLSTokens[entry.key - 1]), ...list, if (entry.key > 0) removeEntry(entry.key, entry.value)],
             selectedIcon: const Icon(Icons.person),
             selectable: false,
           )
-        ).toList();//..add(addEntry);
+        ).toList()..addAll(openInAppList)..add(addEntry);
       } else {
-        // return [...list, addEntry];
-        return list;
+        return [lernSaxOpenInBrowserEntry(creds.lernSaxLogin!, creds.lernSaxToken!), ...list, ...openInAppList, addEntry];
       }
     }
   ),
