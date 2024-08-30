@@ -74,7 +74,7 @@ class _HourtableTabState extends State<HourtableTab> {
           );
         }
         final navPage = state.selectedNavPageIDs.last;
-        if (navPage == StuPlanPageIDs.yours) return const YourPlanPage();
+        if (navPage == StuPlanPageIDs.yours) return YourPlanPage();
         if (navPage == StuPlanPageIDs.classPlans) return const ClassPlanPage();
         if (navPage == StuPlanPageIDs.all) return const AllReplacesPage();
         if (navPage == StuPlanPageIDs.freeRooms) return const FreeRoomsPage();

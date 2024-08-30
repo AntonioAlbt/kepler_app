@@ -44,40 +44,202 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:provider/provider.dart';
 
 final yourPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
+final yourPlanPageKey = GlobalKey<YourPlanPageState>();
 
-class YourPlanPage extends StatelessWidget {
-  const YourPlanPage({super.key});
+class YourPlanPage extends StatefulWidget {
+  YourPlanPage() : super(key: yourPlanPageKey);
+
+  @override
+  State<YourPlanPage> createState() => YourPlanPageState();
+}
+
+class YourPlanPageState extends State<YourPlanPage> {
+  late (int, String) selected;
 
   @override
   Widget build(BuildContext context) {
-    final stdata = Provider.of<StuPlanData>(context);
-    return Stack(
-      children: [
-        RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
-        Column(
+    return Consumer3<StuPlanData, AppState, Preferences>(
+      builder: (context, stdata, state, prefs, _) {
+        final mainSelected = state.userType == UserType.teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!;
+        return Stack(
           children: [
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: StuPlanDisplay(
-                  key: yourPlanDisplayKey,
-                  selected: Provider.of<AppState>(context).userType == UserType.teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!,
-                  mode: SPDisplayMode.yourPlan,
+            RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+            Column(
+              children: [
+                if (prefs.showYourPlanAddDropdown) SizedBox(
+                  height: selected.$1 > 0 ? 90 : 50,
+                  child: AppBar(
+                    scrolledUnderElevation: 5,
+                    backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+                    elevation: 5,
+                    bottom: PreferredSize(
+                      preferredSize: const Size(100, 100),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // extra IconButton, damit der DropdownButton in der Mitte ist
+                              if (stdata.altSelectedClassNames.isEmpty) const IconButton(icon: Icon(Icons.abc, size: 20, color: Colors.transparent), onPressed: null),
+                               DropdownButton<(int, String)>(
+                                items: ([mainSelected, ...stdata.altSelectedClassNames].asMap().entries.map(
+                                  (e) => classNameToIndexedDropdownItem(e.value, false, e.key, e.key == 0 ? " (Hauptnutzer)" : null)
+                                ).toList()..add(
+                                  const DropdownMenuItem(
+                                    value: (-153, "add"),
+                                    child: Text("+ Stundenplan hinzufügen"),
+                                  ),
+                                )),
+                                onChanged: (val) {
+                                  final (i, _) = val!;
+                                  if (i == -153) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => const AddNewStuPlanDialog(),
+                                    );
+                                    return;
+                                  }
+                                  if (i == selected.$1) return;
+                                  setState(() => selected = val);
+                                  Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan = i;
+                                },
+                                value: selected,
+                              ),
+                              if (stdata.altSelectedClassNames.isEmpty) IconButton(onPressed: () {
+                                showDialog(context: context, builder: (ctx) => AlertDialog(
+                                  title: const Text("Ausblenden?"),
+                                  content: const Text("Soll die Möglichkeit zum Hinzufügen anderer Klassen/Stundenpläne wirklich ausgeblendet werden? Dies kann jederzeit in den Einstellungen geändert werden."),
+                                  actions: [
+                                    TextButton(onPressed: () {
+                                      prefs.showYourPlanAddDropdown = false;
+                                      Navigator.pop(ctx);
+                                    }, child: const Text("Ja, ausblenden")),
+                                    TextButton(onPressed: () {
+                                      Navigator.pop(ctx);
+                                    }, child: const Text("Nein")),
+                                  ],
+                                ));
+                              }, icon: const Icon(Icons.visibility_off), iconSize: 20),
+                            ],
+                          ),
+                          if (selected.$1 != 0) TextButton.icon(
+                            icon: const Icon(Icons.delete, size: 16),
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity(horizontal: -4, vertical: -2),
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text("Stundenplan entfernen"),
+                                  content: Text("Stundenplan für ${selected.$2.contains("-") ? "Klasse" : "Jahrgang"} ${selected.$2} wirklich entfernen?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text("Abbrechen"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        stdata.altSelectedClassNames.removeAt(selected.$1 - 1);
+                                        stdata.altSelectedCourseIDs.removeAt(selected.$1 - 1);
+                                        if (!context.mounted) return;
+                                        setState(() {
+                                          selected = (0, mainSelected);
+                                        });
+                                        Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan = 0;
+                                        Navigator.pop(ctx);
+                                      },
+                                      child: const Text("Entfernen"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            label: const Text("Stundenplan entfernen"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: StuPlanDisplay(
+                      key: yourPlanDisplayKey,
+                      mode: SPDisplayMode.yourPlan,
+                      selected: selected.$2,
+                      selectedId: selected.$1,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      }
     );
+  }
+
+  void stdataListener() {
+    if (!context.mounted) return;
+    final stdata = Provider.of<StuPlanData>(context, listen: false);
+    final teacher = Provider.of<AppState>(context, listen: false).userType == UserType.teacher;
+    if (
+      (!teacher && stdata.selectedClassName != selected.$2 && selected.$1 == 0)
+      || (stdata.altSelectedClassNames.length < selected.$1 && selected.$1 > 0)
+    ) {
+      setState(() {
+        selected = (0, stdata.selectedClassName!);
+      });
+    } else if (teacher && stdata.selectedTeacherName != selected.$2 && selected.$1 == 0) {
+      setState(() {
+        selected = (0, stdata.selectedTeacherName!);
+      });
+    } else if (selected.$1 > 0 && stdata.altSelectedClassNames[selected.$1 - 1] != selected.$2) {
+      setState(() {
+        selected = (selected.$1, stdata.altSelectedClassNames[selected.$1 - 1]);
+      });
+    }
+    Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan = selected.$1;
+  }
+
+  @override
+  void initState() {
+    final stdata = Provider.of<StuPlanData>(context, listen: false);
+    final lastIndex = Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan;
+    if (lastIndex != null && lastIndex > 0 && stdata.altSelectedClassNames.length > lastIndex - 1) {
+      selected = (lastIndex, stdata.altSelectedClassNames[lastIndex - 1]);
+    } else {
+      selected = (0, stdata.selectedClassName!);
+    }
+    stdata.addListener(stdataListener);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // globalen Context verwenden, weil lokaler Context hier nicht mehr sicher verwendet werden kann
+    Provider.of<StuPlanData>(globalScaffoldContext, listen: false).removeListener(stdataListener);
+    super.dispose();
   }
 }
 
 void yourStuPlanEditAction() {
-  final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
-  state.infoScreen ??= (state.userType != UserType.teacher)
-      ? stuPlanPupilIntroScreens()
-      : stuPlanTeacherIntroScreens();
+  final ypState = yourPlanPageKey.currentState;
+  if (ypState == null) return;
+
+  if (ypState.selected.$1 == 0) {
+    final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+    state.infoScreen ??= (state.userType != UserType.teacher)
+        ? stuPlanPupilIntroScreens()
+        : stuPlanTeacherIntroScreens();
+  } else {
+    showDialog(
+      context: globalScaffoldContext,
+      builder: (_) => AddNewStuPlanDialog(editId: ypState.selected.$1 - 1),
+    );
+  }
 }
 
 void yourStuPlanRefreshAction() {

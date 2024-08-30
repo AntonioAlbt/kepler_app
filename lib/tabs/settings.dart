@@ -44,6 +44,7 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -271,6 +272,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("Icon für Räume mit letzter Verwendung"),
                   description: const Text("Stunden mit Räumen, die am ausgewählten Tag das letzte Mal verwendet werden, bekommen ein besonderes Icon"),
                   enabled: userType != UserType.nobody,
+                ),
+                rainbowSwitchTile(
+                  initialValue: prefs.showYourPlanAddDropdown,
+                  onToggle: (val) => prefs.showYourPlanAddDropdown = val,
+                  title: const Text("Möglichkeit für Stundenpläne hinzufügen anzeigen"),
+                  description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" Stundenpläne hinzufügen können"),
+                  enabled: userType != UserType.nobody && Provider.of<StuPlanData>(context, listen: false).altSelectedClassNames.isEmpty,
                 ),
               ],
             ),

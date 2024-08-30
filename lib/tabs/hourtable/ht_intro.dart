@@ -68,24 +68,38 @@ class ClassSelectScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SPClassSelector(
-      onSubmit: (selected) {
-        Provider.of<StuPlanData>(context, listen: false).selectedClassName = selected;
-        if (teacherMode) {
-          final state = Provider.of<AppState>(context, listen: false);
-          state.clearInfoScreen();
-          if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
-          state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
-        } else {
-          infoScreenState.next();
-        }
-      },
-      teacherMode: teacherMode,
+    return Consumer<StuPlanData>(
+      builder: (context, stdata, _) {
+        return SPClassSelector(
+          preselected: stdata.selectedClassName,
+          onSubmit: (selected) {
+            Provider.of<StuPlanData>(context, listen: false).selectedClassName = selected;
+            if (teacherMode) {
+              final state = Provider.of<AppState>(context, listen: false);
+              state.clearInfoScreen();
+              if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+              state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+            } else {
+              infoScreenState.next();
+            }
+          },
+          teacherMode: teacherMode,
+        );
+      }
     );
   }
 }
 
-DropdownMenuItem<String> classNameToDropdownItem(String className, bool teacher)
+DropdownMenuItem<(int, String)> classNameToIndexedDropdownItem(String className, bool teacher, int index, [String? suffix])
+  => DropdownMenuItem(
+      value: (index, className),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 32),
+        child: Text("${teacher ? className : className.contains("-") ? "Klasse $className" : "Jahrgang $className"}${suffix ?? ""}"),
+      ),
+    );
+
+DropdownMenuItem<String> classNameToDropdownItem(String className, bool teacher, [int? index])
   => DropdownMenuItem(
       value: className,
       child: Padding(
@@ -94,14 +108,13 @@ DropdownMenuItem<String> classNameToDropdownItem(String className, bool teacher)
       ),
     );
 
-String? _previousSelectedClass;
-
 class SPClassSelector extends StatefulWidget {
+  final String? preselected;
   final bool teacherMode;
   final void Function(String selected) onSubmit;
   final void Function()? onCancel;
 
-  const SPClassSelector({super.key, required this.teacherMode, required this.onSubmit, this.onCancel});
+  const SPClassSelector({super.key, this.preselected, required this.teacherMode, required this.onSubmit, this.onCancel});
 
   @override
   State<SPClassSelector> createState() => _SPClassSelectorState();
@@ -171,17 +184,14 @@ class _SPClassSelectorState extends State<SPClassSelector> {
     _loadData().then(
       (stdata) {
         if (stdata == null) return;
-        if (!widget.teacherMode && stdata.selectedClassName != null) {
-          selected = stdata.selectedClassName!;
-        } else if (widget.teacherMode && stdata.selectedTeacherName != null) {
-          selected = stdata.selectedTeacherName!;
+        if (widget.preselected == null) {
+          selected = widget.teacherMode ? stdata.availableTeachers!.first : stdata.availableClasses!.first;
+        } else {
+          selected = widget.preselected;
         }
-        selected = widget.teacherMode ? stdata.availableTeachers!.first : stdata.availableClasses!.first;
       },
     );
     super.initState();
-
-    _previousSelectedClass = Provider.of<StuPlanData>(globalScaffoldContext, listen: false).selectedClassName;
   }
 
   Future<StuPlanData?> _loadData() async {
@@ -381,9 +391,18 @@ class SPSubjectSelector extends StatefulWidget {
   final void Function() onGoBack;
   final void Function(bool enabled)? onShowExams;
   final List<VPCSubjectS> availableSubjects;
+  final List<VPCSubjectS>? preselectedSubjects;
   final bool currentShowExams;
 
-  const SPSubjectSelector({super.key, required this.onFinish, required this.onGoBack, this.onShowExams, required this.availableSubjects, this.currentShowExams = false});
+  const SPSubjectSelector({
+    super.key,
+    required this.onFinish,
+    required this.onGoBack,
+    this.onShowExams,
+    required this.availableSubjects,
+    this.currentShowExams = false,
+    this.preselectedSubjects,
+  });
 
   @override
   State<SPSubjectSelector> createState() => _SPSubjectSelectorState();
@@ -527,16 +546,11 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
   void initState() {
     super.initState();
     _scctr = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final stdata = Provider.of<StuPlanData>(globalScaffoldContext, listen: false);
-      if (stdata.selectedClassName != _previousSelectedClass) {
-        stdata.selectedCourseIDs = [];
-        stdata.selectedCourseIDs = stdata.availableClassSubjects!.map((e) => e.subjectID).toList();
-      }
-      final cname = stdata.selectedClassName;
-      if (cname != null) Provider.of<Preferences>(globalScaffoldContext, listen: false).stuPlanShowExams = !cname.contains("-");
-    });
     _showExams = widget.currentShowExams;
+    _selected.addAll(widget.preselectedSubjects?.map((e) => e.subjectID) ?? []);
+    if (widget.preselectedSubjects == null) {
+      _selected.addAll(widget.availableSubjects.map((e) => e.subjectID));
+    }
   }
 
   @override
@@ -562,7 +576,9 @@ InfoScreenDisplay stuPlanTeacherIntroScreens() => InfoScreenDisplay(
 
 
 class AddNewStuPlanDialog extends StatefulWidget {
-  const AddNewStuPlanDialog({super.key});
+  final int? editId;
+
+  const AddNewStuPlanDialog({super.key, this.editId});
 
   @override
   State<AddNewStuPlanDialog> createState() => _AddNewStuPlanDialogState();
@@ -578,8 +594,9 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
       animation: stdata,
       builder: (context, _) {
         return AlertDialog(
-          title: const Text("Stundenplan hinzufügen"),
+          title: Text("Stundenplan ${widget.editId != null ? "bearbeiten" : "hinzufügen"}"),
           content: _newClass == null ? SPClassSelector(
+            preselected: widget.editId != null ? stdata.altSelectedClassNames[widget.editId!] : null,
             teacherMode: false,
             onSubmit: (selected) {
               setState(() => _newClass = selected);
@@ -587,8 +604,13 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
             onCancel: () => Navigator.pop(context, false),
           ) : SPSubjectSelector(
             onFinish: (selected) {
-              stdata.altSelectedClassNames = stdata.altSelectedClassNames..add(_newClass!);
-              stdata.altSelectedCourseIDs = stdata.altSelectedCourseIDs..add(selected.join("|"));
+              if (widget.editId == null) {
+                stdata.altSelectedClassNames = stdata.altSelectedClassNames..add(_newClass!);
+                stdata.altSelectedCourseIDs = stdata.altSelectedCourseIDs..add(selected.join("|"));
+              } else {
+                stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
+                stdata.setSelectedCoursesForAlt(widget.editId!, selected);
+              }
               Navigator.pop(context, true);
             },
             onGoBack: () {

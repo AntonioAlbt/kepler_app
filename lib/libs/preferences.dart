@@ -190,18 +190,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
     setSaveNotify("logging_enabled", val);
     _loggingEnabled = val;
   }
-
-  List<String> get stuPlanNames => attributes["stuplan_names"] ?? [];
-  set stuPlanNames(List<String> val) => setSaveNotify("stuplan_names", val);
-  void addStuPlanName(String val) {
-    stuPlanNames = stuPlanNames..add(val);
-  }
-  void setStuPlanName(int id, String val) {
-    stuPlanNames = stuPlanNames..[id] = val;
-  }
-  void removeStuPlanName(int id) {
-    stuPlanNames = stuPlanNames..removeAt(id);
-  }
+  
+  bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
+  set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
 
   bool loaded = false;
 

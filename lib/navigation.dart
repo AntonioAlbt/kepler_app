@@ -49,7 +49,6 @@ import 'package:kepler_app/tabs/ffjkg.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
-import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/all_replaces.dart';
 import 'package:kepler_app/tabs/hourtable/pages/class_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
@@ -198,138 +197,94 @@ final destinations = [
     onTryExpand: stuPlanOnTryOpenCallback,
     lockedFor: [UserType.nobody],
     selectable: false,
-    childrenBuilder: (context) {
-      final list = [
-        NavEntryData(
-          id: StuPlanPageIDs.yours,
-          icon: const Icon(Icons.list_alt_outlined),
-          label: Selector<Preferences, bool>(
-            selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-            builder: (ctx, sie, _) => Selector<AppState, UserType>(
-              selector: (ctx, state) => state.userType,
-              builder: (context, user, _) => Text("${user != UserType.parent ? (sie ? "Ihr " : "Dein ") : ""}Stundenplan${user == UserType.parent ? " ${sie ? "Ihres" : "Deines"} Kindes" : ""}"),
-            ),
-          ),
-          selectedIcon: const Icon(Icons.list_alt),
-          navbarActions: [
-            Consumer<Preferences>(
-              builder: (context, prefs, _) {
-                if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
-                return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
+    children: [
+      NavEntryData(
+        id: StuPlanPageIDs.yours,
+        icon: const Icon(Icons.list_alt_outlined),
+        label: Selector<Preferences, bool>(
+          selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+          builder: (ctx, sie, _) => Selector<AppState, UserType>(
+            selector: (ctx, state) => state.userType,
+            builder: (context, user, _) => Selector<StuPlanData, List<String>>(
+              selector: (ctx, stdata) => stdata.altSelectedClassNames,
+              builder: (context, data, _) {
+                final multiple = data.isNotEmpty;
+                final possesive = "${sie ? "Ihr" : "Dein"}${multiple ? "e" : ""}";
+                final noun = multiple ? "Stundenpläne" : "Stundenplan";
+                if (user == UserType.parent) {
+                  return Text("$noun ${sie ? "Ihre" : "Deine"}${multiple ? "r" : "s"} Kinde${multiple ? "r" : "s"}");
+                } else {
+                  return Text("$possesive $noun");
+                }
               },
             ),
-            const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
-            const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
-          ],
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-        const NavEntryData(
-          id: StuPlanPageIDs.classPlans,
-          icon: Icon(Icons.groups_outlined),
-          label: Text("Klassenpläne"),
-          selectedIcon: Icon(Icons.groups),
-          navbarActions: [
-            IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
-          ],
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-        const NavEntryData(
-          id: StuPlanPageIDs.all,
-          icon: Icon(Icons.list_outlined),
-          label: Text("Alle Vertretungen"),
-          selectedIcon: Icon(Icons.list),
-          navbarActions: [
-            IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
-          ],
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-        const NavEntryData(
-          id: StuPlanPageIDs.freeRooms,
-          icon: Icon(Icons.door_back_door_outlined),
-          label: Text("Freie Zimmer"),
-          selectedIcon: Icon(Icons.door_back_door),
-          navbarActions: [
-            IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
-          ],
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-        NavEntryData(
-          id: StuPlanPageIDs.roomPlans,
-          icon: Icon(MdiIcons.doorClosed),
-          label: const Text("Raumpläne"),
-          selectedIcon: Icon(MdiIcons.doorOpen),
-          navbarActions: [
-            const IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
-          ],
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-        if (kDebugFeatures) const NavEntryData(
-          id: StuPlanPageIDs.debug,
-          icon: Icon(Icons.person_outline),
-          label: Text("Benutzerinfos"),
-          selectedIcon: Icon(Icons.person),
-          onTryOpen: stuPlanShowInfoDialog,
-        ),
-      ];
-      final stdata = Provider.of<StuPlanData>(context, listen: false);
-      final utype = Provider.of<AppState>(context, listen: false).userType;
-      final selected = utype == UserType.teacher ? stdata.selectedTeacherName : stdata.selectedClassName;
-      if (selected == null || (utype != UserType.teacher && stdata.selectedCourseIDs.isEmpty)) {
-        return [
-          const NavEntryData(
-            id: "sp_error",
-            icon: Icon(Icons.warning_rounded),
-            label: Text("Daten fehlen :("),
-            selectable: false,
           ),
-        ];
-      }
-      mainUserList() {
-        if (utype == UserType.teacher) {
-          return [...list]..insert(1, 
-            NavEntryData(
-              id: StuPlanPageIDs.teacherPlan,
-              icon: Icon(MdiIcons.humanMaleBoard),
-              label: const Text("Lehrerpläne"),
-              selectedIcon: Icon(MdiIcons.humanMaleBoard),
-              navbarActions: [
-                const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
-              ],
-              onTryOpen: stuPlanShowInfoDialog,
-            ),
-          );
-        }
-        return list;
-      }
-      final addEntry = NavEntryData(
-        id: "sp_add",
-        icon: const Icon(Icons.add),
-        label: const Text("Stundenplan hinzufügen"),
-        onTryOpen: (ctx) async {
-          final success = await showDialog(
-            context: ctx,
-            builder: (ctx) => const AddNewStuPlanDialog(),
-          );
-          if (success) globalScaffoldState.closeDrawer();
-          return false;
-        },
-      );
-      if (stdata.altSelectedClassNames.isNotEmpty) {
-        return [selected, ...stdata.altSelectedClassNames].asMap().map((i, name) => MapEntry(i, NavEntryData(
-          id: base64UrlEncode(utf8.encode(name)),
-          icon: const Icon(Icons.group_outlined),
-          label: Text(utype == UserType.teacher ? name : name.contains("-") ? "Klasse $name" : "Jahrgang $name"),
-          children: i == 0
-            ? mainUserList()
-            : [...list/* , removeEntry(i, name) */],
-          selectedIcon: const Icon(Icons.group),
-          selectable: false,
-        ))).values.toList()..add(addEntry);
-      } else {
-        return mainUserList()..add(addEntry);
-      }
-      // TODO: only dynamically let user select class for "your stuplan" (it doesnt matter for everything else, but its currently repeated for each class)
-    }
+        ),
+        selectedIcon: const Icon(Icons.list_alt),
+        navbarActions: [
+          Consumer<Preferences>(
+            builder: (context, prefs, _) {
+              if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
+              return const IconButton(onPressed: yourStuPlanJumpToStartAction, icon: Icon(Icons.calendar_today));
+            },
+          ),
+          const IconButton(onPressed: yourStuPlanEditAction, icon: Icon(Icons.edit)),
+          const IconButton(onPressed: yourStuPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+      NavEntryData(
+        id: StuPlanPageIDs.teacherPlan,
+        icon: Icon(MdiIcons.humanMaleBoard),
+        label: const Text("Lehrerpläne"),
+        selectedIcon: Icon(MdiIcons.humanMaleBoard),
+        visibleFor: [UserType.teacher],
+        navbarActions: [
+          const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+      const NavEntryData(
+        id: StuPlanPageIDs.classPlans,
+        icon: Icon(Icons.groups_outlined),
+        label: Text("Klassenpläne"),
+        selectedIcon: Icon(Icons.groups),
+        navbarActions: [
+          IconButton(onPressed: classPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+      const NavEntryData(
+        id: StuPlanPageIDs.all,
+        icon: Icon(Icons.list_outlined),
+        label: Text("Alle Vertretungen"),
+        selectedIcon: Icon(Icons.list),
+        navbarActions: [
+          IconButton(onPressed: allReplacesRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+      const NavEntryData(
+        id: StuPlanPageIDs.freeRooms,
+        icon: Icon(Icons.door_back_door_outlined),
+        label: Text("Freie Zimmer"),
+        selectedIcon: Icon(Icons.door_back_door),
+        navbarActions: [
+          IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+      NavEntryData(
+        id: StuPlanPageIDs.roomPlans,
+        icon: Icon(MdiIcons.doorClosed),
+        label: const Text("Raumpläne"),
+        selectedIcon: Icon(MdiIcons.doorOpen),
+        navbarActions: [
+          const IconButton(onPressed: roomPlanRefreshAction, icon: Icon(Icons.refresh)),
+        ],
+        onTryOpen: stuPlanShowInfoDialog,
+      ),
+    ],
   ),
   NavEntryData(
     id: LernSaxPageIDs.main,
@@ -399,18 +354,18 @@ final destinations = [
         ),
       ];
 
-      final addEntry = NavEntryData(
-        id: "lernsax_add",
-        icon: const Icon(Icons.add),
-        label: const Text("LernSax-Konto hinzufügen"),
-        onTryOpen: (ctx) async {
-          // await showDialog(
-          //   context: ctx,
-          //   builder: (ctx) => const AddNewLernSaxDialog(),
-          // );
-          return false;
-        },
-      );
+      // final addEntry = NavEntryData(
+      //   id: "lernsax_add",
+      //   icon: const Icon(Icons.add),
+      //   label: const Text("LernSax-Konto hinzufügen"),
+      //   onTryOpen: (ctx) async {
+      //     // await showDialog(
+      //     //   context: ctx,
+      //     //   builder: (ctx) => const AddNewLernSaxDialog(),
+      //     // );
+      //     return false;
+      //   },
+      // );
 
       removeEntry(int uid, String login) => NavEntryData(
         id: "ls_remove$uid",
@@ -421,7 +376,7 @@ final destinations = [
             context: ctx,
             builder: (ctx) => AlertDialog(
               title: const Text("Konto entfernen"),
-              content: Text("Möchtest du das Konto $login wirklich entfernen?"),
+              content: Text("Konto mit Login $login wirklich entfernen?"),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
@@ -461,9 +416,10 @@ final destinations = [
             selectedIcon: const Icon(Icons.person),
             selectable: false,
           )
-        ).toList()..add(addEntry);
+        ).toList();//..add(addEntry);
       } else {
-        return [...list, addEntry];
+        // return [...list, addEntry];
+        return list;
       }
     }
   ),

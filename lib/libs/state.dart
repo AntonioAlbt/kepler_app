@@ -83,7 +83,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     _setSaveNotify("lern_sax_token", token);
   }
 
-  List<String> get alternativeLSLogins => attributes["alt_ls_logins"] ?? ["a.a"];
+  List<String> get alternativeLSLogins => attributes["alt_ls_logins"] ?? [];
   set alternativeLSLogins(List<String> list) {
     _setSaveNotify("alt_ls_logins", list);
   }
@@ -196,6 +196,8 @@ class InternalState extends SerializableObject with ChangeNotifier {
   bool get introShown => attributes["intro_shown"] ?? false;
   set introShown(bool introShown) => _setSaveNotify("intro_shown", introShown);
 
+  int? get lastSelectedClassYourPlan => attributes["lscpyp"];
+  set lastSelectedClassYourPlan(int? val) => _setSaveNotify("lscpyp", val);
   String? get lastSelectedClassPlan => attributes["lscp"];
   set lastSelectedClassPlan(String? val) => _setSaveNotify("lscp", val);
   String? get lastSelectedRoomPlan => attributes["lsrp"];
