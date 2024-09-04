@@ -5,6 +5,7 @@ import 'package:rainbow_color/rainbow_color.dart';
 
 const rainbowAnimationDuration = Duration(seconds: 10);
 
+/// verschiedene Regenbogen-Farbschemas und Regenbogen-Farbpaletten / Tweens
 const rainbowColors = [
   Colors.red,
   Colors.orange,
@@ -45,6 +46,9 @@ final _rainbowMap = {
   RainbowVariant.blue: blueRainbowColorTween,
 };
 
+/// Widget, was dem darunterliegenden eine Farbanimation bereitstellt, indem es mit einer neuen Farbe immer wieder
+/// neu gebuildet wird (falls in den Einstellungen aktiviert - um bei Deaktivierung möglichen Lag zu vermeiden)
+/// -> für Widgets, die eigentlich keine Farbanimationen erlauben, gedacht
 class RainbowWrapper extends StatelessWidget {
   final Widget Function(BuildContext context, Color? value) builder;
   final RainbowColorTween? rainbow;
@@ -61,6 +65,7 @@ class RainbowWrapper extends StatelessWidget {
   }
 }
 
+/// wie RainbowWrapper, aber mit verschienenen Rainbows
 class Rainbow2Wrapper extends StatelessWidget {
   final Widget Function(BuildContext context, Color? value1, Color? value2) builder;
   final RainbowColorTween? rainbow1;
@@ -80,6 +85,7 @@ class Rainbow2Wrapper extends StatelessWidget {
   }
 }
 
+/// Widget, was den builder nur immer wieder ausführen lässt, wenn der Regenbogen-Modus aktiviert ist
 class RawRainbowWrapper extends StatelessWidget {
   final Widget Function(BuildContext context, double? value) builder;
 
@@ -100,6 +106,8 @@ class RawRainbowWrapper extends StatelessWidget {
   }
 }
 
+/// ist separat, damit bei deaktiviertem Regenbogen-Modus nicht für jeden RainbowWrapper ein neues StatefulWidget erstellt
+/// wird (ist sonst RAM-Verschwendung und könnte für Lag sorgen)
 class _RainbowAnimatedWrapper extends StatefulWidget {
   final Widget Function(BuildContext context, double? value) builder;
   

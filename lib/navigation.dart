@@ -71,6 +71,10 @@ import 'package:provider/provider.dart';
 
 // all IDs should be constants
 // all IDs should be lowercase letters only, and definitely not include "." (the dot)
+/// Jede Seite hat ihre eigene ID, und damit keine Strings händig verglichen werden müssen
+/// bekommt alles einen Eintrag in der entsprechenden Klasse
+
+/// Haupteinträge (ohne Unterseiten)
 class PageIDs {
   static const home = "home";
   static const foodOrder = "foodOrder";
@@ -81,6 +85,8 @@ class PageIDs {
   static const about = "about";
 }
 
+/// Stundenplan-Einträge
+/// (main ist immer der Eintrag für den obersten Eintrag, der sich ausklappen lässt)
 class StuPlanPageIDs {
   static const main = "spmain";
   static const yours = "yours";
@@ -92,6 +98,7 @@ class StuPlanPageIDs {
   static const debug = "debug";
 }
 
+/// LernSax-Einträge
 class LernSaxPageIDs {
   static const main = "lsmain";
   static const files = "files";
@@ -103,18 +110,22 @@ class LernSaxPageIDs {
   static const openInBrowser = "inbrowser";
 }
 
+/// Einträge für News bzw. Kalender
 class NewsPageIDs {
   static const main = "nwmain";
   static const news = "news";
   static const calendar = "calendar";
 }
 
+/// Einträge für FFJKG-Seiten (nur für Eltern angezeigt)
 class FFJKGPageIDs {
   static const main = "ffjkgmain";
   static const ffjkg = "ffjkg";
   static const representatives = "reprslnk";
 }
 
+/// nur die Haupt-IDs werden einem Tab zugeordnet, um das Anzeigen der ausgewählten Unterseite muss sich jeder Tab
+/// selbst kümmern
 final tabs = {
   PageIDs.home: const HomepageTab(),
   NewsPageIDs.main: const SchoolTab(),
@@ -128,8 +139,11 @@ final tabs = {
   PageIDs.about: const AboutTab(),
 };
 
-// var viewcount = 0;
-
+/// wichtigstes Array - alle Navigationseinträge (und inzwischen auch Zeug zu mehreren Accounts) finden sich hier
+/// (die Bedeutung der Einträge ist ziemlich selbsterklärend, siehe immer auch das Label)
+/// Einträge können verschiedene Icons für (a) nicht ausgewählt und (b) ausgewählt haben
+/// -> (a) ist typischerweise die outlined Variante eines Icons, (b) dann das normale Icon
+/// navbarActions werden als kleine Icons mit Funktion in der NavBar oben rechts angezeigt
 final destinations = [
   NavEntryData(
     id: PageIDs.home,
@@ -137,6 +151,7 @@ final destinations = [
     label: const Text("Startseite"),
     selectedIcon: const Icon(Icons.home),
     navbarActions: [
+      /// für Tests: Intro nochmal anzeigen
       if (kDebugFeatures) IconButton(
         onPressed: () {
           final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
@@ -155,6 +170,8 @@ final destinations = [
     icon: Icon(MdiIcons.newspaperVariantMultipleOutline),
     label: const Text("Neuigkeiten"),
     selectedIcon: Icon(MdiIcons.newspaperVariantMultiple),
+    /// beim Auswählen dieser Seite wird der Benutzer auf die News-Seite umgeleitet
+    /// da die NewsPage main keinen Inhalt hat
     redirectTo: [NewsPageIDs.main, NewsPageIDs.news],
     children: [
       const NavEntryData(
@@ -163,6 +180,7 @@ final destinations = [
         selectedIcon: Icon(Icons.newspaper),
         label: Text("Kepler-News"),
         navbarActions: [
+          /// viele Seiten mit Daten haben eine ähnliche Aktion, um die Daten händisch neu laden/aktualisieren zu können
           IconButton(onPressed: newsTabRefreshAction, icon: Icon(Icons.refresh)),
         ],
       ),
@@ -194,14 +212,25 @@ final destinations = [
     icon: const Icon(Icons.school_outlined),
     label: const Text("Vertretungsplan"),
     selectedIcon: const Icon(Icons.school),
+    /// der Stundenplan muss vor dem Öffnen erst eingerichtet werden (siehe stuPlanOnTryOpenCallback)
+    /// daher wird, wenn die Einrichtung noch passieren muss, jeder Versuch vom Öffnen oder Ausklappen verhindert,
+    /// und der entsprechende InfoScreen angezeigt
     onTryOpen: stuPlanOnTryOpenCallback,
     onTryExpand: stuPlanOnTryOpenCallback,
+    /// Einträge können für gewisse Benutzertypen gesperrt sein (Schloss wird angezeigt und entsprechender Dialog
+    /// beim Antippen) - für den Stundenplan muss der Benutzer angemeldet sein, deshalb sind alle Einträge dafür
+    /// für nicht angemeldete Benutzer gesperrt
     lockedFor: [UserType.nobody],
-    selectable: false,
+    /// auch hier hat StuPlanPage main keinen Inhalt -> Umleitung
+    redirectTo: [StuPlanPageIDs.main, StuPlanPageIDs.yours],
     children: [
       NavEntryData(
         id: StuPlanPageIDs.yours,
         icon: const Icon(Icons.list_alt_outlined),
+        /// Label ist hier so komplex, da sowohl beachtet werden muss:
+        /// - ob der Benutzer mit Du oder Sie angesprochen werden will, als auch
+        /// - ob der Benutzer ein Elternteil ist, als auch
+        /// - ob der Benutzer mehrere Stundenpläne hat
         label: Selector<Preferences, bool>(
           selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
           builder: (ctx, sie, _) => Selector<AppState, UserType>(
@@ -223,6 +252,7 @@ final destinations = [
         ),
         selectedIcon: const Icon(Icons.list_alt),
         navbarActions: [
+          /// falls Unendlich scrollen aktiviert ist, kann man mit dieser Action zum heutigen Tag zurückspringen
           Consumer<Preferences>(
             builder: (context, prefs, _) {
               if (!prefs.enableInfiniteStuPlanScrolling) return const SizedBox.shrink();
@@ -239,6 +269,7 @@ final destinations = [
         icon: Icon(MdiIcons.humanMaleBoard),
         label: const Text("Lehrerpläne"),
         selectedIcon: Icon(MdiIcons.humanMaleBoard),
+        /// der Eintrag für Lehrerpläne wird nur Lehrern angezeigt
         visibleFor: [UserType.teacher],
         navbarActions: [
           const IconButton(onPressed: teacherPlanRefreshAction, icon: Icon(Icons.refresh)),
@@ -292,9 +323,17 @@ final destinations = [
     icon: const Icon(Icons.laptop_outlined),
     label: const Text("LernSax"),
     selectedIcon: const Icon(Icons.laptop),
+    /// wieder nur für angemeldete Benutzer
     lockedFor: [UserType.nobody],
+    /// da die main-Seite sowohl keinen Inhalt hat, als auch nicht auf einen festen Eintrag umgeleitet
+    /// werden kann (wegen mehreren Benutzern, siehe childrenBuilder), ist der Eintrag nicht anwählbar und wird
+    /// beim antippen nur ausgeklappt
     selectable: false,
+    /// da mehrere Benutzer hinzugefügt werden können, werden die Navigations-Einträge hier dynamisch generiert
     childrenBuilder: (context) {
+      /// da der Eintrag sich pro Benutzer unterscheiden muss, weil keine tatsächliche Seite dahinter steht, und
+      /// somit der Navigations-Index nicht geändert wird (weshalb die Funktion nie den Benutzer daraus bestimmen
+      /// könnte), wird der Eintrag mit dieser Funktion entsprechend erstellt
       NavEntryData lernSaxOpenInBrowserEntry(String login, String token) => NavEntryData(
         id: LernSaxPageIDs.openInBrowser,
         icon: Icon(MdiIcons.web),
@@ -302,6 +341,9 @@ final destinations = [
         externalLink: true,
         onTryOpen: (context) => lernSaxOpenInBrowser(context, login, token),
       );
+
+      /// Liste aller Einträge die für jeden Benutzer gleich hinzugefügt werden
+      /// die Seiten dieser Einträge bestimmen den aktuell ausgewählten Benutzer aus dem Navigations-Index
       final list = [
         const NavEntryData(
           id: LernSaxPageIDs.notifications,
@@ -330,6 +372,8 @@ final destinations = [
           ],
         ),
       ];
+
+      /// diese Einträge müssen nicht für jeden Benutzer hinzugefügt werden, da sie sowieso nur auf die App verweisen
       final openInAppList = [
         const NavEntryData(
           id: LernSaxPageIDs.files,
@@ -357,6 +401,8 @@ final destinations = [
         ),
       ];
 
+      /// da der "Hinzufügen"-Eintrag nur einmalig benötigt wird, ist er hier separat und nicht in einer der Listen
+      /// (auch, da seine Position sich ändern kann)
       final addEntry = NavEntryData(
         id: "lernsax_add",
         icon: const Icon(Icons.add),
@@ -386,7 +432,10 @@ final destinations = [
         },
       );
 
+      /// ähnlich wie der lernSaxOpenInBrowserEntry, wird der Eintrag zum Entfernen eines Benutzers für jeden
+      /// Benutzer separat und dynamisch benötigt und wird hier generiert
       removeEntry(int uid, String login) => NavEntryData(
+        /// die ID ist eigentlich egal, da der Eintrag nicht ausgewählt werden kann (onTryOpen gibt immer false zurück)
         id: "ls_remove$uid",
         icon: const Icon(Icons.remove),
         label: const Text("Abmelden"),
@@ -425,20 +474,30 @@ final destinations = [
       );
 
       final creds = Provider.of<CredentialStore>(context, listen: false);
+      /// sollte eigentlich nicht passieren, da der Eintrag für nicht angemeldete Benutzer gesperrt ist -
+      /// aber better safe than sorry
       if (creds.lernSaxLogin == null || creds.lernSaxToken == null) {
         return [
           const NavEntryData(id: "ls_no", icon: Icon(Icons.abc), label: Text("Nicht angemeldet.")),
         ];
       }
+
       final loginList = [creds.lernSaxLogin!, ...creds.alternativeLSLogins];
+      /// nur wenn mehrere Benutzer angemeldet sind, werden die Einträgt doppelt verschachtelt, bei nur 1 Benutzer
+      /// sieht die Übersicht unverändert aus
       if (loginList.length > 1) {
         return loginList.asMap().entries.map((entry) =>
           NavEntryData(
+            /// der Login des Benutzers wird in der ID des NavEntrys und damit im Navigations-Index "verschlüsselt"
+            /// platziert (base64Url statt base64 da ich mir nicht sicher war ob base64 vielleicht den "." enthält
+            /// und ich zu faul war, nachzulesen - base64Url geht auf jeden Fall)
             id: "lslogin:${base64UrlEncode(utf8.encode(entry.value))}",
             icon: const Icon(Icons.person_outline),
             label: Text(entry.value + (entry.key == 0 ? " (primär)" : "")),
+            /// removeEntry wird beim Hauptbenutzer (index = 0) nicht hinzugefügt
             children: [lernSaxOpenInBrowserEntry(entry.value, entry.key == 0 ? creds.lernSaxToken! : creds.alternativeLSTokens[entry.key - 1]), ...list, if (entry.key > 0) removeEntry(entry.key, entry.value)],
             selectedIcon: const Icon(Icons.person),
+            /// nur aufklappbar
             selectable: false,
           )
         ).toList()..addAll(openInAppList)..add(addEntry);
@@ -469,6 +528,8 @@ final destinations = [
     selectedIcon: Icon(Icons.diversity_1),
     visibleFor: [UserType.nobody, UserType.pupil, UserType.teacher],
   ),
+  /// auf Wunsch von Frau Korndörfer sieht der Eintrag für Eltern anders aus und verweist direkt auch auf die
+  /// Ansprechpartner der Schule (statt nur auf der Seite FFJKGPageIDs.main oder FFJKGPageIDs.ffjkg)
   const NavEntryData(
     visibleFor: [UserType.parent],
     id: FFJKGPageIDs.main,
@@ -508,23 +569,10 @@ final destinations = [
     label: Text("Über diese App"),
     selectedIcon: Icon(Icons.info),
   ),
-  // NavEntryData(
-  //   id: PageIDs.about,
-  //   icon: const Icon(Icons.emoji_objects_outlined),
-  //   label: const Text("View Count"),
-  //   selectedIcon: const Icon(Icons.emoji_objects),
-  //   childrenBuilder: (ctx) {
-  //     viewcount += 1;
-  //     return List.generate(viewcount, (index) => NavEntryData(
-  //       id: "viewcount_$index",
-  //       icon: const Icon(Icons.emoji_objects_outlined),
-  //       label: Text("Count $index (${Provider.of<Preferences>(ctx, listen: false).preferredPronoun})"),
-  //       selectedIcon: const Icon(Icons.emoji_objects),
-  //     ));
-  //   }
-  // ),
 ];
 
+/// da die Kinder-Einträge mit childrenBuilder dynamisch generiert werden, kann das Ergebnis der Rekursion
+/// nicht in einer anderen Liste/Map zwischengespeichert werden
 /// mainly used to determine the title and navbar actions needed to display for the current page
 NavEntryData? currentlySelectedNavEntry(BuildContext context) {
   final id = Provider.of<AppState>(context, listen: false).selectedNavPageIDs.join(".");

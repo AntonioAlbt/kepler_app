@@ -124,6 +124,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
               ),
             ).then((confirmed) {
               if (confirmed != true) return null; // confirmed = false or null
+              if (!mounted) return null;
               return showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(

@@ -587,6 +587,7 @@ class LSMailTile extends StatelessWidget {
             case LSMailAction.forward:
             case LSMailAction.respond:
               late LSMail mailData;
+              if (!context.mounted) return;
               final lsdata = Provider.of<LernSaxData>(context, listen: false);
 
               final mailDataCached = lsdata.getCachedMail(mail.folderId, mail.id);

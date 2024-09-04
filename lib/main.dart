@@ -64,6 +64,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+/// Damit ich in dieser Datei noch ohne Consumer auf die Datenquellen zugreifen kann,
+/// werden sie hier als lokale, finale Objekte initialisiert.
 final _newsCache = NewsCache();
 final _internalState = InternalState();
 final _prefs = Preferences();
@@ -72,39 +74,55 @@ final _appState = AppState();
 final _stuPlanData = StuPlanData();
 final _lernSaxData = LernSaxData();
 
+/// global, damit nicht jede Seite sich selbst um Konfetti kümmern muss
 final ConfettiController globalConfettiController = ConfettiController();
 
+/// wird während Ladebildschirm ausgeführt und hat vier Funktionen:
+/// 1. alle Datenquellen vom Speicher laden
+/// 2. Hintergrund-Task für Benachrichtungen initialisieren
+/// 3. neue News abfragen und Infos speichern
+/// 4. zu alte Stundenplan-Daten und Logs löschen
 Future<void> loadAndPrepareApp() async {
   final sprefs = sharedPreferences;
+  /// da im NewsCache theoretisch unendlich Nachrichten gespeichert werden können, wird dieser
+  /// in einer Datei gespeichert - der Benutzer kann diese Datei löschen, wenn sie ihm zu groß wird (nur Android),
+  /// da es in dem extra dafür vorgesehenen Cache-Ordner gespeichert wird
   if (await fs.fileExists(await newsCacheDataFilePath)) {
     final data = await fs.readFile(await newsCacheDataFilePath);
     if (data != null) _newsCache.loadFromJson(data);
   }
+  /// für die Credentials werden intern auch die SharedPreferences verwendet, aber mithilfe des Paketes
+  /// flutter_secure_storage wird es in den SharedPreferences verschlüsselt gespeichert (der Schlüssel gleich mit dazu)
   if (await securePrefs.containsKey(key: credStorePrefKey)) {
     _credStore.loadFromJson((await securePrefs.read(key: credStorePrefKey))!);
   }
+  /// da InternalState nur sehr klein ist, wird es direkt als JSON in den SharedPreferences gespeichert
+  /// die anderen Datenquellen sind alle etwas oder sehr viel größer - sie könnten zwar auch in den SPrefs
+  /// gespeichert werden, damit wird aber das Laden und Speichern ineffizienter
   if (sprefs.containsKey(internalStatePrefsKey)) {
     _internalState.loadFromJson(sprefs.getString(internalStatePrefsKey)!);
   }
+  // in Datei gespeichert (StuPlanData)
   if (await fs.fileExists(await stuPlanDataFilePath)) {
     final data = await fs.readFile(await stuPlanDataFilePath);
     if (data != null) _stuPlanData.loadFromJson(data);
   }
+  // in Datei gespeichert (LernSaxData)
   if (await fs.fileExists(await lernSaxDataFilePath)) {
     final data = await fs.readFile(await lernSaxDataFilePath);
     if (data != null) _lernSaxData.loadFromJson(data);
   }
 
+  /// die übergebene Funktion wird vom Workmanager aufgerufen, wenn es Zeit für die Hintergrund-
+  /// Aufgaben-Ausführung ist
   Workmanager().initialize(
     taskCallbackDispatcher,
     // isInDebugMode: kDebugMode && kDebugNotifData,
   );
+
   // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
+  // nur Android unterstützt das direkte Ausführen von Hintergrundaufgaben - auf iOS kümmert sich immer das Betriebssystem darum
   if (Platform.isAndroid && !((await getNotifLaunchInfo())?.didNotificationLaunchApp ?? false)) {
-    // try {
-    //   // add this because users on previous versions of the app with the old "fetch_news" task will have both running
-    //   Workmanager().cancelByUniqueName("fetch_news");
-    // } on Exception catch (_) {}
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
@@ -115,6 +133,9 @@ Future<void> loadAndPrepareApp() async {
     );
   }
   
+  /// beim Starten der App werden hier neue News abgefragt
+  /// -> falls schon alte vorhanden: nur neue abfragen (loadAllNewNews) und dann speichern
+  /// -> sonst: einfach eine Seite aktuelle News laden und speichern
   if (_newsCache.newsData.isNotEmpty) {
     loadAllNewNews(_newsCache.newsData.first.link).then((data) {
       if (data != null) _newsCache.insertNewsData(0, data);
@@ -130,6 +151,9 @@ Future<void> loadAndPrepareApp() async {
   if (kDebugMode) print("deleted logs for the following days: $del");
 }
 
+/// allererster Schritt, noch bevor Flutter die App selbst initialisiert
+/// lädt die Preferences (Einstellungen) des Benutzers, damit der Ladebildschirm falls nötig im Dark Mode
+/// angezeigt werden kann
 Future<void> prepareApp() async {
   sharedPreferences = await SharedPreferences.getInstance();
   final sprefs = sharedPreferences;
@@ -137,19 +161,34 @@ Future<void> prepareApp() async {
   await IndiwareDataManager.createDataDirIfNecessary();
 }
 
+/// Hauptfunktion - wird beim Starten der App ausgeführt
 void main() async {
+  /// damit die Datumsformatierung geladen werden kann, müssen erst die Grundservices von Flutter hiermit geladen werden
   WidgetsFlutterBinding.ensureInitialized();
+  /// alle Datumsformatierungen für alle Sprachen laden
   initializeDateFormatting();
-  // LicenseRegistry.addLicense(() => Stream.value(const LicenseEntryWithLineBreaks(["kepler_app"], gplv3LicenseText)));
 
+  /// Logging für die App initialisieren
+  /// damit Log-Ausgaben dann in die entsprechenden Dateien gespeichert werden können
   await KeplerLogging.initLogging();
+  /// beim Starten der App (bzw. Ausführen dieser Funktion main())
   logInfo("startup", "--- LOG INIT ---");
+  /// damit alle internen Flutter-Fehler (etwa bei Darstellungsfehlern oder Widgetfehlern) auch geloggt werden,
+  /// registriert sich die App hiermit als Fehler-Handler
   KeplerLogging.registerFlutterErrorHandling();
 
+  /// erster "länger dauernder" Ausführungsschritt, lädt Benutzereinstellungen
   await prepareApp();
+  /// Hier beginnt die große Magie!
+  /// Die App wird initialisiert, und mit runApp wird Flutter mitgeteilt, dass es jetzt dieses
+  /// Widget auf der Anzeigefläche rendern soll.
   runApp(const MyApp());
 }
 
+/// wenn der Benutzer sich erneut anmelden will, wird diese Funktion aufgerufen, und eine etwas veränderte
+/// Variante der Login-Info-Screens angezeigt
+/// dabei können auch die alten Daten gelöscht werden, bzw. kann eingestellt werden, dass der Benutzer die
+/// InfoScreens schließen kann
 void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
   final ctx = globalScaffoldContext;
 
@@ -175,6 +214,9 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
     );
 }
 
+
+/// Name noch von ursprünglichem Vorschlag von Flutter
+/// ist das oberste Widget und dient aktuell nur zur Prüfung auf eine unterstützte Plattform
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -190,8 +232,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// Hilfsfunktion für Übertragen (cast-en) von Objekten auf einen anderen Typ
 T? cast<T>(x) => x is T ? x : null;
 
+/// primäres App-Widget
 class KeplerApp extends StatefulWidget {
   const KeplerApp({super.key});
 
@@ -199,14 +243,26 @@ class KeplerApp extends StatefulWidget {
   State<KeplerApp> createState() => _KeplerAppState();
 }
 
+/// wichtig, wenn wahrscheinlich auch etwas schlechter Programmierstil
+/// Da die Provider nur von dem festen Kontext erreichbar sind - also nur im Kontext unterhalb des MultiProviders,
+/// müssen etwa Widgets in Dialogen immer mit Provider.of<Typ>(globalScaffoldContext, listen: false) auf den Kontext
+/// des allumfassenden Scaffolds (was sich unter dem MultiProvider befindet)
+/// -> d.h. zu beachten: immer, wenn von einer anderen Route (z.B. in einem Dialog oder auf einer Seite,
+/// die mit Navigator unter einer anderen Route geöffnet wurde) auf eine Datenquelle mit einem Provider zugegriffen
+/// werden soll, muss dies mit Provider.of<Typ>(globalScaffoldContext, listen: false) passieren
+///   dabei sorgt das listen: false dafür, dass bei Änderungen an der Datenquelle nicht der globale Scaffold
+///   aktualisiert wird, sondern nichts passiert
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
+/// diese Syntax wird gewählt: (a) damit es kürzer ist und (b) damit nicht immer nicht-null erzwungen werden muss (mit dem "!")
+/// der State wird für Scaffold-Funktionen wie das Anzeigen von SnackBars benötigt
 ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
+/// der Context siehe oben
 BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
 
+/// wofür der genau da ist, weiß ich nicht ups
 final absolutelyTopKeyForToplevelDialogsOnly = GlobalKey();
 
-// const _loadingAnimationDuration = 1000;
-
+/// ich würde mal behaupten, die Funktion erklärt sich am Namen (testet Zugriff auf Schüler- und Lehrerplan)
 /// returns: null = request error, usertype.(pupil|teacher) = success, usertype.nobody = invalid creds
 Future<UserType?> checkIndiwareData(String host, String username, String password) async {
   try {
@@ -226,6 +282,12 @@ Future<UserType?> checkIndiwareData(String host, String username, String passwor
   }
 }
 
+/// überprüft alle Metadaten zum Stundenplanlogin:
+/// - aktuelle Klassen / Lehrercodes, um auf Vorhandensein des Ausgewählten zu prüfen
+/// - verfügbare Klassen und Fächer
+/// - schulfreie Tage
+/// Außerdem wird die letzte Aktualisierung gespeichert, damit der Benutzer auf alte Daten hingewiesen werden kann.
+/// (alte Daten = letzte Aktualisierung vor min. 14 Tagen)
 Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vpPass, UserType utype, StuPlanData stuPlanData) async {
   List<DateTime>? updatedFreeDays;
   String? output;
@@ -283,6 +345,7 @@ Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vp
   return output;
 }
 
+/// Widget, was beim Initialisieren den Changelog der App lädt und anzeigt
 class OnStartLoader extends StatefulWidget {
   final Widget child;
 
@@ -309,6 +372,8 @@ class _OnStartLoaderState extends State<OnStartLoader> {
     final version = await PackageInfo.fromPlatform();
     final currentVersion = int.parse(version.buildNumber);
     // only show changelog for updates, not for features existing on installation
+    /// erfasst letzte angezeigte Version, damit nur bei Aktualisierungen alle neuen
+    /// Änderungen angezeigt werden
     if (internal.lastChangelogShown < 0) internal.lastChangelogShown = currentVersion;
     final lastVersion = internal.lastChangelogShown;
     if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
@@ -318,11 +383,19 @@ class _OnStartLoaderState extends State<OnStartLoader> {
   }
 }
 
+/// Hauptwidget-State für die Kepler-App
 class _KeplerAppState extends State<KeplerApp> {
   UserType utype = UserType.nobody;
   bool isStuplanInvalid = false;
   bool isLernsaxInvalid = false;
 
+  /// "berechnet" den Benutzertyp basierend auf:
+  /// - vergangener Zeit seit letzer Überprüfung
+  /// - nur, wenn Benutzer zuletzt angemeldet war
+  /// Sowohl LernSax als auch Indiware werden separat überprüft, und nur für den Service, für den Fehler auftreten,
+  /// werden die Anmeldedaten neu abgefragt.
+  /// Damit auch bei fehlender Internetverbindung die App verwendet werden kann, wird der Benutzer im InternalState
+  /// zwischengespeichert.
   Future<UserType> calcUT() async {
     if (
       _internalState.lastUserType != null &&
@@ -369,11 +442,17 @@ class _KeplerAppState extends State<KeplerApp> {
     return UserType.nobody;
   }
 
+  /// lädt die App und kümmert sich dabei um die Initialisierung von verschiedenen anderen Funktionen:
+  /// - überprüft und "berechnet" Benutzertyp
+  /// - zeigt die App-Einleitungs-InfoScreens an, wenn nötig
+  /// - geht mit Fehlern bei der Überprüfung der Einloggdaten um
+  /// - überprüft die Benachrichtigungsberechtigung und fragt sie, wenn nötig, erneut an
+  /// - aktualisiert die Stundenplan-Metadaten
+  /// - überprüft, ob die App über eine Benachrichtigung gestartet wurde und geht dementsprechenden damit um
   // returns: the text to display in a snackbar, if not null; if text starts with "Achtung! " -> show as error
   Future<String?> _load() async {
     String? output;
 
-    final t1 = DateTime.now();
     await loadAndPrepareApp();
     utype = await calcUT();
     _internalState.lastUserType = utype;
@@ -406,11 +485,6 @@ class _KeplerAppState extends State<KeplerApp> {
       output ??= await checkAndUpdateSPMetaData(vpHost, vpUser, vpPass, utype, _stuPlanData);
     }
 
-    final mdif = DateTime.now().difference(t1).inMilliseconds;
-    if (kDebugMode) print("Playing difference: $mdif");
-    // if (mdif < _loadingAnimationDuration) await Future.delayed(Duration(milliseconds: _loadingAnimationDuration - mdif));
-    // await Future.delayed(const Duration(seconds: 100));
-
     final launchInfo = await getNotifLaunchInfo();
     if (launchInfo != null && launchInfo.didNotificationLaunchApp && launchInfo.notificationResponse != null && launchInfo.notificationResponse!.payload != null) {
       switch (launchInfo.notificationResponse!.payload!) {
@@ -435,6 +509,7 @@ class _KeplerAppState extends State<KeplerApp> {
 
   @override
   Widget build(BuildContext context) {
+    /// der MultiProvider stellt (wie der Name schon sagt) mehrere Datenquellen für die darunterliegenden Widgets bereit
     final mainWidget = MultiProvider(
       key: absolutelyTopKeyForToplevelDialogsOnly,//const Key("mainWidget"),
       providers: [
@@ -443,6 +518,8 @@ class _KeplerAppState extends State<KeplerApp> {
             ..infoScreen = introductionDisplay
             ..userType = utype
             ..selectedNavPageIDs = (){
+              /// damit beim Durchführen des Intros nicht schon im Hintergrund Daten geladen werden,
+              /// wird der Navigationsindex hier auf eine nicht existente Seite gesetzt.
               if (introductionDisplay != null) return ["intro-non-existent"];
               if (startingNavPageIDs != null) return startingNavPageIDs!;
               return _prefs.startNavPageIDs;
@@ -475,6 +552,10 @@ class _KeplerAppState extends State<KeplerApp> {
         return OnStartLoader(
           // ignore: deprecated_member_use
           child: WillPopScope(
+            /// der WillPopScope fängt das Schließen der aktuellen Route (hier: der App allgemein) ab und erwartet
+            /// stattdessen das Ergebnis von onWillPop (false = nicht schließen, true = schließen)
+            /// damit z.B. beim Durchführen einer "Zurück"-Aktion (nur Android) erstmal der InfoScreen (falls möglich)
+            /// geschlossen wird, wird das Schließen hier abgefangen
             onWillPop: () async {
               if (state.infoScreen != null) {
                 if (infoScreenState.tryCloseCurrentScreen()) {
@@ -488,6 +569,9 @@ class _KeplerAppState extends State<KeplerApp> {
               children: [
                 // ignore: deprecated_member_use
                 WillPopScope(
+                  /// damit beim Durchführen von Zurück auf einer Unterseite, die nicht die ausgewählte Startseite ist,
+                  /// nicht die App geschlossen wird, sondern auf die ausgewählte Startseite umgeleitet wird,
+                  /// wird das Schließen-Ereignis hier abgefangen
                   onWillPop: () async {
                     if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {
                       _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
@@ -499,25 +583,34 @@ class _KeplerAppState extends State<KeplerApp> {
                   child: Scaffold(
                     key: globalScaffoldKey,
                     appBar: AppBar(
+                      /// als Titel wird der Titel der aktuellen Seite gewählt (zu finden im Label vom ausgewählten
+                      /// Navigationseintrag)
                       title: (index.first == PageIDs.home) ? const Text("Kepler-App")
                         : selectedNavEntry?.label,
+                      /// wegen mehreren AppBars darf sich die Farbe beim Scrollen nicht verändern -> Elevation ist gleich
                       scrolledUnderElevation: 5,
                       elevation: 5,
                       // this is so the two appbars in that page seem like theyre one
+                      /// auf manchen Seiten wird eine weitere AppBar angezeigt, die beim Scrollen ihre Farbe verändert
+                      /// damit sie aber nicht heller wird als die Haupt-AppBar, wird hier die Schattenfarbe angepasst
+                      /// -> die Liste muss immer händisch angepasst werden, wenn auf einer Seite eine AppBar hinzugefügt wird!
                       shadowColor: ([StuPlanPageIDs.classPlans, StuPlanPageIDs.teacherPlan, StuPlanPageIDs.roomPlans, LernSaxPageIDs.tasks].contains(state.selectedNavPageIDs.last)) ? const Color(0x0529323b) : null,
                       actions: selectedNavEntry?.navbarActions,
                     ),
+                    /// eigener Drawer für die Kepler-App - zeigt auch das Widget für den aktuellen Tab an
                     drawer: TheDrawer(
                       selectedIndex: index.join("."),
                       onDestinationSelected: (val) {
                         state.selectedNavPageIDs = val.split(".");
                       },
                       entries: destinations,
+                      /// Teiler zwischen Einträgen (hier: zwischen Haupteinträgen und Infos)
                       dividers: const [6],
                     ),
                     body: tabs[index.first] ?? const Text("Unbekannte Seite."),
                   ),
                 ),
+                /// Regenbogenkonfetti ist über die gesamte Haupt-App-Oberfläche gelegt (ist damit immer sichtbar)
                 Align(
                   alignment: Alignment.topCenter,
                   child: ConfettiWidget(
@@ -538,6 +631,7 @@ class _KeplerAppState extends State<KeplerApp> {
                     shouldLoop: true,
                   ),
                 ),
+                /// InfoScreens werden über der Haupt-App-Oberfläche angezeigt
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 100),
                   child: state.infoScreen,
@@ -569,6 +663,7 @@ class _KeplerAppState extends State<KeplerApp> {
           ),
         );
       },
+      /// AnimatedSwitcher sorgt für eine glatte Überblendung zwischen Widgets
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: (_loading) ? loadingWidget : mainWidget,
@@ -576,6 +671,9 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
+  /// da sich die Paket-ID geändert hat, damit ich nicht meine eigene URL verwenden muss, wird hier überprüft,
+  /// ob eine alte App-Version installiert ist - falls ja, muss diese erst vom Benutzer deinstalliert werden
+  /// (nur Android)
   static const oldAndroidPkgId = "dev.gamer153.kepler_app";
   void checkAndNotifyForOldPkgId() async {
     if (!Platform.isAndroid) return;
@@ -621,6 +719,8 @@ class _KeplerAppState extends State<KeplerApp> {
     super.dispose();
   }
 
+  /// wird aus irgendeinem Grund aufgerufen, wenn der Benutzer das Platform-Farmschema ändert
+  /// (und auch für anderes Zeugs, ist aber egal)
   @override
   void didChangeDependencies() {
     deviceInDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;

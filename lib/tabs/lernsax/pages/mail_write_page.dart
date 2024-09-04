@@ -83,7 +83,7 @@ class _MailWritePageState extends State<MailWritePage> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (popped) async {
+      onPopInvokedWithResult: (popped, _) async {
         if (popped) return;
         if (_mailInputCtrl.text != (widget.mail ?? "") ||
             _subjectInputCtrl.text != (widget.subject ?? "") ||

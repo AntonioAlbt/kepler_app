@@ -20,9 +20,10 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'
+          flutter-version: '3.24.1'
       - run: |
           flutter --disable-analytics
+          flutter config --no-analytics
           flutter pub get
         name: flutter pub get (and disable analytics)
       - run: flutter analyze

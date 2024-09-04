@@ -494,6 +494,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
               checkNotificationPermission().then((notifsAllowed) {
                 if (notifsAllowed) {
                   widget.updateData(selected);
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 } else {
                   requestNotificationPermission().then((requestSuccessful) {
@@ -503,6 +504,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
                       widget.updateData(<T>[]);
                       showSnackBar(text: "Keine Zustimmung erteilt. Wir werden keine Benachrichtigungen senden.", error: true);
                     }
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   });
                 }
@@ -703,6 +705,7 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
                     }, child: const Text("Fertig")),
                   ],
                 ),
+              // ignore: use_build_context_synchronously
               ).then((_) => Navigator.pop(context));
             },
             title: Text(
