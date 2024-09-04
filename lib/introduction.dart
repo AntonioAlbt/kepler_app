@@ -512,7 +512,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       if (!_mailController.text.endsWith(".lernsax.de")) return "Ungültige LernSax-E-Mail-Adresse.";
     }
     final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
-    if (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text) {
+    if (_mailController.text != "" && (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text)) {
       return "Dieses LernSax-Konto ist bereits angemeldet.";
     }
     return null;
