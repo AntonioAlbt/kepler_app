@@ -34,6 +34,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:intl/intl.dart';
+import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -47,8 +49,11 @@ import 'package:url_launcher/url_launcher.dart';
 /// this is neccessary for it to still have access to the context that can access all the Provider-s
 class MailDetailPage extends StatefulWidget {
   final LSMailListing listing;
+  final String login;
+  final String token;
+  final bool alternative;
 
-  const MailDetailPage({super.key, required this.listing});
+  const MailDetailPage({super.key, required this.listing, required this.login, required this.token, required this.alternative});
 
   @override
   State<MailDetailPage> createState() => _MailDetailPageState();
@@ -145,10 +150,9 @@ class _MailDetailPageState extends State<MailDetailPage> {
                       onPressed: () {
                         // show this as a kind of loading message
                         showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
-                        final creds = Provider.of<CredentialStore>(context, listen: false);
                         lernsax.exportSessionFileFromMail(
-                          creds.lernSaxLogin!,
-                          creds.lernSaxToken!,
+                          widget.login,
+                          widget.token,
                           folderId: mailData!.folderId,
                           mailId: mailData!.id,
                           attachmentId: att.id,
@@ -189,6 +193,29 @@ class _MailDetailPageState extends State<MailDetailPage> {
                     },
                     icon: const Icon(Icons.edit),
                     label: const Text("Bearbeiten und senden"),
+                  ),
+                  if (!isDraftMail) Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (mailData == null) return;
+                        Provider.of<AppState>(context, listen: false).clearInfoScreen();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => MailWritePage(
+                              subject: "Re: ${mailData!.subject}",
+                              mail: "\n\n> -----Original Message-----\n> From: ${mailData!.from.map((m) => "\"${m.name}\" <${m.address}>").join(", ")}\n> Sent: ${DateFormat("dd.MM.yyyy HH:mm").format(mailData!.date)}\n> To: ${mailData!.to.map((m) => m.address).join(", ")}\n> Subject: ${mailData!.subject}\n> \n> ${joinWithOptions(mailData!.bodyPlain.split("\n"), "\n> ", "")}",
+                              reference: mailData,
+                              referenceMode: LSMWPReferenceMode.answered,
+                              to: mailData!.from.map((m) => m.address).toList(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text("Antworten"),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -268,14 +295,13 @@ class _MailDetailPageState extends State<MailDetailPage> {
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
-    final creds = Provider.of<CredentialStore>(context, listen: false);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
 
     final mailDataCached = lsdata.getCachedMail(widget.listing.folderId, widget.listing.id);
-    if (mailDataCached != null && !widget.listing.isDraft) {
+    if (mailDataCached != null && !widget.listing.isDraft && !widget.alternative) {
       mailData = mailDataCached;
     } else {
-      final (online, mailDataLive) = await lernsax.getMail(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: widget.listing.folderId, mailId: widget.listing.id);
+      final (online, mailDataLive) = await lernsax.getMail(widget.login, widget.token, folderId: widget.listing.folderId, mailId: widget.listing.id);
       if (!online) {
         showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
         Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
@@ -285,7 +311,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
         Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
         return;
       } else {
-        if (!widget.listing.isDraft) lsdata.addMailToCache(mailDataLive);
+        if (!widget.listing.isDraft && !widget.alternative) lsdata.addMailToCache(mailDataLive);
         mailData = mailDataLive;
       }
     }

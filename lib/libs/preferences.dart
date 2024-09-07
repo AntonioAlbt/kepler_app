@@ -160,8 +160,8 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get rainbowModeEnabled => attributes["rainbow_enabled"] ?? false;
   set rainbowModeEnabled(bool val) => setSaveNotify("rainbow_enabled", val);
 
-  bool get reverseSPEnabled => attributes["reverse_sp_enabled"] ?? false;
-  set reverseSPEnabled(bool val) => setSaveNotify("reverse_sp_enabled", val);
+  bool get aprilFoolsEnabled => attributes["aprilfools_enabled"] ?? false;
+  set aprilFoolsEnabled(bool val) => setSaveNotify("aprilfools_enabled", val);
 
   List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
@@ -190,6 +190,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
     setSaveNotify("logging_enabled", val);
     _loggingEnabled = val;
   }
+  
+  bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
+  set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
 
   bool loaded = false;
 
@@ -205,5 +208,6 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   Preferences() {
     objectCreators["time_to_next_plan"] = (_) => HMTime(14, 45);
+    objectCreators["stuplan_names"] = (_) => <String>[];
   }
 }

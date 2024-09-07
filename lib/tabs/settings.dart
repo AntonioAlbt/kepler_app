@@ -44,6 +44,7 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -105,7 +106,14 @@ class _SettingsTabState extends State<SettingsTab> {
                 notificationSettingsTile(prefs.enabledNotifs.map((en) => _notifKeyMap[en]).where((e) => e != null).toList(), userType == UserType.nobody ? ["Neue Kepler-News"] : _notifKeyMap.values.toList(), "Benachrichtigungen", (selectedNow) {
                   prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
                 }),
-                selectionSettingsTile(_startPageMap[prefs.startNavPage], _startPageMap.values.toList(), "Seite, die beim Öffnen angezeigt wird", (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key, disabled: userType == UserType.nobody),
+                selectionSettingsTile(
+                  _startPageMap[prefs.startNavPage],
+                  _startPageMap.values.toList(),
+                  "Seite, die beim Öffnen angezeigt wird",
+                  (val) => prefs.startNavPage = _startPageMap.entries.firstWhere((e) => e.value == val).key,
+                  disabled: userType == UserType.nobody,
+                  addCommaAfterTitle: true,
+                ),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
@@ -229,20 +237,21 @@ class _SettingsTabState extends State<SettingsTab> {
                   },
                   disabled: userType == UserType.nobody,
                 ),
-                rainbowSwitchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation,
-                  onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
-                  title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
-                  description: const Text("auch wenn das kein richtiger Ausfall ist"),
-                  enabled: userType != UserType.nobody,
-                ),
-                rainbowSwitchTile(
-                  initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
-                  onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
-                  title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
-                  description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
-                  enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
-                ),
+                // wird nicht mehr so verwendet
+                // rainbowSwitchTile(
+                //   initialValue: prefs.considerLernSaxTasksAsCancellation,
+                //   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
+                //   title: const Text("\"$cancellationALaLernSax\" als Ausfall ansehen"),
+                //   description: const Text("auch wenn das kein richtiger Ausfall ist"),
+                //   enabled: userType != UserType.nobody,
+                // ),
+                // rainbowSwitchTile(
+                //   initialValue: prefs.considerLernSaxTasksAsCancellation ? prefs.showLernSaxCancelledLessonsInRoomPlan : true,
+                //   onToggle: (val) => prefs.showLernSaxCancelledLessonsInRoomPlan = val,
+                //   title: const Text("LernSax-Ausfall im Raumplan anzeigen"),
+                //   description: const Text("Stunden mit \"$cancellationALaLernSax\" im Raumplan anzeigen"),
+                //   enabled: prefs.considerLernSaxTasksAsCancellation && userType != UserType.nobody,
+                // ),
                 rainbowSwitchTile(
                   initialValue: prefs.enableInfiniteStuPlanScrolling,
                   onToggle: (val) => prefs.enableInfiniteStuPlanScrolling = val,
@@ -263,6 +272,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("Icon für Räume mit letzter Verwendung"),
                   description: const Text("Stunden mit Räumen, die am ausgewählten Tag das letzte Mal verwendet werden, bekommen ein besonderes Icon"),
                   enabled: userType != UserType.nobody,
+                ),
+                rainbowSwitchTile(
+                  initialValue: prefs.showYourPlanAddDropdown,
+                  onToggle: (val) => prefs.showYourPlanAddDropdown = val,
+                  title: const Text("Möglichkeit für Stundenpläne hinzufügen anzeigen"),
+                  description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" Stundenpläne hinzufügen können"),
+                  enabled: userType != UserType.nobody && Provider.of<StuPlanData>(context, listen: false).altSelectedClassNames.isEmpty,
                 ),
               ],
             ),
@@ -294,14 +310,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("🏳️‍🌈 Regenbogenmodus aktivieren"),
                   description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
                   // enabled: userType != UserType.nobody,
-                ),
-                rainbowSwitchTile(
-                    initialValue: prefs.reverseSPEnabled,
-                    onToggle: (val) => prefs.reverseSPEnabled = val,
-                    title: const Text("Umgekehrten Stundenplan aktivieren"),
-                    description: const Text("die erste Stunde steht dann ganz unten, die letzte ganz oben"),
-                    enabled: userType != UserType.nobody,
-                )
+                )//,
+                /*rainbowSwitchTile(
+                  initialValue: prefs.aprilFoolsEnabled,
+                  onToggle: (val) => prefs.aprilFoolsEnabled = val,
+                  title: const Text("Aprilscherze aktivieren"),
+                  description: const Text("nur am 1. April"),
+                )*/
               ],
             ),
             SettingsSection(
@@ -352,12 +367,12 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 }
 
-SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false}) {
+SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false, bool addCommaAfterTitle = false}) {
   return SettingsTile.navigation(
     title: Text(title),
     value: Text(data.toString()),
     onPressed: (ctx) => showDialog(context: ctx, builder: (ctx) => AlertDialog(
-      title: Text("$title auswählen", style: const TextStyle(fontSize: 20)),
+      title: Text("$title${addCommaAfterTitle ? "," : ""} auswählen", style: const TextStyle(fontSize: 20)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -478,6 +493,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
               checkNotificationPermission().then((notifsAllowed) {
                 if (notifsAllowed) {
                   widget.updateData(selected);
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 } else {
                   requestNotificationPermission().then((requestSuccessful) {
@@ -487,6 +503,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
                       widget.updateData(<T>[]);
                       showSnackBar(text: "Keine Zustimmung erteilt. Wir werden keine Benachrichtigungen senden.", error: true);
                     }
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   });
                 }
@@ -547,7 +564,7 @@ class ColorSelectSettingsTile extends AbstractSettingsTile {
                 ),
               ),
             ),
-            TextSpan(text: current != null ? " #${current.toString().substring(10, 10+6).toUpperCase()}" : "keine"),
+            TextSpan(text: current != null ? " #${current?.value.toRadixString(16).padLeft(8, '0')}" : "keine"),
           ],
         ),
       ),
@@ -687,6 +704,7 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
                     }, child: const Text("Fertig")),
                   ],
                 ),
+              // ignore: use_build_context_synchronously
               ).then((_) => Navigator.pop(context));
             },
             title: Text(

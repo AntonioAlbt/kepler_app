@@ -31,6 +31,7 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:appcheck/appcheck.dart';
@@ -58,11 +59,14 @@ class _LernSaxTabState extends State<LernSaxTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
       builder: (context, state, creds, _) {
-        if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
+        final navpid = state.selectedNavPageIDs[1];
+        final login = navpid.startsWith("lslogin:") ? utf8.decode(base64Url.decode(navpid.substring(8))) : creds.lernSaxLogin;
+        final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
+        if (token == null || login == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
         final navPage = state.selectedNavPageIDs.last;
-        if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage();
-        if (navPage == LernSaxPageIDs.tasks) return LSTasksPage();
-        if (navPage == LernSaxPageIDs.emails) return LSMailsPage();
+        if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage(login, token, token != creds.lernSaxToken);
+        if (navPage == LernSaxPageIDs.tasks) return LSTasksPage(login, token, token != creds.lernSaxToken);
+        if (navPage == LernSaxPageIDs.emails) return LSMailsPage(login, token, token != creds.lernSaxToken);
         // if (navPage == LernSaxPageIDs.main) return const LSHomePage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },
@@ -76,13 +80,20 @@ class _LernSaxTabState extends State<LernSaxTab> {
       final istate = Provider.of<InternalState>(context, listen: false);
       final creds = Provider.of<CredentialStore>(context, listen: false);
       final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+
+      final state = Provider.of<AppState>(context, listen: false);
+      final navpid = state.selectedNavPageIDs[1];
+      final login = navpid.startsWith("lslogin:") ? utf8.decode(base64Url.decode(navpid.substring(8))) : creds.lernSaxLogin;
+      final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
+      if (token == null || login == null) return;
+
       () async {
         if (!istate.infosShown.contains("ls_notif_info")) {
-          final (online, data) = await getNotificationSettings(creds.lernSaxLogin!, creds.lernSaxToken!);
+          final (online, data) = await getNotificationSettings(login, token);
           if (!online || data == null) return;
 
           if (data.where((d) => d.enabledFacilities.contains("push")).length < data.length) {
-            showDialog(
+            showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text("LernSax: Hinweis"),
@@ -91,7 +102,10 @@ class _LernSaxTabState extends State<LernSaxTab> {
                   "Das bedeutet, dass ${sie ? "Sie" : "Du"} nicht alle Infos über die App ${sie ? "erhalten" : "erhältst"}.",
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Ignorieren")),
+                  TextButton(onPressed: () {
+                    istate.addInfoShown("ls_notif_info");
+                    Navigator.pop(ctx, false);
+                  }, child: const Text("Ignorieren")),
                   TextButton(onPressed: () {
                     showSnackBar(text: "Passt an...", duration: const Duration(seconds: 10), clear: true);
                     setNotificationSettings(creds.lernSaxLogin!, creds.lernSaxToken!, data: data.map((d) {
@@ -104,27 +118,31 @@ class _LernSaxTabState extends State<LernSaxTab> {
                         showSnackBar(text: "Fehler beim Ändern der Benachrichtigungen.", clear: true);
                       }
                     });
-                    Navigator.pop(ctx);
+                    Navigator.pop(ctx, true);
                   }, child: const Text("Anpassen")),
                 ],
               ),
-            ).then((_) => showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text("Info"),
-                content: Text(
-                  "Wir können nicht überprüfen, ob ${sie ? "Sie" : "Du"} für alle Klassen oder Gruppen Benachrichtigungen aktiviert ${sie ? "haben" : "hast"}.\n"
-                  "${sie ? "Sie können" : "Du kannst"} dies im Browser aber selbst überprüfen.",
+            ).then((confirmed) {
+              if (confirmed != true) return null; // confirmed = false or null
+              if (!mounted) return null;
+              return showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text("Info"),
+                  content: Text(
+                    "Wir können nicht überprüfen, ob ${sie ? "Sie" : "Du"} für alle Klassen oder Gruppen Benachrichtigungen aktiviert ${sie ? "haben" : "hast"}.\n"
+                    "${sie ? "Sie können" : "Du kannst"} dies im Browser aber selbst überprüfen.",
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
+                    TextButton(onPressed: () {
+                      lernSaxOpenInBrowser(context, login, token);
+                      Navigator.pop(ctx);
+                    }, child: const Text("Im Browser öffnen")),
+                  ],
                 ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK")),
-                  TextButton(onPressed: () {
-                    lernSaxOpenInBrowser(context);
-                    Navigator.pop(ctx);
-                  }, child: const Text("Im Browser öffnen")),
-                ],
-              ),
-            )).then((_) => istate.infosShown.add("ls_notif_info"));
+              );
+            }).then((_) => istate.infosShown.add("ls_notif_info"));
           }
         }
       }();
@@ -141,6 +159,28 @@ class LSHomePage extends StatelessWidget {
     // TODO - future: make available, maybe special overview
     return const Center(
       child: Text("Bald verfügbar."),
+    );
+  }
+}
+
+class LSAltNoConnection extends StatelessWidget {
+  final String login;
+  const LSAltNoConnection({super.key, required this.login});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Keine Verbindung zu LernSax.", style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text("Nur Daten für das primäre Konto werden lokal gespeichert, deshalb sind keine Daten für $login verfügbar.", textAlign: TextAlign.center),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -198,10 +238,10 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
   return false;
 }
 
-Future<bool> lernSaxOpenInBrowser(context) async {
+Future<bool> lernSaxOpenInBrowser(BuildContext context, String login, String token) async {
   final creds = Provider.of<CredentialStore>(context, listen: false);
   if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;
-  final (online, url) = await getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!);
+  final (online, url) = await getSingleUseLoginLink(login, token);
   if (!online) {
     showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
   } else if (url == null) {

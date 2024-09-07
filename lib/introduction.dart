@@ -48,10 +48,13 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// verschiedene Sammlungen von InfoScreens für verschiedene Verwendungen - siehe Namen
 final introScreens = [welcomeScreen, lernSaxLoginScreen, stuPlanLoginScreen, notificationInfoScreen, finishScreen];
 final loginAgainScreens = [lernSaxLoginAgainScreen(true), stuPlanLoginAgainScreen, finishScreen];
 final loginAgainScreensUncloseable = [lernSaxLoginAgainScreen(false), stuPlanLoginAgainScreen, finishScreen];
 
+/// viele InfoScreens haben statt nur Text beim InfoText ein komplettes eigenes Widget
+/// -> da häufig State benötigt wird, hier z.B. für die Anrede-Auswahl
 const welcomeScreen = InfoScreen(
   infoTitle: Text("Willkommen in der Kepler-App!"),
   infoText: WelcomeScreenMain(),
@@ -59,16 +62,50 @@ const welcomeScreen = InfoScreen(
   infoImage: Text("🎉", style: TextStyle(fontSize: 48)),
 );
 
+/// da LernSaxScreenMain inzwischen auch andere Verwendungen zulässt und die Anmeldung nicht mehr
+/// komplett selbst verarbeitet und vor allem nicht mehr selbst speichert, wird dies für das Intro hier erledigt
+void lernSaxLoginScreenMainProcessing(String mail, String token, BuildContext context) {
+  final credStore = Provider.of<CredentialStore>(context, listen: false);
+  credStore.lernSaxLogin = mail;
+  credStore.lernSaxToken = token;
+  if (parentTypeEndings.any((element) => mail.split("@")[0].endsWith(".$element"))) {
+    Provider.of<AppState>(context, listen: false).userType = UserType.parent;
+  }
+  showSnackBar(text: "Erfolgreich eingeloggt und verbunden.", clear: true);
+
+  Provider.of<LernSaxData>(context, listen: false).clearData();
+
+  infoScreenState.next();
+}
+
+/// ähnlich wie für lslsmProcessing, nur wenn "Ich habe keine Anmeldedaten." ausgewählt wurde
+void lernSaxLoginScreenMainNonLogin(BuildContext context) {
+  Provider.of<InternalState>(context, listen: false)
+    ..introShown = true
+    ..lastUserType = UserType.nobody;
+  Provider.of<AppState>(context, listen: false)
+    ..userType = UserType.nobody
+    ..clearInfoScreen();
+}
+
 const lernSaxLoginScreen = InfoScreen(
   infoTitle: Text("LernSax-Anmeldung"),
-  infoText: LernSaxScreenMain(),
+  infoText: LernSaxScreenMain(
+    onRegistered: lernSaxLoginScreenMainProcessing,
+    onNonLogin: lernSaxLoginScreenMainNonLogin,
+  ),
   closeable: false,
   infoImage: Icon(Icons.laptop, size: 48),
 );
 
+// Variante des LernSax-LoginScreens für erneute Anmeldung
 InfoScreen lernSaxLoginAgainScreen(bool closeable) => InfoScreen(
   infoTitle: const Text("LernSax-Anmeldung"),
-  infoText: const LernSaxScreenMain(again: true),
+  infoText: const LernSaxScreenMain(
+    again: true,
+    onRegistered: lernSaxLoginScreenMainProcessing,
+    onNonLogin: lernSaxLoginScreenMainNonLogin,
+  ),
   closeable: closeable,
   infoImage: const Icon(Icons.laptop, size: 48),
 );
@@ -80,6 +117,7 @@ const stuPlanLoginScreen = InfoScreen(
   infoImage: Icon(Icons.list_alt, size: 48),
 );
 
+// Variante des StuPlan-LoginScreens für erneute Anmeldung
 const stuPlanLoginAgainScreen = InfoScreen(
   infoTitle: Text("Stundenplan-Anmeldung"),
   infoText: StuPlanScreenMain(again: true),
@@ -94,6 +132,8 @@ const notificationInfoScreen = InfoScreen(
   infoImage: Icon(Icons.notifications_active, size: 48),
 );
 
+/// da dieser Screen keinen State benötigt (da z.B. keine Auswahl bereitgestellt wird), hat er kein eigenes Widget,
+/// und alles, was angezeigt wird, ist direkt mit hier
 final finishScreen = InfoScreen(
   infoImage: const Icon(Icons.check_box, size: 48),
   infoTitle: const Text("Danke und willkommen!"),
@@ -104,6 +144,10 @@ final finishScreen = InfoScreen(
         children: [
           Text("Vielen Dank für ${sie ? "Ihre" : "Deine"} Anmeldung. ${sie ? "Sie können" : "Du kannst"} jetzt auf die App zugreifen."),
           ((){
+            /// wie an den englischen Kommentaren erkennbar, sind manche Zweige dieses Switch-es unnötig und können
+            /// nicht erreicht werden - Dart mag es aber, wenn man bei Enums jede Möglichkeit beachtet (glaube ich???)
+            /// - ich habe hier nicht alle Varianten in einen String integriert, weil es sonst sehr unübersichtlich
+            ///   geworden wäre, stattdessen ist es also mit einem Switch geregelt
             switch (Provider.of<AppState>(context, listen: false).userType) {
               case UserType.nobody:
                 return const Text("Viel Spaß beim Ausprobieren!"); // we shouldn't even reach this case.
@@ -115,6 +159,7 @@ final finishScreen = InfoScreen(
                 return Text("Als Schüler ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Schüler und alle LernSax-Funktionen.");
               default: // we absolutely should not reach this case! (maybe if someone adds new UserType-s)
                 return const Text("Aber irgendetwas ist schiefgelaufen... Ich schau mal schnell nach, ne?");
+                /// aber er hat nie nachgeschaut... :'(
             }
           }()),
           Consumer<AppState>(
@@ -132,6 +177,9 @@ final finishScreen = InfoScreen(
       );
     }
   ),
+  /// diesen Screen kann man auch selbst schließen (durch Drücken vom x oben rechts oder
+  /// Durchführen von "Zurück" (nur Android))
+  /// (macht halt keinen Unterschied zu wenn man einfach den "Schließen"-Knopf drückt)
   onTryClose: (_, context) {
     Provider.of<InternalState>(context, listen: false).introShown = true;
     return true;
@@ -139,6 +187,9 @@ final finishScreen = InfoScreen(
   closeable: true,
 );
 
+/// wichtigste und erste Frage beim Öffnen der App wird hier abgefragt: soll der Benutzer mit Du oder Sie angeredet
+/// werden? -> absichtlich unabhängig vom Benutzertyp, um, falls gewünscht, nur respektvoll mit Sie anzureden
+/// -> oder eben auch bei Lehrern mit Du, falls gewünscht
 class WelcomeScreenMain extends StatefulWidget {
   const WelcomeScreenMain({super.key});
 
@@ -154,6 +205,9 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
         final mitSie = prefs.preferredPronoun == Pronoun.sie;
         return Column(
           children: [
+            /// Erster Text, den der Benutzer sieht! -> Immer beachten, dass jeder Text der App die Anredewahl
+            /// beachten muss! (meist mit einem Selector<bool, Preferences> gemacht, wenn nur preferredPronoun
+            /// aus Preferences benötigt wird, siehe woanders lol)
             Text("Als erstes werden wir ${mitSie ? "Ihnen" : "Dir"} ein paar Fragen stellen, um die App für ${mitSie ? "Sie" : "Dich"} anzupassen."),
             Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -164,6 +218,9 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      /// dadurch, dass der Wert direkt in den Preferences geändert wird, wird der Text auf dieser
+                      /// Seite automatisch live mit Treffen der Auswahl aktualisiert -> Benutzer weiß direkt,
+                      /// was die Einstellung beeinflusst
                       RadioMenuButton(
                         value: Pronoun.sie,
                         groupValue: prefs.preferredPronoun,
@@ -203,8 +260,23 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
 
 class LernSaxScreenMain extends StatefulWidget {
   final bool again;
+  final void Function(String mail, String token, BuildContext context) onRegistered;
+  final bool allowNotLogin;
+  final bool askNotLoginForNotifications;
+  final void Function(BuildContext context) onNonLogin;
+  final bool extraPadding;
+  final bool additionalAccount;
 
-  const LernSaxScreenMain({super.key, this.again = false});
+  const LernSaxScreenMain({
+    super.key,
+    this.again = false,
+    required this.onRegistered,
+    this.allowNotLogin = true,
+    this.askNotLoginForNotifications = true,
+    required this.onNonLogin,
+    this.extraPadding = true,
+    this.additionalAccount = false,
+  });
 
   @override
   State<LernSaxScreenMain> createState() => _LernSaxScreenMainState();
@@ -218,237 +290,231 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
   late TextEditingController _pwController;
   String? _pwError;
 
+  /// Fehler erst anzeigen, nachdem der Benutzer einmal auf "Einloggen" getippt hat
+  /// - sonst werden schon vor oder während des Eingebens immer Fehler angezeigt
   bool _triedToEnter = false;
   bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
     const TextStyle link = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
-    return Selector<Preferences, bool>(
-      selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-      builder: (context, sie, _) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              (widget.again) ?
-              "Bitte ${sie ? "melden Sie sich" : "melde Dich"} erneut mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an."
-              :
-              "Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}.",
-            ),
+    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            (widget.additionalAccount) ?
+            "${sie ? "Sie können sich" : "Du kannst dich"} hier mit einem weiteren JKG-LernSax-Konto anmelden."
+            : (widget.again) ?
+            "Bitte ${sie ? "melden Sie sich" : "melde Dich"} erneut mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an."
+            :
+            "Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}.",
           ),
-          TextField(
-            controller: _mailController,
-            keyboardType: TextInputType.emailAddress,
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: "LernSax-Email-Adresse",
-              errorText: _mailError,
-            ),
+        ),
+        TextField(
+          controller: _mailController,
+          keyboardType: TextInputType.emailAddress,
+          autocorrect: false,
+          decoration: InputDecoration(
+            labelText: "LernSax-Email-Adresse",
+            errorText: _mailError,
           ),
-          TextField(
-            controller: _pwController,
-            keyboardType: TextInputType.visiblePassword,
-            autocorrect: false,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: "LernSax-Passwort",
-              errorText: _pwError,
-            ),
+        ),
+        TextField(
+          controller: _pwController,
+          keyboardType: TextInputType.visiblePassword,
+          autocorrect: false,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: "LernSax-Passwort",
+            errorText: _pwError,
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 16),
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _triedToEnter = true;
-                  _mailError = checkMail();
-                  _pwError = checkPW();
-                });
-                if (_mailError != null || _pwError != null) return;
-                final mail = _mailController.text;
-                final pw = _pwController.text;
-                // close the keyboard when tapping the button
-                FocusScope.of(context).unfocus();
-                runLogin(mail, pw, sie).then((error) {
-                  if (error == null) {
-                    try {
-                      registerApp(mail, pw).then((data) {
-                        final (online, token) = data;
-                        if (!online) {
-                          showSnackBar(text: "Keine Verbindung zu den LernSax-Servern möglich. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-                          return;
-                        } else if (token == null) {
-                          showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
-                          return;
-                        }
-                        final credStore = Provider.of<CredentialStore>(context, listen: false);
-                        credStore.lernSaxLogin = mail;
-                        credStore.lernSaxToken = token;
-                        if (parentTypeEndings.any((element) => mail.split("@")[0].endsWith(".$element"))) {
-                          Provider.of<AppState>(context, listen: false).userType = UserType.parent;
-                        }
-                        showSnackBar(text: "Erfolgreich eingeloggt und verbunden.", clear: true);
-
-                        Provider.of<LernSaxData>(context, listen: false).clearData();
-
-                        infoScreenState.next();
-                      });
-                    } catch (e, s) {
-                      logCatch("ls-intro", e, s);
-                      showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
-                    }
-                  } else {
-                    showSnackBar(text: error, error: true);
-                  }
-                });
-              },
-              child: const TextWithArrowForward(text: "Einloggen"),
-            ),
-          ),
-          // don't show this again because the user already agreed - set to true when re-logging
-          if (!widget.again) RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: [
-                TextSpan(
-                  text: "Mit dem Fortfahren ${sie ? "stimmen Sie" : "stimmst Du"} den ",
-                ),
-                TextSpan(
-                  text: "Datenschutzbestimmungen",
-                  style: link,
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(Uri.parse(keplerAppDSELink), mode: LaunchMode.externalApplication),
-                ),
-                const TextSpan(
-                  text: " dieser App und den ",
-                ),
-                TextSpan(
-                  text: "Nutzungsbedingungen",
-                  style: link,
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(
-                      Uri.parse(lernSaxAGBLink),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                ),
-                const TextSpan(
-                  text: " und der "
-                ),
-                TextSpan(
-                  text: "Datenschutzerklärung",
-                  style: link,
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(
-                      Uri.parse(lernSaxDSELink),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                ),
-                const TextSpan(
-                  text: " von LernSax zu. Hinweis: Diese App ist in keiner Weise mit LernSax, WebWeaver, DigiOnline GmbH oder dem Freistaat Sachsen assoziiert.",
-                ),
-              ],
-            ),
-          ),
-          TextButton(
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 12, bottom: widget.extraPadding ? 16 : 0),
+          child: ElevatedButton(
             onPressed: () {
-              showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Nicht mit LernSax anmelden?"),
-                  content: RichText(
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text: "Wenn ${sie ? "Sie sich" : "Du dich"} nicht ${sie ? "anmelden, können Sie" : "anmeldest, kannst Du"} auf die meisten Funktionen der App nicht zugreifen.",
-                        ),
-                        const TextSpan(
-                          text: " Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. ",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const TextSpan(text: "Wirklich ohne Anmeldung fortfahren?")
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text("Nein"),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text("Ja, fortfahren"),
-                    ),
-                  ],
-                ),
-              ).then((value) {
-                if (value == true) {
-                  Provider.of<InternalState>(context, listen: false)
-                    ..introShown = true
-                    ..lastUserType = UserType.nobody;
-                  Provider.of<AppState>(context, listen: false)
-                    ..userType = UserType.nobody
-                    ..clearInfoScreen();
-                  if (!widget.again) {
-                    showDialog(
-                      context: globalScaffoldContext,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Benachrichtigungen?"),
-                        content: const Text("Möchten Sie benachrichtigt werden, wenn neue Artikel auf der Webseite unserer Schule veröffentlicht werden?"),
-                        actions: [
-                          TextButton(
-                            onPressed: (){
-                              Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [newsNotificationKey];
-                              checkNotificationPermission().then((notifAllowed) {
-                                if (notifAllowed) {
-                                  Navigator.pop(context);
-                                  return;
-                                }
-                                try {
-                                  requestNotificationPermission().then((val) {
-                                    if (val) {
-                                      showSnackBar(textGen: (sie) => "Danke für ${sie ? "Ihre" : "Deine"} Zustimmung!");
-                                    }
-                                    Navigator.pop(context);
-                                  });
-                                } catch (e, s) {
-                                  logCatch("ls-intro", e, s);
-                                  Navigator.pop(context);
-                                }
-                              });
-                              
-                            },
-                            child: const Text("Ja, gerne"),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [];
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Nein"),
-                          ),
-                        ],
-                      ),
-                    );
+              setState(() {
+                _triedToEnter = true;
+                _mailError = checkMail();
+                _pwError = checkPW();
+              });
+              if (_mailError != null || _pwError != null) return;
+              final mail = _mailController.text;
+              final pw = _pwController.text;
+              // close the keyboard when tapping the button
+              FocusScope.of(context).unfocus();
+              runLogin(mail, pw, sie).then((error) {
+                if (error == null) {
+                  try {
+                    registerApp(mail, pw).then((data) {
+                      final (online, token) = data;
+                      if (!online) {
+                        showSnackBar(text: "Keine Verbindung zu den LernSax-Servern möglich. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+                        return;
+                      } else if (token == null) {
+                        showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
+                        return;
+                      }
+                      if (!mounted) return;
+                      widget.onRegistered(mail, token, this.context);
+                    });
+                  } catch (e, s) {
+                    logCatch("ls-intro", e, s);
+                    showSnackBar(text: "Fehler beim Verbinden der App. Bitte ${sie ? "versuchen Sie" : "versuche"} es später erneut.", error: true, clear: true);
                   }
+                } else {
+                  showSnackBar(text: error, error: true);
                 }
               });
             },
-            child: const Text("Ich habe keine Anmeldedaten."),
+            child: const TextWithArrowForward(text: "Einloggen"),
           ),
-          if (_loading) const LinearProgressIndicator(),
-          if (_loading) const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text("Loggt ein..."),
+        ),
+        // don't show this again because the user already agreed - set to true when re-logging
+        if (!widget.again) RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: DefaultTextStyle.of(context).style,
+            children: [
+              TextSpan(
+                text: "Mit dem Fortfahren ${sie ? "stimmen Sie" : "stimmst Du"} den ",
+              ),
+              TextSpan(
+                text: "Datenschutzbestimmungen",
+                style: link,
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => launchUrl(Uri.parse(keplerAppDSELink), mode: LaunchMode.externalApplication),
+              ),
+              const TextSpan(
+                text: " dieser App und den ",
+              ),
+              TextSpan(
+                text: "Nutzungsbedingungen",
+                style: link,
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => launchUrl(
+                    Uri.parse(lernSaxAGBLink),
+                    mode: LaunchMode.externalApplication,
+                  ),
+              ),
+              const TextSpan(
+                text: " und der "
+              ),
+              TextSpan(
+                text: "Datenschutzerklärung",
+                style: link,
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => launchUrl(
+                    Uri.parse(lernSaxDSELink),
+                    mode: LaunchMode.externalApplication,
+                  ),
+              ),
+              const TextSpan(
+                text: " von LernSax zu. Hinweis: Diese App ist in keiner Weise mit LernSax, WebWeaver, DigiOnline GmbH oder dem Freistaat Sachsen assoziiert.",
+              ),
+            ],
           ),
-          const Padding(padding: EdgeInsets.all(16)),
-        ],
-      ),
+        ),
+        if (widget.allowNotLogin) TextButton(
+          onPressed: () {
+            showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Nicht mit LernSax anmelden?"),
+                content: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: [
+                      TextSpan(
+                        text: "Wenn ${sie ? "Sie sich" : "Du dich"} nicht ${sie ? "anmelden, können Sie" : "anmeldest, kannst Du"} auf die meisten Funktionen der App nicht zugreifen.",
+                      ),
+                      const TextSpan(
+                        text: " Dies ist vor allem für interessierte Eltern ohne LernSax-Zugang geeignet. ",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const TextSpan(text: "Wirklich ohne Anmeldung fortfahren?")
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text("Nein"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text("Ja, fortfahren"),
+                  ),
+                ],
+              ),
+            ).then((value) {
+              if (value == true) {
+                if (!context.mounted) return;
+                widget.onNonLogin(context);
+                if (!widget.again && widget.askNotLoginForNotifications) {
+                  if (!globalScaffoldContext.mounted) return;
+                  showDialog(
+                    context: globalScaffoldContext,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Benachrichtigungen?"),
+                      content: const Text("Möchten Sie benachrichtigt werden, wenn neue Artikel auf der Webseite unserer Schule veröffentlicht werden?"),
+                      actions: [
+                        TextButton(
+                          onPressed: (){
+                            Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [newsNotificationKey];
+                            checkNotificationPermission().then((notifAllowed) {
+                              if (notifAllowed) {
+                                if (!context.mounted) return;
+                                Navigator.pop(context);
+                                return;
+                              }
+                              try {
+                                requestNotificationPermission().then((val) {
+                                  if (val) {
+                                    showSnackBar(textGen: (sie) => "Danke für ${sie ? "Ihre" : "Deine"} Zustimmung!");
+                                  }
+                                  if (!context.mounted) return;
+                                  Navigator.pop(context);
+                                });
+                              } catch (e, s) {
+                                logCatch("ls-intro", e, s);
+                                if (!context.mounted) return;
+                                Navigator.pop(context);
+                              }
+                            });
+                            
+                          },
+                          child: const Text("Ja, gerne"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [];
+                            Navigator.pop(context);
+                          },
+                          child: const Text("Nein"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              }
+            });
+          },
+          child: const Text("Ich habe keine Anmeldedaten."),
+        ),
+        if (_loading) const LinearProgressIndicator(),
+        if (_loading) const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text("Loggt ein..."),
+        ),
+        if (widget.extraPadding) const Padding(padding: EdgeInsets.all(16)),
+      ],
     );
   }
 
@@ -475,9 +541,19 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     if (_mailController.text.trim() == "" && _triedToEnter) {
       return "Keine E-Mail-Adresse angegeben.";
     } else if (_triedToEnter) {
+      /// ursprünglich hatte ich hier mal mit einem RegEx die Mail überprüft, um ungültige Mails schon eher abzufangen
+      /// - das hat aber nur für zu viele Benutzer gesorgt, die sich nicht anmelden konnten -_-
+      /// -> ist jetzt alles weg, Hauptsache die Eingabe endet auf .lernsax.de (wird ja eh noch von LernSax bei der
+      /// Anmeldung geprüft)
+
       // RegExp regex = RegExp(r"^[a-z]*[0-9]*(?:.(?:" + parentTypeEndings.join("|") + r"))?@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
-      RegExp regex = RegExp(r"^[a-z0-9.]+@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
-      if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
+      // RegExp regex = RegExp(r"^[a-z0-9.]+@[a-z0-9]+\.lernsax\.de$", multiLine: true, caseSensitive: false);
+      // if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
+      if (!_mailController.text.endsWith(".lernsax.de")) return "Ungültige LernSax-E-Mail-Adresse.";
+    }
+    final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+    if (_mailController.text != "" && (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text)) {
+      return "Dieses LernSax-Konto ist bereits angemeldet.";
     }
     return null;
   }
@@ -491,6 +567,8 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 
   @override
   void initState() {
+    /// immer wenn die Daten geändert werden, überprüfe auf Fehler / zeige an
+
     _mailController = TextEditingController();
     _mailController.addListener(() {
       setState(() => _mailError = checkMail());
@@ -528,6 +606,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
   String? _pwErr;
   late Future<bool?> _dataFuture;
 
+  /// siehe LernSaxScreenMainState
   bool _triedToEnter = false;
   bool _loading = false;
 
@@ -563,6 +642,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                         final cs = Provider.of<CredentialStore>(context, listen: false);
                         determineUserType(cs.lernSaxLogin!, cs.lernSaxToken!)
                           .then((userType) {
+                            if (!context.mounted) return;
                             Provider.of<AppState>(context, listen: false).userType = userType;
                             Provider.of<InternalState>(context, listen: false).lastUserType = userType;
                             infoScreenState.next();
@@ -615,11 +695,13 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                             if (error != null) {
                               showSnackBar(text: error, error: true, clear: true);
                             } else {
+                              if (!context.mounted) return;
                               final cs = Provider.of<CredentialStore>(context, listen: false);
                               cs.vpUser = username;
                               cs.vpPassword = password;
                               determineUserType(cs.lernSaxLogin!, cs.lernSaxToken!)
                                 .then((userType) {
+                                  if (!context.mounted) return;
                                   Provider.of<AppState>(context, listen: false).userType = userType;
                                   Provider.of<InternalState>(context, listen: false).lastUserType = userType;
                                   showSnackBar(text: "Erfolgreich angemeldet.", clear: true);
@@ -644,6 +726,7 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
     );
   }
 
+  /// komprimierte Funktionen zum Überprüfen der Eingaben, da nur auf "nicht leer" geprüft werden muss
   String? checkUser() => (_userController.text.trim() == "") ? "Benutzername erforderlich." : null;
   String? checkPW() => (_pwController.text.trim() == "") ? "Passwort erforderlich." : null;
 
@@ -678,6 +761,10 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
     _pwController.addListener(() {
       if (_triedToEnter) setState(() => _pwErr = checkPW());
     });
+
+    /// für die App sind auf LernSax, wie in /lernsax_data/info.md beschrieben, die Login-Daten für Schüler/Lehrer
+    /// gespeichert - diese werden hier abgefragt, ihre Gültigkeit überprüft, und wenn alles funktioniert,
+    /// der Benutzer einfach darauf hingewiesen (und er kann direkt fortfahren)
     _dataFuture = tryLoadStuPlanLoginFromLSDataFile();
     super.initState();
   }

@@ -56,6 +56,7 @@ enum SPDisplayMode { yourPlan, classPlan, allReplaces, freeRooms, teacherPlan, r
 class StuPlanDisplay extends StatefulWidget {
   /// whatever could be selected, like the class or teacher or room
   final String selected;
+  final int? selectedId;
   final SPDisplayMode mode;
   final bool showInfo;
   final List<String>? allRooms;
@@ -64,7 +65,8 @@ class StuPlanDisplay extends StatefulWidget {
       required this.selected,
       required this.mode,
       this.showInfo = true,
-      this.allRooms});
+      this.allRooms,
+      this.selectedId});
 
   @override
   State<StuPlanDisplay> createState() => StuPlanDisplayState();
@@ -308,9 +310,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                   date: currentDate,
                   key: ValueKey(currentDate.hashCode +
                       widget.selected.hashCode +
+                      widget.selectedId.hashCode +
                       widget.mode.hashCode +
                       holidayDates.hashCode),
                   selected: widget.selected,
+                  selectedId: widget.selectedId,
                   mode: widget.mode,
                   showInfo: widget.showInfo,
                   allRooms: widget.allRooms,
@@ -348,6 +352,7 @@ class StuPlanDayDisplay extends StatefulWidget {
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
   final List<DateTime>? schoolHolidayList;
+  final int? selectedId;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
@@ -359,7 +364,8 @@ class StuPlanDayDisplay extends StatefulWidget {
       this.allRooms,
       this.onSwipeLeft,
       this.onSwipeRight,
-      this.schoolHolidayList});
+      this.schoolHolidayList,
+      this.selectedId});
 
   @override
   State<StuPlanDayDisplay> createState() => _StuPlanDayDisplayState();
@@ -989,7 +995,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   orElse: () => null)
               ?.lessons
               // include lessons with subjectID == null, because they are usually important changed lessons for every pupil
-              .where((element) => stdata.selectedCourseIDs.contains(element.subjectID) || element.subjectID == null)
+              .where((element) => ((widget.selectedId ?? 0) < 1 ? stdata.selectedCourseIDs : stdata.altSelectedCourseIDs[(widget.selectedId ?? 1) - 1].split("|").map((m) => int.parse(m))).contains(element.subjectID) || element.subjectID == null)
               .toList();
           allLessonsForDate = data?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = data?.additionalInfo;
@@ -1337,7 +1343,7 @@ class LessonDisplay extends StatelessWidget {
                     triggerMode: TooltipTriggerMode.tap,
                     message: lesson.roomCodes.length == 1 ? "laut Plan letzte Verwendung des Raumes" : "laut Plan letzte Verwendung einer der gelisteten Räume",
                     showDuration: const Duration(seconds: 2),
-                    child: const Icon(Icons.last_page, size: 20, color: Colors.black),
+                    child: Icon(Icons.last_page, size: 20, color: hasDarkTheme(context) ? Colors.white : Colors.black),
                   ),
                 ),
                 Text(

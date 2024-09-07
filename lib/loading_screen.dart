@@ -40,6 +40,10 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
 
+/// der Ladebildschirm wird beim Start der App angezeigt und ist eine Animation des Logos der App (vereinfachtes
+/// JKG-Logo), wie die drei Kreise größer werden und dann pulsieren
+/// - zum Glück ist die Animation so einfach, dass sie direkt mit Flutter funktioniert und keine weitere Animations-
+///   bibliothek benötigt
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
 
@@ -64,6 +68,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        /// auf Ladebildschirm auf Beta-Version aufmerksam machen
         if (kIsBetaVersion) Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: Container(
@@ -77,6 +82,7 @@ class _LoadingScreenState extends State<LoadingScreen>
             ),
           ),
         ),
+        /// die drei Kreise mit den entsprechenden Farben passend skalieren und anpassen
         SizedBox(
           width: 300,
           height: 350,
@@ -132,6 +138,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                   ),
                 ),
               ),
+              /// falls die App "sehr lange" lädt, Text und evtl. Knopf zum Schließen anzeigen
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Column(
@@ -165,6 +172,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     _circle3AnimContr = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
     _textAnimContr = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
 
+    /// immer nach Beendigung der vorherigen Animation die nächste starten
     _circle1AnimContr.addListener(() {
       if (_circle1AnimContr.isCompleted) _circle2AnimContr.forward();
     });
@@ -173,6 +181,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     });
     _circle3AnimContr.addListener(() {
       if (_circle3AnimContr.isCompleted) {
+        /// nach kurzer Zeit pulsierende Animation starten
         Future.delayed(const Duration(milliseconds: 200)).then((_) {
           if (!mounted) return;
           _textAnimContr.repeat(reverse: true, period: const Duration(milliseconds: 700));
@@ -190,6 +199,7 @@ class _LoadingScreenState extends State<LoadingScreen>
           _circle3AnimContr.repeat(reverse: true);
           setState(() {});
         });
+        /// auf iOS kann sich eine App nicht selbst schließen, also wird der Knopf dort nicht angezeigt
         if (Platform.isAndroid) {
           Future.delayed(const Duration(milliseconds: 2000)).then((_) {
             if (!mounted) return;

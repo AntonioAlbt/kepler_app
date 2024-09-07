@@ -112,6 +112,7 @@ class _AboutTabState extends State<AboutTab> {
                 ElevatedButton(
                   onPressed: () {
                     PackageInfo.fromPlatform().then((data) => showLicensePage(
+                          // ignore: use_build_context_synchronously
                           context: context,
                           applicationName: data.appName,
                           applicationVersion: data.version,

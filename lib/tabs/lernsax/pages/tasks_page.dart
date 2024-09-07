@@ -54,7 +54,11 @@ void lernSaxTasksRefreshAction() {
 }
 
 class LSTasksPage extends StatefulWidget {
-  LSTasksPage() : super(key: lsTaskPageKey);
+  final String login;
+  final String token;
+  final bool alternative;
+
+  LSTasksPage(this.login, this.token, this.alternative) : super(key: lsTaskPageKey);
 
   @override
   State<LSTasksPage> createState() => _LSTasksPageState();

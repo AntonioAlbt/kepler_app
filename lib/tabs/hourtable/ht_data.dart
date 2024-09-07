@@ -55,6 +55,9 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     objectCreators["selected_course_ids"] = (_) => <int>[];
 
     objectCreators["available_teachers"] = (_) => <String>[];
+
+    objectCreators["alt_selected_class_name"] = (_) => <String>[];
+    objectCreators["alt_selected_course_ids"] = (_) => <String>[];
   }
 
   Map<String, List<VPCSubjectS>> _jsonDataStrToMap(String json) {
@@ -93,6 +96,16 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   String? get selectedClassName => attributes["selected_class_name"];
   set selectedClassName(String? cn) => _setSaveNotify("selected_class_name", cn);
 
+  List<String> get altSelectedClassNames => attributes["alt_selected_class_name"] ?? [];
+  set altSelectedClassNames(List<String> cn) => _setSaveNotify("alt_selected_class_name", cn);
+  void setSelectedClassForAlt(int alt, String selected) {
+    altSelectedClassNames = altSelectedClassNames..[alt] = selected;
+  }
+  void removeAltSelection(int alt) {
+    altSelectedClassNames = altSelectedClassNames..removeAt(alt);
+    altSelectedCourseIDs = altSelectedCourseIDs..removeAt(alt);
+  }
+
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
   set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);
   void addSelectedCourse(int id) {
@@ -105,6 +118,14 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     final l = selectedCourseIDs;
     l.remove(id);
     selectedCourseIDs = l;
+  }
+
+  // to make it easier to store multiple I don't want to store nested lists (so sadly the data format doesn't match selectedCourseIDs)
+  // so instead just merge the ints to string
+  List<String> get altSelectedCourseIDs => attributes["alt_selected_course_ids"] ?? [];
+  set altSelectedCourseIDs(List<String> sc) => _setSaveNotify("alt_selected_course_ids", sc);
+  void setSelectedCoursesForAlt(int alt, List<int> selected) {
+    altSelectedCourseIDs = altSelectedCourseIDs..[alt] = selected.join("|");
   }
 
   DateTime get lastAvailClassesUpdate => _getUpdateDateTime("available_classes");
