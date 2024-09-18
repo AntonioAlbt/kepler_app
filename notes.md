@@ -9,6 +9,7 @@ Bisher kommentierte Dateien:
 - navigation.dart
 - rainbow.dart
 - introduction.dart
+- info_screen.dart
 
 ---
 

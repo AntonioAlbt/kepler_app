@@ -259,12 +259,19 @@ class _WelcomeScreenMainState extends State<WelcomeScreenMain> {
 }
 
 class LernSaxScreenMain extends StatefulWidget {
+  /// wird der Screen in einem "Erneut einloggen"-Zusammenhang verwendet (entsprechende Formulierungen verwenden)
   final bool again;
+  /// wird nach erfolgreicher Registrierung der App auf dem LernSax-Konto aufgerufen
   final void Function(String mail, String token, BuildContext context) onRegistered;
+  /// ob der Knopf "Ich habe keine Anmeldedaten." angezeigt werden soll
   final bool allowNotLogin;
+  /// ob ein Benutzer ohne Anmeldung gefragt werden soll, ob er bei neuen News benachrichtigt werden will
   final bool askNotLoginForNotifications;
+  /// wird aufgerufen, wenn ein Benutzer keine Anmeldedaten hat
   final void Function(BuildContext context) onNonLogin;
+  /// ob extra Abstand nach unten hinzugefügt werden soll (für Anzeige auf InfoScreens)
   final bool extraPadding;
+  /// wird der Screen in einem "Account hinzufügen"-Zusammenhang verwendet (entsprechende Formulierungen verwenden)
   final bool additionalAccount;
 
   const LernSaxScreenMain({
@@ -518,6 +525,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
     );
   }
 
+  /// überprüft, ob Login für die Kepler-App verwendet werden kann
   Future<String?> runLogin(String mail, String pw, bool sie) async {
     setState(() => _loading = true);
     // "online" boolean is unnecessary here because MOJKGResult.otherError
@@ -591,6 +599,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
 }
 
 class StuPlanScreenMain extends StatefulWidget {
+  /// wird der Screen in einem "Erneut einloggen"-Zusammenhang verwendet (entsprechende Formulierungen verwenden)
   final bool again;
 
   const StuPlanScreenMain({super.key, this.again = false});

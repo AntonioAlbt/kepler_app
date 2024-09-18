@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
@@ -49,10 +50,17 @@ class ClassPlanPage extends StatefulWidget {
 final classPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
 
 class _ClassPlanPageState extends State<ClassPlanPage> {
+  String? _error;
   late String selectedClass;
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text("Fehler beim Anzeigen: $_error"),
+      ));
+    }
     return Consumer<StuPlanData>(
       builder: (context, stdata, _) => Stack(
         children: [
@@ -98,12 +106,17 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
 
   @override
   void initState() {
+    super.initState();
     // the StuPlanData should have data here because the user already went through
     // the class and subject select screen, which loads it
     final available = Provider.of<StuPlanData>(context, listen: false).availableClasses;
     final lastSelected = Provider.of<InternalState>(context, listen: false).lastSelectedClassPlan;
-    selectedClass = (available!.contains(lastSelected) && lastSelected != null) ? lastSelected : available.first;
-    super.initState();
+    if (available == null) {
+      _error = "Laden der verfügbaren Klassen fehlgeschlagen. Bitte App neustarten.";
+      logError("classplan", "availableClasses was null, for ${Provider.of<AppState>(context, listen: false).userType}, last selected: $lastSelected");
+      return;
+    }
+    selectedClass = (available.contains(lastSelected) && lastSelected != null) ? lastSelected : available.first;
   }
 }
 

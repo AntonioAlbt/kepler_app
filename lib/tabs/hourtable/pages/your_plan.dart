@@ -207,10 +207,11 @@ class YourPlanPageState extends State<YourPlanPage> {
   void initState() {
     final stdata = Provider.of<StuPlanData>(context, listen: false);
     final lastIndex = Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan;
+    final teacher = Provider.of<AppState>(context, listen: false).userType == UserType.teacher;
     if (lastIndex != null && lastIndex > 0 && stdata.altSelectedClassNames.length > lastIndex - 1) {
       selected = (lastIndex, stdata.altSelectedClassNames[lastIndex - 1]);
     } else {
-      selected = (0, stdata.selectedClassName!);
+      selected = (0, teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!);
     }
     stdata.addListener(stdataListener);
     super.initState();
