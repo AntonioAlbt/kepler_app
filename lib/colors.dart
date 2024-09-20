@@ -33,9 +33,16 @@
 
 import 'package:flutter/painting.dart';
 
+/// Farben im kleinen JKG-Logo (favicon von kepler-chemnitz.de)
+
+/// Gelbton
 const keplerColorYellow = Color(0xFFfed44c);
+/// Orangeton
 const keplerColorOrange = Color(0xFFff7c00);
+/// Blauton, Primärfarbe der App
 const keplerColorBlue = Color(0xFF4a8aba);
 
+/// damit die Farben auch als Hintergrundfarbe im Dark/Light Mode verwendet werden können, gibt es diese
+/// Hilfsfunktion - mit sehr heller/sehr dunkler Helligkeit sind die Farben blasser und unscheinbarer
 Color colorWithLightness(Color color, double lightness)
   => HSLColor.fromColor(color).withLightness(lightness).toColor();

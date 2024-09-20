@@ -3,19 +3,27 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 
+/// Changelog-Eintrag
 class CLEntry {
+  /// Titel des Eintrags
   final String title;
+  /// Beschreibung, optional
   final String? description;
+  /// dynamischer Generator für Beschreibung, damit sie auf Anrede angepasst werden kann
   final String Function(bool sie)? descGen;
 
   const CLEntry({required this.title, this.description, this.descGen});
 
+  /// erzeugt ein entsprechendes ListTile aus den Daten
   ListTile generateTile(bool sie) => ListTile(
     title: Text(title),
     subtitle: descGen != null ? Text(descGen!(sie)) : description != null ? Text(description!) : null,
   );
 }
 
+/// Liste aller Änderungen seit Einführung changelog.dart
+/// Hinweis: möglichst nach größeren Änderungen aktualisieren! (nicht vergessen, wie ich für 62)
+/// Aber nur große Änderungen und möglichst kurz zusammenfassen, sonst liest sich das wirklich niemand mehr durch.
 final versionChanges = {
   58: CLEntry(
     title: "Farbanimationen hinzugefügt",
@@ -33,8 +41,13 @@ final versionChanges = {
     title: "Neue Funktionen für LernSax-E-Mails",
     description: "Mit der Kepler-App können jetzt neue LernSax-E-Mails verschickt und vorhandene z.B. weitergeleitet oder gelöscht werden.",
   ),
+  66: const CLEntry(
+    title: "Mehrere Benutzer jetzt unterstützt",
+    description: "Zum persönlichen Stundenplan können jetzt mehrere Klassen hinzugefügt werden. Auch mehrere LernSax-Konten werden jetzt unterstützt.",
+  ),
 };
 
+/// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen
 List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {
   List<CLEntry> changelog = [];
 
@@ -47,6 +60,7 @@ List<CLEntry> computeChangelog(int currentVersion, int lastVersion) {
   return changelog;
 }
 
+/// erstellt den Änderungsdialog
 Widget? getChangelogDialog(int currentVersion, int lastVersion, BuildContext ctx) {
   final cl = computeChangelog(currentVersion, lastVersion);
   if (cl.isEmpty) return null;

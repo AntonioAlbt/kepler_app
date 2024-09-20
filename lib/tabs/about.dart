@@ -44,6 +44,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const keplerAppDSELink = "https://www.kepler-chemnitz.de/materialis/datenschutzerklaerung-kepler-app/";
+const creatorMail = "a.albert@gamer153.dev";
 
 const rainbowScale = 2.0;
 
@@ -85,7 +86,7 @@ class _AboutTabState extends State<AboutTab> {
                   child: ElevatedButton(
                     onPressed: () {
                       launchUrl(
-                        Uri.parse("mailto:a.albert@gamer153.dev"),
+                        Uri.parse("mailto:$creatorMail"),
                         mode: LaunchMode.externalApplication,
                       ).catchError((_) {
                         showSnackBar(text: "Keine Anwendung für E-Mails gefunden.");

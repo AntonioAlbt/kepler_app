@@ -33,7 +33,18 @@
 
 import 'package:flutter/foundation.dart';
 
+/// Die Build-Konstanten, die hier definiert werden, können (wie in README.md) erklärt, beim Builden der App
+/// von Flutter gesetzt werden, z.B.:
+///   flutter build appbundle --dart-define=beta=true --dart-define=debug_features=false
+/// 
+/// Wenn nicht gesetzt, wird der Standardwert genommen (defaultValue).
+
+/// soll der Text "BETA-VERSION" auf dem Ladebildschirm angezeigt werden
 const kIsBetaVersion = bool.fromEnvironment("beta", defaultValue: kDebugMode);
+/// sollen verschiedene Debug-Features aktiviert/angezeigt werden (siehe Verwendungen der Variable)
 const kDebugFeatures = bool.fromEnvironment("debug_features", defaultValue: kDebugMode);
+/// sollen jedes Mal beim Überprüfen auf neue Daten für Benachrichtigungen Test-Daten verwendet und als
+/// Benachrichtigung angezeigt werden
 const kDebugNotifData = bool.fromEnvironment("debug_notif_data", defaultValue: false);
+/// sollen alle Änderungen an Login-Daten im Log aufgezeichnet werden
 const kCredsDebug = bool.fromEnvironment("creds_debug", defaultValue: false);

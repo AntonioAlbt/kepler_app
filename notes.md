@@ -10,6 +10,10 @@ Bisher kommentierte Dateien:
 - rainbow.dart
 - introduction.dart
 - info_screen.dart
+- drawer.dart
+- changelog.dart
+- build_vars.dart
+- colors.dart
 
 ---
 

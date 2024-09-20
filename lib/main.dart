@@ -56,6 +56,7 @@ import 'package:kepler_app/libs/tasks.dart';
 import 'package:kepler_app/libs/filesystem.dart' as fs;
 import 'package:kepler_app/loading_screen.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
@@ -179,6 +180,19 @@ void main() async {
 
   /// erster "länger dauernder" Ausführungsschritt, lädt Benutzereinstellungen
   await prepareApp();
+
+  /// wenn ein Widget beim Rendern oder Erstellen einen Fehler wirft, verwendet Flutter diesen Builder, um stattdessen
+  /// das erstellt Fehlerwidget anzuzeigen (normalerweise wird im Release-Modus nur ein grauer Bildschirm angezeigt,
+  /// dabei weiß der Benutzer allerdings nicht, was los ist)
+  /// - im Debug-Modus soll trotzdem der Fehler angezeigt werden
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    final exception = details.exception;
+    return ErrorWidget.withDetails(
+      message: kDebugMode ? "Error when rendering:\n${details.exceptionAsString()}" : "Oh nein :(\n\nEs ist ein Fehler beim Darstellen aufgetreten.\nBitte kontaktiere den Ersteller der App (siehe \"Feedback & Kontakt\" in der Seitenleiste) bzw. schreibe eine E-Mail an $creatorMail.",
+      error: exception is FlutterError ? exception : null,
+    );
+  };
+
   /// Hier beginnt die große Magie!
   /// Die App wird initialisiert, und mit runApp wird Flutter mitgeteilt, dass es jetzt dieses
   /// Widget auf der Anzeigefläche rendern soll.
@@ -222,6 +236,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // throw ""; // Test for new ErrorWidget
     if (Platform.isIOS || Platform.isAndroid) {
       return const KeplerApp();
     } else {
