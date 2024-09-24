@@ -86,11 +86,13 @@ class Preferences extends SerializableObject with ChangeNotifier {
   Pronoun get preferredPronoun => Pronoun.values.firstWhere((element) => element.name == (attributes["preferred_pronoun"] ?? ""), orElse: () => Pronoun.du);
   set preferredPronoun(Pronoun pp) => setSaveNotify("preferred_pronoun", pp.name);
 
-  bool get considerLernSaxTasksAsCancellation => attributes["consider_ls_tasks_as_cl"] ?? true;
-  set considerLernSaxTasksAsCancellation(bool val) => setSaveNotify("consider_ls_tasks_as_cl", val);
+  /// obwohl die nächsten zwei Einstellungen nicht mehr verändert werden können, werden sie noch zu bedeutend verwendet
+  /// als dass ich sie schon komplett abgeschafft habe
+  bool get considerLernSaxTasksAsCancellation => true; // attributes["consider_ls_tasks_as_cl"] ?? true;
+  // set considerLernSaxTasksAsCancellation(bool val) => setSaveNotify("consider_ls_tasks_as_cl", val);
   
-  bool get showLernSaxCancelledLessonsInRoomPlan => attributes["show_ls_cl_irp"] ?? true;
-  set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
+  bool get showLernSaxCancelledLessonsInRoomPlan => true; // attributes["show_ls_cl_irp"] ?? true;
+  // set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
   bool get enableInfiniteStuPlanScrolling => attributes["enable_is_sp"] ?? false;
   set enableInfiniteStuPlanScrolling(bool val) => setSaveNotify("enable_is_sp", val);

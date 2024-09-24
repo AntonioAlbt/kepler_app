@@ -204,6 +204,8 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     selectedClassName = null;
     selectedCourseIDs = [];
     selectedTeacherName = null;
+    altSelectedClassNames = [];
+    altSelectedCourseIDs = [];
   }
 }
 

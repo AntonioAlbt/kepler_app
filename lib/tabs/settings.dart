@@ -45,10 +45,13 @@ import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
-import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
+import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
 
+/// Tab für Einstellungen, zeigt mithilfe von settings_ui alle Einstellungen an
+/// und nimmt Veränderungen direkt in Preferences vor (die meisten Einstellungen sind ziemlich selbsterklärend
+/// oder entsprechend beschrieben)
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
 
@@ -56,15 +59,17 @@ class SettingsTab extends StatefulWidget {
   State<SettingsTab> createState() => _SettingsTabState();
 }
 
+/// Map aller als Startseiten auswählbaren Seiten (mapping: interne Page ID, von navigation.dart -> benutzerfreundl. Name)
+/// Achtung: falls eine hier aufgelistete Seite eine Unterseite ist, muss der getter von Preferences.startNavPage
+/// in libs/preferences.dart angepasst werden
 final _startPageMap = {
   PageIDs.home: "Startseite",
   NewsPageIDs.news: "Kepler-News",
   StuPlanPageIDs.yours: "Persönlicher Stundenplan",
   StuPlanPageIDs.all: "Alle Vertretungen",
-  LernSaxPageIDs.notifications: "LernSax: Benachrichtigungen",
-  LernSaxPageIDs.emails: "LernSax: E-Mails",
 };
 
+/// Map für alle verfügbaren Benachrichtigungstypen (mapping: Benachrichtigungs-Key -> benutzerfreundlicher Name)
 final _notifKeyMap = {
   newsNotificationKey: "Neue Kepler-News",
   stuPlanNotificationKey: "Änderungen im Stundenplan",
@@ -91,21 +96,42 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
               ],
             ),
+            /// Einstellungen sind grob in Navigations-Kategorien eingeteilt
             SettingsSection(
               title: const Text("Allgemeines"),
               tiles: [
                 // the way this is implemented can cause minor desync and the dialog showing the wrong system theme, but it's not that big an issue
-                selectionSettingsTile(prefs.theme.toString().replaceAll("System", "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})"), AppTheme.values.map((val) {
-                  if (val == AppTheme.system) {
-                    return "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})";
-                  } else {
-                    return val.toString();
-                  }
-                }).toList(), "Farbmodus", (val) => prefs.theme = {"S": AppTheme.system, "D": AppTheme.dark, "H": AppTheme.light}[val.substring(0, 1)]!),
+                /// falls ein Benutzer das System-Theme ändert, während er in den Einstellungen ist, zeigt dieser Dialog
+                /// noch das alte Theme an (aber das ist ja mal vollkommen egal)
+                selectionSettingsTile(
+                  prefs.theme
+                      .toString()
+                      .replaceAll("System", "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})"),
+                  AppTheme.values.map((val) {
+                    if (val == AppTheme.system) {
+                      return "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})";
+                    } else {
+                      return val.toString();
+                    }
+                  }).toList(),
+                  "Farbmodus",
+                  /// einigermaßen schlechter Code, normalerweise (siehe preferredPronoun), implementiert das Enum mit
+                  /// auswählbaren Werten einfach toString und alles geht fein, aber hier soll das aktuelle System-
+                  /// Theme mit erwähnt werden, weshalb es das hier dann so aussieht
+                  /// - das müsste auch mit geändert werden, falls jemals mehr Themes hinzugefügt werden oder
+                  /// AppTheme.toString geändert wird
+                  (val) => prefs.theme = {"S": AppTheme.system, "D": AppTheme.dark, "H": AppTheme.light}[val.substring(0, 1)]!,
+                ),
+                /// es gibt bestimmt ein besseres Wort als "pronoun" für das deutsche Wort Anrede, allerdings ist es
+                /// jetzt nur noch mit Portierungsaufwand möglich, die Benennung zu ändern und es sieht eh nie ein
+                /// Benutzer wie das heißt - die Bedeutung ist ja nah genug
                 selectionSettingsTile(prefs.preferredPronoun, Pronoun.values, "Bevorzugte Anrede", (val) => prefs.preferredPronoun = val),
+                /// notificationSettingsTile ist eigentlich einfach ein selectionSettingsTile mit der Option für mehrere
+                /// angewählte Elemente
                 notificationSettingsTile(prefs.enabledNotifs.map((en) => _notifKeyMap[en]).where((e) => e != null).toList(), userType == UserType.nobody ? ["Neue Kepler-News"] : _notifKeyMap.values.toList(), "Benachrichtigungen", (selectedNow) {
                   prefs.enabledNotifs = selectedNow.map((e) => _notifKeyMap.entries.firstWhere((element) => element.value == e).key).toList().cast();
                 }),
+                /// Umsetzung siehe prefs.startNavPage und Verwendungen
                 selectionSettingsTile(
                   _startPageMap[prefs.startNavPage],
                   _startPageMap.values.toList(),
@@ -114,10 +140,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   disabled: userType == UserType.nobody,
                   addCommaAfterTitle: true,
                 ),
+                /// da der Benutzer hier nichts ändern kann, gibt es tatsächlich mal ein passendes vorgefertigtes
+                /// SettingsTile, was bei Tippen einfach etwas ausführt
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
                       children: [
+                        /// zur Hervorhebung der "schlimmen" Bedeutung dieser Funktion wird das Icon mit angezeigt
                         WidgetSpan(child: Icon(Icons.warning_rounded, color: hasDarkTheme(context) ? Colors.amber : Colors.yellow.shade900, size: 22)),
                         const TextSpan(text: " Abmelden und neu anmelden"),
                       ],
@@ -132,11 +161,6 @@ class _SettingsTabState extends State<SettingsTab> {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            // this doesn't user the showLoginScreenAgain() method, because that is intended for
-                            // a login screen which the user can cancel - which isn't supposed to be possible for this
-                            // one, because it's intended as a clean login
-                            // this might be unneccessary, but it'd be worse to do this for the other one - parents probably would just not use the app after it closing itself
-
                             final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
                             Provider.of<InternalState>(globalScaffoldContext, listen: false).introShown = false;
                             () async {
@@ -144,7 +168,18 @@ class _SettingsTabState extends State<SettingsTab> {
                                 // try to unregister this app from LernSax, but don't care if it doesn't work
                                 // (most users don't check their registered apps on LernSax anyways)
                                 // waiting for this to complete is still necessary
-                                await unregisterApp(creds.lernSaxLogin!, creds.lernSaxToken!);
+                                /// auch für alle hinzugefügten Konten versuchen, App-Registrierung zu trennen
+                                for (final entry in creds.alternativeLSLogins.asMap().entries) {
+                                  final i = entry.key, login = entry.value;
+                                  if (creds.alternativeLSLogins.length <= i) break;
+                                  final token = creds.alternativeLSTokens[i];
+                                  try {
+                                    await unregisterApp(login, token);
+                                  } catch (_) {}
+                                }
+                                try {
+                                  await unregisterApp(creds.lernSaxLogin!, creds.lernSaxToken!);
+                                } catch (_) {}
                               }
                               if (!mounted) return;
 
@@ -185,12 +220,22 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Stundenplan"),
               tiles: [
+                /// ursprünglich hinzugefügt, als es nur einen Stundenplan gab - bearbeitet also immer den primären
+                // TODO: könnte angepasst werden, dass man gefragt wird, welchen Stundenplan man ändern bzw. hinzufügen will
                 SettingsTile.navigation(
                   title: Text(userType == UserType.teacher ? "Lehrer ändern" : "Klasse oder Belegung ändern"),
-                  description: Text("${sie ? "Ihre" : "Deine"} ${userType == UserType.teacher ? "Lehrer-Abkürzung" : "Klasse und/oder belegte Fächer ändern"} (für ${sie ? "Ihren" : "Deinen"} Stundenplan)"),
-                  onPressed: (_) => yourStuPlanEditAction(),
+                  description: Text("${sie ? "Ihre" : "Deine"} ${userType == UserType.teacher ? "Lehrer-Abkürzung" : "Klasse und/oder belegte Fächer ändern"} (für ${sie ? "Ihren" : "Deinen"} primären Stundenplan)"),
+                  onPressed: (_) {
+                    final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+                    state.infoScreen ??= (state.userType != UserType.teacher)
+                        ? stuPlanPupilIntroScreens()
+                        : stuPlanTeacherIntroScreens();
+                  },
                   enabled: userType != UserType.nobody,
                 ),
+                /// warum nur einmal? weil es sonst nicht so einfach ist, zu erfassen, wann das passieren soll
+                /// - es könnte natürlich auch jedes Mal beim Öffnen der App oder Seite sein, aber ich fand es so besser
+                /// - auf modernen Handys wird eh fast alles im RAM gehalten, da gibt es kaum mehr neu öffnen
                 rainbowSwitchTile(
                   initialValue: prefs.reloadStuPlanAutoOnceDaily,
                   onToggle: (val) => prefs.reloadStuPlanAutoOnceDaily = val,
@@ -198,6 +243,9 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: const Text("passiert einmal täglich beim Öffnen des Stundenplanes"),
                   enabled: userType != UserType.nobody,
                 ),
+                /// dafür kann HMTime von indiware.dart gleich passend wiederverwendet werden, weil es einfach zu
+                /// serialisieren geht (und ansonsten nur TimeOfDay von Flutter für Datentyp Uhrzeit ohne Datum
+                /// verwendet werden kann)
                 SettingsTile.navigation(
                   title: const Text("Zeit für nächsten Tag bzw. Plan"),
                   // description: const Text("ab welcher Uhrzeit der Plan für den nächsten Tag angezeigt werden soll"),
@@ -221,6 +269,9 @@ class _SettingsTabState extends State<SettingsTab> {
                   updateData: (col) => prefs.stuPlanDataAvailableBorderColor = col!,
                   disabled: prefs.stuPlanDataAvailableBorderWidth == 0 || userType == UserType.nobody,
                 ),
+                /// da ich die Beschreibung auf den SettingsTile-s schon für die Anzeige der aktuell ausgewählten Farbe
+                /// verwende, kann ich dort nicht genau erklären, was die zweite Farbe eigentlich macht
+                /// - also schreib ich das einfach in den Titel rein
                 ColorSelectSettingsTile(
                   title: "Rahmenfarbe 2 für Stundenplanliste - Farbe für Farbverlauf",
                   current: prefs.stuPlanDataAvailableBorderGradientColor,
@@ -228,6 +279,8 @@ class _SettingsTabState extends State<SettingsTab> {
                   nullAvailable: true,
                   disabled: prefs.stuPlanDataAvailableBorderWidth == 0 || userType == UserType.nobody,
                 ),
+                /// damit hier die Einheit entsprechend angezeigt werden kann, wird " px" an alles angehangen
+                /// und beim Speichern entsprechend wieder gelöscht
                 selectionSettingsTile(
                   "${prefs.stuPlanDataAvailableBorderWidth.round()} px${prefs.stuPlanDataAvailableBorderWidth == 0 ? " (kein Rahmen)" : ""}",
                   [ "0 px (kein Rahmen)", "1 px", "3 px", "4 px", "6 px", "10 px", "15 px", "20 px" ],
@@ -237,7 +290,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   },
                   disabled: userType == UserType.nobody,
                 ),
-                // wird nicht mehr so verwendet
+                /// auskommentiert, da "Aufgaben auf LernSax" im Vertretungsplan nicht mehr so verwendet wird
                 // rainbowSwitchTile(
                 //   initialValue: prefs.considerLernSaxTasksAsCancellation,
                 //   onToggle: (val) => prefs.considerLernSaxTasksAsCancellation = val,
@@ -282,6 +335,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
               ],
             ),
+            /// da die Kategorie LernSax selbst nur so wenig Inhalt hat, gibt es auch kaum Einstellungen 
             SettingsSection(
               title: const Text("LernSax"),
               tiles: [
@@ -294,6 +348,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
               ],
             ),
+            /// Kategorie für Einstellungen, die unterhaltsam bzw. lustig bzw. random sind
             SettingsSection(
               title: const Text("Lustiges"),
               tiles: [
@@ -317,7 +372,6 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("Aprilscherze aktivieren"),
                   description: const Text("nur am 1. April"),
                 )*/
-
               ],
             ),
             SettingsSection(
@@ -330,6 +384,8 @@ class _SettingsTabState extends State<SettingsTab> {
                       prefs.loggingEnabled = true;
                       return;
                     }
+                    /// da es für mich einfacher ist, wenn die Logs immer aktiviert sind, gibt es zum Deaktivieren
+                    /// eine extra Nachfrage
                     showDialog(context: context, builder: (ctx) => AlertDialog(
                       title: const Text("Wirklich ändern?"),
                       content: const Text("Soll diese Einstellung wirklich geändert werden? Die Debug-Aufzeichnungen werden dann zukünftig nicht mehr gespeichert, und können nicht zur Fehlerbehebung genutzt werden."),
@@ -345,6 +401,7 @@ class _SettingsTabState extends State<SettingsTab> {
                     ));
                   },
                   title: const Text("Aufzeichnungen aktivieren"),
+                  /// "bedrohlicher" Text
                   description: Selector<Preferences, bool>(
                     selector: (_, prefs) => prefs.preferredPronoun == Pronoun.sie,
                     builder: (context, sie, _) => Text("Nur ändern, wenn ${sie ? "Sie wissen, was Sie tun!" : "Du weißt, was du tust!"}"),
@@ -368,6 +425,7 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 }
 
+/// Eintrag für eine Einstellung, bei der ein Element aus einer Liste von Elementen ausgesucht werden kann
 SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void Function(T val) updateData, {bool disabled = false, bool addCommaAfterTitle = false}) {
   return SettingsTile.navigation(
     title: Text(title),
@@ -398,6 +456,8 @@ SettingsTile selectionSettingsTile<T>(T data, List<T> values, String title, void
   );
 }
 
+/// Eintrag für die Benachrichtigungseinstellung (bei der mehrere Elemente aus einer Liste von Elementen ausgesucht
+/// werden können - allerdings angepasst speziell auf Benachrichtigungen)
 SettingsTile notificationSettingsTile<T>(List<T> selected, List<T> values, String title, void Function(List<dynamic> selectedNow) updateData, {bool disabled = false}) {
   // return CustomSettingsTile(child: MultiSelectionSettingsDialog(selected: selected, values: values, title: title, updateData: updateData));
   return SettingsTile.navigation(
@@ -411,6 +471,7 @@ SettingsTile notificationSettingsTile<T>(List<T> selected, List<T> values, Strin
   );
 }
 
+/// ein selectionSettingsTile, bei dem der Schalter (wenn aktiviert) mit Regenbogenfarben animiert wird
 CustomSettingsTile rainbowSwitchTile({
   required bool? initialValue,
   required dynamic Function(bool)? onToggle,
@@ -443,6 +504,8 @@ CustomSettingsTile rainbowSwitchTile({
   );
 }
 
+/// Helfer für notificationSettingsTile, da der Dialog dafür State braucht (um die neuen Elemente erst bei Tippen auf
+/// "Bestätigen" abzusenden)
 class NotificationSettingsDialog<T> extends StatefulWidget {
   final List<T> selected;
   final List<T> values;
@@ -497,6 +560,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
                   if (!context.mounted) return;
                   Navigator.pop(context);
                 } else {
+                  /// falls keine Benachrichtigungen erlaubt, auch keine als ausgewählt speichern
                   requestNotificationPermission().then((requestSuccessful) {
                     if (requestSuccessful) {
                       widget.updateData(selected);
@@ -527,6 +591,7 @@ class _NotificationSettingsDialogState<T> extends State<NotificationSettingsDial
   }
 }
 
+/// Eintrag für Farbauswahl-Einstellung
 class ColorSelectSettingsTile extends AbstractSettingsTile {
   const ColorSelectSettingsTile({
     super.key,
@@ -581,6 +646,7 @@ class ColorSelectSettingsTile extends AbstractSettingsTile {
   }
 }
 
+/// Auswahldialog für Farbauswahl-Einstellung
 class CSTileColorSelectDialog extends StatefulWidget {
   const CSTileColorSelectDialog({
     super.key,
@@ -744,6 +810,8 @@ class _CSTileColorSelectDialogState extends State<CSTileColorSelectDialog> {
   }
 }
 
+/// weil settings_ui immer eine Liste von AbstractSettingsTile-s will, habe ich diesen Wrapper erstellt, der einfach
+/// das angegebene Widget zurückgibt
 class CustomSettingsTile extends AbstractSettingsTile {
   final Widget child;
 

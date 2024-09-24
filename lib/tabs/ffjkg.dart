@@ -35,6 +35,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Tab für Infos zum Förderverein und verschiedenen Links bezüglich diesem
 class FFJKGTab extends StatefulWidget {
   const FFJKGTab({super.key});
 

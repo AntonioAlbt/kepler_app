@@ -131,6 +131,8 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     vpHost = null;
     vpUser = null;
     vpPassword = null;
+    alternativeLSLogins = alternativeLSLogins..clear();
+    alternativeLSTokens = alternativeLSTokens..clear();
   }
 }
 

@@ -47,15 +47,24 @@ import 'package:kepler_app/libs/widgets.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:provider/provider.dart';
 
+/// Link zu einer Webseite mit mehr Infos zum Pendel
 const pendelInfoUrl = "https://pendel.vlant.de";
+/// Link zur Daten-API vom Pendel
 const pendelDataUrl = "https://pendel.vlant.de/logging";
 
+/// globaler Key für Tab zum Aktualisieren in NavAction
 final pendelInfoTabKey = GlobalKey<_PendelInfoTabState>();
 
+/// Funktion für NavAction zum Aktualisieren
 void pendelInfoRefreshAction() {
   pendelInfoTabKey.currentState?._load();
 }
 
+/// Tab für Datenanzeige von Datenerfassung des Foucaultschen Pendels im JKG
+/// (Pendel gebaut und programmiert von Vlad H., 2022-24)
+/// - Anzeige der Daten mit Text
+/// - Darstellung der aktuellen Rotation des Pendels mit Strich über "Tischplatte" (Modellierung des Aufbaus)
+/// - Farbanimation auf Strich, etwa so schnell, wie echtes Pendel schwingt (natürlich nicht echt synchron)
 class PendelInfoTab extends StatefulWidget {
   PendelInfoTab() : super(key: pendelInfoTabKey);
 
@@ -65,11 +74,18 @@ class PendelInfoTab extends StatefulWidget {
 
 final pendelDateFormat = DateFormat("dd.MM., HH:mm", "de-DE");
 
+/// formatiere eine potentielle Nummer mit verschiedenen Optionen
+/// - precision: wie viele Nachkommastellen maximal angezeigt werden
+/// - suffix: was soll danach angehangen werden
+/// - orElse: was soll zurückgegeben werden, wenn num == null ist
 String formatForDisplay(double? num, int precision, [String? suffix, String? orElse])
   => num != null ? ((num * pow(10, precision)).roundToDouble() / pow(10, precision)).toString().replaceAll(".", ",") + (suffix ?? "") : orElse ?? "-";
 
 class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProviderStateMixin {
+  /// hier war ich extrem inkonsequent mit den privaten Variablen (mit "_"), ist aber auch egal weil eh nie ein
+  /// anderes Widget auf den State zugreift / zugreifen kann
   bool _loading = false, dataAvailable = false;
+  /// Werte werden automatisch in diese Variablen geladen
   double? cpu, ram, angle, period;
   DateTime? lastUpdate;
 
@@ -105,6 +121,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
               padding: const EdgeInsets.only(top: 8),
               child: Text("Letzte Aktualisierung: ${lastUpdate != null ? pendelDateFormat.format(lastUpdate!) : "unbekannt"}"),
             ),
+            /// Server ist manchmal offline, dann wird länger nichts aktualisiert -> Hinweis wird angezeigt
             if (lastUpdate != null && lastUpdate!.difference(DateTime.now()).abs().inHours >= 4) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Card(
@@ -130,6 +147,8 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                 ),
               ),
             ),
+            /// modellhafte Darstellung der Pendelschwingung über Tisch, so ähnlich wie es in echt aus Vogelperspektive
+            /// aussehen würde
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
               child: DefaultTextStyle.merge(
@@ -137,6 +156,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                 textAlign: TextAlign.center,
                 child: Column(
                   children: [
+                    /// Seitenverhältnisse sollten etwa so sein wie der echte Tisch
                     SizedBox(
                       height: 200,
                       child: Stack(
@@ -164,6 +184,8 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                           ),
                           SizedBox(
                             width: 300,
+                            /// automatische Generation einer gestrichelten Linie als Mittellinie
+                            /// (hab ich glaube ich irgendwo auf StackOverflow gefunden)
                             child: LayoutBuilder(
                               builder: (BuildContext context, BoxConstraints constraints) {
                                 final boxWidth = constraints.constrainWidth();
@@ -189,6 +211,8 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                           Center(
                             child: Transform.rotate(
                               // + 90 is needed to change 0° to mean horizontal line
+                              /// krasse Umrechnung von Grad in Radian (vielleicht hätte es auch eine Funktion von Dart
+                              /// gegeben, aber naja)
                               angle: (pi / 180.0) * ((angle ?? 0) + 90),
                               child: AnimatedBuilder(
                                 animation: _controller,
@@ -199,6 +223,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                                       return Container(
                                         // color: hasDarkTheme(context) ? Colors.blue.shade300 : Colors.blue.shade800,
                                         decoration: BoxDecoration(
+                                          /// Animation von Strich entweder Blau oder mit zwei Regenbogen-Varianten
                                           gradient: LinearGradient(
                                             stops: [0, max(0, _controller.value - .3), _controller.value, _controller.value + .3, 2],
                                             begin: AlignmentDirectional.topCenter,
@@ -251,7 +276,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                           children: [
                             const TextSpan(text: "Aktueller Pendel-Winkel: "),
                             TextSpan(
-                              text: angle != null ? "${angle!.round()} °" : "unbekannt",
+                              text: formatForDisplay(angle?.roundToDouble(), 0, " °", "unbekannt"),
                               style: angle != null ? const TextStyle(fontWeight: FontWeight.bold) : null,
                             ),
                           ],
@@ -280,6 +305,8 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                 link: pendelInfoUrl,
               ),
             ),
+            /// Nur anzeigen, wenn Benutzer sehr technikinteressiert ist (weil sonst irrelevant)
+            /// bzw. könnte auch auf Webseite eingesehen
             if (kDebugFeatures) Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text("Debug-Daten:\n  Systeminfo: CPU: ${formatForDisplay(cpu, 2, " %", "-")}, RAM: ${formatForDisplay(ram, 2, " %", "-")}"),
@@ -323,6 +350,8 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
     });
 
     final (date_, angle_, period_, cpu_, ram_) = await getPendelData();
+    /// da sowieso am Ende setState aufgerufen wird, rufe ich es hier trotz der Veränderung der Feldern nicht auf
+    /// (bei !mounted wird das Widget eh nicht mehr angezeigt)
     lastUpdate = date_; angle = angle_; period = period_; cpu = cpu_; ram = ram_;
     dataAvailable = angle != null;
     if (!mounted) return;
@@ -338,6 +367,7 @@ Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
     final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);
     // the values should already be double-s, but just to be safe, convert them anyway
     // the api is sometimes unreliable
+    /// - API gibt möglicherweise nur teilweise ungültige Daten zurück, also so viel wie möglich erfassen und anzeigen
     logDebug("pendel", "fetched pendel data from $pendelDataUrl");
     return (
       DateTime.tryParse(res["date"]?.toString() ?? "-")?.toLocal(),
@@ -349,6 +379,7 @@ Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
   } catch (e, s) {
     logCatch("pendel", e, s);
     if (kDebugFeatures) {
+      /// Jahr muss bei Testdaten kleiner als 2022 sein
       return (DateTime(2020, 3, 11), 66.66, 31.2, 9.2314, 15.309);
     }
     // // can be simplified, but is better readable this way

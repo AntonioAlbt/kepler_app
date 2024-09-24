@@ -56,6 +56,8 @@ enum LSMWPReferenceMode {
   }[this];
 }
 
+// TODO: make it possible to select which account to send the mail from!
+
 class MailWritePage extends StatefulWidget {
   final List<String>? to;
   final String? subject;

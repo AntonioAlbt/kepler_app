@@ -36,8 +36,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/widgets.dart';
+import 'package:kepler_app/tabs/about.dart';
 import 'package:provider/provider.dart';
 
+/// Tab für Infos zum Bewerten der App und Knopf zum Kontakt per Mail
 class FeedbackTab extends StatefulWidget {
   const FeedbackTab({super.key});
 
@@ -76,7 +78,7 @@ class _FeedbackTabState extends State<FeedbackTab> {
                 padding: EdgeInsets.only(top: 8.0),
                 child: OpenLinkButton(
                   label: "Per E-Mail kontaktieren",
-                  link: "mailto:a.albert@gamer153.dev",
+                  link: "mailto:$creatorMail",
                   showTrailingIcon: false,
                   infront: Icon(Icons.mail, size: 16),
                 ),

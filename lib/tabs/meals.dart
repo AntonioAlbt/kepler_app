@@ -38,6 +38,9 @@ import 'package:appcheck/appcheck.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Tab eigentlich für Essensbestellung, aber tatsächlich für Links bezüglich DLS (-> App und Webseite)
+/// - Knopf, der entweder auf die App oder zum Play Store verlinkt, je nachdem ob die "Guten APPetit!"-App von DLS
+/// installiert ist (nur auf Android, Test auf Installation ist auf iOS nicht möglich -> nur Link zum App Store)
 class MealOrderingTab extends StatefulWidget {
   const MealOrderingTab({super.key});
 
@@ -47,6 +50,8 @@ class MealOrderingTab extends StatefulWidget {
 
 const appleAppId = "1087734660";
 const androidAppId = "biz.dls_gmbh.guten.appetit";
+/// komplett unnötig, da nur auf Android Installation echt testbar ist
+/// (auf iOS nur über Protokolle, aber k.A. ob DLS-App welche definiert - wahrscheinlich nicht)
 String appId() => (Platform.isIOS) ? appleAppId : androidAppId;
 
 class _MealOrderingTabState extends State<MealOrderingTab> {

@@ -14,6 +14,13 @@ Bisher kommentierte Dateien:
 - changelog.dart
 - build_vars.dart
 - colors.dart
+- tabs:
+  - about.dart
+  - feedback.dart
+  - ffjkg.dart
+  - meals.dart
+  - pendel.dart
+  - settings.dart
 
 ---
 
