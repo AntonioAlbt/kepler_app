@@ -42,11 +42,14 @@ import 'package:kepler_app/tabs/home/home.dart';
 
 const prefsPrefKey = "user_preferences";
 
+/// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
 
+/// global verfügbar, damit KeplerLogging keinen BuildContext benötigt
 bool _loggingEnabled = true;
 bool get loggingEnabled => _loggingEnabled;
 
+/// Anredepronomen
 enum Pronoun {
   du,
   sie;
@@ -56,6 +59,7 @@ enum Pronoun {
     Pronoun.sie: "Mit Sie anreden",
   }[this]!;
 }
+/// Farbschema der App
 enum AppTheme {
   system,
   dark,
@@ -68,21 +72,26 @@ enum AppTheme {
   }[this]!;
 }
 
+/// Farbe aus Farbwerten erstellen
 Color _color(List<int> args) => Color.fromARGB(args[0], args[1], args[2], args[3]);
 
+/// alle Einstellungen, die vom Benutzer angepasst werden können
 class Preferences extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
+  /// Hilfsmethode für alle Klassen mit SerializableObject und ChangeNotifier
   void setSaveNotify(String key, dynamic data) {
     attributes[key] = data;
     notifyListeners();
     save();
   }
 
+  /// Farbschema der App
   AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
   set theme(AppTheme theme) => setSaveNotify("theme", theme.name);
   bool get darkTheme => theme == AppTheme.dark || (theme == AppTheme.system && (deviceInDarkMode ?? true));
 
+  /// gewünschte Anrede
   Pronoun get preferredPronoun => Pronoun.values.firstWhere((element) => element.name == (attributes["preferred_pronoun"] ?? ""), orElse: () => Pronoun.du);
   set preferredPronoun(Pronoun pp) => setSaveNotify("preferred_pronoun", pp.name);
 
@@ -94,42 +103,53 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get showLernSaxCancelledLessonsInRoomPlan => true; // attributes["show_ls_cl_irp"] ?? true;
   // set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
+  /// soll der Stundenplan unendlich weit in die Zukunft und Vergangenheit blätterbar sein
   bool get enableInfiniteStuPlanScrolling => attributes["enable_is_sp"] ?? false;
   set enableInfiniteStuPlanScrolling(bool val) => setSaveNotify("enable_is_sp", val);
 
+  /// Zeit, ab wann standardmäßig der Stundenplan für den nächsten Tag angezeigt werden soll
   HMTime get timeToDefaultToNextPlanDay => attributes["time_to_next_plan"] ?? HMTime(14, 45);
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
+  /// Farbe der Umrandung für die Stundenplanansicht, falls Daten verfügbar sind
   Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : keplerColorBlue;
   set stuPlanDataAvailableBorderColor(Color val) => setSaveNotify("sp_border_col", [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(","));
 
-  /// if set, used with normal border color for a vertical gradient
+  /// falls hier eine Farbe gewählt ist, wird sie mit der Hauptfarbe für einen Farbverlauf verwendet
   Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _color((attributes["sp_border_gradient_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
   set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
 
+  /// Breite der Farbumrandung in der Stundenplanansicht
   double get stuPlanDataAvailableBorderWidth => attributes["sp_border_width"] ?? 3;
   set stuPlanDataAvailableBorderWidth(double val) => setSaveNotify("sp_border_width", val);
   
+  /// sollen Klausuren im Stundenplan angezeigt werden
   bool get stuPlanShowExams => attributes["sp_show_exams"] ?? false;
   set stuPlanShowExams(bool val) => setSaveNotify("sp_show_exams", val);
 
+  /// soll im Stundenplan ein Icon für die letzte Verwendung des Raumes an dem ausgewählten Tag angezeigt werden
   bool get stuPlanShowLastRoomUsage => attributes["sp_show_lru"] ?? true;
   set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
 
+  /// ungenutzt - eigentlich, damit der Benutzer Einträge in der Navigationsliste ausblenden kann
+  /// TODO: Einträge in Drawer ausblenden - implementieren?
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);
   void removeHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..remove(id);
 
+  /// Liste der Widgets der Startseite, werden in angegebener Reihenfolge dort angezeigt
   List<String> get homeScreenWidgetOrderList => cast<String>(attributes["hs_widget_list"])?.split("|") ?? [];
   set homeScreenWidgetOrderList(List<String> val) => setSaveNotify("hs_widget_list", val.join("|"));
   void resetHomeScreenWidgetList() {
     homeScreenWidgetOrderList = homeWidgetKeyMap.keys.toList();
   }
 
+  /// ausgeblendete Widgets der Startseite
   List<String> get hiddenHomeScreenWidgets => cast<String>(attributes["hs_hidden_widgets"])?.split("|") ?? [];
   set hiddenHomeScreenWidgets(List<String> val) => setSaveNotify("hs_hidden_widgets", val.join("|"));
 
+  /// Seite, die beim Öffnen der App ausgewählt sein soll
   String get startNavPage => attributes["start_nav_page"] ?? PageIDs.home;
   set startNavPage(String val) => setSaveNotify("start_nav_page", val);
   List<String> get startNavPageIDs {
@@ -156,15 +176,19 @@ class Preferences extends SerializableObject with ChangeNotifier {
     }
   }
 
+  /// Konfetti auf unterstützten Seiten anzeigen
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);
 
+  /// Regenbodenmodus aktivieren
   bool get rainbowModeEnabled => attributes["rainbow_enabled"] ?? false;
   set rainbowModeEnabled(bool val) => setSaveNotify("rainbow_enabled", val);
 
+  /// Aprilscherze anwenden bzw. anzeigen
   bool get aprilFoolsEnabled => attributes["aprilfools_enabled"] ?? false;
   set aprilFoolsEnabled(bool val) => setSaveNotify("aprilfools_enabled", val);
 
+  /// IDs aller aktivierten Benachrichtigungen
   List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
   void addEnabledNotif(String val) {
@@ -175,24 +199,30 @@ class Preferences extends SerializableObject with ChangeNotifier {
     enabledNotifs = enabledNotifs..remove(val);
   }
 
+  /// soll der Stundenplan einmal täglich neu geladen werden?
   bool get reloadStuPlanAutoOnceDaily => attributes["sp_rl_on_open_d"] ?? true;
   set reloadStuPlanAutoOnceDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
 
+  /// sollen Mails in der LernSax-Mail-Liste automatisch beim Vorbeiscrollen heruntergeladen werden?
   bool get lernSaxAutoLoadMailOnScrollBy => attributes["ls_mail_auto_load_osb"] ?? true;
   set lernSaxAutoLoadMailOnScrollBy(bool val) => setSaveNotify("ls_mail_auto_load_osb", val);
   
+  /// sollen die Optionen für die Bearbeitung der Home Screen Widgets angezeigt werden?
   bool get showHomeWidgetEditOptions => attributes["show_home_weo"] ?? true;
   set showHomeWidgetEditOptions(bool val) => setSaveNotify("show_home_weo", val);
 
+  /// Anzahl der Tage, die ein Log aufbewart werden soll
   int get logRetentionDays => attributes["log_retention_days"] ?? 90;
   set logRetentionDays(int val) => setSaveNotify("log_retention_days", val);
 
+  /// sollen Debug-Logs gespeichert werden?
   bool get loggingEnabled => attributes["logging_enabled"] ?? true;
   set loggingEnabled(bool val) {
     setSaveNotify("logging_enabled", val);
     _loggingEnabled = val;
   }
   
+  /// soll die Möglichkeit zum Hinzufügen von Stundenplänen/Klassen auf der Seite "Dein Stundenplan" angezeigt werden?
   bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
   set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
 

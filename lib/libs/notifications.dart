@@ -45,14 +45,30 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 
+/// 
+/// Benachrichtigungen in der Kepler-App funktionen mit dem Pull-Prinzip, d.h. alle paar Stunden werden im Hintergrund
+/// die aktuellen Daten abgefragt, mit den gecacheden Daten verglichen und die neuen Daten in einer Benachrichtigung
+/// erwähnt.
+/// Das passiert aber alles in der Datei tasks.dart - hier ist nur alles bezüglich dem eigentlichen Senden von B.
+/// 
+
+/// Jede Art von Benachrichtigung benötigt ihren eigenen Key, etwa für die Einstellungen und für das,
+/// was passieren soll, wenn eine Benachrichtigung der Art angetippt wird.
+/// 
+/// für neue News
 const newsNotificationKey = "news_notification";
+/// für Änderungen im Stundenplan
 const stuPlanNotificationKey = "stu_plan_notification";
 
-const kAndroid13 = 33;
-const kIos9 = 9;
+/// Nicht verwendet, da alle Funktionen im Bezug darauf schon selbst damit umgehen.
+// /// ab welchem Android-API-Level benötigt man eine Berechtigung für Benachrichtigungen?
+// const kAndroid13 = 33;
+// /// ab welcher iOS-Version benötigt man eine Berechtigung für Benachrichtigungen?
+// const kIos9 = 9;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+/// Berechtigung für das Senden von Benachrichtigungen anfragen
 Future<bool> requestNotificationPermission() async {
   var result = false;
   if (Platform.isIOS) {
@@ -67,8 +83,14 @@ Future<bool> requestNotificationPermission() async {
   return result;
 }
 
+/// überprüft, ob App Benachrichtigungen senden kann
 Future<bool> checkNotificationPermission() async {
   if (Platform.isIOS) {
+    /// Ich weiß nicht genau, warum ich hier ein anderes Plugin zum Überprüfen für iOS verwende.
+    /// TODO: Benachrichtigung-Permission-Check auf Unterschiede testen
+    // return (await flutterLocalNotificationsPlugin
+    //   .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+    //   ?.checkPermissions())?.isEnabled ?? false;
     return await Permission.notification.isGranted;
   } else {
     return await flutterLocalNotificationsPlugin
@@ -77,6 +99,8 @@ Future<bool> checkNotificationPermission() async {
   }
 }
 
+/// alles nötige für Benachrichtigungen initialisieren (FlutterLocalNotificationsPlugin.initialize aufrufen)
+/// - registriert auch Handler für angetippte Benachrichtigungen
 void initializeNotifications() {
   flutterLocalNotificationsPlugin.initialize(
     const InitializationSettings(
@@ -112,6 +136,8 @@ void initializeNotifications() {
   );
 }
 
+/// Funktionen für Details für Benachrichtigungen
+/// damit alle Benachrichtigungen für einen Typ die gleichen Channel-Infos haben (wird bei erster automatisch erstellt)
 NotificationDetails newsNotificationDetails(String bigText) => NotificationDetails(
   android: AndroidNotificationDetails(
     newsNotificationKey,
@@ -138,6 +164,7 @@ NotificationDetails stuPlanNotificationDetails(String bigText) => NotificationDe
   ),
 );
 
+/// Benachrichtigung senden (wenn notifId gesetzt ist, wird die Benachrichtigung mit der ID ersetzt)
 Future<void> sendNotification({required String title, required String body, required String notifKey, int? notifId}) async {
   if (notifKey != newsNotificationKey && notifKey != stuPlanNotificationKey) return;
   await flutterLocalNotificationsPlugin.show(
@@ -149,4 +176,5 @@ Future<void> sendNotification({required String title, required String body, requ
   );
 }
 
+/// wenn die App über eine Benachrichtigung gestartet wird, lassen sich so die Infos über den Start abfragen
 Future<NotificationAppLaunchDetails?> getNotifLaunchInfo() async => flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();

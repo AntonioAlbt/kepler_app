@@ -36,23 +36,43 @@ import 'dart:convert';
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/logging.dart';
+import 'package:kepler_app/tabs/about.dart';
 import 'package:xml/xml.dart';
 import 'package:http/http.dart' as http;
 
+/// Host ist zwar hier hardcoded, aber bei Änderung Achtung: App bevorzugt den von LernSax bei der Anmeldung
+/// abgefragten Host
 const baseUrl = "https://plan.kepler-chemnitz.de/stuplanindiware";
+/// Host, der in der Demo-Version genutzt werden soll
+/// (nicht für echte Anfragen, nur für Check auf Demo-Version)
 const indiwareDemoHost = "demo";
 
+/// Unterschied zwischen den Plänen:
+/// - Desktopplan: bietet nur Ausfälle, Infos zu Klausuren
+/// - Mobilplan: bietet kompletten Stundenplan inkl. Ausfällen
+///     -> allgemeine Info-XML-Daten: letzte verfügbare Plan-Datei, vom Server ausgesucht
+///       -> sichere Datenquelle für z.B. freie Tage oder verfügbare Klassen
+
+/// Pfad zu Desktopplan für Schüler
 const sUrlDPath = "/VplanonlineS";
+/// Pfad zu Mobilplan für Schüler
 const sUrlMPath = "/VmobilS";
+/// Pfad zu allgemeiner Info-XML-Datei (hier: Klassen.xml) für Schüler
 const sUrlMKlXmlPath = "$sUrlMPath/mobdaten/Klassen.xml";
 
+/// Pfad zu Desktopdaten für Lehrer
 const lUrlDPath = "/VplanonlineL";
+/// Pfad zu Mobildaten für Schüler
 const lUrlMPath = "/VmobilL";
+/// Pfad zu allgemeiner Info-XML-Datei (hier: Lehrer.xml) für Lehrer
 const lUrlMLeXmlPath = "$lUrlMPath/mobdaten/Lehrer.xml";
 
+/// Klassen.xml-URL angepasst auf host
 Uri sUrlMKlXmlUrl(String host) => Uri.parse("$host$sUrlMKlXmlPath");
+/// Lehrer.xml-URL angepasst auf host
 Uri lUrlMLeXmlUrl(String host) => Uri.parse("$host$lUrlMLeXmlPath");
 
+/// Serialisierbares Objekt für extrem simple Uhrzeit (HH:MM)
 class HMTime extends SerializableObject {
   int get hour => attributes["hour"];
   set hour(int val) => attributes["hour"] = val;
@@ -60,6 +80,7 @@ class HMTime extends SerializableObject {
   int get minute => attributes["minute"];
   set minute(int val) => attributes["minute"] = val;
 
+  /// DateTime aus Uhrzeit und Basis
   DateTime toDateTime(DateTime? dayBase) =>
       DateTime(dayBase?.year ?? 0, dayBase?.month ?? 1, dayBase?.day ?? 1, hour, minute);
 
@@ -73,6 +94,7 @@ class HMTime extends SerializableObject {
     this.minute = int.parse(minute);
   }
   
+  /// aus String mit Format HH:MM (bzw. H:M)
   HMTime.fromTimeString(String timeString) {
     hour = int.parse(timeString.split(':')[0]);
     minute = int.parse(timeString.split(':')[1]);
@@ -93,11 +115,16 @@ class HMTime extends SerializableObject {
   int get hashCode => toString().hashCode;
 }
 
+/// Root-Objekt für Schülermobildaten
 class VPKlData {
-  final VPHeader header; // "Kopf"
-  final VPHolidays holidays; // "FreieTage"
-  final List<VPClass> classes; // "Klassen"
-  final List<String> additionalInfo; // "ZusatzInfo" -> "ZiZeile" values
+  /// aus Element `<Kopf>`
+  final VPHeader header;
+  /// aus Element `<FreieTage>`
+  final VPHolidays holidays;
+  /// aus Element `<Klassen>`
+  final List<VPClass> classes;
+  /// aus Inhalten der Unterelemente `<ZiZeile>` aus Element `<ZusatzInfo>`
+  final List<String> additionalInfo;
 
   const VPKlData({required this.header, required this.holidays, required this.classes, required this.additionalInfo});
   @override
@@ -106,11 +133,16 @@ class VPKlData {
   }
 }
 
+/// Root-Objekt für Lehrermobildaten
 class VPLeData {
-  final VPHeader header; // "Kopf"
-  final VPHolidays holidays; // "FreieTage"
-  final List<VPTeacher> teachers; // "Klassen"
-  final List<String> additionalInfo; // "ZusatzInfo" -> "ZiZeile" values
+  /// aus Element `<Kopf>`
+  final VPHeader header;
+  /// aus Element `<FreieTage>`
+  final VPHolidays holidays;
+  /// aus Element `<Klassen>` (ist gleich benannt, obwohl es sich jetzt auf Lehrer bezieht)
+  final List<VPTeacher> teachers;
+  /// aus Inhalten der Unterelemente `<ZiZeile>` aus Element `<ZusatzInfo>`
+  final List<String> additionalInfo;
 
   const VPLeData({required this.header, required this.holidays, required this.teachers, required this.additionalInfo});
   @override
@@ -120,10 +152,13 @@ class VPLeData {
 }
 
 class VPHeader {
-  final String lastUpdated; // "zeitstempel"
-  final String dataDate; // "DatumPlan"
-  final String filename; // "dateiname"
-  // other fields: "planart", "nativ", "woche", "tageprowoche", "schulnummer"
+  /// wann der Plan zuletzt auf dem Server geändert wurde - aus Element `<zeitstempel>`
+  final String lastUpdated;
+  /// für welchen Tag der Plan ist - aus Element `<DatumPlan>`
+  final String dataDate;
+  /// Dateiname des Planes (auf dem Server?) - aus Element `<dateiname>`
+  final String filename;
+  /// ungenutze Elemente: <planart>, <nativ>, <woche>, <tageprowoche>, <schulnummer>
 
   const VPHeader({required this.lastUpdated, required this.dataDate, required this.filename});
   @override
@@ -133,8 +168,10 @@ class VPHeader {
 }
 
 class VPHolidays {
+  /// Liste der freien Tage, direkt aus XML als String ausgelesen
   final List<String> holidayDateStrings;
 
+  /// verarbeitete Liste der freien Tage
   List<DateTime> get holidayDates => holidayDateStrings
       .map(
         (holidayString) => DateTime(
@@ -152,12 +189,17 @@ class VPHolidays {
 }
 
 class VPClass {
+  /// "Name" bzw. Kürzel der Klasse - aus Element `<Kurz>`
   final String className;
-  // other field: "Hash" - seems to always be empty
-  final List<VPHourBlock> hourBlocks; // "KlStunden"
-  final List<VPClassCourse> courses; // "Kurse"
-  final List<VPClassSubject> subjects; // "Unterricht"
-  final List<VPLesson> lessons; // "Pl"
+  /// ungenutzes Element: <Hash> (anscheinend immer leer)
+  /// Zeitblöcke, in denen Stunden stattfinden können - aus Element `<KlStunden>`
+  final List<VPHourBlock> hourBlocks;
+  /// Kurse der Klasse? Nutzen/Bedeutung unklar (auch keine Verwendung) - aus Element `<Kurse>`
+  final List<VPClassCourse> courses;
+  /// Fächer/Kurse der Klasse mit Infos - aus Element `<Unterricht>`
+  final List<VPClassSubject> subjects;
+  /// echte Unterrichtsstunden an dem gegebenen Tag - aus Element `<Pl>`
+  final List<VPLesson> lessons;
 
   const VPClass({required this.className, required this.hourBlocks, required this.courses, required this.subjects, required this.lessons});
   @override
@@ -166,10 +208,14 @@ class VPClass {
   }
 }
 
-class VPHourBlock { // "KlSt"
-  final HMTime startTime; // "ZeitVon"
-  final HMTime endTime; // "ZeitBis"
-  final int blockStartLesson; // value
+/// aus Unterelement `<KlSt>` von VPClass
+class VPHourBlock {
+  /// Beginn der Stunde - aus Element `<ZeitVon>`
+  final HMTime startTime;
+  /// Ende der Stunde - aus Element `<ZeitBis>`
+  final HMTime endTime;
+  /// Inhalt des Elementes
+  final int blockStartLesson;
 
   const VPHourBlock({required this.startTime, required this.endTime, required this.blockStartLesson});
   @override
@@ -178,9 +224,12 @@ class VPHourBlock { // "KlSt"
   }
 }
 
-class VPClassCourse { // "Ku" -> "KKz"
-  final String? teacherCode; // "KLe"
-  final String courseName; // value
+/// aus Unterelement `<KKz>` von `<Ku>`
+class VPClassCourse {
+  /// aus Element `<KLe>`
+  final String? teacherCode;
+  /// Inhalt des Elementes
+  final String courseName;
 
   const VPClassCourse({required this.teacherCode, required this.courseName});
   @override
@@ -189,12 +238,18 @@ class VPClassCourse { // "Ku" -> "KKz"
   }
 }
 
-class VPClassSubject { // "<Ue>" -> "<UeNr>"
-  final String teacherCode; // "UeLe"
-  final String subjectCode; // "UeFa"
-  /// only sometimes defined, seems to include additional info about some subjects (usually the "courses")
-  final String? additionalDescr; // "UeGr"
-  final int subjectID; // value
+/// aus Unterelement `<UeNr>` von `<Ue>`
+class VPClassSubject {
+  /// aus Element `<UeLe>`
+  final String teacherCode;
+  /// aus Element `<UeFa>`
+  final String subjectCode;
+  // only sometimes defined, seems to include additional info about some subjects (usually the "courses")
+  /// nur manchmal verwendet, mit umfangreicherer Beschreibung zu manchen Fächern -> meist Kurse in JG 11/12
+  /// aus Element `<UeGr>`
+  final String? additionalDescr;
+  /// Inhalt des Elementes
+  final int subjectID;
 
   const VPClassSubject({required this.teacherCode, required this.subjectCode, this.additionalDescr, required this.subjectID});
   @override
@@ -203,18 +258,30 @@ class VPClassSubject { // "<Ue>" -> "<UeNr>"
   }
 }
 
-class VPLesson { // "<Std>"
-  final int schoolHour; // "St"
-  final HMTime? startTime; // "Beginn"
-  final HMTime? endTime; // "Ende"
-  final String subjectCode; // "Fa" -> value
-  final bool subjectChanged; // "Fa.FaAe == FaGeaendert"
-  final String teacherCode; // "Le" -> value
-  final bool teacherChanged; // "Le.LeAe == LeGeaendert"
-  final List<String> roomCodes; // "Ra" -> value
-  final bool roomChanged; // "Ra.RaAe == RaGeaendert"
-  final int? subjectID; // "Nr"
-  final String infoText; // "If"
+/// aus Unterelement `<Std>` von `<Pl>`
+class VPLesson {
+  /// aus Element `<St>`
+  final int schoolHour;
+  /// aus Element `<Beginn>`
+  final HMTime? startTime;
+  /// aus Element `<Ende>`
+  final HMTime? endTime;
+  /// aus Element `<Fa>`
+  final String subjectCode;
+  /// ist Attribut `<Fa>.FaAe == "FaGeaendert"`?
+  final bool subjectChanged;
+  /// aus Element `<Le>`
+  final String teacherCode;
+  /// ist Attribut `<Le>.LeAe == "LeGeaendert"`?
+  final bool teacherChanged;
+  /// aus Element `<Ra>`
+  final List<String> roomCodes;
+  /// ist Attribut `<Ra>.RaAe == "RaGeaendert"`?
+  final bool roomChanged;
+  /// aus Element `<Nr>`
+  final int? subjectID;
+  /// aus Element `<If>`
+  final String infoText;
   
   // additional access method for better clarity in the code
   /// -> teacherCode
@@ -276,11 +343,15 @@ VPLesson considerLernSaxCancellationForLesson(VPLesson lesson, bool considerIt, 
 }
 
 class VPTeacher {
+  /// Lehrerkürzel - aus Element `<Kurz>`
   final String teacherCode;
-  // other field: "Hash" - seems to always be empty
-  final List<VPHourBlock> hourBlocks; // "KlStunden"
-  final List<VPLesson> lessons; // "Pl"
-  final List<VPTeacherSupervision> supervisions; // "Aufsichten"
+  /// ungenutzes Element: <Hash> (anscheinend immer leer)
+  /// aus Element `<KlStunden>`
+  final List<VPHourBlock> hourBlocks;
+  /// aus Element `<Pl>`
+  final List<VPLesson> lessons;
+  /// aus Element `<Aufsichten>`
+  final List<VPTeacherSupervision> supervisions;
 
   const VPTeacher({required this.teacherCode, required this.hourBlocks, required this.lessons, required this.supervisions});
   @override
@@ -289,13 +360,20 @@ class VPTeacher {
   }
 }
 
-class VPTeacherSupervision { // "<Aufsicht>"
-  final int beforeSchoolHour; // "AuVorStunde"
-  final HMTime time; // "AuUhrzeit"
-  final String timeDesc; // "AuZeit"
-  final String location; // "AuOrt"
-  final String? infoText; // "AuInfo"
-  final bool cancelled; // "<Aufsicht>.AuAe == AuAusfall"
+/// aus Unterelement `<Aufsicht>` von `<Aufsichten>`
+class VPTeacherSupervision {
+  /// aus Element `<AuVorStunde>`
+  final int beforeSchoolHour;
+  /// aus Element `<AuUhrzeit>`
+  final HMTime time;
+  /// aus Element `<AuZeit>`
+  final String timeDesc;
+  /// aus Element `<AuOrt>`
+  final String location;
+  /// aus Element `<AuInfo>`
+  final String? infoText;
+  /// ist Attribut `<Aufsicht>.AuAe == "AuAusfall"`?
+  final bool cancelled;
   // other field: "AuTag", seems to contain the current day of week as a 1-based index
 
   const VPTeacherSupervision({required this.beforeSchoolHour, required this.time, required this.timeDesc, required this.location, required this.infoText, required this.cancelled});
@@ -305,12 +383,13 @@ class VPTeacherSupervision { // "<Aufsicht>"
   }
 }
 
+/// Anfrage mit passender Authentifizierung und Kepler-App User Agent
 /// no connection => null
 Future<http.Response?> authRequest(Uri url, String user, String password) async {
   try {
     return await http.get(url, headers: {
       "Authorization": "Basic ${base64Encode(utf8.encode("$user:$password"))}",
-      "User-Agent": "KeplerApp/0.1 (info: a.albert@gamer153.dev)"
+      "User-Agent": "KeplerApp/0.1 (info: $creatorMail)"
     }).timeout(const Duration(seconds: 5));
   } catch (e, s) {
     logCatch("indiware", e, s);
@@ -318,6 +397,7 @@ Future<http.Response?> authRequest(Uri url, String user, String password) async 
   }
 }
 
+/// Indiware-Anfrage stellen und verarbeiten
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> _fetch(Uri url, String user, String password) async {
   logDebug("indiware", "fetching ${url.toString()}");
@@ -329,6 +409,7 @@ Future<(XmlDocument?, bool)> _fetch(Uri url, String user, String password) async
   return (xml, true);
 }
 
+/// Klassen-XML abfragen
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getKlassenXML(String host, String user, String password) async {
   if (host == indiwareDemoHost) return (null, true);
@@ -336,6 +417,7 @@ Future<(XmlDocument?, bool)> getKlassenXML(String host, String user, String pass
   return xml;
 }
 
+/// Lehrer-XML abfragen
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getLehrerXML(String host, String user, String password) async {
   if (host == indiwareDemoHost) return (null, false);
@@ -343,26 +425,32 @@ Future<(XmlDocument?, bool)> getLehrerXML(String host, String user, String passw
   return xml;
 }
 
+/// Datumsformat für Indiware-Plan-XML-Dateien (PlanKlyyyyMMdd.xml bzw. PlanLeyyyyMMdd.xml)
 final indiwareFilenameFormat = DateFormat("yyyyMMdd");
 
+/// Schülerplan-XML-Daten für Datum abfragen
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getKlXMLForDate(String host, String user, String password, DateTime date)
   => _fetch(Uri.parse("$host$sUrlMPath/mobdaten/PlanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
+/// Lehrerplan-XML-Daten für Datum abfragen
 /// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getLeXMLForDate(String host, String user, String password, DateTime date)
   => _fetch(Uri.parse("$host$lUrlMPath/mobdaten/PlanLe${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
+/// VPHeader aus XML erstellen
 VPHeader _parseHeader(XmlElement kopf) => VPHeader(
   lastUpdated: kopf.getElement("zeitstempel")!.innerText,
   dataDate: kopf.getElement("DatumPlan")!.innerText,
   filename: kopf.getElement("datei")!.innerText,
 );
 
+/// VPHolidays aus XML erstellen
 VPHolidays _parseHolidays(XmlElement freieTage) => VPHolidays(
   holidayDateStrings: freieTage.childElements.map((e) => e.innerText).toList(),
 );
 
+/// VPHourBlock-s aus XML erstellen
 List<VPHourBlock> _parseHourBlocks(XmlElement klStunden) =>
   klStunden.childElements.map((klSt) => VPHourBlock(
     startTime: HMTime.fromTimeString(klSt.getAttribute("ZeitVon")!),
@@ -370,9 +458,11 @@ List<VPHourBlock> _parseHourBlocks(XmlElement klStunden) =>
     blockStartLesson: int.parse(klSt.innerText),
   )).toList();
 
+/// Hilfsfunktionen für null-Checks
 HMTime? _timeOrNull(String? time) => (time == null || time == "") ? null : HMTime.fromTimeString(time);
 int? _intOrNull(String? nr) => (nr == null || nr == "") ? null : int.parse(nr);
 
+/// VPLesson-s aus XML erstellen
 List<VPLesson> _parseLessons(XmlElement pl) =>
   pl.childElements.map((std) => VPLesson(
     schoolHour: int.parse(std.getElement("St")!.innerText),
@@ -392,9 +482,11 @@ List<VPLesson> _parseLessons(XmlElement pl) =>
     infoText: std.getElement("If")?.innerText ?? "",
   )).toList();
 
+/// Infotext aus XML erstellen
 List<String> _parseAdditionalInfo(XmlElement? zusatzInfo) =>
   zusatzInfo?.childElements.map((e) => e.innerText).toList() ?? [];
 
+/// komplettes VPKlData-Objekt aus XML erstellen
 VPKlData xmlToKlData(XmlDocument klData) {
   final xml = klData.rootElement;
   final classes = xml.getElement("Klassen")!.childElements.toList();
@@ -423,6 +515,7 @@ VPKlData xmlToKlData(XmlDocument klData) {
   );
 }
 
+/// komplettes VPLeData-Objekt aus XML erstellen
 VPLeData xmlToLeData(XmlDocument leData) {
   final xml = leData.rootElement;
   final teacher = xml.getElement("Klassen")!.childElements.toList();
@@ -446,6 +539,7 @@ VPLeData xmlToLeData(XmlDocument leData) {
   );
 }
 
+/// Klassen-XML-Daten abfragen
 /// returns (data, isOnline)
 Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, String password) async {
   if (host == indiwareDemoHost) return (null, false);
@@ -454,6 +548,9 @@ Future<(VPKlData?, bool)> getKlassenXmlKlData(String host, String username, Stri
   return (xmlToKlData(xml), online);
 }
 
+/// Schülerplan-Daten abfragen
+/// - da VPKlData nicht direkt gecached werden kann und diese Funktion nicht auf den Cache zugreift,
+///   sollte sie eigentlich nie verwendet werden
 /// returns (data, isOnline)
 Future<(VPKlData?, bool)> getStuPlanDataForDate(String host, String username, String password, DateTime date) async {
   if (host == indiwareDemoHost) return (null, false);
@@ -462,6 +559,7 @@ Future<(VPKlData?, bool)> getStuPlanDataForDate(String host, String username, St
   return (xmlToKlData(xml), online);
 }
 
+/// Lehrer-XML-Daten abfragen
 /// returns (data, isOnline)
 Future<(VPLeData?, bool)> getLehrerXmlLeData(String host, String username, String password) async {
   if (host == indiwareDemoHost) return (null, false);
@@ -470,6 +568,9 @@ Future<(VPLeData?, bool)> getLehrerXmlLeData(String host, String username, Strin
   return (xmlToLeData(xml), online);
 }
 
+/// Lehrerplan-Daten abfragen
+/// - da VPLeData nicht direkt gecached werden kann und diese Funktion nicht auf den Cache zugreift,
+///   sollte sie eigentlich nie verwendet werden
 /// returns (data, isOnline)
 Future<(VPLeData?, bool)> getLehPlanDataForDate(String host, String username, String password, DateTime date) async {
   if (host == indiwareDemoHost) return (null, false);
@@ -480,12 +581,19 @@ Future<(VPLeData?, bool)> getLehPlanDataForDate(String host, String username, St
 
 // --- desktop data fetching ---
 
+/// Root-Element für Schülerdesktopdaten
 class VPKLDesktopData {
+  /// Element `<kopf>`
   final XmlElement? header;
+  /// Element `<freietage>`
   final XmlElement? holidays;
+  /// Element `<aufsichten>`
   final XmlElement? teacherWatch;
+  /// Element `<fuss>`
   final XmlElement? footer;
+  /// Element `<haupt>`
   final XmlElement? mainInfo;
+  /// aus Element `<klausuren>`
   final List<VPExam>? exams;
 
   const VPKLDesktopData({
@@ -498,25 +606,34 @@ class VPKLDesktopData {
   });
 }
 
+/// Serializable, damit nur die Klausuren aus dem Desktop-XML gespeichert werden müssen
+/// - aus Unterelement `<klausur>` von `<klausuren>`
 class VPExam extends SerializableObject {
+  /// aus Element `<jahrgang>`
   String get year => attributes["year"];
   set year(String val) => attributes["year"] = val;
 
+  /// aus Element `<kurs>`
   String get subject => attributes["subject"];
   set subject(String val) => attributes["subject"] = val;
 
+  /// aus Element `<kursleiter>`
   String get teacher => attributes["teacher"];
   set teacher(String val) => attributes["teacher"] = val;
 
+  /// aus Element `<stunde>`
   String get hour => attributes["hour"];
   set hour(String val) => attributes["hour"] = val;
 
+  /// aus Element `<beginn>`
   String get begin => attributes["begin"];
   set begin(String val) => attributes["begin"] = val;
 
+  /// Dauer in Minuten (ohne Einheit?), als String (weil nichts garantiert ist) - aus Element `<dauer>`
   String get duration => attributes["duration"];
   set duration(String val) => attributes["duration"] = val;
 
+  /// aus Element `<kinfo>`
   String get info => attributes["info"];
   set info(String val) => attributes["info"] = val;
 
@@ -549,9 +666,12 @@ class VPExam extends SerializableObject {
   }
 }
 
+/// Schülerplan-Desktop-XML-Daten für Datum abfragen
+/// returns (data, isOnline)
 Future<(XmlDocument?, bool)> getKlDesktopXMLForDate(String host, String user, String password, DateTime date)
   => _fetch(Uri.parse("$host$sUrlDPath/vdaten/VplanKl${indiwareFilenameFormat.format(date)}.xml"), user, password);
 
+/// komplettes VPKLDesktopData-Objekt aus XML erstellen
 VPKLDesktopData xmlToKlDesktopData(XmlDocument doc) {
   final xml = doc.rootElement;
   return VPKLDesktopData(
@@ -572,6 +692,8 @@ VPKLDesktopData xmlToKlDesktopData(XmlDocument doc) {
   );
 }
 
+/// Schüler-Desktop-XML-Daten für Datum abfragen und nur Klausuren zurückgeben
+/// returns (data, isOnline)
 Future<(List<VPExam>?, bool)> getExamRawDataForDate(String host, String username, String password, DateTime date) async {
   if (host == indiwareDemoHost) return (null, false);
   final (xml, online) = await getKlDesktopXMLForDate(host, username, password, date);

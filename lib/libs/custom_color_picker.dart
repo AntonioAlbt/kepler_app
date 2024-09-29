@@ -37,6 +37,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+/// Wie der Kommentar unter der Lizenzinfo sagt, ist dieses Widget eine modifizierte Version
+/// vom HueRingPicker aus flutter_colorpicker.
+/// Alle Änderungen sind durch separate Kommentare hervorgehoben.
 class CustomHueRingPicker extends StatefulWidget {
   const CustomHueRingPicker({
     super.key,
@@ -85,8 +88,7 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.of(context).orientation == Orientation.portrait ||
-        widget.portraitOnly) {
+    if (MediaQuery.of(context).orientation == Orientation.portrait || widget.portraitOnly) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -94,26 +96,24 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
             borderRadius: widget.pickerAreaBorderRadius,
             child: Padding(
               padding: const EdgeInsets.all(15),
-              child: Stack(
-                  alignment: AlignmentDirectional.center,
-                  children: <Widget>[
-                    SizedBox(
-                      width: widget.colorPickerHeight,
-                      height: widget.colorPickerHeight,
-                      child: ColorPickerHueRing(
-                        currentHsvColor,
-                        onColorChanging,
-                        displayThumbColor: widget.displayThumbColor,
-                        strokeWidth: widget.hueRingStrokeWidth,
-                      ),
-                    ),
-                    SizedBox(
-                      width: widget.colorPickerHeight * .5,
-                      height: widget.colorPickerHeight * .5,
-                      child: ColorPickerArea(
-                          currentHsvColor, onColorChanging, PaletteType.hsv),
-                    )
-                  ]),
+              child: Stack(alignment: AlignmentDirectional.center, children: <Widget>[
+                SizedBox(
+                  width: widget.colorPickerHeight,
+                  height: widget.colorPickerHeight,
+                  child: ColorPickerHueRing(
+                    currentHsvColor,
+                    onColorChanging,
+                    displayThumbColor: widget.displayThumbColor,
+                    strokeWidth: widget.hueRingStrokeWidth,
+                  ),
+                ),
+                SizedBox(
+                  /// Faktoren von 0.625 zu 0.5 geändert (-> kleiner)
+                  width: widget.colorPickerHeight * .5,
+                  height: widget.colorPickerHeight * .5,
+                  child: ColorPickerArea(currentHsvColor, onColorChanging, PaletteType.hsv),
+                )
+              ]),
             ),
           ),
           if (widget.enableAlpha)
@@ -132,6 +132,8 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
+                /// SizedBox entfernt und Expanded zu Flexible geändert
+                /// - wahrscheinlich damit das besser zentriert wird und überhaupt besser aussieht
                 ColorIndicator(currentHsvColor),
                 Flexible(
                   child: Padding(
@@ -139,13 +141,12 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
                     child: ColorPickerInput(
                       currentHsvColor.toColor(),
                       (Color color) {
-                        setState(
-                            () => currentHsvColor = HSVColor.fromColor(color));
+                        setState(() => currentHsvColor = HSVColor.fromColor(color));
                         widget.onColorChanged(currentHsvColor.toColor());
                       },
                       enableAlpha: widget.enableAlpha,
                       embeddedText: true,
-                      disable: true,
+                      disable: true, /// direkte Eingabe eines Farbcodes deaktiviert
                     ),
                   ),
                 ),
@@ -163,8 +164,7 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
               height: widget.colorPickerHeight,
               child: ClipRRect(
                 borderRadius: widget.pickerAreaBorderRadius,
-                child: ColorPickerArea(
-                    currentHsvColor, onColorChanging, PaletteType.hsv),
+                child: ColorPickerArea(currentHsvColor, onColorChanging, PaletteType.hsv),
               ),
             ),
           ),
@@ -173,40 +173,37 @@ class _CustomHueRingPickerState extends State<CustomHueRingPicker> {
             child: Padding(
               padding: const EdgeInsets.all(15),
               child: Stack(
-                  alignment: AlignmentDirectional.topCenter,
-                  children: <Widget>[
-                    SizedBox(
-                      width: widget.colorPickerHeight -
-                          widget.hueRingStrokeWidth * 2,
-                      height: widget.colorPickerHeight -
-                          widget.hueRingStrokeWidth * 2,
-                      child: ColorPickerHueRing(
-                          currentHsvColor, onColorChanging,
-                          strokeWidth: widget.hueRingStrokeWidth),
-                    ),
-                    Column(
-                      children: [
-                        SizedBox(height: widget.colorPickerHeight / 8.5),
-                        ColorIndicator(currentHsvColor),
-                        const SizedBox(height: 10),
-                        Text("#${currentHsvColor.toColor().toString().substring(9, 9+6)}"),
-                        if (widget.enableAlpha) const SizedBox(height: 5),
-                        if (widget.enableAlpha)
-                          SizedBox(
-                            height: 40.0,
-                            width: (widget.colorPickerHeight -
-                                    widget.hueRingStrokeWidth * 2) /
-                                2,
-                            child: ColorPickerSlider(
-                              TrackType.alpha,
-                              currentHsvColor,
-                              onColorChanging,
-                              displayThumbColor: true,
-                            ),
+                alignment: AlignmentDirectional.topCenter,
+                children: <Widget>[
+                  SizedBox(
+                    width: widget.colorPickerHeight - widget.hueRingStrokeWidth * 2,
+                    height: widget.colorPickerHeight - widget.hueRingStrokeWidth * 2,
+                    child: ColorPickerHueRing(currentHsvColor, onColorChanging, strokeWidth: widget.hueRingStrokeWidth),
+                  ),
+                  Column(
+                    children: [
+                      SizedBox(height: widget.colorPickerHeight / 8.5),
+                      ColorIndicator(currentHsvColor),
+                      const SizedBox(height: 10),
+                      /// von deaktiviertem ColorPickerInput zu Text geändert, sieht so besser aus
+                      /// - aber nur für Landscape Mode - warum hab ich das gemacht???
+                      Text("#${currentHsvColor.toColor().toString().substring(9, 9 + 6)}"),
+                      if (widget.enableAlpha) const SizedBox(height: 5),
+                      if (widget.enableAlpha)
+                        SizedBox(
+                          height: 40.0,
+                          width: (widget.colorPickerHeight - widget.hueRingStrokeWidth * 2) / 2,
+                          child: ColorPickerSlider(
+                            TrackType.alpha,
+                            currentHsvColor,
+                            onColorChanging,
+                            displayThumbColor: true,
                           ),
-                      ],
-                    ),
-                  ]),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

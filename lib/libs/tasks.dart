@@ -51,6 +51,7 @@ import 'package:workmanager/workmanager.dart';
 
 const fetchTaskName = "fetch_task";
 
+/// wird in separatem Bereich vom Betriebssystem im Hintergrund ausgeführt
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
@@ -89,6 +90,7 @@ void taskCallbackDispatcher() {
   });
 }
 
+/// verarbeitet alles bezüglich neuen News
 Future<void> runNewsFetchTask() async {
   final newsCache = NewsCache();
   if (await fileExists(await newsCacheDataFilePath)) {
@@ -131,9 +133,11 @@ Future<void> runNewsFetchTask() async {
   );
 }
 
+/// verarbeitet alles bezüglich Stundenplan-Änderungen
 Future<void> runStuPlanFetchTask() async {
   // TODO - future: inform the user about course ids changing -> if a course they had selected doesn't exist anymore (maybe not as a notif but when app opens)
 
+  /// alles, was normalerweise im BuildContext bereitsteht, muss hier neu vom Speicher geladen werden
   final spdata = StuPlanData();
   if (await fileExists(await stuPlanDataFilePath)) {
     final data = await readFile(await stuPlanDataFilePath);
@@ -188,6 +192,7 @@ Future<void> runStuPlanFetchTask() async {
   );
 }
 
+/// fragt neuen Stundenplan ab, vergleicht Änderungen und gibt geänderte Stunden der Klasse zurück
 Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className, List<int> selectedCourseIds) async {
   final newDatas = <DateTime, VPKlData>{};
   final oldDatas = <DateTime, VPKlData>{};
@@ -249,6 +254,7 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
   return differentLessons;
 }
 
+/// wie getDifferentClassLessons, aber für Lehrerstunden
 Future<Map<DateTime, List<VPLesson>>?> getDifferentTeacherLessons(CredentialStore creds, String teacherCode) async {
   final newDatas = <DateTime, VPLeData>{};
   final oldDatas = <DateTime, VPLeData>{};

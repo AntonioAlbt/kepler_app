@@ -43,16 +43,20 @@ import 'package:kepler_app/navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 late final SharedPreferences sharedPreferences;
+/// ist das dunkle Farbschema aktiviert?
 bool hasDarkTheme(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
 
+/// Keys für alle Sachen, die in den Shared Preferences gespeichert werden
 const newsCachePrefKey = "news_cache";
 const credStorePrefKey = "cred_store";
 const securePrefs = FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
 
+/// Mail, die für die Aktivierung des Demo-Modus' verwendet werden muss
 const lernSaxDemoModeMail = "jkgappdemo@jkgc.lernsax.de";
 
+/// für die Speicherung von allen Login-Daten, wird in Flutter Secure Storage (verschlüsselt) gespeichert
 class CredentialStore extends SerializableObject with ChangeNotifier {
   CredentialStore() {
     objectCreators["alt_ls_logins"] = (_) => <String>[];
@@ -102,22 +106,25 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
     alternativeLSTokens = alternativeLSTokens..removeAt(index);
   }
 
+  /// Indiware-Host
   String? get vpHost => attributes["vp_host"] ?? indiware.baseUrl;
   set vpHost(String? host) => _setSaveNotify("vp_host", host);
 
+  /// Benutzername für Indiware
   String? get vpUser => attributes["vp_user"];
   set vpUser(String? user) {
     if (kCredsDebug) logCatch("creds-debug", "vpUser changed to ${user == null ? "null" : "value with len ${user.length}"}", StackTrace.current);
     _setSaveNotify("vp_user", user);
   }
 
+  /// Passwort für Indiware
   String? get vpPassword => attributes["vp_password"];
   set vpPassword(String? password) {
     if (kCredsDebug) logCatch("creds-debug", "vpPassword changed to ${password == null ? "null" : "value with len ${password.length}"}", StackTrace.current);
     _setSaveNotify("vp_password", password);
   }
 
-  // VP doesn't need alternative accounts, because it's the same
+  // VP doesn't need alternative accounts, because it'd be the same login data
 
   String _serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
@@ -136,6 +143,7 @@ class CredentialStore extends SerializableObject with ChangeNotifier {
   }
 }
 
+/// Benutzertyp
 enum UserType {
   pupil, teacher, parent, nobody;
   @override
@@ -149,6 +157,7 @@ enum UserType {
   }
 }
 
+/// für alles, was den aktuellen Status der App beschreibt (ephemeral, nur im RAM)
 class AppState extends ChangeNotifier {
   /// needed to make current navigation available to the tabs, so they change content based on sub-tab
   /// last ID is for "topmost" (currently visible) page
@@ -159,6 +168,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// welche NavPage (Liste weil Pfad, z.B. ["lernsax", "notifications"]) nach dem nächsten Schließen eines
+  /// InfoScreens geöffnet werden soll
   List<String>? navPagesToOpenAfterNextISClose;
 
   InfoScreenDisplay? _infoScreen;
@@ -184,6 +195,7 @@ class AppState extends ChangeNotifier {
 
 const internalStatePrefsKey = "internal_state";
 
+/// wie Preferences, aber für Einstellungen, die nur App-intern verwendet werden (nicht vom Benutzer veränderbar)
 class InternalState extends SerializableObject with ChangeNotifier {
   final _serializer = Serializer();
 
@@ -243,6 +255,7 @@ class InternalState extends SerializableObject with ChangeNotifier {
   }
 }
 
+/// Endungen von LernSax-Mail-Adressen von Eltern bzw. Eltern-ähnlichen Konten
 final parentTypeEndings = [
   "eltern",
   "vati",

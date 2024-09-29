@@ -14,6 +14,20 @@ Bisher kommentierte Dateien:
 - changelog.dart
 - build_vars.dart
 - colors.dart
+- libs:
+  - custom_color_picker.dart
+  - custom_simple_chips_input.dart
+  - filesystem.dart
+  - indiware.dart
+  - kepler_app_custom_icons.dart
+  - lernsax.dart
+  - logging.dart
+  - notifications.dart
+  - preferences.dart
+  - snack.dart
+  - state.dart
+  - tasks.dart
+  - widgets.dart
 - tabs:
   - about.dart
   - feedback.dart

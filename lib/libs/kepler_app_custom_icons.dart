@@ -48,6 +48,7 @@
 ///
 import 'package:flutter/widgets.dart';
 
+/// automatisch erstellt, mit fluttericon.com
 class KeplerAppCustomIcons {
   KeplerAppCustomIcons._();
 

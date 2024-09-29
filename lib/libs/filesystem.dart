@@ -37,12 +37,18 @@ import 'dart:io';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:path_provider/path_provider.dart';
 
+/// für Dateien, die auf Android durch Auswählen von "Cache leeren" vom Benutzer gelöscht werden können
 Future<String> get cacheDirPath async => (await getApplicationCacheDirectory()).path;
+/// für Benutzerdaten
 Future<String> get userDataDirPath async => (await getApplicationDocumentsDirectory()).path;
+/// für generelle App-Daten
 Future<String> get appDataDirPath async => (await getApplicationSupportDirectory()).path;
+
+/// Hilfsfunktionen für verschiedene Dateiaktionen
 
 Future<bool> fileExists(String fn) => File(fn).exists();
 
+/// Binärdaten in Datei schreiben
 Future<bool> writeFileBin(String fn, List<int> data) async {
   final file = File(fn);
   try {
@@ -55,8 +61,10 @@ Future<bool> writeFileBin(String fn, List<int> data) async {
     return false;
   }
 }
+/// String in Datei schreiben
 Future<bool> writeFile(String fn, String data) => writeFileBin(fn, utf8.encode(data));
 
+/// Binärdaten aus Datei lesen
 Future<List<int>?> readFileBin(String fn) async {
   if (!(await fileExists(fn))) return null;
   final file = File(fn);
@@ -67,6 +75,7 @@ Future<List<int>?> readFileBin(String fn) async {
     return null;
   }
 }
+/// String aus Datei lesen
 Future<String?> readFile(String fn) async {
   final raw = await readFileBin(fn);
   if (raw == null) return null;

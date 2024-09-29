@@ -44,6 +44,7 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+/// Output-Objekt, damit logger in eine Datei schreibt
 class FileOutput extends LogOutput {
   final String filePath;
   FileOutput(this.filePath);
@@ -71,6 +72,7 @@ class FileOutput extends LogOutput {
   }
 }
 
+/// eigenes Objekt, damit logger mit dem gewünschten Format Logs ausgibt
 class CustomPrinter extends LogPrinter {
   static final levelPrefixes = {
     Level.trace: '[T]',
@@ -99,15 +101,20 @@ class CustomPrinter extends LogPrinter {
   }
 }
 
+/// schönes, typisch deutsches Datumsformat
 final logDateFormat = DateFormat("dd.MM.yyyy HH:mm");
 
+/// statische Klasse, die für Logging in der Kepler-App zuständig ist
 class KeplerLogging {
+  /// Unterordner in App-Daten für Log-Dateien
   static const logDir = "logs";
+  /// Dateiendung der Log-Dateien
   static const logFileEnding = ".log";
 
   static Logger? logger;
   static DateTime? _fileUpdated;
 
+  /// Wrapper für logger.log, damit Deaktivieren berücksichtigt werden kann (und für subTag-Support)
   static void log({String? subTag, required Level level, required String message}) {
     if (!loggingEnabled) {
       if (kDebugMode) print("ignored log (logging disabled): $level - ${"${subTag != null ? "($subTag) " : ""}$message"}");
@@ -116,10 +123,17 @@ class KeplerLogging {
 
     logger?.log(level, "${subTag != null ? "($subTag) " : ""}$message");
 
+    /// wenn sich der Tag ändert, neue Log-Datei erstellen
     if (_fileUpdated?.day != DateTime.now().day) initLogging();
   }
 
+  /// Datumsformat für Dateiname (wird auch zum Parsen verwendet)
+  /// 
+  /// damit typischer Dateiname: 01_01_2024.log
   static final fnDateFormat = DateFormat("dd_MM_yyyy");
+  /// initialisiert alle nötigen Dinge für Logging, sollte in `main()` vor `runApp` aufgerufen werden
+  /// 
+  /// muss beliebig oft aufgerufen werden können
   static Future<void> initLogging() async {
     final dir = await getPlatformSpecificLoggingDir();
     await dir.create(recursive: true);
@@ -144,11 +158,13 @@ class KeplerLogging {
     return Directory("${await appDataDirPath}/$logDir");
   }
 
+  /// Datum des Logs aus Dateiname entnehmen
   static DateTime getDateFromFileName(String fileName) => fnDateFormat.parse(fileName.substring(0, fileName.length - logFileEnding.length + 1));
 
   static String fileName(File file) => file.path.split("/").last;
   static DateTime getDateFromFile(File file) => getDateFromFileName(fileName(file));
 
+  /// alle aktuell existierenden Log-Dateien abfragen
   static Future<List<File>> getAllLogFiles() async {
     final out = <File>[];
     for (final f in await (await getPlatformSpecificLoggingDir()).list().toList()) {
@@ -157,6 +173,7 @@ class KeplerLogging {
     return out;
   }
 
+  /// Logs älter als ein bestimmtes Datum löschen
   static Future<List<DateTime>> deleteLogsOlderThan(DateTime time) async {
     final deleted = <DateTime>[];
     for (final file in await getAllLogFiles()) {
@@ -169,6 +186,10 @@ class KeplerLogging {
     return deleted;
   }
 
+  /// in der Fehlerbehandlung von Flutter registrieren, damit auch Flutter-Fehler im Log aufgezeichnet werden können
+  /// 
+  /// da Fehler in der Fehlerbehandlung nicht von Flutter gefangen werden, sollte kein unendlicher Loop bei Fehlern
+  /// in KeplerLogging entstehen
   static void registerFlutterErrorHandling() {
     FlutterError.onError = (error) {
       logCatch("flutter-error", error.exception, error.stack ?? StackTrace.empty);
@@ -181,6 +202,8 @@ class KeplerLogging {
     };
   }
 }
+
+// kürzere Hilfsfunktionen zum Loggen auf einem bestimmten Level
 
 void logDebug(String? subTag, String message) => KeplerLogging.log(
   level: Level.debug,
@@ -209,10 +232,12 @@ void logCatch(String? subTag, Object error, StackTrace stack) => KeplerLogging.l
   message: limitStringLength("$error:\n$stack", 5000, "..."),
 );
 
+/// erstellt ein LogListViewerPage-Widget
 Widget logViewerPageBuilder(BuildContext context) {
   return const LogListViewerPage();
 }
 
+/// Übersichtsseite für alle aktuell existierenden Log-Dateien, bietet auch Option zum Löschen einzelner oder aller
 class LogListViewerPage extends StatefulWidget {
   const LogListViewerPage({super.key});
 
@@ -220,6 +245,7 @@ class LogListViewerPage extends StatefulWidget {
   State<LogListViewerPage> createState() => _LogListViewerPageState();
 }
 
+/// Datumsformat für die ausgegebene Datei für den Benutzer
 final _outDF = DateFormat("dd.MM.yyyy");
 class _LogListViewerPageState extends State<LogListViewerPage> {
   @override
@@ -290,21 +316,10 @@ class _LogListViewerPageState extends State<LogListViewerPage> {
   }
 }
 
+/// erstellt einen Builder für eine LogViewPage für eine bestimmte Log-Datei
 Widget Function(BuildContext) logViewBuilder(FileSystemEntity file) => (context) => LogViewPage(File(file.absolute.path));
 
-RegExp logPiece = RegExp(r"{(.*?)}");
-String parseLog(String input) {
-  final lines = input.split("\n");
-  return lines.map((line) {
-    final parsed = logPiece.allMatches(line).map((e) => e.group(1)!).toList();
-    if (parsed.length == 5) {
-      return "[${parsed[3]}] (${parsed[0]} - ${parsed[1]}) [${parsed[4]}]:\n${parsed[2]}";
-    } else {
-      return line;
-    }
-  }).join("\n");
-}
-
+/// Ansichtsseite für eine Log-Datei, mit Optionen zum Kopieren oder Teilen
 class LogViewPage extends StatefulWidget {
   final File logFile;
 
@@ -406,7 +421,7 @@ class _LogViewPageState extends State<LogViewPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: SelectableText(
-                        parseLog(snapshot.data ?? "keine Daten"),
+                        snapshot.data ?? "keine Daten",
                       ),
                     ),
                   );

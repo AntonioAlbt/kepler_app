@@ -35,6 +35,7 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// zwischen alle gegebenen Widgets einen Divider einschieben
 List<Widget> separatedListViewWithDividers(List<Widget> children)
   => children.fold((0, <Widget>[]), (previousValue, element) {
     final (i, list) = previousValue;
@@ -44,6 +45,7 @@ List<Widget> separatedListViewWithDividers(List<Widget> children)
   }).$2;
 
 
+/// Knopf mit mehr Optionen, der primär für das Öffnen eines Links verwendet werden sollte
 class OpenLinkButton extends StatelessWidget {
   final String label;
   final String link;

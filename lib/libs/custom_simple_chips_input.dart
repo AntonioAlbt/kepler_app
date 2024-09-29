@@ -59,6 +59,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Der Code für das SimpleChipsInput-Widget ist aus dem pub.dev-Paket simple_chips_input.
+/// (leicht von mir für Controller-Integration verändert)
+
+/// zum Paket hinzugefügt: Controller für das Widget, um Processing vorm Absenden hinzuzufügen
+/// (damit eventuelle Eingabe noch in Chip verwandelt werden kann)
 class SimpleChipsInputController {
   bool Function()? trySubmit;
   

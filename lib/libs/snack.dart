@@ -36,13 +36,18 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 
+/// Hilfsfunktion, um alle möglichen Nachrichten in SnackBar-s anzuzeigen
+/// 
 /// argument priority: text+error -> textGen+error -> child
 void showSnackBar({ String? text, bool error = false, Widget? child, String Function(bool sie)? textGen, bool clear = false, Duration duration = const Duration(seconds: 4) }) {
+  /// da es teilweise vorkommen kann, dass auf den State noch nicht zugegriffen werden sollte,
+  /// werden SnackBar-s immer für das Ende des Frames gescheduled
   WidgetsBinding.instance.addPostFrameCallback((_) {
     showSnackBarDirectly(text: text, error: error, child: child, textGen: textGen, clear: clear, duration: duration);
   });
 }
 
+/// zeigt eine SnackBar direkt an
 void showSnackBarDirectly({ String? text, bool error = false, Widget? child, String Function(bool sie)? textGen, bool clear = false, Duration duration = const Duration(seconds: 4) }) {
   final msgr = ScaffoldMessenger.of(globalScaffoldContext);
   if (clear) msgr.clearSnackBars();
