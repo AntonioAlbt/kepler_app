@@ -30,20 +30,19 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace "de.keplerchemnitz.kepler_app"
-    //compileSdkVersion flutter.compileSdkVersion
-    compileSdkVersion 34
-    ndkVersion flutter.ndkVersion
+    compileSdk = 35 // flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         // for flutter_local_notifications
         coreLibraryDesugaringEnabled true
         
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = JavaVersion.VERSION_1_8
     }
 
     sourceSets {
@@ -53,10 +52,10 @@ android {
     defaultConfig {
         applicationId "de.keplerchemnitz.kepler_app"
         
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
 
         // for flutter_local_notifications
         multiDexEnabled true
@@ -73,6 +72,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
+
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -83,5 +84,5 @@ flutter {
 
 dependencies {
     // for flutter_local_notifications
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
 }

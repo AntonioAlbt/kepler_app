@@ -50,7 +50,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.6.1+67
+version: 2.6.2+68
 
 environment:
   sdk: '^3.0.0'
@@ -81,6 +81,10 @@ dependencies:
   scroll_to_index: ^3.0.1
   package_info_plus: ^8.0.1
   logger: ^2.4.0
+  flutter_system_proxy:
+    git: 
+      url: https://github.com/BrowserStackCE/flutter_system_proxy.git
+      ref: main
 
   # notification lib
   flutter_local_notifications: ^17.2.1+2
@@ -115,7 +119,7 @@ dependencies:
 
   # libs for stuplan
   xml: ^6.5.0
-  confetti: ^0.7.0
+  confetti: ^0.8.0
 
   # libs for settings
   settings_ui: ^2.0.2
@@ -135,10 +139,10 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
   # app icon lib
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.1
   image: ^4.1.7
 
 # For information on the generic Dart part of this file, see the

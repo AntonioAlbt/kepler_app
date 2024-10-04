@@ -39,6 +39,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_system_proxy/flutter_system_proxy.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kepler_app/changelog.dart';
 import 'package:kepler_app/colors.dart';
@@ -50,6 +51,7 @@ import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/proxy.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/tasks.dart';
@@ -192,6 +194,11 @@ void main() async {
       error: exception is FlutterError ? exception : null,
     );
   };
+
+  /// Der folgende Block an Code kümmert sich um das Einrichten vom Proxy, wie es vom System vorgegeben wird.
+  /// Dies ist nötig, da auf Schul-iPads im Schul-WLAN immer ein Proxy zum Internetzugriff verwendet werden muss.
+  logDebug("proxy", "proxy: ${await FlutterSystemProxy.findProxyFromEnvironment("https://www.lernsax.de")}");
+  HttpOverrides.global = ProxyHttpOverrides();
 
   /// Hier beginnt die große Magie!
   /// Die App wird initialisiert, und mit runApp wird Flutter mitgeteilt, dass es jetzt dieses
