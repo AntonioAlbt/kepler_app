@@ -60,6 +60,7 @@
 import 'dart:io';
 
 import 'package:flutter_system_proxy/flutter_system_proxy.dart';
+import 'package:kepler_app/libs/logging.dart';
 
 class ProxyHttpOverrides extends HttpOverrides {
   @override
@@ -72,7 +73,19 @@ class ProxyHttpOverrides extends HttpOverrides {
     HttpOverrides.global = old;        /// (4) Overrides werden wiederhergestellt
     /// Nur wenn HttpOverrides.createHttpClient global null ist, wird ein normaler HttpClient erstellt - sonst wird
     /// genau diese Funktion hier wieder aufgerufen. -> StackOverflowError
-    return ProxyAwareHttpClient(client: client);
+    
+    return ProxyAwareHttpClient(client: client)
+      ..badCertificateCallback = (cert, host, port) {
+        /// Das ist an sich erstmal schlecht, aber bei genauerer Betrachtung zeigt sich... dass es eigentlich
+        /// wirklich schlecht ist. Gleichzeitig ist es aber die einzige mir offensichtliche Lösung, da der
+        /// Zertifikatsfehler nur alle paar Anfragen auftritt.
+        /// Leider ist es trotzdem ziemlich schlecht, da die Anmeldedaten zum Stundenplan halt mit jeder Anfrage
+        /// übergeben werden, d.h. wenn jemand den Traffic irgendwie abgreift und ein ungültiges Zertifikat
+        /// reinschiebt, könnte man alle Daten komplett abfangen. Aber naja. Ist ja dann doch nur der Stundenplan.
+        final ignoredBecauseKPlan = host == "plan.kepler-chemnitz.de";
+        logError("http-cert", "cert error for $host:$port${ignoredBecauseKPlan ? " - ignored!" : ""}");
+        return ignoredBecauseKPlan;
+      };
   }
   @override
   String findProxyFromEnvironment(Uri url, Map<String, String>? environment) {
