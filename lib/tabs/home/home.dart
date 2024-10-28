@@ -50,6 +50,7 @@ import 'package:kepler_app/tabs/home/widgets/stuplan_home.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
+/// Standard-Startseite der App, mit Liste von Infoblöcken ("Widgets") für alle wichtigen Bestandteile der App
 class HomepageTab extends StatefulWidget {
   const HomepageTab({super.key});
 
@@ -57,6 +58,12 @@ class HomepageTab extends StatefulWidget {
   State<HomepageTab> createState() => _HomepageTabState();
 }
 
+/// "Registrierung" der Widgets. Die IDs werden zum Ausblenden und Anordnen der Widgets verwendet, und auch,
+/// um die Widgets am Anfang überhaupt auf der Startseite anzuzeigen.
+/// 
+/// Wenn ein neues Widget hinzugefügt werden soll, muss es hier in Form von
+///   "widget_id": ("Widget-Titel", Widget(id: "widget_id"))
+/// eingetragen werden.
 final homeWidgetKeyMap = {
   "news": ("Kepler-News", const HomeNewsWidget(id: "news")),
   "stuplan": ("Aktuelle Vertretungen", const HomeStuPlanWidget(id: "stuplan")),
@@ -68,6 +75,8 @@ final homeWidgetKeyMap = {
   "foucault": ("Foucaultsches Pendel", const HomePendulumWidget(id: "foucault")),
 };
 
+/// welche Widgets in welcher Reihenfolge für nicht eingeloggte Benutzer angezeigt werden sollen
+/// - diese können die Reihenfolge nicht ändern und auch keine Widgets aus-/einblenden
 final widgetsForNotLoggedIn = ["news", "calendar", "stuplan", "foucault"];
 
 class _HomepageTabState extends State<HomepageTab> {
@@ -81,6 +90,7 @@ class _HomepageTabState extends State<HomepageTab> {
             builder: (context, prefs, _) {
               return Column(
                 children: [
+                  /// Hauptbestandteil der Startseite -> alle noch verfügbaren Widgets, die nicht ausgeblendet sind, anzeigen
                   ...prefs.homeScreenWidgetOrderList.where((id) => homeWidgetKeyMap.keys.contains(id) && !prefs.hiddenHomeScreenWidgets.contains(id)).map((widget) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: homeWidgetKeyMap[widget]?.$2,
@@ -126,9 +136,13 @@ class _HomepageTabState extends State<HomepageTab> {
     final prefs = Provider.of<Preferences>(context, listen: false);
     final istate = Provider.of<InternalState>(context, listen: false);
     final notLoggedIn = Provider.of<AppState>(context, listen: false).userType == UserType.nobody;
+    /// ermitteln, welche Widgets neu hinzugefügt werden sollen, da der Benutzer sie noch nicht hatte
+    /// -> auch dafür, wenn neue Widgets zur App hinzugefügt werden - werden damit direkt auf der Startseite
+    /// von Benutzern hinzugefügt
     final newIds = homeWidgetKeyMap.keys.where((id) => !istate.widgetsAdded.contains(id) && !prefs.homeScreenWidgetOrderList.contains(id)).where((id) {
       return notLoggedIn ? widgetsForNotLoggedIn.contains(id) : true;
     }).toList();
+    /// damit der State nicht beim Rendern verändert wird, muss ein PostFrameCallback verwendet werden
     WidgetsBinding.instance.addPostFrameCallback((_) {
       prefs.homeScreenWidgetOrderList = prefs.homeScreenWidgetOrderList.where((id) {
         return homeWidgetKeyMap.keys.contains(id) && (notLoggedIn ? widgetsForNotLoggedIn.contains(id) : true);
@@ -140,6 +154,8 @@ class _HomepageTabState extends State<HomepageTab> {
   }
 }
 
+/// öffnet den Dialog für das Ändern der Reihenfolge der Widgets
+/// - verwendet globalen Context, damit beim Ausblenden des öffnenden Widgets nicht das Rendering fehlschlägt
 Future<void> openReorderHomeWidgetDialog() => showDialog(context: globalScaffoldContext, builder: (context) {
   if (Provider.of<AppState>(globalScaffoldContext, listen: false).userType == UserType.nobody) {
     return AlertDialog(title: const Text("Fehler"), content: const Text("Anmeldung erforderlich."), actions: [

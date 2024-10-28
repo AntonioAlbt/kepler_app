@@ -41,7 +41,9 @@ import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:kepler_app/tabs/school/news_view.dart';
 import 'package:provider/provider.dart';
 
+/// zeigt Liste der 3 aktuellsten News aus Cache an (aktualisiert NewsCache **nicht**!)
 class HomeNewsWidget extends StatefulWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
   const HomeNewsWidget({super.key, required this.id});
 
@@ -58,6 +60,7 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
       title: const Text("Aktuelle News"),
       titleColor: Theme.of(context).cardColor,
       child: Consumer<NewsCache>(
+        // TODO: test if this ScrollConfiguration can be removed -> no scrollables below it anymore?
         builder: (context, newsCache, _) => ScrollConfiguration(
           behavior: const ScrollBehavior().copyWith(overscroll: false),
           child: Column(
@@ -86,7 +89,9 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
   }
 }
 
+/// einheitliche Darstellung für News-Einträge
 class NewsHomeListTile extends StatelessWidget {
+  /// Daten zum darzustellenden News-Eintrag
   final NewsEntryData data;
   const NewsHomeListTile(this.data, {super.key});
 

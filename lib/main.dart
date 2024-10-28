@@ -279,6 +279,7 @@ final globalScaffoldKey = GlobalKey<ScaffoldState>();
 /// der State wird für Scaffold-Funktionen wie das Anzeigen von SnackBars benötigt
 ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
 /// der Context siehe oben
+/// TODO: nicht mehr verwenden. einfach mal die Provider über das MaterialApp Widget schieben - dann wäre das nicht mehr nötig
 BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
 
 /// wofür der genau da ist, weiß ich nicht ups

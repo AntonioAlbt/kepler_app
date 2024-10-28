@@ -41,7 +41,9 @@ import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/pendel.dart';
 import 'package:provider/provider.dart';
 
+/// Widget, was eine vereinfachte Darstellung des "Tisches" im Pendel-Tab anzeigt
 class HomePendulumWidget extends StatelessWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
 
   const HomePendulumWidget({super.key, required this.id});
@@ -66,6 +68,7 @@ class HomePendulumWidget extends StatelessWidget {
                   children: [
                     Flexible(
                       flex: 4,
+                      /// einfach eine kleinere, nicht animierte Darstellung des Pendels als auf der Pendel-Seite
                       child: Stack(
                         alignment: AlignmentDirectional.center,
                         children: [
@@ -150,10 +153,18 @@ class HomePendulumWidget extends StatelessWidget {
   }
 }
 
+/// FPDisplay = Foucaultsches Pendel Display
+/// - zeigt, wider Erwarten, nicht den Pendelzustand, sondern alles außenrum (Link zur Webseite, Ladeanim., ...) an
+/// 
+/// Ich weiß auch ehrlich nicht, warum das als separates Widget verfügbar ist - es hat keinerlei andere Verwendung.
 class FPDisplay extends StatelessWidget {
+  /// Widget mit der tatsächlichen Darstellung des Pendels
   final Widget? child;
+  /// wird aufgerufen, wenn der Benutzer die Daten aktualisieren will
   final VoidCallback? onRefresh;
+  /// werden die Daten aktuell noch abgefragt
   final bool stillLoading;
+  /// konnte sich mit dem Server verbunden werden
   final bool isOnline;
   const FPDisplay({super.key, required this.child, this.onRefresh, this.stillLoading = false, this.isOnline = false});
 

@@ -362,6 +362,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
   }
 }
 
+/// Rückgabe-Daten: (Zuletzt aktualisiert, Winkel, Periodendauer, CPU %, RAM %)
 Future<(DateTime?, double?, double?, double?, double?)> getPendelData() async {
   try {
     final res = jsonDecode((await http.get(Uri.parse(pendelDataUrl))).body);

@@ -62,7 +62,11 @@ import 'dart:io';
 import 'package:flutter_system_proxy/flutter_system_proxy.dart';
 import 'package:kepler_app/libs/logging.dart';
 
+/// Um in Dart (Paket http) alles mögliche zu den verwendeten Clients zu verändern, muss die createHttpClient-
+/// Funktion global überschrieben werden, in den HttpOverrides. Dafür wird hier die Klasse erstellt, und dann
+/// in main() als Override verwendet.
 class ProxyHttpOverrides extends HttpOverrides {
+  /// wird bei jeder Verbindung(?) aufgerufen, um einen Client zu erstellen
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     /// Das ist absolut durcheinander, aber scheint leider nötig zu sein, weil man nicht einfach einen "_HttpClient"
@@ -87,6 +91,8 @@ class ProxyHttpOverrides extends HttpOverrides {
         return ignoredBecauseKPlan;
       };
   }
+  /// wird vielleicht auch irgendwo aufgerufen? kann aber leider von mir nicht verwendet werden,
+  /// da Dart hier kein async erlaubt und es sich nur damit Proxies von z.B. Android / iOS laden lassen.
   @override
   String findProxyFromEnvironment(Uri url, Map<String, String>? environment) {
     /// Immer direct zurückgeben, damit sich der ProxyAwareHttpClient selbst drum kümmern kann.

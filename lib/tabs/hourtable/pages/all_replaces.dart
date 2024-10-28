@@ -35,8 +35,15 @@ import 'package:flutter/material.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 
+/// eigentlich folgen alle Stundenplanseiten diesem Schema
+/// 1. GlobalKey für navActions definieren
+/// 2. RainbowWrapper in Stack für Hintergrund
+/// 3. wichtigster Teil: StuPlanDisplay mit mode passend gesetzt
+
 final allReplacesDisplayKey = GlobalKey<StuPlanDisplayState>();
 
+/// wie der Name sagt, werden alle Vertretungen des Tages (alle Stunden mit Änderungen) nach Klasse sortiert
+/// aufgelistet (wie Bildschirm im Foyer der Schule)
 class AllReplacesPage extends StatelessWidget {
   const AllReplacesPage({super.key});
 

@@ -45,7 +45,9 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:provider/provider.dart';
 
+/// wie LSMailsWidget, aber für Benachrichtigungen
 class HomeLSNotifsWidget extends StatefulWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
 
   const HomeLSNotifsWidget({super.key, required this.id});
@@ -93,6 +95,7 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
           }
           return Column(
             children: separatedListViewWithDividers(
+              /// geladene Benachrichtigungen und Link zur LS-Notifs-Seite anzeigen
               notifsSlice!.map<Widget>((data) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: LSNotificationTile(notif: data, darkerClock: !hasDarkTheme(context)),
@@ -127,10 +130,12 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
   @override
   void initState() {
     super.initState();
+    /// siehe HomeLSMailsWidget.initState
     Provider.of<CredentialStore>(context, listen: false).addListener(loadData);
     loadData();
   }
 
+  /// wie in tabs/lernsax/pages/notifs_page.dart, aber nur für Hauptaccount
   Future<void> loadData() async {
     setState(() {
       loading = true;

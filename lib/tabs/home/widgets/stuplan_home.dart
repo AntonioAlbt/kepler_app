@@ -44,6 +44,9 @@ import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:provider/provider.dart';
 
+/// Widget, was aktuelle Vertretungen für heute oder morgen (je nach Uhrzeit) anzeigt und Stundenplan aktualisiert
+/// 
+/// (wahrscheinlich eines der besten Widgets, das die App anbietet)
 class HomeStuPlanWidget extends StatefulWidget {
   final String id;
 
@@ -53,6 +56,8 @@ class HomeStuPlanWidget extends StatefulWidget {
   State<HomeStuPlanWidget> createState() => HomeStuPlanWidgetState();
 }
 
+/// eindeutig eine der besten Funktionen im ganzen Code (commited um 01:26 Uhr lol)
+///
 // this code was written saturday at 0:30 am
 /// acschually returns if today is weekend
 bool evrydayIsSaturday() {
@@ -77,6 +82,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
           titleColor: colorWithLightness(keplerColorOrange, hasDarkTheme(context) ? .05 : .9),
           child: Column(
             children: [
+              /// ist der Benutzer nicht angemeldet? -> Infotext und Knopf für Anmeldung 
               if (user == UserType.nobody) Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
                 child: SPListContainer(
@@ -104,10 +110,13 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                   ),
                 ),
               )
+              /// ist der Benutzer angemeldet und hat den Stundenplan schon eingerichtet?
               else if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
                 height: 200,
-                child: ScrollConfiguration( // possible qol improvement: propagate scroll event to upper scroll view if this view couldn't scroll
+                // TODO: possible qol improvement: propagate scroll event to upper scroll view if this view couldn't scroll -> scroll main view if this one couldn't
+                child: ScrollConfiguration(
                   behavior: const ScrollBehavior().copyWith(overscroll: false),
+                  /// ist der Benutzer Schüler oder Elternteil? -> Vertretungen für primäre Klasse anzeigen
                   child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
                     future: (creds.vpPassword != null) ? IndiwareDataManager.getKlDataForDate(
                       date,
@@ -137,17 +146,17 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
                         ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
                         .where((e) => stdata.selectedCourseIDs.contains(e.subjectID) || e.subjectID == null).toList();
-                      final considerIt = prefs.considerLernSaxTasksAsCancellation;
                       return SPWidgetList(
                         stillLoading: datasn.connectionState != ConnectionState.done,
-                        lessons: lessons?.map((lesson) => considerLernSaxCancellationForLesson(lesson, considerIt)).toList(),
+                        lessons: lessons,
                         fullLessonList: dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
-                          ?.lessons?.map((l) => considerLernSaxCancellationForLesson(l, considerIt)).toList(),
+                          ?.lessons,
                         onRefresh: () => setState(() => forceRefresh = true),
                         isOnline: dataP?.$2 ?? false,
                         isSchoolHoliday: stdata.checkIfHoliday(date),
                       );
                     }
+                  /// ist der Benutzer ein Lehrer? -> Vertretungen für Lehrer anzeigen
                   ) : (user == UserType.teacher) ? FutureBuilder(
                     future: IndiwareDataManager.getLeDataForDate(
                       date,
@@ -174,8 +183,10 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                         isSchoolHoliday: stdata.checkIfHoliday(date),
                       );
                     },
+                  /// nicht erreichbar
                   ) : const Text("Fehler."),
                 ),
+              /// hat der Benutzer den Stundenplan noch nicht eingerichtet? -> Info und Knopf dazu anzeigen
               ) else Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
                 child: SPListContainer(
@@ -234,12 +245,19 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
   }
 }
 
+/// Darstellung der geänderten Stunden speziell in diesem Widget
 class SPWidgetList extends StatelessWidget {
+  /// geänderte Stunden -> werden angezeigt
   final List<VPLesson>? lessons;
+  /// kompletter Stundenplan des Tages (wird anscheinend nicht mal mehr verwendet)
   final List<VPLesson>? fullLessonList;
+  /// wird aufgerufen, wenn der Benutzer Aktualisieren-Icon antippt
   final VoidCallback? onRefresh;
+  /// wird der Plan noch geladen
   final bool stillLoading;
+  /// war die Verbindung zum Server erfolgreich
   final bool isOnline;
+  /// ist der anzuzeigende Tag ein freier Tag
   final bool isSchoolHoliday;
   const SPWidgetList({super.key, required this.lessons, this.fullLessonList, this.onRefresh, this.stillLoading = false, this.isOnline = false, required this.isSchoolHoliday});
 
@@ -255,6 +273,7 @@ class SPWidgetList extends StatelessWidget {
         // could've used a builder here, but whatever - it's just a bit less readable this way
         child: () {
           Widget? child;
+          /// Falls heute WE ist und nicht zu morgen weitergrblättert werden soll
           if (evrydayIsSaturday() && !shouldGoToNextPlanDay(context)) {
             child = const Expanded(
               child: Center(
@@ -342,6 +361,7 @@ class SPWidgetList extends StatelessWidget {
                   thickness: 1.5,
                   color: Colors.grey.shade700,
                 ),
+                /// entweder this.child oder Standard-Stundenliste
                 child ?? Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 4, left: 12, right: 12, bottom: 8),

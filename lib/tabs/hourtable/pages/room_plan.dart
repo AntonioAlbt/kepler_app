@@ -41,6 +41,7 @@ import 'package:provider/provider.dart';
 
 final roomPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
 
+/// wie Klassenplan, nur für einen Raum (auswählbar aus im Code festgelegter Raumliste -> ./free_rooms.dart)
 class RoomPlanPage extends StatefulWidget {
   const RoomPlanPage({super.key});
 
@@ -78,6 +79,8 @@ class RoomPlanPageState extends State<RoomPlanPage> {
                   ),
                 ),
               ),
+              /// da der Raumplan nicht komplett akkurat sein muss, und Lehrer sich auch spontan umentscheiden können,
+              /// habe ich für den Raumplan diesen Hinweis hinzugefügt (z.B. auch für Belegung Sporthallen / Aula)
               const Padding(
                 padding: EdgeInsets.only(top: 8, left: 8, right: 8),
                 child: Text(

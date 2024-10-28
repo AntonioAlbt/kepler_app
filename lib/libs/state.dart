@@ -205,40 +205,54 @@ class InternalState extends SerializableObject with ChangeNotifier {
     save();
   }
 
+  /// zuletzt bestätigter Typ des Benutzers (für Offlineverwendung)
   UserType? get lastUserType => UserType.values.firstWhere((element) => element.name == attributes["last_user_type"], orElse: () => UserType.nobody);
   set lastUserType(UserType? type) => _setSaveNotify("last_user_type", type?.name);
 
+  /// wann wurde der Benutzertyp zuletzt online überprüft
   DateTime? get lastUserTypeCheck => (attributes.containsKey("last_ut_check") && attributes["last_ut_check"] != null) ? DateTime.parse(attributes["last_ut_check"]) : null;
   set lastUserTypeCheck(DateTime? val) => _setSaveNotify("last_ut_check", val?.toIso8601String());
 
+  /// wurde die App-Einleitung erfolgreich abgeschlossen?
   bool get introShown => attributes["intro_shown"] ?? false;
   set introShown(bool introShown) => _setSaveNotify("intro_shown", introShown);
 
+  /// letzte Stundenplan-ID, die auf der "Dein/Ihr Stundenplan"-Seite ausgewählt wurde
   int? get lastSelectedClassYourPlan => attributes["lscpyp"];
   set lastSelectedClassYourPlan(int? val) => _setSaveNotify("lscpyp", val);
+  /// letzte Klasse, die für den Klassenplan ausgewählt wurde
   String? get lastSelectedClassPlan => attributes["lscp"];
   set lastSelectedClassPlan(String? val) => _setSaveNotify("lscp", val);
+  /// letzter Raum, der für den Raumplan ausgewählt wurde
   String? get lastSelectedRoomPlan => attributes["lsrp"];
   set lastSelectedRoomPlan(String? val) => _setSaveNotify("lsrp", val);
+  /// letztes Lehrerkürzel, was für den Lehrerplan ausgewählt wurde
   String? get lastSelectedTeacherPlan => attributes["lstp"];
   set lastSelectedTeacherPlan(String? val) => _setSaveNotify("lstp", val);
+  /// letzter LS-Kurs, für den die Aufgabe angeschaut wurden
   String? get lastSelectedLSTaskClass => attributes["lslstc"];
   set lastSelectedLSTaskClass(String? val) => _setSaveNotify("lslstc", val);
+  /// letzter Zustand der "Abgeschlossene anzeigen"-Checkbox auf der LS-Aufgaben-Seite
   bool get lastSelectedLSTaskShowDone => attributes["lslstsd"] ?? false;
   set lastSelectedLSTaskShowDone(bool val) => _setSaveNotify("lslstsd", val);
+  /// letzter LS-Mail-Ordner, für den die E-Mails angeschaut wurden
   String? get lastSelectedLSMailFolder => attributes["lslsmf"];
   set lastSelectedLSMailFolder(String? val) => _setSaveNotify("lslsmf", val);
 
+  /// Liste der IDs der Info-Dialoge, die dem Benutzer schon angezeigt wurden
   List<String> get infosShown => (attributes["infos_shown"] as String?)?.split("|") ?? [];
   set infosShown(List<String> val) => _setSaveNotify("infos_shown", val.join("|"));
   void addInfoShown(String info) => infosShown = infosShown..add(info);
 
+  /// welche Widgets schon automatisch zur Homepage hinzugefügt wurden
   List<String> get widgetsAdded => (attributes["widgets_added"] as String?)?.split("|") ?? [];
   set widgetsAdded(List<String> val) => _setSaveNotify("widgets_added", val.join("|"));
 
+  /// letzter Zeitpunkt, zu dem der Stundenplan automatisch aktualisiert wurde
   DateTime? get lastStuPlanAutoReload => (attributes.containsKey("last_sp_auto_rl") && attributes["last_sp_auto_rl"] != null) ? DateTime.parse(attributes["last_sp_auto_rl"]) : null;
   set lastStuPlanAutoReload(DateTime? val) => _setSaveNotify("last_sp_auto_rl", val?.toIso8601String());
 
+  /// Versionsnummer des letzten Changelogs, der dem Benutzer angezeigt wurde
   int get lastChangelogShown => attributes["last_cl_shown"] ?? -1;
   set lastChangelogShown(int val) => _setSaveNotify("last_cl_shown", val);
 

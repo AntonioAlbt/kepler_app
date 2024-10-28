@@ -45,7 +45,9 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:provider/provider.dart';
 
+/// Widget, was eine Liste der aktuellen LS-Mails aus dem Posteingang anzeigt
 class HomeLSMailsWidget extends StatefulWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
 
   const HomeLSMailsWidget({super.key, required this.id});
@@ -65,6 +67,9 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
       id: widget.id,
       color: hasDarkTheme(context) ? colorWithLightness(const Color.fromARGB(255, 46, 129, 25), .1) : Colors.green.shade300,
       title: const Text("LernSax: E-Mails"),
+      /// da LSMailTile für die Anhänge-Anzeige die Login-Daten braucht (um den richtigen Account zu nehmen),
+      /// muss hier ein Consumer eingefügt werden (obwohl die Daten durch den Listener bei Änderungen an
+      /// CredentialStore eh neu geladen werden)
       child: Consumer<CredentialStore>(
         builder: (context, creds, _) {
           if (loading) {
@@ -143,10 +148,16 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
   @override
   void initState() {
     super.initState();
+    /// wenn der Benutzer sich neu anmelden will, wird dieses Widget auf der Startseite gerendert
+    /// - um dann nach der Anmeldung automatisch die Daten zu laden, wird auf Änderungen in CredentialStore reagiert
+    /// 
+    /// das sorgt zwar aktuell für einen unsichtbaren Null-Fehler (bei creds.lernSaxLogin!), nachdem sich der Nutzer
+    /// abgemeldet hat - ist aber egal, da es dann beim Anmelden wieder geht
     Provider.of<CredentialStore>(context, listen: false).addListener(loadData);
     loadData();
   }
 
+  /// eigentlich wie in tabs/lernsax/pages/mails_page.dart, aber nur für Hauptaccount
   Future<void> loadData() async {
     setState(() {
       loading = true;
@@ -171,7 +182,7 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
     mailsSlice = mails?.sublist(0, min(3, mails.length));
 
     if (mailsSlice?.isEmpty ?? true) {
-      final (online, mailLsts) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken ?? "", folderId: inbox.id);
+      final (online, mailLsts) = await lernsax.getMailListings(creds.lernSaxLogin!, creds.lernSaxToken!, folderId: inbox.id);
       if (!online || mailLsts == null) {
         mailsSlice = null;
         return;

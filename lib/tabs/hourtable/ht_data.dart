@@ -44,10 +44,14 @@ import 'package:kepler_app/libs/logging.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:xml/xml.dart';
 
+/// Key fürs Speichern in den SharedPreferences
 const stuPlanDataPrefsKey = "stuplandata";
 
+/// Speicherpfad für die Stundenplandaten
 Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
 // TODO - future: automatically determine summer holiday end and ask user if their class changed -> maybe with https://ferien-api.de/api/v1/holidays/SN ?
+/// für alle Daten, die für die Offline-Anzeige vom Stundenplan gecached werden müssen
+/// und alle Einstellungen/ausgewählte Optionen bzgl. des Stundenplanes
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
     objectCreators["selected_courses"] = (_) => <String>[];
@@ -93,19 +97,23 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   }
   void _setUpdateDateTime(String key, DateTime date) => _setSaveNotify("lu_$key", date.toIso8601String());
 
+  /// vom Schüler/Elternteil gewählte primäre Klasse
   String? get selectedClassName => attributes["selected_class_name"];
   set selectedClassName(String? cn) => _setSaveNotify("selected_class_name", cn);
 
+  /// alternative Klassen für Anzeige von weiteren Stundenplänen
   List<String> get altSelectedClassNames => attributes["alt_selected_class_name"] ?? [];
   set altSelectedClassNames(List<String> cn) => _setSaveNotify("alt_selected_class_name", cn);
   void setSelectedClassForAlt(int alt, String selected) {
     altSelectedClassNames = altSelectedClassNames..[alt] = selected;
   }
+  /// Eintrag mit Index `alt` aus altSelectedClassNames und altSelectedCourseIDs entfernen
   void removeAltSelection(int alt) {
     altSelectedClassNames = altSelectedClassNames..removeAt(alt);
     altSelectedCourseIDs = altSelectedCourseIDs..removeAt(alt);
   }
 
+  /// angewählte Kurse/Fächer für Schüler/Elternteil (bei Lehrern Auswahl nicht möglich)
   List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
   set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);
   void addSelectedCourse(int id) {
@@ -122,35 +130,46 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   // to make it easier to store multiple I don't want to store nested lists (so sadly the data format doesn't match selectedCourseIDs)
   // so instead just merge the ints to string
+  /// alternative angewählte Fächer für andere Stundenpläne, muss gleich lang sein wie alternative Klassen-Liste
   List<String> get altSelectedCourseIDs => attributes["alt_selected_course_ids"] ?? [];
   set altSelectedCourseIDs(List<String> sc) => _setSaveNotify("alt_selected_course_ids", sc);
   void setSelectedCoursesForAlt(int alt, List<int> selected) {
     altSelectedCourseIDs = altSelectedCourseIDs..[alt] = selected.join("|");
   }
 
+  /// letzter Zeitpunkt, an dem die verfügbaren Klassen aktualisiert wurden
   DateTime get lastAvailClassesUpdate => _getUpdateDateTime("available_classes");
   set lastAvailClassesUpdate(DateTime val) => _setUpdateDateTime("available_classes", val);
+  /// verfügbare Klassen (Klassen, für die es einen Plan gibt)
   List<String>? get availableClasses => attributes.containsKey("available_classes") ? attributes["available_classes"] : null;
   set availableClasses(List<String>? ac) => _setSaveNotify("available_classes", ac);
 
+  /// letzter Zeitpunkt, an dem die verfügbaren Fächer aktualisiert wurden
   DateTime get lastAvailSubjectsUpdate => _getUpdateDateTime("available_subjects");
   set lastAvailSubjectsUpdate(DateTime val) => _setUpdateDateTime("available_subjects", val);
+  /// alle verfügbaren Fächer, Map: Klasse -> Fächerliste
   Map<String, List<VPCSubjectS>> get availableSubjects => _jsonDataStrToMap(attributes["available_subjects"] ?? "");
   set availableSubjects(Map<String, List<VPCSubjectS>> ac) => _setSaveNotify("available_subjects", jsonEncode(ac));
+  /// verfügbare Fächer für die aktuell ausgewählte primäre(!) Klasse
   List<VPCSubjectS>? get availableClassSubjects =>
     ((selectedClassName == null) ? null : availableSubjects[selectedClassName])
       ?.where((e) => e.teacherCode != "").toList();
   
+  /// für Lehrer das aktuell ausgewählte Lehrerkürzel
   String? get selectedTeacherName => attributes["selected_teacher_name"];
   set selectedTeacherName(String? tn) => _setSaveNotify("selected_teacher_name", tn);
 
+  /// letzter Zeitpunkt, an dem die verfügbaren Lehrer aktualisiert wurden
   DateTime get lastAvailTeachersUpdate => _getUpdateDateTime("available_teachers");
   set lastAvailTeachersUpdate(DateTime val) => _setUpdateDateTime("available_teachers", val);
+  /// alle verfügbaren Lehrer (für die ein Plan existiert)
   List<String>? get availableTeachers => attributes.containsKey("available_teachers") ? attributes["available_teachers"] : null;
   set availableTeachers(List<String>? at) => _setSaveNotify("available_teachers", at);
 
+  /// letzter Zeitpunkt, an dem die Liste der freien Tage aktualisiert wurde
   DateTime get lastHolidayDatesUpdate => _getUpdateDateTime("school_holiday_dates");
   set lastHolidayDatesUpdate(DateTime val) => _setUpdateDateTime("school_holiday_dates", val);
+  /// Liste der freien Tage laut Plan
   List<DateTime> get holidayDates => attributes.containsKey("school_holiday_dates") ? (attributes["school_holiday_dates"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
   set holidayDates(List<DateTime> val) => _setSaveNotify("school_holiday_dates", val.map((d) => d.toIso8601String()).join("|"));
   void removeHolidayDate(DateTime date) {
@@ -210,6 +229,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 }
 
 /// VPClassSubject, but serializable
+/// Das S am Ende steht für Serializable
 class VPCSubjectS extends SerializableObject {
   String get teacherCode => attributes["teacher_code"];
   String get subjectCode => attributes["subject_code"];
@@ -232,21 +252,26 @@ class VPCSubjectS extends SerializableObject {
   };
 }
 
+/// Order in privaten App-Dateien für Stundenplandaten
 const stuplanpath = "/stuplans";
 
+/// Manager für Cache von Stundenplan-Daten auf dem internen Speicher
 class IndiwareDataManager {
   static final fnTimeFormat = DateFormat("yyyy-MM-dd");
 
+  /// versucht, Schüler-Daten ausschließlich vom Cache zu lesen
   static Future<VPKlData?> getCachedKlDataForDate(DateTime date) async {
     final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml");
     if (xml == null) return null;
     return xmlToKlData(XmlDocument.parse(xml));
   }
+  /// versucht, Lehrer-Daten ausschließlich vom Cache zu lesen
   static Future<VPLeData?> getCachedLeDataForDate(DateTime date) async {
     final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml");
     if (xml == null) return null;
     return xmlToLeData(XmlDocument.parse(xml));
   }
+  /// versucht, Klassen.xml ausschließlich vom Cache zu lesen
   static Future<VPKlData?> getCachedKlassenXmlData() async {
     final f = File("${await appDataDirPath}$stuplanpath/Klassen-kl.xml");
     // force-refresh Klassen.xml every 30 days
@@ -258,6 +283,7 @@ class IndiwareDataManager {
     if (xml == null) return null;
     return xmlToKlData(XmlDocument.parse(xml));
   }
+  /// versucht, Klausur-Daten ausschließlich vom Cache zu lesen
   static Future<List<VPExam>?> getCachedExamDataForDate(DateTime date) async {
     final json = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-exams.json");
     if (json == null) return null;
@@ -266,19 +292,24 @@ class IndiwareDataManager {
     return out;
   }
 
+  /// Cache für Schüler-Daten setzen
   static Future<void> setCachedKlDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml", data.toXmlString());
   }
+  /// Cache für Lehrer-Daten setzen
   static Future<void> setCachedLeDataForDate(DateTime date, XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml", data.toXmlString());
   }
+  /// Cache für Klassen.xml setzen
   static Future<void> setKlassenXmlData(XmlDocument data) async {
     await writeFile("${await appDataDirPath}$stuplanpath/Klassen-kl.xml", data.toXmlString());
   }
+  /// Cache für Klausuren setzen
   static Future<void> setExamDataForDate(DateTime date, List<VPExam> exams) async {
     await writeFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-exams.json", Serializer().serializeList(exams));
   }
 
+  /// Cache ab bestimmten Datum leeren
   static Future<void> clearCachedData({ DateTime? excludeDate }) async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     for (var file in (await dir.list().toList())) {
@@ -292,6 +323,8 @@ class IndiwareDataManager {
     }
   }
 
+  /// Schüler-Daten für Tag abfragen - aus Cache oder online (dann automatisch cachen)
+  /// 
   /// returns (data, isOnline)
   static Future<(VPKlData?, bool)> getKlDataForDate(
       DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
@@ -304,6 +337,8 @@ class IndiwareDataManager {
     await setCachedKlDataForDate(date, real);
     return (xmlToKlData(real), online);
   }
+  /// Lehrer-Daten für Tag abfragen - aus Cache oder online (dann automatisch cachen)
+  /// 
   /// returns (data, isOnline)
   static Future<(VPLeData?, bool)> getLeDataForDate(
       DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
@@ -316,6 +351,8 @@ class IndiwareDataManager {
     await setCachedLeDataForDate(date, real);
     return (xmlToLeData(real), online);
   }
+  /// Klassen.xml abfragen - aus Cache oder online (dann automatisch cachen)
+  /// 
   /// returns (data, isOnline)
   static Future<(VPKlData?, bool)> getKlassenXmlData(
       String host, String username, String password, {bool forceRefresh = false}) async {
@@ -328,6 +365,8 @@ class IndiwareDataManager {
     await setKlassenXmlData(real);
     return (xmlToKlData(real), online);
   }
+  /// Klausuren für Tag abfragen - aus Cache oder online (dann automatisch cachen)
+  /// 
   /// returns (data, isOnline)
   static Future<(List<VPExam>?, bool)> getExamDataForDate(
       DateTime date, String host, String username, String password, {bool forceRefresh = false}) async {
@@ -343,12 +382,14 @@ class IndiwareDataManager {
 
   // now following: setup methods
 
+  /// Initialisierungsfunktion, erstellt Ordner
   static Future<void> createDataDirIfNecessary() async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     if (await dir.exists()) return;
     await dir.create(recursive: true);
   }
 
+  /// Dateien ab 3 Tage in der Vergangenheit löschen
   static Future<void> removeOldCacheFiles() async {
     final dir = Directory("${await appDataDirPath}$stuplanpath");
     final thresholdDate = DateTime.now().subtract(const Duration(days: 3));

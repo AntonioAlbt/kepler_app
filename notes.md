@@ -24,6 +24,7 @@ Bisher kommentierte Dateien:
   - logging.dart
   - notifications.dart
   - preferences.dart
+  - proxy.dart
   - snack.dart
   - state.dart
   - tasks.dart
@@ -35,6 +36,36 @@ Bisher kommentierte Dateien:
   - meals.dart
   - pendel.dart
   - settings.dart
+  - home:
+    - home.dart
+    - home_widget.dart
+    - widgets:
+      - calendar_home.dart
+      - foucault_home.dart
+      - ls_link_home.dart
+      - ls_mails_home.dart
+      - ls_notifs_home.dart
+      - ls_tasks_home.dart
+      - stuplan_home.dart
+  - hourtable:
+    - hourtable.dart
+    - ht_data.dart
+    - ht_intro.dart
+    - pages:
+      - all_replaces.dart
+      - class_plan.dart
+      - free_rooms.dart
+      - plan_display.dart
+      - room_plan.dart
+      - teacher_plan.dart
+      - your_plan.dart
+  - lernsax:
+    - lernsax.dart
+    - ls_data.dart
+    - pick_member_dialog.dart
+    - pages:
+      - mail_detail_page.dart
+      - mail_write_page.dart
 
 ---
 

@@ -39,6 +39,7 @@ import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:provider/provider.dart';
 
+/// wie Klassenplan, aber nur für Lehrer
 class TeacherPlanPage extends StatefulWidget {
   const TeacherPlanPage({super.key});
 
@@ -48,6 +49,8 @@ class TeacherPlanPage extends StatefulWidget {
 
 class _TeacherPlanPageState extends State<TeacherPlanPage> {
   late String selectedTeacher;
+
+  // TODO: wie im Klassenplan Fehler anzeigen, wenn Lehrer nicht abgefragt werden können
 
   @override
   Widget build(BuildContext context) {

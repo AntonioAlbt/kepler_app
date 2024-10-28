@@ -47,9 +47,16 @@ import 'package:provider/provider.dart';
 
 Widget mailWritePageBuilder(BuildContext context) => const MailWritePage();
 
+/// wie bezieht sich `reference` auf diese Mail
 enum LSMWPReferenceMode {
-  forwarded, answered, draftToDelete;
+  /// `reference` wird weitergeleitet
+  forwarded,
+  /// Antwort auf `reference`
+  answered,
+  /// `reference` ist der Entwurf dieser Mail, der nach Speichern oder Absenden gelöscht werden sollte
+  draftToDelete;
 
+  /// in Referenztyp für API umwandeln
   LSMailReferenceMode? convert() => {
     LSMWPReferenceMode.answered: LSMailReferenceMode.answered,
     LSMWPReferenceMode.forwarded: LSMailReferenceMode.forwarded,
@@ -57,7 +64,9 @@ enum LSMWPReferenceMode {
 }
 
 // TODO: make it possible to select which account to send the mail from!
+// TODO: Design so anpassen, dass wenn Tastatur ausgeklappt ist man die ganze Seite scrollen kann, so dass man mehr als eine Zeile Inhalt sieht
 
+/// Seite, die mit MaterialPageRoute und Navigator geöffnet werden sollte, auf der man eine Mail verfassen kann
 class MailWritePage extends StatefulWidget {
   final List<String>? to;
   final String? subject;
@@ -71,6 +80,7 @@ class MailWritePage extends StatefulWidget {
   State<MailWritePage> createState() => _MailWritePageState();
 }
 
+/// was gibt es schöneres als eine RegExp für eine Mail-Adresse
 final mailRegex = RegExp(
     r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$");
 
@@ -149,6 +159,8 @@ class _MailWritePageState extends State<MailWritePage> {
                 ],
               ),
             ),
+            /// wenn die Tastatur geöffnet wird, sollte dieses Widget weniger Bildschirmplatz beanspruchen
+            /// -> wird kleiner animiert
             KeyboardVisibilityBuilder(
               builder: (context, visible) {
                 return AnimatedSize(
@@ -157,7 +169,9 @@ class _MailWritePageState extends State<MailWritePage> {
                     child: SimpleChipsInput(
                       key: recvKey,
                       controller: _sciCtrl,
+                      /// trennt Einträge in Output (für onSubmitted u.ä.) -> wird nicht verwendet
                       separatorCharacter: "|",
+                      /// wenn der Benutzer dies eingibt, wird versucht, einen neuen Chip zu erstellen (mit validateInput)
                       createCharacter: ",",
                       textFormFieldStyle: const TextFormFieldStyle(
                         decoration: InputDecoration(

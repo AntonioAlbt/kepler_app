@@ -271,7 +271,7 @@ class LernSaxScreenMain extends StatefulWidget {
   final void Function(BuildContext context) onNonLogin;
   /// ob extra Abstand nach unten hinzugefügt werden soll (für Anzeige auf InfoScreens)
   final bool extraPadding;
-  /// wird der Screen in einem "Account hinzufügen"-Zusammenhang verwendet (entsprechende Formulierungen verwenden)
+  /// wird der Screen in einem "Account hinzufügen"-Zusammenhang verwendet
   final bool additionalAccount;
 
   const LernSaxScreenMain({
@@ -560,7 +560,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       if (!_mailController.text.endsWith(".lernsax.de")) return "Ungültige LernSax-E-Mail-Adresse.";
     }
     final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
-    if (_mailController.text != "" && (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text)) {
+    if (widget.additionalAccount && _mailController.text != "" && (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text)) {
       return "Dieses LernSax-Konto ist bereits angemeldet.";
     }
     return null;

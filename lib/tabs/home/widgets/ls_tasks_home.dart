@@ -45,7 +45,9 @@ import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
 
+/// wie LSMailsWidget, aber für Aufgaben auf LS
 class HomeLSTasksWidget extends StatefulWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
 
   const HomeLSTasksWidget({super.key, required this.id});
@@ -82,6 +84,8 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
               ),
             );
           }
+          /// da nicht unbedingt alle Aufgaben geladen werden (-> loadData), kann es sein, dass wenn der Benutzer keine
+          /// persönlichen Aufgaben hat, hier keine angezeigt werden, obwohl es in Klassen vielleicht welche gibt
           if (tasksSlice!.isEmpty) {
             return const Center(
               child: Padding(
@@ -126,10 +130,16 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
   @override
   void initState() {
     super.initState();
+    /// siehe HomeLSMailsWidget.initState
     Provider.of<CredentialStore>(context, listen: false).addListener(loadData);
     loadData();
   }
 
+  /// wie in tabs/lernsax/pages/tasks_page.dart, aber:
+  /// - nur für Hauptaccount
+  /// - entweder werden vorhandene Aufgaben angezeigt, wenn verfügbar -> nicht(!) aktualisiert (anders als
+  /// bei anderen LS-Widgets)
+  /// - oder es werden nur Aufgaben vom Benutzer selbst, nicht von Klassen, angezeigt
   Future<void> loadData() async {
     setState(() {
       loading = true;
@@ -141,6 +151,10 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
     if (tasksSlice!.isEmpty) {
       // this only loads tasks from the user themselves, because i don't want to bother loading all tasks just for this widget
       // all widgets will be considered if the users opens the task page
+      /// -> alle Aufgaben abzufragen erfordert sehr viel mehr API-Anfragen:
+      ///   (1) Liste aller Mitgliedschaften (mit Rechten für Aufgaben lesen) anfragen
+      ///   (2) für jede Klasse/Gruppe eine eigene Anfrage stellen, um Aufgaben abzufragen
+      /// - für Benutzer selbst nur eine Anfrage (Aufgaben abfragen, lernsax.getTasks)
       final creds = Provider.of<CredentialStore>(context, listen: false);
       final (online, tasks) = await lernsax.getTasks(creds.lernSaxLogin!, creds.lernSaxToken!);
       if (!online || tasks == null) {

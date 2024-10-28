@@ -40,6 +40,8 @@ import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:provider/provider.dart';
 
+/// Seite, die für eine auswählbare Klasse den Stundenplan des aktuellen Tages (ohne Berücksichtigung von
+/// ausgewählten Fächern) anzeigt
 class ClassPlanPage extends StatefulWidget {
   const ClassPlanPage({super.key});
 
@@ -69,6 +71,8 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
             children: [
               SizedBox(
                 height: 50,
+                /// damit es so aussieht wie als wäre das Dropdown mit in der oberen AppBar,
+                /// erstelle ich hier eine neue ganz oben auf der Seite mit dem gleichen Design wie die Haupt-AppBar
                 child: AppBar(
                   scrolledUnderElevation: 5,
                   backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -89,6 +93,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
               Flexible(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
+                  /// Plan für gewählte Klasse anzeigen (keine Infos)
                   child: StuPlanDisplay(
                     key: classPlanDisplayKey,
                     selected: selectedClass,

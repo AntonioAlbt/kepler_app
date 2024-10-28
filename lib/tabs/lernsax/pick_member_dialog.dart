@@ -5,6 +5,10 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
 
+/// Dialog, um LernSax-Mitglieder aus Institution zu suchen und beliebig viele auszuwählen
+/// 
+/// hier wird nichts gecached, bei jedem Öffnen des Dialoges wird also eine neue API-Anfrage
+/// nach allen Mitgliedern geschickt
 class LSPickMemberDialog extends StatefulWidget {
   const LSPickMemberDialog({super.key});
 
@@ -53,21 +57,6 @@ class _LSPickMemberDialogState extends State<LSPickMemberDialog> {
             child: SizedBox(
               width: MediaQuery.sizeOf(context).width,
               height: MediaQuery.sizeOf(context).height * .5,
-              // child: ListView.builder(
-              //   itemBuilder: (context, i) => CheckboxListTile(
-              //     value: selectedMails.contains(data[i].address),
-              //     onChanged: (select) {
-              //       if (select == true) {
-              //         setState(() => selectedMails.add(data[i].address));
-              //       } else {
-              //         setState(() => selectedMails.remove(data[i].address));
-              //       }
-              //     },
-              //     title: Text(data[i].name),
-              //     subtitle: Text(data[i].address),
-              //   ),
-              //   itemCount: data.length,
-              // ),
               child: ListView(
                 children: data.where((element) => _searchText == "" || element.address.toLowerCase().startsWith(_searchText.toLowerCase()) || element.name.toLowerCase().startsWith(_searchText.toLowerCase())).map((d) => CheckboxListTile(
                   value: selectedMails.contains(d.address),

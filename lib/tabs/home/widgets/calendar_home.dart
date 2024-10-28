@@ -41,7 +41,11 @@ import 'package:kepler_app/tabs/school/calendar.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:provider/provider.dart';
 
+/// Infoblock, der den Kalender mit Terminen des aktuellen Monats anzeigt
+/// 
+/// könnte eigentlich auch ein StatelessWidget sein - oder Ladevorgang könnte angepasst werden
 class HomeCalendarWidget extends StatefulWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
   const HomeCalendarWidget({super.key, required this.id});
 
@@ -57,6 +61,7 @@ class HomeCalendarWidgetState extends State<HomeCalendarWidget> {
       color: colorWithLightness(keplerColorBlue, hasDarkTheme(context) ? .15 : .8),
       title: const Text("Kepler-Kalender"),
       titleColor: Theme.of(context).cardColor,
+      /// Daten werden zwar gecached, aber nie aus dem Cache gelesen.
       child: FutureBuilder(
         future: loadCalendarEntries(DateTime.now()).then((out) {
           final (online, data) = out;

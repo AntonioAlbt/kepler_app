@@ -38,7 +38,9 @@ import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:provider/provider.dart';
 
+/// sehr simples Widget - zeigt einen einzigen Knopf an, der einen LS-Autologin-Link öffnet
 class HomeLSLinkWidget extends StatelessWidget {
+  /// Home-Widget-ID - muss mit der in home.dart übereinstimmen
   final String id;
 
   const HomeLSLinkWidget({super.key, required this.id});

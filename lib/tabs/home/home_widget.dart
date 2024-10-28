@@ -40,16 +40,27 @@ import 'package:kepler_app/tabs/home/home.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
+/// Basisklasse für alle Home-Widgets, damit das Design einheitlich bleibt
 class HomeWidgetBase extends StatelessWidget {
+  /// echter Block mit Infos auf dem Widget (Hauptteil)
   final Widget child;
-  final Widget? title;
+  /// Widget für Titel
+  final Widget title;
+  /// Hintergrundfarbe des Widgets, sollte einmalig sein
   final Color color;
+  /// Hintergrundfarbe der Titelleiste
   final Color? titleColor;
+  /// Aktuell nicht implementiert!
+  /// 
+  /// eigentlich Widget, mit dem das aktuelle Widget mit Tippen auf Button ausgetauscht werden kann
+  /// - ich weiß leider nicht mehr, für welche Widgets das mal gedacht war
   final String? switchId;
+  /// einmalige ID des Widgets
   final String id;
+  /// wenn `false`, dann werden die Icons zum Anordnen und Ausblenden unabhängig von der Einstellung ausgeblendet
   final bool? overrideShowIcons;
 
-  const HomeWidgetBase({super.key, this.title, required this.color, this.titleColor, required this.id, required this.child, this.switchId, this.overrideShowIcons});
+  const HomeWidgetBase({super.key, required this.title, required this.color, this.titleColor, required this.id, required this.child, this.switchId, this.overrideShowIcons});
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +76,7 @@ class HomeWidgetBase extends StatelessWidget {
               width: double.infinity,
               child: Column(
                 children: [
-                  if (title != null) Padding(
+                  Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Card(
                       color: rcolorTitle != null ? Color.alphaBlend(rcolorTitle.withOpacity(.4), titleColor) : titleColor,
@@ -79,7 +90,7 @@ class HomeWidgetBase extends StatelessWidget {
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 12),
                                   child: DefaultTextStyle.merge(
-                                    child: title!,
+                                    child: title,
                                     style: Theme.of(context).textTheme.titleMedium,
                                     // textAlign: TextAlign.center,
                                   ),

@@ -40,9 +40,32 @@ import 'package:enough_serialization/enough_serialization.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:synchronized/synchronized.dart';
 
+
+/// Die meisten Klassen hier repräsentieren die Daten, die von der API zurückgegeben werden.
+/// Die offizielle Dokumentation hilft zwar kaum, weil sie nie auf die Rückgabewerte eingeht, aber hier ist
+/// trotzdem ein Link: https://www.lernsax.de/wws/api.php
+/// 
+/// Teilweise werden unwichtige oder unverständliche Felder ausgelassen. Teilweise sind die Klassen selbst wieder
+/// in JSON umwandelbar (dann, wenn sie offline gecached werden sollen).
+/// 
+/// Die eigentlichen API-Anfragen, die diese Klassen hier zurückgeben, finden sich in libs/lernsax.dart.
+/// (Das ist irgendwie seltsam aufgeteilt, und ich weiß auch nicht mehr, warum ich das so gemacht habe.)
+
+
+/// Speicherschlüssel für die LS-Daten in den SharedPrefs
 const lernSaxDataPrefsKey = "lernsaxdata";
 
+/// da durch das Cachen von Mails der Cache relativ groß werden könnte, werden die Daten stattdessen in eine
+/// Datei im privaten App-Speicher geschrieben
 Future<String> get lernSaxDataFilePath async => "${await userDataDirPath}/$lernSaxDataPrefsKey-data.json";
+
+/// Provider für LernSax-Daten, die gecached werden sollen
+/// 
+/// Einige Datenfelder haben den Zeitpunkt des letzten Updates mit definiert, damit der Benutzer darauf hingewiesen
+/// werden kann, wenn die Daten lange nicht mehr aktualisiert wurden.
+/// 
+/// Da es für alle Daten nur einen Cache gibt, werden nur die Daten für den primären Benutzer gecached. Alle anderen
+/// Benutzer können nur verwendet werden, wenn man online ist.
 class LernSaxData extends SerializableObject with ChangeNotifier {
   LernSaxData() {
     objectCreators["notifs"] = (_) => <LSNotification>[];
@@ -79,6 +102,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   Duration get lastTasksUpdateDiff => lastTasksUpdate.difference(DateTime.now()).abs();
   List<LSTask>? get tasks => (attributes["tasks"] as List<LSTask>? ?? [])..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   set tasks(List<LSTask>? val) => _setSaveNotify("tasks", val);
+  /// alle neuen Tasks aus `newTasks` zu `tasks` hinzufügen
   void addTasksNew(List<LSTask> newTasks, {bool sort = true}) {
     final newIds = newTasks.map((t) => t.id);
     final l = (tasks ?? []).where((e) => !newIds.contains(e.id)).toList();
@@ -91,6 +115,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   DateTime get lastMembershipsUpdate => (attributes.containsKey("lu_memberships") && attributes["lu_memberships"] != null) ? DateTime.parse(attributes["lu_memberships"]) : DateTime(1900);
   set lastMembershipsUpdate(DateTime val) => attributes["lu_memberships"] = val.toIso8601String();
   Duration get lastMembershipsUpdateDiff => lastMembershipsUpdate.difference(DateTime.now()).abs();
+  /// Liste der Mitgliedschaften in Kursen/Klassen bzw. Gruppen
   List<LSMembership>? get memberships => attributes["memberships"];
   set memberships(List<LSMembership>? val) => _setSaveNotify("memberships", val);
 
@@ -107,7 +132,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   set mailListings(List<LSMailListing>? val) => _setSaveNotify("mail_listings", val?..sort((ml1, ml2) => ml2.date.compareTo(ml1.date)));
 
   /// This doesn't have a "last update" value, because (lernsax) mails can never change.
-  /// And they never will.
+  /// And they never will. (hopefully :|)
   List<LSMail> get mailCache => attributes["mails"] ?? [];
   set mailCache(List<LSMail> val) => _setSaveNotify("mails", val);
   void addMailToCache(LSMail mail) {
@@ -155,6 +180,7 @@ class LernSaxData extends SerializableObject with ChangeNotifier {
   }
 }
 
+/// Systembenachrichtigung auf LernSax
 class LSNotification extends SerializableObject {
   String get id => attributes["id"];
   set id(String val) => attributes["id"] = val;
@@ -171,21 +197,26 @@ class LSNotification extends SerializableObject {
   String? get data => attributes["data"];
   set data(String? val) => attributes["data"] = val;
 
+  /// eher from.login -> Login des Absenders, falls vorhanden
   String? get fromUserLogin => attributes["fromUserLogin"];
   set fromUserLogin(String? val) => attributes["fromUserLogin"] = val; // may be empty
 
+  /// Benutzername des Absenders, falls vorhanden
   String? get fromUserName => attributes["fromUserName"];
   set fromUserName(String? val) => attributes["fromUserName"] = val; // may be empty
 
+  /// Login der Absender-/Verursachergruppe, falls vorhanden
   String? get fromGroupLogin => attributes["fromGroupLogin"];
   set fromGroupLogin(String? val) => attributes["fromGroupLogin"] = val; // may be empty
 
+  /// Name der Absender-/Verursachergruppe, falls vorhanden
   String? get fromGroupName => attributes["fromGroupName"];
   set fromGroupName(String? val) => attributes["fromGroupName"] = val; // may be empty
 
   bool get unread => attributes["unread"];
   set unread(bool val) => attributes["unread"] = val;
 
+  /// auf welche LernSax-Funktion bezieht sich die Benachrichtigung (z.B. "mail")
   String? get object => attributes["object"];
   set object(String? val) => attributes["object"] = val;
 
@@ -238,6 +269,7 @@ class LSNotification extends SerializableObject {
   }
 }
 
+/// Aufgabe
 class LSTask extends SerializableObject {
   String get id => attributes["id"];
   set id(String val) => attributes["id"] = val;
@@ -250,6 +282,7 @@ class LSTask extends SerializableObject {
   DateTime? get dueDate => (attributes.containsKey("due_date") && attributes["due_date"] != null) ? DateTime.parse(attributes["due_date"]) : null;
   set dueDate(DateTime? val) => attributes["due_date"] = val?.toIso8601String();
 
+  /// falls null = persönliche Aufgabe, sonst Aufgabe in Kurs/Gruppe mit diesem Login
   String? get classLogin => attributes["class_login"];
   set classLogin(String? val) => attributes["class_login"] = val;
 
@@ -313,8 +346,19 @@ class LSTask extends SerializableObject {
   }
 }
 
+/// Typ eines Objektes, in dem man Mitglied sein kann
+/// 
+/// Achtung: wie vieles in der API ist die Bedeutung der Rückgabewerte nicht erläutert. Ich habe diese Zuordnung
+/// an den Rückgabewerten festgestellt - es könnte natürlich sein, dass andere Werte noch andere Bedeutungen haben.
 enum MembershipType {
-  institution, group, class_, unknown;
+  /// Institution = Schule, etwa info@jkgc.lernsax.de
+  institution,
+  /// Gruppe = dynamischere Klasse, Benutzer könnten frei beitreten/verlassen
+  group,
+  /// Klasse bzw. Kurs für ein Unterrichtsfach oder allgemein
+  class_,
+  /// alle anderen Werte, die von der API zurückgegeben werden und die ich nicht zuordnen kann
+  unknown;
   static MembershipType fromInt(int val) {
     switch (val) {
       case 16: return MembershipType.institution;
@@ -331,7 +375,9 @@ enum MembershipType {
   }[this]!;
 }
 
+/// Mitgliedschaft in einem Kurs/Gruppe
 class LSMembership extends SerializableObject {
+  /// Login des Kurses
   String get login => attributes["login"];
   set login(String val) => attributes["login"] = val;
 
@@ -343,12 +389,21 @@ class LSMembership extends SerializableObject {
   MembershipType get type => MembershipType.fromInt(attributes["type"]);
   set type(MembershipType val) => attributes["type"] = val.toInt();
 
+  /// Rechte des Benutzers
+  /// 
+  /// vielleicht allgemeine verfügbare Berechtigungen für diesen Kurs?
   List<String> get baseRights => attributes["base_rights"];
   set baseRights(List<String> val) => attributes["base_rights"] = val;
 
+  /// andere Rechte des Benutzers
+  /// 
+  /// vielleicht die Berechtigungen von Mitgliedern im Kurs?
   List<String> get memberRights => attributes["member_rights"];
   set memberRights(List<String> val) => attributes["member_rights"] = val;
 
+  /// nochmal andere Rechte des Benutzers
+  /// 
+  /// wahrscheinlich die Berechtigungen, die der Benutzer tatsächlich im Kurs besitzt
   List<String> get effectiveRights => attributes["effective_rights"];
   set effectiveRights(List<String> val) => attributes["effective_rights"] = val;
 
@@ -394,6 +449,7 @@ class LSMembership extends SerializableObject {
   }
 }
 
+/// Inhalt der Datei Kepler-App-Daten.json im entsprechenden Ordner
 class LSAppData {
   final String host;
   final String user;
@@ -409,6 +465,7 @@ class LSAppData {
   }
 }
 
+/// Ordner für Emails
 class LSMailFolder extends SerializableObject {
   String get id => attributes["id"];
   set id(String val) => attributes["id"] = val;
@@ -459,10 +516,12 @@ class LSMailFolder extends SerializableObject {
   }
 }
 
+/// Adressierbares Objekt auf LernSax, wird von API so zurückgegeben um Name und Login zu vereinigen
 class LSMailAddressable extends SerializableObject {
   String get address => attributes["address"];
   set address(String val) => attributes["address"] = val;
 
+  /// kann "" sein
   String get name => attributes["name"];
   set name(String val) => attributes["name"] = val;
 
@@ -492,6 +551,7 @@ class LSMailAddressable extends SerializableObject {
   }
 }
 
+/// Mail-Auflistungseintrag, wie LSMail nur mit weniger Informationen (keinen Inhalt, keine Anhänge)
 class LSMailListing extends SerializableObject {
   int get id => attributes["id"];
   set id(int val) => attributes["id"] = val;
@@ -502,6 +562,7 @@ class LSMailListing extends SerializableObject {
   bool get isUnread => attributes["is_unread"];
   set isUnread(bool val) => attributes["is_unread"] = val;
 
+  /// hat der Benutzer die Mail auf LernSax mit einem Sternchen markiert?
   bool get isFlagged => attributes["is_flagged"];
   set isFlagged(bool val) => attributes["is_flagged"] = val;
 
@@ -518,10 +579,12 @@ class LSMailListing extends SerializableObject {
   set size(int val) => attributes["size"] = val;
 
   /// determined by checking if it's in the drafts folder
+  /// -> wird so nicht in der API zurückgegeben
   bool get isDraft => attributes["is_draft"];
   set isDraft(bool val) => attributes["is_draft"] = val;
 
   /// determined by checking if it's in the sent folder
+  /// -> wird so nicht von der API zurückgegeben
   bool get isSent => attributes["is_sent"];
   set isSent(bool val) => attributes["is_sent"] = val;
 
@@ -579,7 +642,7 @@ class LSMailListing extends SerializableObject {
   }
 }
 
-
+/// Anhang an eine Mail
 class LSMailAttachment extends SerializableObject {
   String get id => attributes["id"];
   set id(String val) => attributes["id"] = val;
@@ -619,6 +682,7 @@ class LSMailAttachment extends SerializableObject {
   }
 }
 
+/// Mail auf LernSax
 class LSMail extends SerializableObject {
   int get id => attributes["id"];
   set id(int val) => attributes["id"] = val;
@@ -741,6 +805,8 @@ class LSMailState {
   LSMailState({required this.usageBytes, required this.freeBytes, required this.limitBytes, required this.unreadMessages, required this.mode});
 }
 
+/// um einen Anhang herunterzuladen, muss er in eine Session-Datei übertragen werden - dabei bekommt man diese
+/// Daten zurückgegeben
 class LSSessionFile {
   final String id;
   final String name;
@@ -750,6 +816,7 @@ class LSSessionFile {
   const LSSessionFile({required this.id, required this.name, required this.size, required this.downloadUrl});
 }
 
+/// Benachrichtigungseinstellungen für einen Kurs oder den Benutzer, wenn `classLogin == null`
 class LSNotifSettings {
   final int id;
   final String? classLogin;

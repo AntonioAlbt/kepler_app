@@ -47,6 +47,9 @@ import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// nicht zu verwechseln mit lernsax.dart in lib/
+
+/// Hauptseite für alle LernSax-Seiten, kümmert sich um Erkennung, auf welches Konto zugegriffen werden soll
 class LernSaxTab extends StatefulWidget {
   const LernSaxTab({super.key});
 
@@ -59,6 +62,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
       builder: (context, state, creds, _) {
+        /// "entschlüssele" LS-Login aus Navigationspfad - Schema: "lslogin:<base64url(login)>"
         final navpid = state.selectedNavPageIDs[1];
         final login = navpid.startsWith("lslogin:") ? utf8.decode(base64Url.decode(navpid.substring(8))) : creds.lernSaxLogin;
         final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
@@ -87,6 +91,9 @@ class _LernSaxTabState extends State<LernSaxTab> {
       final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
       if (token == null || login == null) return;
 
+      /// hilfreicherweise den Benutzer darauf hinweisen, wenn er keine Push-Nachrichten oder nicht
+      /// für alle Klassen/Gruppen überhaupt Benachrichtigungen aktiviert hat
+      /// (aber über die API scheint sich das nicht ändern zu lassen, also nur auf den Browser verweisen)
       () async {
         if (!istate.infosShown.contains("ls_notif_info")) {
           final (online, data) = await getNotificationSettings(login, token);
@@ -163,6 +170,7 @@ class LSHomePage extends StatelessWidget {
   }
 }
 
+/// Widget, was darauf hinweist, dass man für die Verwendung eines alternativen Accounts online sein muss
 class LSAltNoConnection extends StatelessWidget {
   final String login;
   const LSAltNoConnection({super.key, required this.login});
@@ -190,6 +198,7 @@ const lernSaxMsgrAppleAppId = "1564415378";
 
 const lernSaxAppInfoKey = "lern_sax_app_info_key";
 
+/// offizielle App "LernSax Messenger" oder deren Seite im App/Play Store öffnen
 Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
   final internal = Provider.of<InternalState>(context, listen: false);
   // internal.infosShown = internal.infosShown..clear();
@@ -238,6 +247,7 @@ Future<bool> lernSaxOpenInOfficialApp(BuildContext context) async {
   return false;
 }
 
+/// LernSax angemeldet im Browser öffnen
 Future<bool> lernSaxOpenInBrowser(BuildContext context, String login, String token) async {
   final creds = Provider.of<CredentialStore>(context, listen: false);
   if (creds.lernSaxToken == null || creds.lernSaxLogin == null) return false;

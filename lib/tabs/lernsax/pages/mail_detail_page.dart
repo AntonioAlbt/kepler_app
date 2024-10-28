@@ -47,10 +47,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// this class is supposed to be shown as a customWidget on an InfoScreen -> InfoScreenDisplay
 /// this is neccessary for it to still have access to the context that can access all the Provider-s
+/// - ich hätte auch damals schon `globalScaffoldContext` verwenden können, aber das ist halt schlechter Stil
 class MailDetailPage extends StatefulWidget {
+  /// Mail, die angezeigt werden soll (LSMail wird selbst geladen)
   final LSMailListing listing;
+  /// zu verwendender Login
   final String login;
+  /// zu verwendendes Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   const MailDetailPage({super.key, required this.listing, required this.login, required this.token, required this.alternative});
@@ -150,6 +155,9 @@ class _MailDetailPageState extends State<MailDetailPage> {
                       onPressed: () {
                         // show this as a kind of loading message
                         showSnackBar(text: "\"${att.name}\" wird abgefragt...", clear: true, duration: const Duration(seconds: 10));
+                        /// um einen Anhang herunterzuladen, muss er erst in eine Session-Datei exportiert werden,
+                        /// dabei bekommt man dann einen Download-Link zurückgegeben und über diesen lässt er sich
+                        /// dann herunterladen
                         lernsax.exportSessionFileFromMail(
                           widget.login,
                           widget.token,
@@ -185,6 +193,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             to: mailData!.to.map((to) => to.address).toList(),
                             subject: mailData!.subject,
                             mail: mailData!.bodyPlain,
+                            /// beim Absenden soll der Entwurf, gespeichert in `mailData`, gelöscht werden
+                            /// -> `draftToDelete` mit Referenz
                             reference: mailData!,
                             referenceMode: LSMWPReferenceMode.draftToDelete,
                           ),
@@ -206,6 +216,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             builder: (ctx) => MailWritePage(
                               subject: "Re: ${mailData!.subject}",
                               mail: "\n\n> -----Original Message-----\n> From: ${mailData!.from.map((m) => "\"${m.name}\" <${m.address}>").join(", ")}\n> Sent: ${DateFormat("dd.MM.yyyy HH:mm").format(mailData!.date)}\n> To: ${mailData!.to.map((m) => m.address).join(", ")}\n> Subject: ${mailData!.subject}\n> \n> ${joinWithOptions(mailData!.bodyPlain.split("\n"), "\n> ", "")}",
+                              /// Mail ist eine Antwort auf `mailData`
                               reference: mailData,
                               referenceMode: LSMWPReferenceMode.answered,
                               to: mailData!.from.map((m) => m.address).toList(),
@@ -233,6 +244,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                         contextMenuBuilder: const SelectableText("").contextMenuBuilder,
                         // change order so emails get linkified first, is needed because of looseUrl
                         linkifiers: const [EmailLinkifier(), UrlLinkifier()],
+                        /// looseUrl heißt, dass auch Urls wie example.com linkified werden, nicht nur https://example.com
                         options: const LinkifyOptions(looseUrl: true, defaultToHttps: true),
                         onOpen: (link) {
                           if (link.text.contains("@")) {
@@ -266,12 +278,12 @@ class _MailDetailPageState extends State<MailDetailPage> {
                                 ),
                               ],
                             ));
-                            return;
-                          }
-                          try {
-                            launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
-                          } on Exception catch (_) {
-                            showSnackBar(text: "Keine App zum Öffnen dieses Links gefunden.");
+                          } else {
+                            try {
+                              launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+                            } on Exception catch (_) {
+                              showSnackBar(text: "Keine App zum Öffnen dieses Links gefunden.");
+                            }
                           }
                         },
                         text: mailData!.bodyPlain,
@@ -293,6 +305,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
     _loadData();
   }
 
+  /// nur wenn der primäre Benutzer verwendet wird, wird eine eventuell gecachete Mail angezeigt oder eine
+  /// abgefragte Mail im Cache gespeichert
   Future<void> _loadData() async {
     setState(() => _loading = true);
     final lsdata = Provider.of<LernSaxData>(context, listen: false);
@@ -320,6 +334,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
   }
 }
 
+/// erstellt WidgetText für RichText, um Name/Login mit Symbol für Mail-Anzeige in Text einzubetten
 InlineSpan createLSMailAddressableSpan(LSMailAddressable addressable, bool isLast, { Offset? translate, bool darkerIcon = false })
   => createLSNameMailSpan(addressable.name, addressable.address, addComma: !isLast, translate: translate, darkerIcon: darkerIcon);
 

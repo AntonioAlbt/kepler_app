@@ -395,6 +395,8 @@ Future<(bool, String?)> getSingleUseLoginLink(String login, String token, { Stri
 
 /// Benachrichtigungen abfragen
 /// 
+/// wenn `startId` gegeben ist, werden nur Benachrichtigungen ab dieser ID zurückgegeben
+/// 
 /// returns: isOnline, data
 Future<(bool, List<LSNotification>?)> getNotifications(String login, String token, {String? startId}) async {
   if (login == lernSaxDemoModeMail) {
@@ -452,6 +454,7 @@ Future<(bool, List<LSNotification>?)> getNotifications(String login, String toke
 }
 
 /// Aufgaben für Kurs mit Login classLogin abfragen
+/// (falls `classLogin == null`, Aufgaben von Benutzer selbst abfragen)
 /// 
 /// returns: isOnline, data
 Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? classLogin}) async {
@@ -492,6 +495,7 @@ Future<(bool, List<LSTask>?)> getTasks(String login, String token, {String? clas
 }
 
 /// Mitgliedschaften des Benutzers abfragen
+/// 
 /// returns: isOnline, data
 Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String token) async {
   if (login == lernSaxDemoModeMail) {
@@ -527,6 +531,7 @@ Future<(bool, List<LSMembership>?)> getGroupsAndClasses(String login, String tok
 }
 
 /// ist der Benutzer ein Lehrer? (ist er Mitglied in der Lehrergruppe?)
+/// 
 /// returns: isOnline, data
 Future<(bool, bool?)> isTeacher(String login, String token) async {
   if (login == lernSaxDemoModeMail) {
@@ -546,6 +551,7 @@ Future<(bool, bool?)> isTeacher(String login, String token) async {
 }
 
 /// App-Registrierung von LernSax entfernen
+/// 
 /// returns: isOnline, data
 Future<(bool, bool?)> unregisterApp(String login, String token) async {
   if (login == lernSaxDemoModeMail) {
@@ -872,6 +878,9 @@ Future<(bool, LSSessionFile?)> exportSessionFileFromMail(String login, String to
 }
 
 /// Status einer Aufgabe verändern (theoretisch wären auch andere Elemente möglich, aber noch nicht in App)
+/// 
+/// Achtung: nur für den Benutzer selbst lässt sich eine Aufgabe abschließen - `classLogin` sollte also aktuell
+/// *immer* auf `null` gesetzt werden.
 /// 
 /// returns: isOnline, data
 Future<(bool, LSTask?)> modifyTask(String login, String token, { required String id, required String? classLogin, required bool completed }) async {

@@ -36,6 +36,12 @@ import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 
 /// all of this is subject to change because of building "updates"
+/// - maaaybe the building updates will still take a good while
+/// 
+/// die Räume sind hardcoded, da der Raumplan und die Übersicht der freien Räume viel zuverlässiger sind,
+/// und die Räume so auch kategorisiert werden können
+/// -> die App könnte ja sonst nur vom Stundenplan rausfinden, welche Räume es gibt, d.h. wenn ein Raum an
+///   einem Tag nicht verwendet wird, weiß die App nicht über die Existenz des Raumes
 final allKeplerRooms = [
   "K08", "K10",
   ...rooms("0", 4, 12, [5, 7]),
@@ -44,6 +50,7 @@ final allKeplerRooms = [
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
   "TH", "Jb1", "Jb2",
 ];
+/// Varianten für Räume, Einteilung für Benutzer
 enum RoomType {
   compSci, technic, sports, specialist, music, art;
   @override
@@ -57,6 +64,7 @@ enum RoomType {
   }[this]!;
 }
 // this even more
+/// Zuteilung Räume zu Raumtyp
 final specialRoomInfo = {
   RoomType.compSci: ["K08", "K10", "202"],
   RoomType.technic: ["004", "006"],
@@ -65,6 +73,7 @@ final specialRoomInfo = {
   RoomType.music: ["317"],
   RoomType.art: ["302"],
 };
+/// Generierung einer Map Raumnummer -> Raumtyp
 final specialRoomMap = (){
   final map = <String, RoomType>{};
   specialRoomInfo.forEach((key, value) {
@@ -77,7 +86,7 @@ final specialRoomMap = (){
 
 final freeRoomDisplayKey = GlobalKey<StuPlanDisplayState>();
 
-/// including start and end
+/// generiert Liste von Raumnummern, einschließlich start und end ausschließlich Räume in excludes
 List<String> rooms(String prefix, int start, int end, List<int> excludes) {
   final rooms = <String>[];
   for (var i = start; i <= end; i++) {
@@ -87,6 +96,7 @@ List<String> rooms(String prefix, int start, int end, List<int> excludes) {
   return rooms;
 }
 
+/// zeigt freie Räume für ausgewählten Tag und je nach Stunde kategorisiert nach RoomType an
 class FreeRoomsPage extends StatelessWidget {
   const FreeRoomsPage({super.key});
 
@@ -112,6 +122,7 @@ void freeRoomRefreshAction() {
   freeRoomDisplayKey.currentState?.forceRefreshData();
 }
 
+/// Dialog mit Details zur Stunde - Kategorisierung freie Räume mit Text statt Icon
 Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType?, List<String>>> freeRoomsList, int hour) {
   return AlertDialog(
     title: Text("Freie Räume in Stunde $hour"),

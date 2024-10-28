@@ -43,7 +43,11 @@ import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
+/// zwei Keys, da Bearbeiten des Planes Zugriff auf den State der Seite selbst benötigt
+
+/// zum Neuladen und "Springe zum heutigen Tag"
 final yourPlanDisplayKey = GlobalKey<StuPlanDisplayState>();
+/// zum Plan bearbeiten
 final yourPlanPageKey = GlobalKey<YourPlanPageState>();
 
 class YourPlanPage extends StatefulWidget {
@@ -54,6 +58,10 @@ class YourPlanPage extends StatefulWidget {
 }
 
 class YourPlanPageState extends State<YourPlanPage> {
+  /// gerade ausgewählter Plan, bestehend aus ( id* + 1, Klassenname/Lehrerkürzel )
+  /// *wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
+  /// 
+  /// -> Achtung: bei Verwendung als Index immer `- 1` rechnen!
   late (int, String) selected;
 
   @override
@@ -105,6 +113,8 @@ class YourPlanPageState extends State<YourPlanPage> {
                                 },
                                 value: selected,
                               ),
+                              /// da Benutzer, die nie einen anderen Plan hinzufügen wollen, das Dropdown vielleicht
+                              /// nervig finden, kann man es ausblenden (und in den Einstellungen wieder einblenden)
                               if (stdata.altSelectedClassNames.isEmpty) IconButton(onPressed: () {
                                 showDialog(context: context, builder: (ctx) => AlertDialog(
                                   title: const Text("Ausblenden?"),
@@ -180,6 +190,7 @@ class YourPlanPageState extends State<YourPlanPage> {
     );
   }
 
+  /// automatisch damit umgehen, wenn der aktuell ausgewählte Eintrag entfernt oder verändert wird
   void stdataListener() {
     if (!context.mounted) return;
     final stdata = Provider.of<StuPlanData>(context, listen: false);
@@ -225,6 +236,7 @@ class YourPlanPageState extends State<YourPlanPage> {
   }
 }
 
+/// den aktuell ausgewählten Plan bearbeiten: Klasse ändern, ausgewählte Fächer/Kurse anpassen
 void yourStuPlanEditAction() {
   final ypState = yourPlanPageKey.currentState;
   if (ypState == null) return;
@@ -252,6 +264,7 @@ void yourStuPlanJumpToStartAction() {
 
 const stuPlanInfoKey = "stu_plan_info";
 
+/// Dialog beim ersten Öffnen einer Stundenplanansicht aus dem Drawer anzeigen, falls noch nicht angezeigt
 Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
   final internal = Provider.of<InternalState>(context, listen: false);
   final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
@@ -284,6 +297,9 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
   return true;
 }
 
+// TODO: Dialog-Funktionen verschieben -> werden nur in plan_display.dart verwendet
+
+/// Dialog mit mehr Infos zu einer Stunde erstellen
 Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
@@ -407,6 +423,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
   );
 }
 
+/// Dialog mit mehr Infos zu einer Klausur erstellen
 Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
   return AlertDialog(
     title: Text("Infos zur Klausur in ${exam.subject}"),

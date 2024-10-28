@@ -89,19 +89,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
   /// Farbschema der App
   AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
   set theme(AppTheme theme) => setSaveNotify("theme", theme.name);
+  /// sollte das Dark Theme verwendet werden? (Hilfsvariable, nur lesbar)
   bool get darkTheme => theme == AppTheme.dark || (theme == AppTheme.system && (deviceInDarkMode ?? true));
 
   /// gewünschte Anrede
   Pronoun get preferredPronoun => Pronoun.values.firstWhere((element) => element.name == (attributes["preferred_pronoun"] ?? ""), orElse: () => Pronoun.du);
   set preferredPronoun(Pronoun pp) => setSaveNotify("preferred_pronoun", pp.name);
-
-  /// obwohl die nächsten zwei Einstellungen nicht mehr verändert werden können, werden sie noch zu bedeutend verwendet
-  /// als dass ich sie schon komplett abgeschafft habe
-  bool get considerLernSaxTasksAsCancellation => true; // attributes["consider_ls_tasks_as_cl"] ?? true;
-  // set considerLernSaxTasksAsCancellation(bool val) => setSaveNotify("consider_ls_tasks_as_cl", val);
-  
-  bool get showLernSaxCancelledLessonsInRoomPlan => true; // attributes["show_ls_cl_irp"] ?? true;
-  // set showLernSaxCancelledLessonsInRoomPlan(bool val) => setSaveNotify("show_ls_cl_irp", val);
 
   /// soll der Stundenplan unendlich weit in die Zukunft und Vergangenheit blätterbar sein
   bool get enableInfiniteStuPlanScrolling => attributes["enable_is_sp"] ?? false;
@@ -207,7 +200,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get lernSaxAutoLoadMailOnScrollBy => attributes["ls_mail_auto_load_osb"] ?? true;
   set lernSaxAutoLoadMailOnScrollBy(bool val) => setSaveNotify("ls_mail_auto_load_osb", val);
   
-  /// sollen die Optionen für die Bearbeitung der Home Screen Widgets angezeigt werden?
+  /// sollen die Optionen für das Anordnen und Ausblenden der Home-Widgets angezeigt werden?
   bool get showHomeWidgetEditOptions => attributes["show_home_weo"] ?? true;
   set showHomeWidgetEditOptions(bool val) => setSaveNotify("show_home_weo", val);
 

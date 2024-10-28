@@ -51,26 +51,46 @@ import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
-enum SPDisplayMode { yourPlan, classPlan, allReplaces, freeRooms, teacherPlan, roomPlan }
+enum SPDisplayMode {
+  /// "Dein/Ihr Stundenplan": Stundenplan für einzelne, ausgewählte Klasse, Fächer können ausgeblendet werden.
+  yourPlan,
+  /// "Klassenplan": Stundenplan für direkt auf Seite auswählbare Klasse, alle Fächer werden angezeigt.
+  classPlan,
+  /// "Alle Vertretungen": alle geänderten Stunden für Tag, kategorisiert nach Klasse
+  allReplaces,
+  /// "Freie Räume": freie Räume für Stunde, kategorisiert nach Raumtyp
+  freeRooms,
+  /// "Lehrerplan": wie Klassenplan, aber für Lehrer
+  teacherPlan,
+  /// "Raumplan": Stundenplan für auswählbaren Raum, zeigt Stunden, die in Raum stattfinden sollen
+  /// (wie Klassenplan, aber für Raum)
+  roomPlan,
+}
 
+/// einfach die Masterclass des Projektes, mit etwa 1500 Zeilen Code für alles
+/// (hätte man vielleicht aufteilen können, aber die Logik zum Laden der Stunden ist halt für alles
+/// ähnlich, und die Anzeige meist auch)
 class StuPlanDisplay extends StatefulWidget {
-  /// whatever could be selected, like the class or teacher or room
+  /// was grad ausgewählt ist, etwa Klasse oder Lehrer
   final String selected;
+  /// Stundenplan-ID für alternativen Stundenplan
   final int? selectedId;
+  /// Anzeigemodus des Widgets - welcher Plan angezeigt werden soll
   final SPDisplayMode mode;
+  /// sollen die Infos vom Sekretariat unten mit angezeigt werden?
   final bool showInfo;
-  final List<String>? allRooms;
   const StuPlanDisplay(
       {super.key,
       required this.selected,
       required this.mode,
       this.showInfo = true,
-      this.allRooms,
       this.selectedId});
 
   @override
   State<StuPlanDisplay> createState() => StuPlanDisplayState();
 }
+
+/// Hilfsfunktionen für Datumszeug
 
 bool isWeekend(DateTime day) =>
     day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
@@ -94,6 +114,7 @@ DateTime findPrevFriday(DateTime day) {
   return nm;
 }
 
+/// ist die vom Benutzer gewählte Zeit für den nächsten Plan vergangen?
 bool shouldGoToNextPlanDay(BuildContext context) {
   final today = DateTime.now();
   final prefs = Provider.of<Preferences>(context, listen: false);
@@ -102,13 +123,15 @@ bool shouldGoToNextPlanDay(BuildContext context) {
     && !isWeekend(today.add(const Duration(days: 1)));
 }
 
-bool isSameDay(DateTime dateTime1, DateTime dateTime2)
+bool isSameDate(DateTime dateTime1, DateTime dateTime2)
   => dateTime1.year == dateTime2.year && dateTime1.month == dateTime2.month && dateTime1.day == dateTime2.day;
 
+/// wurde der Stundenplan heute schonmal aktualisiert?
 bool shouldStuPlanAutoReload(BuildContext context)
   => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&
-    !isSameDay((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
+    !isSameDate((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
 
+/// schönere Beschreibung des Datums relativ zu heutigem Tag wenn möglich, sonst nur Formatierung
 String getDayDescription(DateTime date) {
   final today = DateTime.now();
   final diffToToday = date.difference(today);
@@ -129,14 +152,17 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
 
+  /// versucht erstmal nur, Daten für heute neu zu laden - wenn erfolgreich, löscht auch andere Daten im Cache
   void forceRefreshData() {
     // only clear the cache if loading the new data succeeded (if connected to indiware)
     _ctr.triggerRefresh(forceOnline: true)?.then((val) {
       if (val) {
-        IndiwareDataManager.clearCachedData(excludeDate: currentDate);
+        /// Cache nur für alles in der Zukunft löschen (Stundenplan in Vergangenheit wird sich ja wohl nicht ändern)
+        IndiwareDataManager.clearCachedData(excludeDate: DateTime.now());
         showSnackBar(text: "Stundenplan erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
       } else {
         showSnackBar(textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+        /// nochmal neu laden, damit wieder gecachete Daten angezeigt werden
         _ctr.triggerRefresh(forceOnline: false);
       }
     });
@@ -148,6 +174,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     });
   }
 
+  /// heute falls Wochentag, sonst nächster Montag
   DateTime _getStartDate() {
     final today = DateTime.now();
     if (isWeekend(today)) return findNextMonday(today);
@@ -206,13 +233,12 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     }
   }
 
-  bool isSameDate(DateTime one, DateTime two) => one.day == two.day && one.month == two.month && one.year == two.year;
-
   @override
   Widget build(BuildContext context) {
     final prefs = Provider.of<Preferences>(context, listen: false);
     return Center(
       child: ConstrainedBox(
+        /// für angenehmeres Layout auf Tablets wird die Breite beschränkt
         constraints: const BoxConstraints(
           maxWidth: 600,
         ),
@@ -226,12 +252,6 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                       ? () => makeCurrentDateGoBack()
                       : null,
                 ),
-                // IconButton(
-                //   icon: const Icon(Icons.fast_rewind),
-                //   onPressed: (currentDate.isAfter(DateTime.now())) ? () => setState(() {
-                //     currentDate = DateTime.now();
-                //   }) : null,
-                // ),
                 Expanded(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -244,8 +264,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                           style: const TextStyle(fontSize: 16),
                         ),
                       ),
-                      // because the max difference is 9 days (e.g. Sat -> Mon+1)
-                      // only the day needs to be checked for "today"
+                      /// farbige Chips für "heute" und "morgen" anzeigen
                       if (isSameDate(currentDate, DateTime.now()))
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
@@ -287,12 +306,6 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                     ],
                   ),
                 ),
-                // IconButton(
-                //   icon: const Icon(Icons.fast_forward),
-                //   onPressed: (currentDate.isBefore(getStartDate().add(const Duration(days: 13)))) ? () => setState(() {
-                //     currentDate = getStartDate().add(const Duration(days: 14));
-                //   }) : null,
-                // ),
                 IconButton.outlined(
                   icon: const Icon(Icons.arrow_forward),
                   onPressed:
@@ -303,6 +316,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
               ],
             ),
             Flexible(
+              /// echte Anzeige vom Stundenplan für den ausgewählten Tag
               child: Selector<StuPlanData, List<DateTime>>(
                 selector: (_, stdata) => stdata.holidayDates,
                 builder: (_, holidayDates, __) => StuPlanDayDisplay(
@@ -317,7 +331,6 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
                   selectedId: widget.selectedId,
                   mode: widget.mode,
                   showInfo: widget.showInfo,
-                  allRooms: widget.allRooms,
                   onSwipeRight: () => (canGoBack() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoBack() : null,
                   onSwipeLeft: () => (canGoForward() || prefs.enableInfiniteStuPlanScrolling) ? makeCurrentDateGoForward() : null,
                   schoolHolidayList: holidayDates,
@@ -331,6 +344,12 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   }
 }
 
+/// damit das übergeordnete Widget das StuPlanDayDisplay kontrollieren kann, wird dieser Controller als Vermittler
+/// zwischen den beiden übergeben:
+/// - das Elternwidget erstellt den Controller und übergibt eine Referenz
+/// - das Kindwidget verwendet setRefreshListener um eine eigene Funktion an den Controller zu übergeben
+/// - dann kann triggerRefresh vom Elternwidget aufgerufen werden, und es wird eine Funktion im Kindwidget
+///   aufgerufen
 class StuPlanDayDisplayController {
   Future<bool> Function(bool forceOnline)? onRefreshListener;
 
@@ -341,18 +360,25 @@ class StuPlanDayDisplayController {
   StuPlanDayDisplayController();
 }
 
+/// das hier ist die tatsächlich wichtigste Klasse im Bezug auf den Stundenplan
+/// -> zeigt den Stundenplan für einen Tag an und lädt die dafür nötigen Daten vom Cache/Indiware-Server
 class StuPlanDayDisplay extends StatefulWidget {
+  /// Parameter wie bei StuPlanDisplay
   final DateTime date;
   final String selected;
+  final SPDisplayMode mode;
+  final int? selectedId;
+  /// Controller, optional (wow)
   final StuPlanDayDisplayController? controller;
   final bool showInfo;
+  /// sollen die Aufsichten für den ausgewählten Lehrer angezeigt werden? (nur für Lehrer)
   final bool showSupervisions;
-  final SPDisplayMode mode;
-  final List<String>? allRooms;
+  /// wird aufgerufen, wenn der Benutzer nach links wischt
   final void Function()? onSwipeLeft;
+  /// wird aufgerufen, wenn der Benutzer nach rechts wischt
   final void Function()? onSwipeRight;
+  /// Liste der freien Tage
   final List<DateTime>? schoolHolidayList;
-  final int? selectedId;
   const StuPlanDayDisplay(
       {super.key,
       required this.date,
@@ -361,7 +387,6 @@ class StuPlanDayDisplay extends StatefulWidget {
       this.controller,
       this.showInfo = true,
       this.showSupervisions = true,
-      this.allRooms,
       this.onSwipeLeft,
       this.onSwipeRight,
       this.schoolHolidayList,
@@ -372,6 +397,10 @@ class StuPlanDayDisplay extends StatefulWidget {
 }
 
 class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
+  // das ist schon kommentiert, weil es selbst direkt nach schreiben schon zu unübersichtlich war
+  // wahrscheinlich sollte man dafür jeden Modus in ein eigenes Widget extrahieren?
+  // und dann in StuPlanDisplay anzeigen? aber naja, so ist es schön kompakt (nicht auf die Linienanzahl dieser Datei schauen)
+
   bool _loading = true;
   /// gets selected lessons loaded when no special mode selected, if `freeRoomsMode` gets loaded all lessons for all classes, otherwise is null
   List<VPLesson>? lessons;
@@ -392,12 +421,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   /// is always updated when something is loaded
   bool? isSchoolHoliday;
 
+  /// generiert Widgets für anzuzeigende Liste für Modus Alle Vertretungen
   List<Widget> _buildAllReplacesLessonList() {
     // final currentClass = Provider.of<StuPlanData>(context, listen: false).selectedClassName;
     final children = <Widget>[];
     if (changedClassLessons == null) return [];
     final stdata = Provider.of<StuPlanData>(context, listen: false);
-    final consider = Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation;
     changedClassLessons!.forEach((clName, lessons) {
       if (lessons.isEmpty) return;
       final cl2 = <Widget>[];
@@ -415,10 +444,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         cl2.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           child: LessonDisplay(
-              considerLernSaxCancellationForLesson(lessons[i], consider),
+              lessons[i],
               (i > 0) ? lessons[i - 1].schoolHour : null,
               lessons[i].hasLastRoomUsageFromList(lessons),
-              classNameToReplace: clName,
+              classNameToStrip: clName,
               subject: stdata.availableSubjects[clName]
                 ?.cast<VPCSubjectS?>()
                 .firstWhere(
@@ -453,6 +482,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return children;
   }
 
+  /// für Mapping RoomType -> IconData
   IconData roomTypeIcon(RoomType? type) => switch (type) {
         RoomType.art => MdiIcons.palette,
         RoomType.compSci => MdiIcons.desktopClassic,
@@ -463,7 +493,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         null => MdiIcons.school,
       };
 
+  /// generiert anzuzeigende Widgets in Liste für Modus Freie Räume
   List<Widget> _buildFreeRoomList() {
+    /// nur für 1. bis 9. Stunde, alles andere gibt es nur extrem selten -> eh alle Räume frei, oder Schule geschlossen
     final occupiedRooms = <int, List<String>>{
       1: [],
       2: [],
@@ -478,6 +510,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     if (lessons == null) return [];
     for (final lesson in lessons!) {
       // somehow, some people had a 10th and 11th lesson - what the fuck!?
+      /// und obwohl da "nur 1. bis 9. Stunde" stand, wird hier einfach für die Stunde eine Liste hinzugefügt,
+      /// damit nur an Tagen, wo es nötig ist, alle möglichen Stunden angezeigt werden
       if (!occupiedRooms.containsKey(lesson.schoolHour)) occupiedRooms[lesson.schoolHour] = [];
       occupiedRooms[lesson.schoolHour]!.addAll(lesson.roomCodes);
     }
@@ -554,6 +588,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     return children;
   }
 
+  /// Bestimmung von Info-Text der beim Laden des Planes unter Ladebalken angezeigt werden soll
   String? _getLoadingDescription() {
     switch (widget.mode) {
       case SPDisplayMode.classPlan:
@@ -694,6 +729,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   ),
           ),
         ),
+        /// Aufsichten anzeigen
         if (supervisions != null && (supervisions?.isEmpty == false) && widget.showSupervisions)
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 100),
@@ -742,6 +778,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ),
             ),
           ),
+        /// Klausuren anzeigen
         if (exams != null &&
             (exams?.isEmpty == false) &&
             Provider.of<Preferences>(context, listen: false).stuPlanShowExams &&
@@ -797,6 +834,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               ),
             ),
           ),
+        /// Infos vom Sekretariat anzeigen
         if (additionalInfo != null &&
             (additionalInfo?.isEmpty == false) &&
             widget.showInfo)
@@ -845,6 +883,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     super.initState();
   }
 
+  /// falls `forceRefresh == true` wird zwingend versucht, die Daten von Indiware statt aus dem Cache zu laden
   Future<bool> loadData({required bool forceRefresh}) async {
     if (!mounted) return false;
     setState(() => _loading = true);
@@ -860,6 +899,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       showSnackBar(text: "Fehler bei der Datenabfrage. Bitte erneut anmelden.", error: true);
       return false;
     }
+    /// Schüler-Stundenplan für widget.date laden
     getKlData() {
       if (creds.lernSaxLogin == lernSaxDemoModeMail) {
         return Future.value((VPKlData(
@@ -962,6 +1002,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         forceRefresh: forceRefresh,
       );
     }
+    /// Lehrer-Stundenplan für widget.date laden
     getLeData() => IndiwareDataManager.getLeDataForDate(
         widget.date,
         creds.vpHost!,
@@ -976,11 +1017,14 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       setState(() => _loading = false);
       return true;
     }
+    /// Klausuren laden
     Future<(List<VPExam>?, bool)> getExamData() {
       if (creds.lernSaxLogin == lernSaxDemoModeMail) return Future.value((<VPExam>[], true));
       return IndiwareDataManager.getExamDataForDate(widget.date, creds.vpHost!, creds.vpUser!, creds.vpPassword!, forceRefresh: forceRefresh);
     }
 
+    /// Hier werden die Daten entsprechend des Modus' (und Benutzertyps) geladen und verarbeitet.
+    /// was welche Felder enthalten und wann sie gesetzt werden müssen -> siehe Kommentare bei Feldern selbst
     switch (widget.mode) {
       case SPDisplayMode.yourPlan:
         if (user == UserType.pupil || user == UserType.parent) {
@@ -1018,7 +1062,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         }
         if (
           prefs.confettiEnabled &&
-          lessons?.any((lesson) => lesson.teacherCode == "---" || considerLernSaxCancellationForLesson(lesson, prefs.considerLernSaxTasksAsCancellation).subjectCode == "---") == true
+          lessons?.any((lesson) => lesson.teacherCode == "---") == true
         ) {
           globalConfettiController.play();
         }
@@ -1089,11 +1133,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         if (!mounted) return false;
         isOnline = online;
         lastUpdated = klData?.header.lastUpdated;
-        final prefs = Provider.of<Preferences>(context, listen: false);
         lessons = klData?.classes
             .fold<List<VPLesson>>([], (prev, ls) => prev..addAll(ls.lessons.map((e) => e.copyWith(infoText: "${ls.className.contains("-") ? "Klasse" : "Jahrgang"} ${ls.className}${e.infoText == "" ? "" : "\n"}${e.infoText}"))))
             .where((l) => l.roomCodes.contains(widget.selected))
-            .where((l) => (!prefs.showLernSaxCancelledLessonsInRoomPlan) ? ((considerLernSaxCancellationForLesson(l, prefs.considerLernSaxTasksAsCancellation).roomCodes != l.roomCodes) ? false : true) : true)
             .toList();
         // dont load allLessonsForDate because last room usage doesn't matter anyway (it's kinda obvious)
         break;
@@ -1252,7 +1294,7 @@ class LessonListContainer extends StatelessWidget {
               child: ListView.separated(
                 itemCount: lessons!.length,
                 itemBuilder: (context, index) => LessonDisplay(
-                  considerLernSaxCancellationForLesson(lessons![index], Provider.of<Preferences>(context, listen: false).considerLernSaxTasksAsCancellation),
+                  lessons![index],
                   index > 0
                       ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                       : null,
@@ -1263,7 +1305,7 @@ class LessonListContainer extends StatelessWidget {
                         (s) => s!.subjectID == lessons![index].subjectID,
                         orElse: () => null,
                       ),
-                  classNameToReplace: className,
+                  classNameToStrip: className,
                 ),
                 separatorBuilder: (context, index) => const Divider(height: 24),
               ),
@@ -1273,16 +1315,25 @@ class LessonListContainer extends StatelessWidget {
   }
 }
 
+/// zeigt Stunde schön formatiert an (mit Dialog beim Antippen)
 class LessonDisplay extends StatelessWidget {
+  /// anzuzeigende Stunde
   final VPLesson lesson;
+  /// Stunde der vorherigen Stunde (damit Text mit Stunde nur einmal vor mehreren Stunden in derselben Stunde
+  /// angezeigt wird)
   final int? previousLessonHour;
+  /// soll der Info-Dialog beim Antippen angezeigt werden?
   final bool showInfoDialog;
+  /// das zur Stunde zugehörige Fach, für Anzeige von "sonst <Lehrer>" und "sonst <Fach>" bei Änderungen
   final VPCSubjectS? subject;
-  final String? classNameToReplace;
+  /// Teil des Fachnamens der Stunde, der entfernt werden soll
+  /// weil manche Stunden z.B. als 11DE1 eingetragen sind -> "11" wird entfernt
+  final String? classNameToStrip;
+  /// wird der Raum das letzte Mal für den Tag verwendet?
   final bool lastRoomUsageInDay;
 
   const LessonDisplay(this.lesson, this.previousLessonHour, this.lastRoomUsageInDay,
-      {super.key, this.showInfoDialog = true, this.subject, this.classNameToReplace});
+      {super.key, this.showInfoDialog = true, this.subject, this.classNameToStrip});
 
   @override
   Widget build(BuildContext context) {
@@ -1296,7 +1347,7 @@ class LessonDisplay extends StatelessWidget {
         onTap: (showInfoDialog)
             ? () => showDialog(
                 context: context,
-                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToReplace, lastRoomUsageInDay))
+                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay))
             : null,
         child: Column(
           children: [
@@ -1310,7 +1361,7 @@ class LessonDisplay extends StatelessWidget {
                       : const SizedBox.shrink(),
                 ),
                 Text(
-                  lesson.subjectCode.replaceFirst(classNameToReplace ?? "funny joke.", ""),
+                  lesson.subjectCode.replaceFirst(classNameToStrip ?? "funny joke.", ""),
                   style: TextStyle(
                     color: (lesson.subjectChanged) ? Colors.red : null,
                     fontWeight: (lesson.subjectChanged)
@@ -1373,8 +1424,11 @@ class LessonDisplay extends StatelessWidget {
   }
 }
 
+/// wie LessonDisplay, aber für Klausur
 class ExamDisplay extends StatelessWidget {
+  /// anzuzeigende Klausur
   final VPExam exam;
+  /// Jahrgang der vorherigen Klausur (damit JG-Text nur einmal angezeigt wird)
   final String? previousYear;
 
   const ExamDisplay({super.key, required this.exam, required this.previousYear});
@@ -1427,3 +1481,5 @@ class ExamDisplay extends StatelessWidget {
     );
   }
 }
+
+// boah. fast 1500 Zeilen "Code".

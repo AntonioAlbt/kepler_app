@@ -47,6 +47,7 @@ import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:provider/provider.dart';
 
+/// Hauptseite für alle Unterseiten bzgl. des Stundenplans - ordnet die NavIds den tatsächlichen Seiten zu
 class HourtableTab extends StatefulWidget {
   const HourtableTab({super.key});
 
@@ -59,6 +60,7 @@ class _HourtableTabState extends State<HourtableTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, StuPlanData>(
       builder: (context, state, stdata, _) {
+        /// Das sollte eigentlich nie erreicht werden, da der Eintrag nicht ausgewählt werden kann, wenn Daten fehlen.
         if (shouldShowStuPlanIntro(stdata, state.userType == UserType.teacher)) {
           return Column(
             children: [
@@ -98,11 +100,12 @@ class _HourtableTabState extends State<HourtableTab> {
   }
 }
 
+/// fehlen Daten für den Stundenplan -> sollte die Stundenplan-Einrichtung angezeigt werden?
 bool shouldShowStuPlanIntro(StuPlanData data, bool teacher) =>
     teacher ? (data.selectedTeacherName == null) : (data.selectedClassName == null || data.selectedCourseIDs.isEmpty);
 
 // returns true if all data is given and the stuplan page should be shown
-// and false if the intro screens have to be shown
+// and false if the intro screens have to be shown -> for Drawer onTryOpen
 Future<bool> stuPlanOnTryOpenCallback(BuildContext context) async {
   final state = Provider.of<AppState>(context, listen: false);
   final stdata = Provider.of<StuPlanData>(context, listen: false);
