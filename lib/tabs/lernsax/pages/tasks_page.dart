@@ -53,9 +53,13 @@ void lernSaxTasksRefreshAction() {
   lsTaskPageKey.currentState?.loadData(force: true);
 }
 
+/// Auflistungsseite für LS-Aufgaben, Klasse/Gruppe oder "Alle"/"persönliche" auswählbar
 class LSTasksPage extends StatefulWidget {
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   LSTasksPage(this.login, this.token, this.alternative) : super(key: lsTaskPageKey);
@@ -163,7 +167,11 @@ class _LSTasksPageState extends State<LSTasksPage> {
   }
 }
 
+/// zeigt Aufgaben für eine spezielle Klasse an (mit Offline-Modus)
 class LSTaskDisplay extends StatefulWidget {
+  /// Login, für den die Aufgaben angezeigt werden sollen
+  /// - falls `null`, zeigt persönliche Aufgaben an
+  /// - falls `"all"`, lädt Aufgaben für alle Klassen/Gruppen
   final String? selectedClass;
 
   const LSTaskDisplay({super.key, required this.selectedClass});
@@ -171,8 +179,6 @@ class LSTaskDisplay extends StatefulWidget {
   @override
   State<LSTaskDisplay> createState() => _LSTaskDisplayState();
 }
-
-const linkRegex = r"(([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?";
 
 class _LSTaskDisplayState extends State<LSTaskDisplay> {
   bool _loading = true;
@@ -218,6 +224,8 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
               },
               title: const Text("Abgeschlossene anzeigen"),
             ),
+            /// aus irgendeinem Grund habe ich für dieses Widget einen Offline-Modus hinzugefügt, der aktiviert wird
+            /// wenn es einen Verbindungsfehler gab (dabei können Aufgaben nicht mehr an-/abgeschlossen werden)
             if (!_connected) const Padding(
               padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
               child: Row(
@@ -232,8 +240,6 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
                 ],
               ),
             ),
-            
-            
             if (tasks.isEmpty) const Expanded(
               child: Center(
                 child: Text(
@@ -338,6 +344,7 @@ class _LSTaskDisplayState extends State<LSTaskDisplay> {
   }
 }
 
+/// Häkchenbox für LS-Task, inklusive Darstellung Task via LSTaskTile
 class LSTaskEntry extends StatefulWidget {
   const LSTaskEntry({
     super.key,
@@ -346,8 +353,11 @@ class LSTaskEntry extends StatefulWidget {
     this.darkerIcons = false,
   });
 
+  /// anzuzeigende Aufgabe
   final LSTask task;
+  /// ist der Benutzer online? (kann die Aufgabe an/abgeschlossen werden?)
   final bool online;
+  /// sollen die Icons dunkler sein?
   final bool darkerIcons;
 
   @override
@@ -381,6 +391,12 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
               child: LSTaskCheckBox(
                 checked: widget.task.completed,
                 updateChecked: (val) async {
+                  /// Ich hab es beim besten Willen nicht rausgefunden, wie man die Aufgaben für eine Klasse für
+                  /// einen Benutzer abschließen soll.
+                  /// Ich denke, dadurch dass keine offizielle App (zumindest für LernSax) die Aufgaben verwalten kann,
+                  /// ist es vielleicht mit der API nicht, sondern nur auf der Webseite möglich.
+                  /// 
+                  /// aber: TODO: vielleicht mit webscraping und single-use-login-links das abschließen trotzdem ermöglichen -> über Webseite statt API
                   if (widget.task.classLogin != null) {
                     await showDialog(
                       context: context,
@@ -459,6 +475,7 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
   }
 }
 
+/// einheitliche Darstellung einer Aufgabe für eine Auflistung (ohne Häkchenbox)
 class LSTaskTile extends StatelessWidget {
   final LSTask task;
   final bool completed;

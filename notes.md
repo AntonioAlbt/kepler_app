@@ -66,6 +66,15 @@ Bisher kommentierte Dateien:
     - pages:
       - mail_detail_page.dart
       - mail_write_page.dart
+      - mails_page.dart
+      - notifs_page.dart
+      - tasks_page.dart
+  - school:
+    - calendar.dart
+    - news_data.dart
+    - news_view.dart
+    - news.dart
+    - school.dart
 
 ---
 

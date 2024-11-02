@@ -53,6 +53,7 @@ extension StringExtension on String {
 
 final newsTabKey = GlobalKey<NewsTabState>();
 
+/// zeigt Kepler-News von RSS-Feed an und cached sie
 class NewsTab extends StatefulWidget {
   NewsTab() : super(key: newsTabKey);
 
@@ -89,6 +90,7 @@ class NewsTabState extends State<NewsTab> {
         final loadedNews = newsCache.newsData.asMap().map((i, d) => MapEntry(i, NewsEntry(data: d, count: i, prefs: prefs,))).values.toList()
           ..sort((a, b) => b.data.createdDate.compareTo(a.data.createdDate));
         return Scaffold(
+          /// lädt automatisch mehr News, wenn der Benutzer ganz nach unten gescrollt hat
           body: LazyLoadScrollView(
             onEndOfPage: () => _loadMoreNews(),
             child: Scrollbar(
@@ -96,6 +98,7 @@ class NewsTabState extends State<NewsTab> {
               radius: const Radius.circular(4),
               thickness: 4.75,
               child: RefreshIndicator(
+                /// beim Neuladen wird der Cache komplett geleert
                 onRefresh: () async { _resetNews(); },
                 child: ListView.builder(
                   itemCount: loadedNews.length + 2,
@@ -152,6 +155,7 @@ class NewsTabState extends State<NewsTab> {
     );
   }
 
+  /// lädt jeweils eine Seite neue Nachrichten, oder alle neuen Nachrichten seit letztem Öffnen
   Future _loadMoreNews() async {
     if (noMoreNews || loading) return;
     if (_newsCache.newsData.isNotEmpty) {
@@ -178,6 +182,7 @@ class NewsTabState extends State<NewsTab> {
         loading = false;
       });
     } else {
+      /// Duplikate entfernen (falls weniger als 10 neue Nachrichten dazugekommen sind)
       newNewsData.removeWhere((e1) => _newsCache.newsData.any((e2) => e1.link == e2.link));
       while (newNewsData.length < 9 && lastNewsPage < 50) {
         lastNewsPage++;
@@ -212,6 +217,7 @@ class NewsTabState extends State<NewsTab> {
   }
 
   final _colors = [keplerColorOrange, keplerColorYellow];
+  /// "berechnet" Farbe für NewsEntry abhängig von Index
   Color getNEntryCol(int count, bool darkMode) {
     return HSLColor.fromColor(_colors[count % _colors.length])
         .withLightness((darkMode) ? .2 : .8)
@@ -220,6 +226,7 @@ class NewsTabState extends State<NewsTab> {
   }
 }
 
+/// ListEntry für Kepler-News
 class NewsEntry extends StatelessWidget with SerializableObject {
   final NewsEntryData data;
   final int count;

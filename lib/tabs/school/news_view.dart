@@ -39,8 +39,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+/// zeigt Nachricht auf Kepler-Webseite in In-App-WebView an
 class NewsView extends StatefulWidget {
+  /// anzuzeigender Link
   final Uri newsLink;
+  /// Überschrift der Seite
   final String newsTitle;
 
   const NewsView({super.key, required this.newsLink, required this.newsTitle});
@@ -59,10 +62,12 @@ class _NewsViewState extends State<NewsView> {
         title: Text(widget.newsTitle),
         backgroundColor: (hasDarkTheme(context)) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
+          /// Link in externem Browser öffnen
           IconButton(
             icon: Icon(MdiIcons.web),
             onPressed: () => launchUrl(widget.newsLink, mode: LaunchMode.externalApplication),
           ),
+          /// Link teilen
           IconButton(
             icon: Icon(MdiIcons.shareVariant),
             onPressed: () => Share.share(widget.newsLink.toString(), sharePositionOrigin: const Rect.fromLTRB(0, 0, 0, 0)),
@@ -80,6 +85,7 @@ class _NewsViewState extends State<NewsView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
+            /// alle Urls außer aktuelle wird in externem Browser geöffnet
             if (Uri.parse(request.url) == widget.newsLink) return NavigationDecision.navigate;
             launchUrlString(
               request.url,
@@ -88,6 +94,7 @@ class _NewsViewState extends State<NewsView> {
             return NavigationDecision.prevent;
           },
           onPageFinished: (url) {
+            /// alle Teile außer der Hauptteil der Seite wird mit JS entfernt -> cleanere Darstellung
             for (var id in ["secondary", "masthead", "colophon"]) {
               _controller.runJavaScript("document.getElementById(\"$id\").remove();");
             }
@@ -95,6 +102,7 @@ class _NewsViewState extends State<NewsView> {
           },
         ),
       )
+      /// muss gesetzt werden, damit _controller.runJavaScript funktioniert
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
     super.initState();
   }

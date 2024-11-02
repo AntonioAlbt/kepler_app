@@ -188,12 +188,15 @@ class LSNotification extends SerializableObject {
   DateTime get date => DateTime.parse(attributes["date"]);
   set date(DateTime val) => attributes["date"] = val.toIso8601String();
 
+  /// interne ID der Nachricht (wahrscheinlich für Übersetzungen? Bedeutung der IDs unbekannt)
   String get messageTypeId => attributes["messageTypeId"];
   set messageTypeId(String val) => attributes["messageTypeId"] = val;
 
+  /// Inhalt/Beschreibung der Nachricht
   String get message => attributes["message"];
   set message(String val) => attributes["message"] = val;
 
+  /// weitere Daten von LernSax, variiert je nach "object" (etwa Absender für Mail oder Dateiname bei Upload)
   String? get data => attributes["data"];
   set data(String? val) => attributes["data"] = val;
 

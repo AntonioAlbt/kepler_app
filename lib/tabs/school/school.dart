@@ -38,6 +38,7 @@ import 'package:kepler_app/tabs/school/calendar.dart';
 import 'package:kepler_app/tabs/school/news.dart';
 import 'package:provider/provider.dart';
 
+/// Tab für allgemeine Infos zur Schule, aktuell Kepler-News und Kalender (wie auf Webseite zu finden)
 class SchoolTab extends StatefulWidget {
   const SchoolTab({super.key});
 

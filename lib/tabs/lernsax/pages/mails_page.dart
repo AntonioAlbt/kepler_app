@@ -57,9 +57,13 @@ void lernSaxMailsRefreshAction() {
 
 String _lastLoadedLogin = "";
 
+/// Auflistungsseite für Mails, Ordner auswählbar und Mails können z.B. verschoben oder gelöscht werden
 class LSMailsPage extends StatefulWidget {
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   LSMailsPage(this.login, this.token, this.alternative) : super(key: lsMailPageKey);
@@ -163,6 +167,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
             ),
           ],
         );
+        /// bei alternativem Account keinen Cache verwenden
         if (widget.alternative) {
           return FutureBuilder(
             key: ValueKey(i),
@@ -243,11 +248,17 @@ class LSMailDispController {
   void Function()? onForceRefresh;
 }
 
+/// Liste für die Emails im Ordner `selectedFolder`
 class LSMailDisplay extends StatefulWidget {
+  /// Ordner, der anzuzeigen ist
   final LSMailFolder selectedFolder;
+  /// Controller, um aktualisieren auszulösen
   final LSMailDispController? controller;
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   const LSMailDisplay({super.key, required this.selectedFolder, this.controller, required this.login, required this.token, required this.alternative});
@@ -316,7 +327,10 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: mails.length + 1,
+                        /// unbedingt builder verwenden, da AttachmentAmountDisplay in LSMailTile beim Builden die Mail
+                        /// herunterlädt, deshalb nicht alle auf einmal builden lassen!
                         itemBuilder: (context, i) {
+                          /// erster Eintrag ist Info zu aktuellem Mail-Zustand
                           if (i == 0) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -387,6 +401,8 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
                               ),
                             );
                           }
+
+                          /// sonst einfach Mails anzeigen
                           final mail = mails[i - 1];
                           return Padding(
                             padding: const EdgeInsets.all(4),
@@ -472,6 +488,7 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
 
 enum LSMailAction { delete, move, forward, respond }
 
+/// zeigt LSMail in ListTile an
 class LSMailTile extends StatelessWidget {
   const LSMailTile({
     super.key,
@@ -485,13 +502,24 @@ class LSMailTile extends StatelessWidget {
     required this.alternative,
   });
 
+  /// anzuzeigende Mail
   final LSMailListing mail;
+  /// Mail ist aus diesem Ordner
+  /// 
+  /// warum? warum nicht einfach mail.folderId? keine Ahnung.
+  /// TODO: aufklären, warum folderId separat übergeben wird
   final String folderId;
+  /// sollen die Icons mit dunkleren Farben dargestellt werden?
   final bool darkerIcons;
+  /// falls gegeben ist, wird `darkerIcons` ignoriert und nur dies als Icon-Farbe verwenden
   final Color? iconColor;
+  /// wird aufgerufen, nachdem eine Aktion auf der Mail erfolgreich ausgeführt wurde
   final void Function()? onAfterSuccessfulMailAction;
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   @override
@@ -614,6 +642,7 @@ class LSMailTile extends StatelessWidget {
                     subject: "${action == LSMailAction.forward ? "Fwd" : "Re"}: ${mail.subject}",
                     mail: (action == LSMailAction.forward) ?
                       "gesendet von ${mail.addressed.map((e) => e.address).join(", ")}:\n\n${mailData.bodyPlain}" :
+                      /// wird von den offiziellen LernSax-Clients so eingeschoben, wird nicht übersetzt
                       "\n\n> -----Original Message-----\n> From: ${mailData.from.map((m) => "\"${m.name}\" <${m.address}>").join(", ")}\n> Sent: ${DateFormat("dd.MM.yyyy HH:mm").format(mailData.date)}\n> To: ${mailData.to.map((m) => m.address).join(", ")}\n> Subject: ${mailData.subject}\n> \n> ${joinWithOptions(mailData.bodyPlain.split("\n"), "\n> ", "")}",
                     reference: mailData,
                     referenceMode: action == LSMailAction.forward ? LSMWPReferenceMode.forwarded : LSMWPReferenceMode.answered,
@@ -693,6 +722,7 @@ class LSMailTile extends StatelessWidget {
                               return createLSMailAddressableSpan(
                                 (addr.address == lernSaxLogin) ? LSMailAddressable(address: addr.address, name: mail.isDraft || mail.isSent ? (sie ? "Sie" : "Dich") : (sie ? "Ihnen" : "Dir")) : addr,
                                 mail.addressed.last == addr,
+                                /// ist etwas hacky, aber sonst ist der Text im Vergleich zu dem anderen verschoben
                                 translate: const Offset(0, 2),
                                 darkerIcon: darkerIcons,
                               );
@@ -706,6 +736,10 @@ class LSMailTile extends StatelessWidget {
                 ],
               ),
             ),
+            /// da im MailListing keinerlei Infos über die Anhänge gespeichert ist, muss für die Anzeige von Anhängen
+            /// die komplette Mail heruntergeladen werden
+            /// -> darum kümmert sich dieses Widget - es lädt, sobald es angezeigt wird, die Mail herunter,
+            /// cached sie (falls primär) und zeigt die Anhänge an (kann per Einstellung gesteuert werden)
             AttachmentAmountDisplay(
               folderId: folderId,
               mailId: mail.id,
@@ -722,13 +756,23 @@ class LSMailTile extends StatelessWidget {
   }
 }
 
+/// Infos über die Anhänge von Mails sind nur in den Daten mit der Mail selbst gespeichert, und da für das
+/// Cache-Abfragen State notwendig ist (wait - vielleicht nicht? hätte ein FutureBuilder gereicht?)
+/// ist dies ein seperates Widget, was bei Anzeige die Daten herunterladen und cached (für primären Account)
 class AttachmentAmountDisplay extends StatefulWidget {
+  /// LS-Mail-Ordner-ID
   final String folderId;
+  /// ID der Mail
   final int mailId;
+  /// ist die Mail ein Entwurf?
   final bool isDraft;
+  /// Farbe des Icons
   final Color? iconColor;
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   const AttachmentAmountDisplay({super.key, required this.folderId, required this.mailId, required this.isDraft, this.iconColor, required this.login, required this.token, required this.alternative});

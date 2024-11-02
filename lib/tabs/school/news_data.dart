@@ -48,6 +48,8 @@ const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 const keplerEvtApiURL = "https://www.kepler-chemnitz.de/wp-json/tribe/events/v1";
 
 // the news data sometimes has these in it - so I'm just replacing them when loading
+/// Dart scheitert beim Laden von solchen Zeichen - aber nicht beim Speichern?
+/// naja, durch das Entfernen vorm Speichern wird nicht jedes Mal beim Laden der Cache gelöscht
 final List<String> controlCharacters = (){
   final out = <String>[];
   for (var i = 0; i < 32; i++) {
@@ -56,7 +58,10 @@ final List<String> controlCharacters = (){
   return out;
 }();
 
+/// Speicherpfad des NewsCaches, wird separat gespeichert, da er relativ groß werden kann
 Future<String> get newsCacheDataFilePath async => "${await cacheDirPath}/$newsCachePrefKey-data.json";
+
+/// Cache für abgefragte Kepler-News-RSS-Einträge und Kalender-Events
 class NewsCache extends SerializableObject with ChangeNotifier {
   NewsCache() {
     objectCreators["news_data"] = (map) => <NewsEntryData>[];
@@ -157,6 +162,7 @@ class NewsCache extends SerializableObject with ChangeNotifier {
 bool _isSameMonth(DateTime one, DateTime two) => one.year == two.year && one.month == two.month;
 bool _isSameDay(DateTime one, DateTime two) => _isSameMonth(one, two) && one.day == two.day;
 
+/// Kepler-News-RSS-Eintrag mit allen wichtigen Metadaten
 class NewsEntryData extends SerializableObject {
   NewsEntryData() {
     objectCreators["categories"] = (_) => <String>[];
@@ -182,6 +188,7 @@ class NewsEntryData extends SerializableObject {
   set categories(List<String>? val) => attributes["categories"] = val;
 }
 
+/// lädt News von RSS-Feed auf Seite 2 laut Wordpress
 Future<List<NewsEntryData>?> loadNews(int page) async {
   final newNewsData = <NewsEntryData>[];
   final http.Response res;
@@ -209,7 +216,9 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
   return newNewsData;
 }
 
-Future<List<NewsEntryData>?> loadAllNewNews(String lastKnownNewsLink, [int maxCount = -1]) async {
+/// lädt alle News, die nach lastKnownNewsLink hinzugefügt wurden (lädt so lange News, bis lastKnownNewsLink
+/// erreicht wird oder maxCount Nachrichten geladen wurden)
+Future<List<NewsEntryData>?> loadAllNewNews(String lastKnownNewsLink, [int maxCount = 1000]) async {
   var page = 0;
   List<NewsEntryData>? latestNews = [];
   
@@ -227,7 +236,7 @@ Future<List<NewsEntryData>?> loadAllNewNews(String lastKnownNewsLink, [int maxCo
   return newNews;
 }
 
-
+/// Kalender-Eintrag, Metadaten laut WP-Events-Plugin-API
 class CalendarEntryData extends SerializableObject {
   String get title => attributes["title"];
   set title(String val) => attributes["title"] = val;
@@ -273,6 +282,7 @@ class CalendarEntryData extends SerializableObject {
 }
 
 final calApiDateFormat = DateFormat("yyyy-MM-dd");
+/// lädt Kalendereinträge für Monat, in dem Datum `month` liegt
 Future<(bool, List<CalendarEntryData>?)> loadCalendarEntries(DateTime month) async {
   final startDate = DateTime(month.year, month.month, 1);
   final endDate = DateTime(month.year, month.month + 1, 1).subtract(const Duration(days: 1));

@@ -53,9 +53,13 @@ void lernSaxNotifsRefreshAction() {
   lsNotifPageKey.currentState?.loadData();
 }
 
+/// Auflistungsseite für LS-Benachrichtigungen, mehr Infos zu jeder in Dialog verfügbar
 class LSNotificationPage extends StatefulWidget {
+  /// zu verwendender LS-Login
   final String login;
+  /// zu verwendendes LS-Token
   final String token;
+  /// wird nicht der primäre LS-Account verwendet?
   final bool alternative;
 
   LSNotificationPage(this.login, this.token, this.alternative) : super(key: lsNotifPageKey);
@@ -144,6 +148,7 @@ class LSNotificationPageState extends State<LSNotificationPage> {
   }
 }
 
+/// Map für Benachrichtigung.object -> IconData
 final iconObjectMap = {
   "files": MdiIcons.fileMultiple,
   "mail": MdiIcons.email,
@@ -154,8 +159,10 @@ final iconObjectMap = {
   "calendar": MdiIcons.calendar,
 };
 
+/// Benachrichtigungs.object's, für die die Daten nicht angezeigt werden sollen
 final hideData = ["files", "trusts"];
 
+/// ListTile für einheitliche Darstellung von LS-Benachrichtigungen in einer ListView
 class LSNotificationTile extends StatelessWidget {
   const LSNotificationTile({
     super.key,
@@ -164,8 +171,11 @@ class LSNotificationTile extends StatelessWidget {
     this.iconColor,
   });
 
+  /// darzustellende Benachrichtigung
   final LSNotification notif;
+  /// Icons dunkler darstellen
   final bool darkerClock;
+  /// stattdessen zu verwendende Farbe für alle Icons
   final Color? iconColor;
 
   @override
@@ -246,6 +256,7 @@ class LSNotificationTile extends StatelessWidget {
   }
 }
 
+/// Map von object -> NavPage ID für In-App-Navigation und Vorschlag von Aktion in Dialog
 final _appPageObjectMap = {
   "mail": LernSaxPageIDs.emails,
   "tasks": LernSaxPageIDs.tasks,
@@ -300,6 +311,8 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            /// Da bei einer Mail-Benachrichtigung keine Ordner-ID/ID der Mail selbst übergeben wird,
+            /// kann man nicht direkt auf die Mail antworten oder die Mail direkt öffnen -_- (coole API)
             Text("${_appPageObjectMap.containsKey(notif.object) ? "In App" : "Im Browser"} öffnen", style: const TextStyle(fontWeight: FontWeight.w600)),
             if (!_appPageObjectMap.containsKey(notif.object)) const Padding(
               padding: EdgeInsets.only(left: 4),
@@ -312,6 +325,8 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
   );
 }
 
+/// Eintrag im Dialog, damit alle ordentlich angezeigt werden
+/// TODO: ausprobieren, ob das actually so funktioniert - ist zwar ziemlich lange her, aber ich glaube das lange Text immer abgeschnitten wurden
 class InfoDialogEntry extends StatelessWidget {
   final String text;
   final IconData icon;

@@ -48,6 +48,7 @@ DateTime? globalCalendarNextDateToHighlightOnOpen;
 
 final calendarTabKey = GlobalKey<CalendarTabState>();
 
+/// zeigt Termine/Events von Kepler-Webseite in Kalender-Widget an
 class CalendarTab extends StatefulWidget {
   CalendarTab() : super(key: calendarTabKey);
 
@@ -94,6 +95,7 @@ class CalendarTabState extends State<CalendarTab> {
               selectedDate: _selectedDate,
               displayedMonthDate: _displayedMonthDate,
             ),
+            /// Terminanzeige für ausgewählten Tag
             if (_selectedDate != null) CalendarDateShowcase(date: _selectedDate!),
           ],
         ),
@@ -201,6 +203,7 @@ class _SchoolCalendarState extends State<SchoolCalendar> {
   }
 }
 
+/// zeigt Termine im Kalender für ausgewähltes Datum an
 class CalendarDateShowcase extends StatefulWidget {
   final DateTime date;
 
@@ -218,6 +221,7 @@ class _CalendarDateShowcaseState extends State<CalendarDateShowcase> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: HomeWidgetBase(
+        /// HomeWidgetBase hier nur für schönes Design (deshalb extrem lustige ID)
         id: "who did this XDDDD",
         color: Theme.of(context).cardColor,
         titleColor: hasDarkTheme(context) ? Theme.of(context).cardColor : colorWithLightness(Theme.of(context).cardColor, .95),
