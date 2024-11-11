@@ -27,3 +27,7 @@ Hier bitte zutreffende Screenshots oder Videos einfügen.
 
 **Log-Ausschnitt**
 Hier einen relevanten Log-Ausschnitt (zu erhalten von "Über diese App" -> "Debug-Aufzeichnungen") oder den kompletten Log des Tages als Datei einfügen bzw. anhängen.
+Bitte, wenn ein Ausschnitt eingefügt werden soll, einen Codeblock verwenden:
+```txt
+Log-Ausschnitt hier
+```
