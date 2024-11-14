@@ -170,7 +170,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   DateTime get lastHolidayDatesUpdate => _getUpdateDateTime("school_holiday_dates");
   set lastHolidayDatesUpdate(DateTime val) => _setUpdateDateTime("school_holiday_dates", val);
   /// Liste der freien Tage laut Plan
-  List<DateTime> get holidayDates => attributes.containsKey("school_holiday_dates") ? (attributes["school_holiday_dates"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
+  List<DateTime> get holidayDates => (attributes.containsKey("school_holiday_dates") && attributes["school_holiday_dates"] != "") ? (attributes["school_holiday_dates"] as String).split("|").map((str) => DateTime.parse(str)).toList() : [];
   set holidayDates(List<DateTime> val) => _setSaveNotify("school_holiday_dates", val.map((d) => d.toIso8601String()).join("|"));
   void removeHolidayDate(DateTime date) {
     holidayDates = holidayDates.where((d) => !(d.day == date.day && d.month == date.month && d.year == date.year)).toList();

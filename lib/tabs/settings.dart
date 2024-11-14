@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -415,6 +416,13 @@ class _SettingsTabState extends State<SettingsTab> {
                     prefs.logRetentionDays = int.parse(val.split(" Tage")[0]);
                   },
                   disabled: prefs.loggingEnabled == false,
+                ),
+                if (kDebugFeatures) SettingsTile.navigation(
+                  title: Text("Clear StuPlanData"),
+                  onPressed: (ctx) {
+                    Provider.of<StuPlanData>(ctx, listen: false).clearData();
+                    showSnackBar(text: "cleared StuPlanData");
+                  },
                 ),
               ],
             ),

@@ -408,6 +408,17 @@ final destinations = [
         icon: const Icon(Icons.add),
         label: const Text("LernSax-Konto hinzufügen"),
         onTryOpen: (ctx) async {
+          final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+          if (creds.lernSaxLogin == lernSaxDemoModeMail) {
+            await showDialog(
+              context: ctx,
+              builder: (ctx) => AlertDialog(
+                title: Text("Nicht verfügbar"),
+                content: Text("Im Demo-Modus können keine LernSax-Konten hinzugefügt werden."),
+              ),
+            );
+            return false;
+          }
           await showDialog(
             context: ctx,
             builder: (ctx) => AlertDialog(

@@ -301,7 +301,9 @@ class _LSMailDisplayState extends State<LSMailDisplay> {
         return Scaffold(
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: mailWritePageBuilder));
+              Navigator.push(context, MaterialPageRoute(builder: (ctx) => MailWritePage(
+                preselectedAccount: creds.alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
+              )));
             },
             icon: const Icon(Icons.edit_note),
             label: const Text("E-Mail verfassen"),
@@ -647,6 +649,10 @@ class LSMailTile extends StatelessWidget {
                     reference: mailData,
                     referenceMode: action == LSMailAction.forward ? LSMWPReferenceMode.forwarded : LSMWPReferenceMode.answered,
                     to: action == LSMailAction.respond ? mailData.from.map((m) => m.address).toList() : null,
+                    /// dies funktioniert sehr gut, da indexWhere -1 zurückgibt, wenn es nichts findet
+                    /// bei preselectedAccount bedeutet 0 dann primärer Account, sonst ist das index - 1 -> geht also
+                    /// perfekt hier auf
+                    preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == login) + 1,
                   ),
                 ),
               );

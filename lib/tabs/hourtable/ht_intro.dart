@@ -33,6 +33,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
@@ -60,6 +61,7 @@ InfoScreenDisplay stuPlanPupilIntroScreens() => InfoScreenDisplay(
       infoText: SubjectSelectScreen(),
       closeable: false,
     ),
+    stuPlanSetupFinishedScreen(),
   ],
 );
 
@@ -74,17 +76,14 @@ class ClassSelectScreen extends StatelessWidget {
     return Consumer<StuPlanData>(
       builder: (context, stdata, _) {
         return SPClassSelector(
-          preselected: stdata.selectedClassName,
+          preselected: teacherMode ? stdata.selectedTeacherName : stdata.selectedClassName,
           onSubmit: (selected) {
-            Provider.of<StuPlanData>(context, listen: false).selectedClassName = selected;
             if (teacherMode) {
-              final state = Provider.of<AppState>(context, listen: false);
-              state.clearInfoScreen();
-              if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
-              state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+              stdata.selectedTeacherName = selected;
             } else {
-              infoScreenState.next();
+              stdata.selectedClassName = selected;
             }
+            infoScreenState.next();
           },
           teacherMode: teacherMode,
         );
@@ -123,8 +122,10 @@ class SPClassSelector extends StatefulWidget {
   final void Function(String selected) onSubmit;
   /// wird nach Abbruch durch Benutzer aufgerufen
   final void Function()? onCancel;
+  /// Hinweis bzgl. Benachrichtigungen anzeigen
+  final bool alternativeAccount;
 
-  const SPClassSelector({super.key, this.preselected, required this.teacherMode, required this.onSubmit, this.onCancel});
+  const SPClassSelector({super.key, this.preselected, required this.teacherMode, required this.onSubmit, this.onCancel, this.alternativeAccount = false});
 
   @override
   State<SPClassSelector> createState() => _SPClassSelectorState();
@@ -144,10 +145,13 @@ class _SPClassSelectorState extends State<SPClassSelector> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        /// Text war ursprünglich in einer Zeile, aber viel zu unübersichtlich -> aufgeteilt nach Benutzertyp
-        if (userType == UserType.pupil) Text("Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus.")
-        else if (userType == UserType.parent) Text("Bitte ${sie ? "wählen Sie" : "wähle"} die Klasse ${sie ? "Ihres" : "Deines"} Kindes für den Stundenplan aus.")
-        else if (userType == UserType.teacher) Text("Bitte ${sie ? "wählen Sie Ihr" : "wähle Dein"} Lehrerkürzel aus."),
+        Text(
+          /// Text war ursprünglich in einer Zeile, aber viel zu unübersichtlich -> aufgeteilt nach Benutzertyp
+          ((userType == UserType.pupil) ? "Bitte ${sie ? "wählen Sie Ihre" : "wähle Deine"} Klasse für den Stundenplan aus."
+          : (userType == UserType.parent) ? "Bitte ${sie ? "wählen Sie" : "wähle"} die Klasse ${sie ? "Ihres" : "Deines"} Kindes für den Stundenplan aus."
+          : (userType == UserType.teacher) ? "Bitte ${sie ? "wählen Sie Ihr" : "wähle Dein"} Lehrerkürzel aus."
+          : "") + (widget.alternativeAccount ? "\nHinweis: Nur für den primären Account werden Benachrichtigungen angezeigt." : ""),
+        ),
         if (_loading) const Padding(
           padding: EdgeInsets.all(8.0),
           child: CircularProgressIndicator(),
@@ -395,10 +399,7 @@ class SubjectSelectScreen extends StatelessWidget {
           },
           onFinish: (selected) {
             Provider.of<StuPlanData>(context, listen: false).selectedCourseIDs = selected;
-            final state = Provider.of<AppState>(context, listen: false);
-            state.clearInfoScreen();
-            if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
-            state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+            infoScreenState.next();
           },
           availableSubjects: stdata.availableClassSubjects!,
           /// wenn nicht in Klasse 5 bis 10: standardmäßig keine Klausuren anzeigen (weil Klausuren
@@ -607,7 +608,57 @@ InfoScreenDisplay stuPlanTeacherIntroScreens() => InfoScreenDisplay(
       },
       closeable: true,
     ),
+    stuPlanSetupFinishedScreen(),
   ],
+);
+
+InfoScreen stuPlanSetupFinishedScreen() => InfoScreen(
+  infoImage: Icon(Icons.check),
+  infoTitle: Text("Einrichtung abgeschlossen"),
+  infoText: Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16, left: 8, right: 8),
+        child: Selector<Preferences, bool>(
+          selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+          builder: (ctx, sie, _) => Text("${sie ? "Sie haben Ihren" : "Du hast Deinen"} primären Stundenplan erfolgreich eingerichtet."),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
+        child: TextButton(
+          onPressed: () {
+            final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+            state.clearInfoScreen();
+            if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+            state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+            showDialog(
+              context: globalScaffoldContext,
+              builder: (_) => const AddNewStuPlanDialog(),
+            );
+          },
+          child: Text("Weiteren Stundenplan hinzufügen"),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(
+          onPressed: () {
+            final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+            state.clearInfoScreen();
+            if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+            state.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+          },
+          child: TextWithArrowForward(text: "Zum Stundenplan"),
+        ),
+      ),
+    ],
+  ),
+  onTryClose: (_, context) {
+    if (globalScaffoldState.isDrawerOpen) globalScaffoldState.closeDrawer();
+    return true;
+  },
 );
 
 
@@ -641,6 +692,7 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
               setState(() => _newClass = selected);
             },
             onCancel: () => Navigator.pop(context, false),
+            alternativeAccount: true,
           ) : SPSubjectSelector(
             onFinish: (selected) {
               if (widget.editId == null) {

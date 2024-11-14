@@ -353,6 +353,12 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
               final pw = _pwController.text;
               // close the keyboard when tapping the button
               FocusScope.of(context).unfocus();
+
+              if (widget.additionalAccount && mail == lernSaxDemoModeMail) {
+                showSnackBar(text: "Der Demo-Account kann nur als primäres Konto verwendet werden.", error: true);
+                return;
+              }
+
               runLogin(mail, pw, sie).then((error) {
                 if (error == null) {
                   try {

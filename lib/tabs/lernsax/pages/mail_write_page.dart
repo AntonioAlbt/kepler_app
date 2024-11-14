@@ -45,8 +45,6 @@ import 'package:kepler_app/tabs/lernsax/pick_member_dialog.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
-Widget mailWritePageBuilder(BuildContext context) => const MailWritePage();
-
 /// wie bezieht sich `reference` auf diese Mail
 enum LSMWPReferenceMode {
   /// `reference` wird weitergeleitet
@@ -63,18 +61,26 @@ enum LSMWPReferenceMode {
   }[this];
 }
 
-// TODO: make it possible to select which account to send the mail from!
 // TODO: Design so anpassen, dass wenn Tastatur ausgeklappt ist man die ganze Seite scrollen kann, so dass man mehr als eine Zeile Inhalt sieht
 
 /// Seite, die mit MaterialPageRoute und Navigator geöffnet werden sollte, auf der man eine Mail verfassen kann
 class MailWritePage extends StatefulWidget {
+  /// vorausgefüllte Empfänger
   final List<String>? to;
+  /// vorausgefüllter Betreff
   final String? subject;
+  /// vorausgefüllter Inhalt der Mail
   final String? mail;
+  /// Referenzmail
   final LSMail? reference;
+  /// Referenzmodus
   final LSMWPReferenceMode? referenceMode;
+  /// vorausgewählter Account
+  /// 0 -> primärer Account
+  /// sonst -> `creds.alternativeLSLogins[preselectedAccount - 1]`
+  final int? preselectedAccount;
 
-  const MailWritePage({super.key, this.to, this.subject, this.mail, this.reference, this.referenceMode});
+  const MailWritePage({super.key, this.to, this.subject, this.mail, this.reference, this.referenceMode, this.preselectedAccount});
 
   @override
   State<MailWritePage> createState() => _MailWritePageState();
@@ -91,8 +97,11 @@ class _MailWritePageState extends State<MailWritePage> {
   final _mailInputCtrl = TextEditingController();
   final _subjectInputCtrl = TextEditingController();
 
+  int _selectedAccount = 0;
+
   @override
   Widget build(BuildContext context) {
+    final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (popped, _) async {
@@ -140,20 +149,33 @@ class _MailWritePageState extends State<MailWritePage> {
                     ),
                   ),
                   Builder(
-                    builder: (context) => Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: "von: ",
-                          ),
-                          TextSpan(
-                            text: "${Provider.of<CredentialStore>(globalScaffoldContext, listen: false).lernSaxLogin}",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                    builder: (context) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("von: "),
+                        AnimatedBuilder(
+                          animation: creds,
+                          builder: (context, _) {
+                            return DropdownButton(
+                              onChanged: (index) {
+                                if (index == null) return;
+                                setState(() => _selectedAccount = index);
+                              },
+                              items: [
+                                DropdownMenuItem(
+                                  value: 0,
+                                  child: Text(creds.lernSaxLogin!),
+                                ),
+                                ...creds.alternativeLSLogins.asMap().map((i, login) => MapEntry(i, DropdownMenuItem(
+                                  value: i + 1,
+                                  child: Text(login),
+                                ))).values,
+                              ],
+                              value: _selectedAccount,
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -281,10 +303,12 @@ class _MailWritePageState extends State<MailWritePage> {
                         ));
                         return;
                       }
+                      final selectedLogin = _selectedAccount == 0 ? creds.lernSaxLogin! : creds.alternativeLSLogins[_selectedAccount - 1];
+                      final selectedToken = _selectedAccount == 0 ? creds.lernSaxToken! : creds.alternativeLSTokens[_selectedAccount - 1];
         
                       final (online, success) = await saveDraft(
-                        creds.lernSaxLogin!,
-                        creds.lernSaxToken!,
+                        selectedLogin,
+                        selectedToken,
                         subject: _subjectInputCtrl.text,
                         to: recvKey.currentState!.chips,
                         bodyPlain: _mailInputCtrl.text,
@@ -295,8 +319,8 @@ class _MailWritePageState extends State<MailWritePage> {
       
                       if (widget.reference != null && widget.referenceMode == LSMWPReferenceMode.draftToDelete) {
                         await deleteMail(
-                          creds.lernSaxLogin!,
-                          creds.lernSaxToken!,
+                          selectedLogin,
+                          selectedToken,
                           folderId: widget.reference!.folderId,
                           mailId: widget.reference!.id,
                         );
@@ -332,9 +356,11 @@ class _MailWritePageState extends State<MailWritePage> {
                         ));
                         return;
                       }
+                      final selectedLogin = _selectedAccount == 0 ? creds.lernSaxLogin! : creds.alternativeLSLogins[_selectedAccount - 1];
+                      final selectedToken = _selectedAccount == 0 ? creds.lernSaxToken! : creds.alternativeLSTokens[_selectedAccount - 1];
                       if (!await showDialog(context: context, builder: (ctx) => AlertDialog(
                         title: const Text("Wirklich absenden?"),
-                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
+                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so von $selectedLogin an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Ja, jetzt senden")),
                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Abbrechen")),
@@ -342,8 +368,8 @@ class _MailWritePageState extends State<MailWritePage> {
                       ))) return;
         
                       final (online, success) = await sendMail(
-                        creds.lernSaxLogin!,
-                        creds.lernSaxToken!,
+                        selectedLogin,
+                        selectedToken,
                         subject: _subjectInputCtrl.text,
                         to: recvKey.currentState!.chips,
                         text: _mailInputCtrl.text,
@@ -355,8 +381,18 @@ class _MailWritePageState extends State<MailWritePage> {
                       if (!online) return showSnackBar(text: "LernSax ist nicht erreichbar. E-Mail konnte nicht versendet werden.", error: true);
                       if (!success) return showSnackBar(text: "Fehler beim Versenden der E-Mail.", error: true);
 
-                      showSnackBar(text: "E-Mail erfolgreich versendet.");
-                      
+                      if (widget.reference != null && widget.referenceMode == LSMWPReferenceMode.draftToDelete) {
+                        await deleteMail(
+                          selectedLogin,
+                          selectedToken,
+                          folderId: widget.reference!.folderId,
+                          mailId: widget.reference!.id,
+                        );
+                        showSnackBar(text: "E-Mail versendet und Entwurf gelöscht.");
+                      } else {
+                        showSnackBar(text: "E-Mail erfolgreich versendet.");
+                      }
+
                       if (mounted && success) Navigator.pop(this.context);
                     },
                     icon: const Icon(Icons.send, size: 20),
@@ -381,6 +417,7 @@ class _MailWritePageState extends State<MailWritePage> {
     }
     if (widget.subject != null) _subjectInputCtrl.text = widget.subject!;
     if (widget.mail != null) _mailInputCtrl.text = widget.mail!;
+    if (widget.preselectedAccount != null) _selectedAccount = widget.preselectedAccount!;
     super.initState();
   }
 

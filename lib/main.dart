@@ -417,6 +417,7 @@ class _KeplerAppState extends State<KeplerApp> {
   /// - nur, wenn Benutzer zuletzt angemeldet war
   /// Sowohl LernSax als auch Indiware werden separat überprüft, und nur für den Service, für den Fehler auftreten,
   /// werden die Anmeldedaten neu abgefragt.
+  /// Auch alternative LS-Logins werden überprüft und, falls ungültig, mit einem Hinweis entfernt.
   /// Damit auch bei fehlender Internetverbindung die App verwendet werden kann, wird der Benutzer im InternalState
   /// zwischengespeichert.
   Future<UserType> calcUT() async {
@@ -430,6 +431,7 @@ class _KeplerAppState extends State<KeplerApp> {
     _internalState.lastUserTypeCheck = DateTime.now();
     if (_credStore.lernSaxToken != null && _credStore.lernSaxLogin != null) {
       final (online, check) = await confirmLernSaxCredentials(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);
+      /// wenn kein Internet -> annehmen, Benutzertyp hat sich nicht geändert
       if (!online) {
         showSnackBar(textGen: (sie) => "LernSax ist nicht erreichbar. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
         return _internalState.lastUserType ?? UserType.nobody;
@@ -453,9 +455,25 @@ class _KeplerAppState extends State<KeplerApp> {
         _credStore.vpPassword = null;
       }
       if (isLernsaxInvalid || isStuplanInvalid) return UserType.nobody;
+
+      /// seperate Liste, damit i nicht auf einmal nicht mehr auf alternativeLSLogins passt
+      final toRemove = <int>[];
+      /// alle alternativen LS-Logins auch überprüfen
+      for (var i = 0; i < _credStore.alternativeLSLogins.length; i++) {
+        final (online, check) = await confirmLernSaxCredentials(_credStore.alternativeLSLogins[i], _credStore.alternativeLSTokens[i]);
+        if (!online) break;
+        if (check != true) {
+          toRemove.add(i);
+          showSnackBar(text: "Fehler beim Authentifizieren mit LernSax-Konto ${_credStore.alternativeLSLogins[i]}. Es wurde entfernt.");
+        }
+      }
+      for (final remove in toRemove) {
+        _credStore.removeAlternativeLSUser(remove);
+      }
+
+      /// wenn Check fehlschlägt -> annehmen, Benutzertyp hat sich nicht geändert
       if (check == null) {
-        // no internet = assume user didn't change
-        showSnackBar(textGen: (sie) => "LernSax ist nicht erreichbar. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
+        showSnackBar(textGen: (sie) => "Fehler beim Kommunizieren mit LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden? Die App kann nicht auf aktuelle Daten zugreifen.");
         return _internalState.lastUserType ?? UserType.nobody;
       } else {
         final ut = await determineUserType(_credStore.lernSaxLogin!, _credStore.lernSaxToken!);

@@ -196,7 +196,8 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             /// beim Absenden soll der Entwurf, gespeichert in `mailData`, gelöscht werden
                             /// -> `draftToDelete` mit Referenz
                             reference: mailData!,
-                            referenceMode: LSMWPReferenceMode.draftToDelete,
+                            referenceMode: LSMWPReferenceMode.draftToDelete,                            
+                            preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
                           ),
                         ),
                       );
@@ -220,6 +221,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                               reference: mailData,
                               referenceMode: LSMWPReferenceMode.answered,
                               to: mailData!.from.map((m) => m.address).toList(),
+                              preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
                             ),
                           ),
                         );
@@ -259,6 +261,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                                       MaterialPageRoute(
                                         builder: (ctx) => MailWritePage(
                                           to: [link.text],
+                                          preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
                                         ),
                                       ),
                                     );
