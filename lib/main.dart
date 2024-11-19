@@ -116,6 +116,14 @@ Future<void> loadAndPrepareApp() async {
     if (data != null) _lernSaxData.loadFromJson(data);
   }
 
+  /// Bei iOS werden die Credentials auch nach Deinstallation der App noch in der System-Keychain gespeichert, was
+  /// zu Instabilität führen kann. Da der Benutzer, wenn introShown == false, sowieso noch keine Daten im CredStore
+  /// gespeichert haben sollte, wird der dann zur Sicherheit beim Öffnen geleert - es könnte ja auch das Öffnen
+  /// nach einer Reinstallation sein.
+  if (!_internalState.introShown) {
+    _credStore.clearData();
+  }
+
   /// die übergebene Funktion wird vom Workmanager aufgerufen, wenn es Zeit für die Hintergrund-
   /// Aufgaben-Ausführung ist
   Workmanager().initialize(
@@ -229,7 +237,8 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
     Provider.of<Preferences>(ctx, listen: false).startNavPage = PageIDs.home;
   }
   Provider.of<AppState>(ctx, listen: false)
-    ..selectedNavPageIDs = [PageIDs.home] // isn't neccessarily the default screen (because of prefs), but idc
+    ..selectedNavPageIDs = ["404"]
+    ..navPagesToOpenAfterNextISClose = Provider.of<Preferences>(ctx, listen: false).startNavPageIDs
     ..infoScreen = InfoScreenDisplay(
       infoScreens: closeable ? loginAgainScreens : loginAgainScreensUncloseable,
     );
