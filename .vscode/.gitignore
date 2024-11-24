@@ -1,0 +1,3 @@
+# damit ich die LogUp-URL veröffentlichen muss, aber trotzdem verwenden kann,
+# ist in der launch.json die normale Debug-Action, aber mit logup_host gesetzt, definiert
+/launch.json

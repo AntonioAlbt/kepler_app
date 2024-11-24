@@ -783,42 +783,40 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             (exams?.isEmpty == false) &&
             Provider.of<Preferences>(context, listen: false).stuPlanShowExams &&
             widget.showInfo)
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .2),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  // border: Border.all(
-                  //   color: Colors.grey.shade800
-                  // ),
-                  borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: hasDarkTheme(context)
-                          ? Colors.black26
-                          : Colors.grey.withOpacity(0.24),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    )
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          "Klausuren ${getDayDescription(widget.date).toLowerCase()}",
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                        ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                // border: Border.all(
+                //   color: Colors.grey.shade800
+                // ),
+                borderRadius: BorderRadius.circular(8),
+                color: Theme.of(context).colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: hasDarkTheme(context) ? Colors.black26 : Colors.grey.withOpacity(0.24),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: const Offset(0, 3),
+                  )
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        "Klausuren ${getDayDescription(widget.date).toLowerCase()}",
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
-                      ListView.separated(
+                    ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .2),
+                      child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: exams!.length,
                         itemBuilder: (context, index) {
@@ -828,8 +826,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         },
                         separatorBuilder: (context, i) => Divider(indent: (exams!.length > 1 && exams![i].year == exams![i + 1].year) ? 70 : 0),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1446,8 +1444,10 @@ class ExamDisplay extends StatelessWidget {
                 context: context,
                 builder: (dialogCtx) => generateExamInfoDialog(dialogCtx, exam)),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
                   width: 70,
@@ -1465,6 +1465,7 @@ class ExamDisplay extends StatelessWidget {
             ),
             if (exam.info != "")
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(width: 25),
                   Flexible(

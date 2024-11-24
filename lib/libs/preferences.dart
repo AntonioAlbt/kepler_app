@@ -33,6 +33,7 @@
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
+import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -173,7 +174,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get confettiEnabled => attributes["confetti_enabled"] ?? false;
   set confettiEnabled(bool val) => setSaveNotify("confetti_enabled", val);
 
-  /// Regenbodenmodus aktivieren
+  /// Regenbogenmodus aktivieren
   bool get rainbowModeEnabled => attributes["rainbow_enabled"] ?? false;
   set rainbowModeEnabled(bool val) => setSaveNotify("rainbow_enabled", val);
 
@@ -218,6 +219,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
   /// soll die Möglichkeit zum Hinzufügen von Stundenplänen/Klassen auf der Seite "Dein Stundenplan" angezeigt werden?
   bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
   set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
+
+  /// Host für VLANT-LogUp
+  String? get logUpHost => attributes["log_up_url"] ?? kBaseLogUpHost;
+  set logUpHost(String? val) => setSaveNotify("log_up_url", val ?? kBaseLogUpHost);
 
   bool loaded = false;
 

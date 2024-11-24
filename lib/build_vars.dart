@@ -48,3 +48,6 @@ const kDebugFeatures = bool.fromEnvironment("debug_features", defaultValue: kDeb
 const kDebugNotifData = bool.fromEnvironment("debug_notif_data", defaultValue: false);
 /// sollen alle Änderungen an Login-Daten im Log aufgezeichnet werden
 const kCredsDebug = bool.fromEnvironment("creds_debug", defaultValue: false);
+
+/// standartmäßig gewählter Host für VLANT-LogUp (wenn leer = Knopf zum Hochladen wird ausgegraut) -> Verwendung als https://<host>
+const kBaseLogUpHost = String.fromEnvironment("logup_host") == "" ? null : String.fromEnvironment("logup_host");

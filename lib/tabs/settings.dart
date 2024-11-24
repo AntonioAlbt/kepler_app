@@ -31,7 +31,10 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
@@ -49,6 +52,7 @@ import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Tab für Einstellungen, zeigt mithilfe von settings_ui alle Einstellungen an
 /// und nimmt Veränderungen direkt in Preferences vor (die meisten Einstellungen sind ziemlich selbsterklärend
@@ -416,6 +420,41 @@ class _SettingsTabState extends State<SettingsTab> {
                     prefs.logRetentionDays = int.parse(val.split(" Tage")[0]);
                   },
                   disabled: prefs.loggingEnabled == false,
+                ),
+                SettingsTile.navigation(
+                  title: Text("VLANT-LogUp-Host"),
+                  description: Text("aktuell: ${prefs.logUpHost ?? "keiner"}"),
+                  onPressed: (ctx) {
+                    showDialog<String?>(context: ctx, builder: (ctx) => HostEntryDialog(host: prefs.logUpHost ?? "")).then((host) {
+                      if (host != null) {
+                        prefs.logUpHost = host == "clear" ? null : host;
+                      }
+                    });
+                  },
+                ),
+                SettingsTile.navigation(
+                  title: Text("Infos zu VLANT-LogUp"),
+                  description: Text("Mehr Informationen zu LogUp"),
+                  onPressed: (ctx) {
+                    showDialog<String?>(context: ctx, builder: (ctx) => AlertDialog(
+                      title: Text("VLANT-LogUp"),
+                      content: Text("""LogUp ist ein Dienst, um Aufzeichnungen der Kepler-App direkt an den Ersteller zu übermitteln.
+Dabei kann man direkt aus der App die Aufzeichnungen hochladen.\nFür LogUp gelten seperate Datenschutzbedingungen. Vor allem werden Aufzeichnungen unverschlüsselt auf dem Server gespeichert."""),
+                      actions: [
+                        TextButton(
+                          onPressed: () => launchUrl(
+                            Uri(scheme: "https", host: prefs.logUpHost, path: "/datenschutz"),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: Text("Datenschutzerkl. öffnen"),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text("OK"),
+                        ),
+                      ],
+                    ));
+                  },
                 ),
                 if (kDebugFeatures) SettingsTile.navigation(
                   title: Text("Clear StuPlanData"),
@@ -828,5 +867,117 @@ class CustomSettingsTile extends AbstractSettingsTile {
   @override
   Widget build(BuildContext context) {
     return child;
+  }
+}
+
+class HostEntryDialog extends StatefulWidget {
+  final String host;
+
+  const HostEntryDialog({super.key, required this.host});
+
+  @override
+  State<HostEntryDialog> createState() => _HostEntryDialogState();
+}
+
+class _HostEntryDialogState extends State<HostEntryDialog> {
+  late TextEditingController _controller;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  Widget build(BuildContext context) {
+    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    return AlertDialog(
+      title: Text("VLANT-LogUp-Host ändern"),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("LogUp ist ein Dienst, der zum Übermitteln von Debug-Aufzeichnungen dient."),
+            Text("Hier kann ein anderer Zielserver eingegeben werden. Dabei wird https-Zugriff erfordert.\n"),
+            Text("Durch das Speichern ${sie ? "stimmen Sie" : "stimmst Du"} den Datenschutzbedingungen des Servers zu, unter https://${_controller.text == "" ? "(Host)" : _controller.text}/datenschutz."),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _controller,
+              ),
+            ),
+            if (_error != null) Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 4),
+              child: Text("Fehler: $_error"),
+            ),
+            if (_loading) LinearProgressIndicator(),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: Text("Abbrechen"),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, "clear"),
+          child: Text("Zurücksetzen"),
+        ),
+        TextButton(
+          onPressed: () {
+            if (!_controller.text.contains(".")) {
+              setState(() => _error = "Host enthält keinen \".\" - keine gültige Domain/IP.");
+              return;
+            }
+            process();
+          },
+          child: Text("Speichern"),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void initState() {
+    _controller = TextEditingController(text: widget.host);
+    super.initState();
+  }
+
+  Future<void> process() async {
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
+
+    final Uri uri;
+    try {
+      uri = Uri(scheme: "https", host: _controller.text, path: "/api/ping");
+    } catch (_) {
+      setState(() {
+        _error = "Ungültiger Host.";
+        _loading = false;
+      });
+      return;
+    }
+
+    final dynamic json;
+    try {
+      final res = await http.get(uri);
+      json = jsonDecode(res.body);
+    } catch (_) {
+      setState(() {
+        _error = "Kommunikation mit Host gescheitert. Ist die Instanz richtig eingerichtet?";
+        _loading = false;
+      });
+      return;
+    }
+    
+    if (json is! Map || json["service"] != "logup") {
+      setState(() {
+        _error = "Keine funktionierende LogUp-Instanz.";
+        _loading = false;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    showSnackBar(text: "LogUp-Host zu \"${_controller.text}\" geändert.");
+    Navigator.pop(context, _controller.text);
   }
 }

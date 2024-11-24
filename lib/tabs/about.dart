@@ -33,11 +33,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
-import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
+import 'package:kepler_app/log_views.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
