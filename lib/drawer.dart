@@ -77,6 +77,9 @@ class NavEntryData {
   /// wird beim Rendern vom Drawer aufgerufen, zur dynamischen Erstellung der Untereinträge
   final List<NavEntryData> Function(BuildContext context)? childrenBuilder;
 
+  /// soll dieser Eintrag nicht ausblendbar sein
+  final bool? ignoreHiding;
+
   // bool get isParent => children != null ? children!.isNotEmpty : false;
   /// Hilfsfunktionen für cleaneren Code
   bool isParent(BuildContext ctx) => getChildren(ctx).isNotEmpty;
@@ -90,7 +93,10 @@ class NavEntryData {
 
     return [];
   }
-  bool shouldBeVisible(BuildContext ctx, UserType type) => (isVisible?.call(ctx) ?? true) && (visibleFor?.contains(type) ?? true);
+  bool shouldBeVisible(BuildContext ctx, UserType type) =>
+    (isVisible?.call(ctx) ?? true)
+      && (visibleFor?.contains(type) ?? true)
+      && (!Provider.of<Preferences>(ctx, listen: false).hiddenNavIDs.contains(id) || ignoreHiding == true);
   bool shouldBeLocked(BuildContext ctx, UserType type) => (isLocked?.call(ctx) ?? false) || (lockedFor?.contains(type) ?? false);
 
   const NavEntryData({
@@ -110,6 +116,7 @@ class NavEntryData {
     this.redirectTo,
     this.navbarActions,
     this.childrenBuilder,
+    this.ignoreHiding,
   });
 }
 
@@ -442,7 +449,12 @@ class _TheDrawerState extends State<TheDrawer> {
       .map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values
       .toList().cast<Widget>();
     /// bei jedem dividerIndex einen Divider einfügen
-    widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
+    /// TODO: make dividers react to hidden entries
+    try {
+      widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
+    } catch (_) {
+      /// wahrscheinlich hat der Benutzer nicht genügend Einträge eingeblendet, damit Divider eingefügt werden können
+    }
     return Drawer(
       child: ListView(
         controller: _controller,

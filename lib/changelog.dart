@@ -45,6 +45,10 @@ final versionChanges = {
     title: "Mehrere Benutzer jetzt unterstützt",
     description: "Zum persönlichen Stundenplan können jetzt mehrere Klassen hinzugefügt werden. Auch mehrere LernSax-Konten werden jetzt unterstützt.",
   ),
+  72: CLEntry(
+    title: "Navigationsenträge ausblendbar",
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen für bessere Übersichtlichkeit Einträge in der Seitenleiste ausblenden."
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen

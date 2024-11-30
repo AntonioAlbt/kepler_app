@@ -37,6 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
@@ -50,6 +51,7 @@ import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -201,6 +203,11 @@ class _SettingsTabState extends State<SettingsTab> {
                       ],
                     ),
                   ),
+                ),
+                SettingsTile.navigation(
+                  title: Text("Navigationseinträge ausblenden"),
+                  description: Text("Einträge im Navigationsmenü ausblenden"),
+                  onPressed: (_) => showDialog(context: context, builder: (ctx) => NavHideDialog()),
                 ),
               ],
             ),
@@ -979,5 +986,66 @@ class _HostEntryDialogState extends State<HostEntryDialog> {
     if (!mounted) return;
     showSnackBar(text: "LogUp-Host zu \"${_controller.text}\" geändert.");
     Navigator.pop(context, _controller.text);
+  }
+}
+
+class NavHideDialog extends StatefulWidget {
+  const NavHideDialog({super.key});
+
+  @override
+  State<NavHideDialog> createState() => _NavHideDialogState();
+}
+
+class _NavHideDialogState extends State<NavHideDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final prefs = Provider.of<Preferences>(globalScaffoldContext, listen: false);
+    final userType = Provider.of<AppState>(globalScaffoldContext, listen: false).userType;
+    return AlertDialog(
+      title: Text("Einträge ausblenden"),
+      content: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .5,
+        width: MediaQuery.sizeOf(context).width,
+        child: AnimatedBuilder(
+          animation: prefs,
+          builder: (ctx, _) => ListView(
+            shrinkWrap: true,
+            children: destinations.map((dest) {
+              ListTile? genLT(NavEntryData data, bool child, bool parentHidden) {
+                if (dest.isVisible?.call(globalScaffoldContext) == false || data.visibleFor?.contains(userType) == false) return null;
+                final hidden = prefs.hiddenNavIDs.contains(data.id);
+                final startpage = prefs.startNavPageIDs.contains(data.id);
+                return ListTile(
+                  title: Row(
+                    children: [
+                      (data.label is Text) ? Text("${child ? " - " : ""}${(data.label as Text).data}") : (data.id == StuPlanPageIDs.yours) ? Text(" - Eigener Plan") : data.label,
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton.outlined(
+                            onPressed: (data.ignoreHiding == true || parentHidden || startpage) ? null : () => hidden ? prefs.removeHiddenNavID(data.id) : prefs.addHiddenNavID(data.id),
+                            icon: Icon((hidden || parentHidden) ? MdiIcons.eyeOff : MdiIcons.eye),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: data.children?.isNotEmpty == true ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [if (startpage) Text("als Seite beim Öffnen ausgewählt"), ...data.children!.map((c) => genLT(c, true, hidden)).where((lt) => lt != null).toList().cast()],
+                  ) : startpage ? Text("als Seite beim Öffnen ausgewählt") : null,
+                  isThreeLine: data.children?.isNotEmpty == true,
+                );
+              }
+              final lt = genLT(dest, false, false);
+              return lt;
+            }).where((lt) => lt != null).toList().cast(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text("Fertig"))
+      ],
+    );
   }
 }

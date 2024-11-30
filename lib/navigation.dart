@@ -108,6 +108,7 @@ class LernSaxPageIDs {
   static const notifications = "notifications";
   static const tasks = "tasks";
   static const openInBrowser = "inbrowser";
+  static const add = "lernsax_add";
 }
 
 /// Einträge für News bzw. Kalender
@@ -164,6 +165,7 @@ final destinations = [
         icon: const Icon(Icons.adb),
       ),
     ],
+    ignoreHiding: true,
   ),
   NavEntryData(
     id: NewsPageIDs.main,
@@ -400,11 +402,11 @@ final destinations = [
           onTryOpen: lernSaxOpenInOfficialApp,
         ),
       ];
-
+ 
       /// da der "Hinzufügen"-Eintrag nur einmalig benötigt wird, ist er hier separat und nicht in einer der Listen
       /// (auch, da seine Position sich ändern kann)
       final addEntry = NavEntryData(
-        id: "lernsax_add",
+        id: LernSaxPageIDs.add,
         icon: const Icon(Icons.add),
         label: const Text("LernSax-Konto hinzufügen"),
         onTryOpen: (ctx) async {
@@ -567,6 +569,7 @@ final destinations = [
     icon: Icon(Icons.settings_outlined),
     label: Text("Einstellungen"),
     selectedIcon: Icon(Icons.settings),
+    ignoreHiding: true,
   ),
   const NavEntryData(
     id: PageIDs.feedback,

@@ -126,9 +126,8 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
 
   /// ungenutzt - eigentlich, damit der Benutzer Einträge in der Navigationsliste ausblenden kann
-  /// TODO: Einträge in Drawer ausblenden - implementieren?
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
-  set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val);
+  set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val.join(","));
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);
   void removeHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..remove(id);
 
@@ -145,7 +144,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
 
   /// Seite, die beim Öffnen der App ausgewählt sein soll
   String get startNavPage => attributes["start_nav_page"] ?? PageIDs.home;
-  set startNavPage(String val) => setSaveNotify("start_nav_page", val);
+  set startNavPage(String val) {
+    setSaveNotify("start_nav_page", val);
+    for (final id in startNavPageIDs) {
+      removeHiddenNavID(id);
+    }
+  }
   List<String> get startNavPageIDs {
     switch (startNavPage) {
       case StuPlanPageIDs.all:
