@@ -39,6 +39,7 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
+import 'package:kepler_app/libs/filesystem.dart' as fs;
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/notifications.dart';
@@ -149,6 +150,34 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
                 /// da der Benutzer hier nichts ändern kann, gibt es tatsächlich mal ein passendes vorgefertigtes
                 /// SettingsTile, was bei Tippen einfach etwas ausführt
+                SettingsTile.navigation(
+                  onPressed: (context) async {
+                    Navigator.push(context, MaterialPageRoute(builder: sharePreferencesPageBuilder(await fs.readFile(await stuPlanDataFilePath))));
+                  },
+                  title: const Text("Einstellungen exportieren"),
+                  description: const Text("um diese auf einem anderen Gerät benutzen zu können"),
+                ),
+                SettingsTile.navigation(
+                  onPressed: (context) {
+                    prefs.loadFromExportJson(context).then((result) {
+                      switch (result) {
+                        case 'success':
+                          setState(() {});
+                          showSnackBar(text: "Einstellungen erfolgreich importiert", duration: const Duration(seconds: 2));
+                          break;
+                        case 'abort':
+                          break;
+                        case 'import_error':
+                          showSnackBar(text: "Fehler beim Import", error: true, clear: true);
+                        default:
+                          /// sollte nicht eintreten können
+                          break;
+                      }
+                    });
+                  },
+                  title: const Text("Einstellungen importieren"),
+                  description: const Text("von einem anderen Gerät exportierte Einstellungen übernehmen"),
+                ),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
@@ -377,7 +406,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("🏳️‍🌈 Regenbogenmodus aktivieren"),
                   description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
                   // enabled: userType != UserType.nobody,
-                )//,
+                ),
                 /*rainbowSwitchTile(
                   initialValue: prefs.aprilFoolsEnabled,
                   onToggle: (val) => prefs.aprilFoolsEnabled = val,
@@ -1018,15 +1047,12 @@ class _NavHideDialogState extends State<NavHideDialog> {
                 return ListTile(
                   title: Row(
                     children: [
-                      (data.label is Text) ? Text("${child ? " - " : ""}${(data.label as Text).data}") : (data.id == StuPlanPageIDs.yours) ? Text(" - Eigener Plan") : data.label,
                       Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton.outlined(
-                            onPressed: (data.ignoreHiding == true || parentHidden || startpage) ? null : () => hidden ? prefs.removeHiddenNavID(data.id) : prefs.addHiddenNavID(data.id),
-                            icon: Icon((hidden || parentHidden) ? MdiIcons.eyeOff : MdiIcons.eye),
-                          ),
-                        ),
+                        child: (data.label is Text) ? Text("${child ? " - " : ""}${(data.label as Text).data}") : (data.id == StuPlanPageIDs.yours) ? Text(" - Eigener Plan") : data.label,
+                      ),
+                      IconButton.outlined(
+                        onPressed: (data.ignoreHiding == true || parentHidden || startpage) ? null : () => hidden ? prefs.removeHiddenNavID(data.id) : prefs.addHiddenNavID(data.id),
+                        icon: Icon((hidden || parentHidden) ? MdiIcons.eyeOff : MdiIcons.eye),
                       ),
                     ],
                   ),
