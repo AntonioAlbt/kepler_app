@@ -31,17 +31,27 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 const prefsPrefKey = "user_preferences";
+
+/// Version der Einstellungen, muss für jede Änderung derselben geändert werden,
+/// damit die App keine Einstellungen importiert, welche aus einer anderen App-Version stammen
+const prefsVersion = 1;
 
 /// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
@@ -60,6 +70,7 @@ enum Pronoun {
     Pronoun.sie: "Mit Sie anreden",
   }[this]!;
 }
+
 /// Farbschema der App
 enum AppTheme {
   system,
@@ -240,8 +251,118 @@ class Preferences extends SerializableObject with ChangeNotifier {
     _loggingEnabled = loggingEnabled;
   }
 
+  /// Prefs aus externer Datei laden
+  Future<String> loadFromExportJson(BuildContext context) async {
+    final sie = preferredPronoun == Pronoun.sie;
+    /// Datei-Auswahldialog
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    /// Prüft, ob eine Datei ausgewählt wurde
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      try {
+        var importJsonText = (await file.readAsString());
+        var importJson = jsonDecode(importJsonText);
+
+        if (importJson['prefs_version'] != prefsVersion) {
+          bool abort = false;
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Achtung!"),
+              content: Text("Die Version dieser App stimmt nicht mit der Version der Herkunftsapp der Datei überein. ${sie ? "Bitte aktualisieren Sie": "Bitte aktualisiere"} beide Apps und ${sie ? "versuchen Sie" : "versuche"} es erneut. Das Fortfahren kann zu Fehlern führen und ${sie ? "Sie sollten dies nur benutzen, wenn Sie wissen, was Sie tun!": "Du solltest dies nur benutzen, wenn Du weißt, was du tust!"}"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Trotzdem fortfahren"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    abort = true;
+                  },
+                  child: const Text("Abbrechen"),
+                ),
+              ]
+            ),
+          );
+          if (abort) return "abort";
+        }
+        loadFromJson(importJson["prefs_json"].toString());
+        return "success";
+      } catch (e, s) {
+        logCatch("prefs_import", e, s);
+        return "import_error";
+      }
+    } else {
+      return "abort";
+    }
+  }
+
   Preferences() {
     objectCreators["time_to_next_plan"] = (_) => HMTime(14, 45);
     objectCreators["stuplan_names"] = (_) => <String>[];
+  }
+}
+
+Widget Function(BuildContext) sharePreferencesPageBuilder(String? data) =>
+        (context) => SharePreferencesPage(data!);
+class SharePreferencesPage extends StatefulWidget {
+  final String data;
+  const SharePreferencesPage(this.data, {super.key});
+  @override
+  State<SharePreferencesPage> createState() => _SharePreferencesPageState();
+}
+class _SharePreferencesPageState extends State<SharePreferencesPage> {
+  @override
+  Widget build(BuildContext context) {
+    String prefsJson = sharedPreferences.getString(prefsPrefKey) as String;
+    var exportJsonText = {
+      'prefs_version': prefsVersion,
+      'prefs_json': prefsJson,
+    };
+    var exportJson = jsonEncode(exportJsonText);
+    return Scaffold(
+      appBar: AppBar(title: const Text("Gespeicherte Einstellungen")),
+      body: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              Share.shareXFiles(
+                  [XFile.fromData(utf8.encode(exportJson.toString()), mimeType: 'application/json')], fileNameOverrides: ['Kepler_App_Einstellungen_Export.json'],
+                  sharePositionOrigin: Rect.fromLTWH(
+                      0, 0,
+                      MediaQuery.of(this.context).size.width,
+                      MediaQuery.of(this.context).size.height / 2
+                  )
+              );
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(flex: 0, child: Text("Exportieren")),
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 4),
+                    child: Icon(Icons.ios_share, size: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  //child: Text(widget.data + (sharedPreferences.getString(prefsPrefKey) as String)),
+                  child: Text(exportJsonText.toString()),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
