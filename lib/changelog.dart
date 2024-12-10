@@ -31,7 +31,7 @@ final versionChanges = {
   ),
   59: const CLEntry(
     title: "Klausurenanzeige hinzugefügt",
-    description: "In der persönlichen Stundenplanansicht werden jetzt für Schüler in Jahrgang 11 und 12 automatisch eingetragene Klausuren angezeigt. Dies kann in den Einstellungen angepasst werden."
+    description: "In der persönlichen Stundenplanansicht werden jetzt für Schüler in Jahrgang 11 und 12 automatisch eingetragene Klausuren angezeigt. Dies kann in den Einstellungen angepasst werden.",
   ),
   60: const CLEntry(
     title: "Letzte Raumverwendungen markiert",
@@ -47,7 +47,11 @@ final versionChanges = {
   ),
   72: CLEntry(
     title: "Navigationsenträge ausblendbar",
-    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen für bessere Übersichtlichkeit Einträge in der Seitenleiste ausblenden."
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt in den Einstellungen für bessere Übersichtlichkeit Einträge in der Seitenleiste ausblenden.",
+  ),
+  73: CLEntry(
+    title: "Einstellungen übertragbar",
+    descGen: (sie) => "${sie ? "Sie können jetzt Ihre" : "Du kannst jetzt Deine"} Einstellungen auf ein anderes Gerät übertragen.",
   ),
 };
 
