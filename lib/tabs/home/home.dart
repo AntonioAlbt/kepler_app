@@ -157,12 +157,12 @@ class _HomepageTabState extends State<HomepageTab> {
 /// öffnet den Dialog für das Ändern der Reihenfolge der Widgets
 /// - verwendet globalen Context, damit beim Ausblenden des öffnenden Widgets nicht das Rendering fehlschlägt
 Future<void> openReorderHomeWidgetDialog() => showDialog(context: globalScaffoldContext, builder: (context) {
-  if (Provider.of<AppState>(globalScaffoldContext, listen: false).userType == UserType.nobody) {
+  if (Provider.of<AppState>(context, listen: false).userType == UserType.nobody) {
     return AlertDialog(title: const Text("Fehler"), content: const Text("Anmeldung erforderlich."), actions: [
       TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
     ]);
   }
-  final prefs = Provider.of<Preferences>(globalScaffoldContext);
+  final prefs = Provider.of<Preferences>(context);
   return AnimatedBuilder(
     animation: prefs,
     builder: (context, _) => AlertDialog(

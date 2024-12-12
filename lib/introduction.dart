@@ -42,7 +42,6 @@ import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:provider/provider.dart';
@@ -305,7 +304,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
   @override
   Widget build(BuildContext context) {
     const TextStyle link = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
-    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -471,16 +470,15 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                 if (!context.mounted) return;
                 widget.onNonLogin(context);
                 if (!widget.again && widget.askNotLoginForNotifications) {
-                  if (!globalScaffoldContext.mounted) return;
                   showDialog(
-                    context: globalScaffoldContext,
+                    context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Benachrichtigungen?"),
                       content: const Text("Möchten Sie benachrichtigt werden, wenn neue Artikel auf der Webseite unserer Schule veröffentlicht werden?"),
                       actions: [
                         TextButton(
                           onPressed: (){
-                            Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [newsNotificationKey];
+                            Provider.of<Preferences>(context, listen: false).enabledNotifs = [newsNotificationKey];
                             checkNotificationPermission().then((notifAllowed) {
                               if (notifAllowed) {
                                 if (!context.mounted) return;
@@ -507,7 +505,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Provider.of<Preferences>(globalScaffoldContext, listen: false).enabledNotifs = [];
+                            Provider.of<Preferences>(context, listen: false).enabledNotifs = [];
                             Navigator.pop(context);
                           },
                           child: const Text("Nein"),
@@ -565,7 +563,7 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
       // if (!regex.hasMatch(_mailController.text)) return "Ungültige LernSax-E-Mail-Adresse.";
       if (!_mailController.text.endsWith(".lernsax.de")) return "Ungültige LernSax-E-Mail-Adresse.";
     }
-    final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+    final creds = Provider.of<CredentialStore>(context, listen: false);
     if (widget.additionalAccount && _mailController.text != "" && (creds.alternativeLSLogins.contains(_mailController.text) || creds.lernSaxLogin == _mailController.text)) {
       return "Dieses LernSax-Konto ist bereits angemeldet.";
     }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/preferences.dart';
-import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 
 /// Changelog-Eintrag
@@ -69,7 +68,7 @@ Widget? getChangelogDialog(int currentVersion, int lastVersion, BuildContext ctx
   final cl = computeChangelog(currentVersion, lastVersion);
   if (cl.isEmpty) return null;
 
-  final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+  final sie = Provider.of<Preferences>(ctx, listen: false).preferredPronoun == Pronoun.sie;
 
   return AlertDialog(
     title: const Text("Neue Funktionen!"),

@@ -197,7 +197,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                             /// -> `draftToDelete` mit Referenz
                             reference: mailData!,
                             referenceMode: LSMWPReferenceMode.draftToDelete,                            
-                            preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
+                            preselectedAccount: Provider.of<CredentialStore>(context, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
                           ),
                         ),
                       );
@@ -221,7 +221,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                               reference: mailData,
                               referenceMode: LSMWPReferenceMode.answered,
                               to: mailData!.from.map((m) => m.address).toList(),
-                              preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
+                              preselectedAccount: Provider.of<CredentialStore>(context, listen: false).alternativeLSLogins.indexWhere((l) => l == widget.login) + 1,
                             ),
                           ),
                         );
@@ -256,6 +256,7 @@ class _MailDetailPageState extends State<MailDetailPage> {
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context);
+                                    /// da der aktuelle context hier gepopped wird, ab hier lieber globalen Kontext verwenden
                                     Navigator.push(
                                       globalScaffoldContext,
                                       MaterialPageRoute(
@@ -321,11 +322,11 @@ class _MailDetailPageState extends State<MailDetailPage> {
       final (online, mailDataLive) = await lernsax.getMail(widget.login, widget.token, folderId: widget.listing.folderId, mailId: widget.listing.id);
       if (!online) {
         showSnackBar(textGen: (sie) => "Fehler bei der Verbindung zu LernSax. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
-        Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
+        Provider.of<AppState>(context, listen: false).clearInfoScreen();
         return;
       } else if (mailDataLive == null) {
         showSnackBar(textGen: (sie) => "Fehler beim Abfragen ${sie ? "Ihrer" : "Deiner"} E-Mails. Bitte ${sie ? "probieren Sie" : "probiere"} es später erneut.", error: true, clear: true);
-        Provider.of<AppState>(globalScaffoldContext, listen: false).clearInfoScreen();
+        Provider.of<AppState>(context, listen: false).clearInfoScreen();
         return;
       } else {
         if (!widget.listing.isDraft && !widget.alternative) lsdata.addMailToCache(mailDataLive);

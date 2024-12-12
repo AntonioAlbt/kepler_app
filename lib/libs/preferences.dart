@@ -35,11 +35,14 @@ import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/info_screen.dart';
+import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:provider/provider.dart';
 
 const prefsPrefKey = "user_preferences";
 
@@ -49,6 +52,40 @@ bool? deviceInDarkMode;
 /// global verfügbar, damit KeplerLogging keinen BuildContext benötigt
 bool _loggingEnabled = true;
 bool get loggingEnabled => _loggingEnabled;
+
+
+/// wenn der Benutzer sich erneut anmelden will, wird diese Funktion aufgerufen, und eine etwas veränderte
+/// Variante der Login-Info-Screens angezeigt
+/// dabei können auch die alten Daten gelöscht werden, bzw. kann eingestellt werden, dass der Benutzer die
+/// InfoScreens schließen kann
+void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
+  final ctx = globalScaffoldContext;
+
+  if (Provider.of<CredentialStore>(ctx, listen: false).lernSaxLogin == lernSaxDemoModeMail) {
+    showDialog(context: ctx, builder: (ctx) => const AlertDialog(
+      title: Text("Demo-Login"),
+      content: Text("Da der Demo-Login verwendet wurde, muss die App zum Abmelden neu installiert werden."),
+    ));
+    return;
+  }
+
+  if (clearData) {
+    Provider.of<CredentialStore>(ctx, listen: false).clearData();
+    // Provider.of<NewsCache>(ctx, listen: false).clearData();
+    // Provider.of<StuPlanData>(ctx, listen: false).clearData();
+    Provider.of<InternalState>(ctx, listen: false).introShown = false;
+    Provider.of<Preferences>(ctx, listen: false).startNavPage = PageIDs.home;
+  }
+  Provider.of<AppState>(ctx, listen: false)
+    ..selectedNavPageIDs = ["404"]
+    ..navPagesToOpenAfterNextISClose = Provider.of<Preferences>(ctx, listen: false).startNavPageIDs
+    ..infoScreen = InfoScreenDisplay(
+      infoScreens: closeable ? loginAgainScreens : loginAgainScreensUncloseable,
+    );
+}
+
+/// Hilfsfunktion für Übertragen (cast-en) von Objekten auf einen anderen Typ
+T? cast<T>(x) => x is T ? x : null;
 
 /// Anredepronomen
 enum Pronoun {

@@ -39,7 +39,6 @@ import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pick_member_dialog.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -101,7 +100,7 @@ class _MailWritePageState extends State<MailWritePage> {
 
   @override
   Widget build(BuildContext context) {
-    final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+    final creds = Provider.of<CredentialStore>(context, listen: false);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (popped, _) async {
@@ -109,8 +108,8 @@ class _MailWritePageState extends State<MailWritePage> {
         if (_mailInputCtrl.text != (widget.mail ?? "") ||
             _subjectInputCtrl.text != (widget.subject ?? "") ||
             recvKey.currentState!.chips.join("|") != (widget.to ?? []).join("|")) {
-          final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
-          await showDialog(context: globalScaffoldContext, builder: (ctx) => AlertDialog(
+          final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+          await showDialog(context: context, builder: (ctx) => AlertDialog(
             title: const Text("Eingaben verwerfen?"),
             content: Text("${sie ? "Wollen Sie Ihre" : "Willst Du Deine"} Eingaben verwerfen? ${sie ? "Ihre" : "Deine"} Änderungen werden damit nicht gespeichert."),
             actions: [
@@ -292,7 +291,7 @@ class _MailWritePageState extends State<MailWritePage> {
                         showSnackBar(text: "E-Mail hat keinen Betreff!", error: true);
                         return;
                       }
-                      final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                      final creds = Provider.of<CredentialStore>(context, listen: false);
                       if (creds.lernSaxLogin == lernSaxDemoModeMail) {
                         await showDialog(context: context, builder: (ctx) => AlertDialog(
                           title: const Text("Nicht möglich."),
@@ -345,7 +344,7 @@ class _MailWritePageState extends State<MailWritePage> {
                         showSnackBar(text: "E-Mail hat keinen Betreff!", error: true);
                         return;
                       }
-                      final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                      final creds = Provider.of<CredentialStore>(context, listen: false);
                       if (creds.lernSaxLogin == lernSaxDemoModeMail) {
                         await showDialog(context: context, builder: (ctx) => AlertDialog(
                           title: const Text("Nicht möglich."),
@@ -360,7 +359,7 @@ class _MailWritePageState extends State<MailWritePage> {
                       final selectedToken = _selectedAccount == 0 ? creds.lernSaxToken! : creds.alternativeLSTokens[_selectedAccount - 1];
                       if (!await showDialog(context: context, builder: (ctx) => AlertDialog(
                         title: const Text("Wirklich absenden?"),
-                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so von $selectedLogin an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
+                        content: Builder(builder: (_) => Text("${Provider.of<Preferences>(ctx, listen: false).preferredPronoun == Pronoun.sie ? "Wollen Sie" : "Willst Du"} diese E-Mail wirklich so von $selectedLogin an ${joinWithOptions(recvKey.currentState!.chips, ", ", " und ")} abschicken?")),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Ja, jetzt senden")),
                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Abbrechen")),

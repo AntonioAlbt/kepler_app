@@ -37,7 +37,6 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mail_detail_page.dart';
@@ -754,7 +753,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
 }
 
 Widget generateLernSaxTaskInfoDialog(BuildContext context, LSTask task) {
-  final originMshp = Provider.of<LernSaxData>(globalScaffoldContext, listen: false).memberships?.cast<LSMembership?>().firstWhere((m) => m!.login == task.classLogin, orElse: () => null);
+  final originMshp = Provider.of<LernSaxData>(context, listen: false).memberships?.cast<LSMembership?>().firstWhere((m) => m!.login == task.classLogin, orElse: () => null);
   return AlertDialog(
     title: const Text("Aufgabe"),
     content: SingleChildScrollView(

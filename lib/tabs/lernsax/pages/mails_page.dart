@@ -39,7 +39,6 @@ import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
@@ -208,7 +207,7 @@ class _LSMailsPageState extends State<LSMailsPage> {
 
     final folderIds = await loadData(force: force);
     // ignore: use_build_context_synchronously
-    final prev = Provider.of<InternalState>(globalScaffoldContext, listen: false).lastSelectedLSMailFolder;
+    final prev = Provider.of<InternalState>(context, listen: false).lastSelectedLSMailFolder;
     if (prev != null && folderIds != null && folderIds.contains(prev)) {
       setState(() => selectedFolderId = prev);
     } else if (folderIds != null) {
@@ -576,7 +575,7 @@ class LSMailTile extends StatelessWidget {
           switch (action) {
             case LSMailAction.delete:
               // ignore: use_build_context_synchronously
-              final trashFolder = (alternative ? (await lernsax.getMailFolders(login, token)).$2 : Provider.of<LernSaxData>(globalScaffoldContext, listen: false).mailFolders)?.cast<LSMailFolder?>().firstWhere((f) => f!.isTrash == true, orElse: () => null);
+              final trashFolder = (alternative ? (await lernsax.getMailFolders(login, token)).$2 : Provider.of<LernSaxData>(context, listen: false).mailFolders)?.cast<LSMailFolder?>().firstWhere((f) => f!.isTrash == true, orElse: () => null);
               if (trashFolder == null) {
                 showSnackBar(text: "Fehler beim Abfragen der Ordnerliste von LernSax.");
                 return;
@@ -652,7 +651,7 @@ class LSMailTile extends StatelessWidget {
                     /// dies funktioniert sehr gut, da indexWhere -1 zurückgibt, wenn es nichts findet
                     /// bei preselectedAccount bedeutet 0 dann primärer Account, sonst ist das index - 1 -> geht also
                     /// perfekt hier auf
-                    preselectedAccount: Provider.of<CredentialStore>(globalScaffoldContext, listen: false).alternativeLSLogins.indexWhere((l) => l == login) + 1,
+                    preselectedAccount: Provider.of<CredentialStore>(ctx, listen: false).alternativeLSLogins.indexWhere((l) => l == login) + 1,
                   ),
                 ),
               );

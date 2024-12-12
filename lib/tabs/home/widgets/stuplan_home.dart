@@ -36,7 +36,6 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/hourtable/hourtable.dart';

@@ -34,11 +34,9 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:appcheck/appcheck.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_system_proxy/flutter_system_proxy.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kepler_app/changelog.dart';
@@ -46,6 +44,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
+import 'package:kepler_app/libs/checks.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
@@ -85,7 +84,7 @@ final ConfettiController globalConfettiController = ConfettiController();
 /// 2. Hintergrund-Task für Benachrichtungen initialisieren
 /// 3. neue News abfragen und Infos speichern
 /// 4. zu alte Stundenplan-Daten und Logs löschen
-Future<void> loadAndPrepareApp() async {
+Future<void> initializeApp() async {
   final sprefs = sharedPreferences;
   /// da im NewsCache theoretisch unendlich Nachrichten gespeichert werden können, wird dieser
   /// in einer Datei gespeichert - der Benutzer kann diese Datei löschen, wenn sie ihm zu groß wird (nur Android),
@@ -165,7 +164,7 @@ Future<void> loadAndPrepareApp() async {
 /// allererster Schritt, noch bevor Flutter die App selbst initialisiert
 /// lädt die Preferences (Einstellungen) des Benutzers, damit der Ladebildschirm falls nötig im Dark Mode
 /// angezeigt werden kann
-Future<void> prepareApp() async {
+Future<void> preInitApp() async {
   sharedPreferences = await SharedPreferences.getInstance();
   final sprefs = sharedPreferences;
   if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
@@ -189,7 +188,9 @@ void main() async {
   KeplerLogging.registerFlutterErrorHandling();
 
   /// erster "länger dauernder" Ausführungsschritt, lädt Benutzereinstellungen
-  await prepareApp();
+  /// muss separat vor Anzeige Ladebildschirm passieren, damit das Theme geladen wird
+  /// (damit Ladebildschirm wenn gewünscht im Darkmode angezeigt wird)
+  await preInitApp();
 
   /// wenn ein Widget beim Rendern oder Erstellen einen Fehler wirft, verwendet Flutter diesen Builder, um stattdessen
   /// das erstellt Fehlerwidget anzuzeigen (normalerweise wird im Release-Modus nur ein grauer Bildschirm angezeigt,
@@ -214,37 +215,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-/// wenn der Benutzer sich erneut anmelden will, wird diese Funktion aufgerufen, und eine etwas veränderte
-/// Variante der Login-Info-Screens angezeigt
-/// dabei können auch die alten Daten gelöscht werden, bzw. kann eingestellt werden, dass der Benutzer die
-/// InfoScreens schließen kann
-void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
-  final ctx = globalScaffoldContext;
-
-  if (Provider.of<CredentialStore>(ctx, listen: false).lernSaxLogin == lernSaxDemoModeMail) {
-    showDialog(context: ctx, builder: (ctx) => const AlertDialog(
-      title: Text("Demo-Login"),
-      content: Text("Da der Demo-Login verwendet wurde, muss die App zum Abmelden neu installiert werden."),
-    ));
-    return;
-  }
-
-  if (clearData) {
-    Provider.of<CredentialStore>(ctx, listen: false).clearData();
-    // Provider.of<NewsCache>(ctx, listen: false).clearData();
-    // Provider.of<StuPlanData>(ctx, listen: false).clearData();
-    Provider.of<InternalState>(ctx, listen: false).introShown = false;
-    Provider.of<Preferences>(ctx, listen: false).startNavPage = PageIDs.home;
-  }
-  Provider.of<AppState>(ctx, listen: false)
-    ..selectedNavPageIDs = ["404"]
-    ..navPagesToOpenAfterNextISClose = Provider.of<Preferences>(ctx, listen: false).startNavPageIDs
-    ..infoScreen = InfoScreenDisplay(
-      infoScreens: closeable ? loginAgainScreens : loginAgainScreensUncloseable,
-    );
-}
-
-
 /// Name noch von ursprünglichem Vorschlag von Flutter
 /// ist das oberste Widget und dient aktuell nur zur Prüfung auf eine unterstützte Plattform
 class MyApp extends StatelessWidget {
@@ -263,131 +233,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Hilfsfunktion für Übertragen (cast-en) von Objekten auf einen anderen Typ
-T? cast<T>(x) => x is T ? x : null;
-
-/// primäres App-Widget
-class KeplerApp extends StatefulWidget {
-  const KeplerApp({super.key});
-
-  @override
-  State<KeplerApp> createState() => _KeplerAppState();
-}
-
-/// wichtig, wenn wahrscheinlich auch etwas schlechter Programmierstil
-/// Da die Provider nur von dem festen Kontext erreichbar sind - also nur im Kontext unterhalb des MultiProviders,
-/// müssen etwa Widgets in Dialogen immer mit Provider.of<Typ>(globalScaffoldContext, listen: false) auf den Kontext
-/// des allumfassenden Scaffolds (was sich unter dem MultiProvider befindet)
-/// -> d.h. zu beachten: immer, wenn von einer anderen Route (z.B. in einem Dialog oder auf einer Seite,
-/// die mit Navigator unter einer anderen Route geöffnet wurde) auf eine Datenquelle mit einem Provider zugegriffen
-/// werden soll, muss dies mit Provider.of<Typ>(globalScaffoldContext, listen: false) passieren
-///   dabei sorgt das listen: false dafür, dass bei Änderungen an der Datenquelle nicht der globale Scaffold
-///   aktualisiert wird, sondern nichts passiert
-final globalScaffoldKey = GlobalKey<ScaffoldState>();
-/// diese Syntax wird gewählt: (a) damit es kürzer ist und (b) damit nicht immer nicht-null erzwungen werden muss (mit dem "!")
-/// der State wird für Scaffold-Funktionen wie das Anzeigen von SnackBars benötigt
-ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
-/// der Context siehe oben
-/// TODO: nicht mehr verwenden. einfach mal die Provider über das MaterialApp Widget schieben - dann wäre das nicht mehr nötig
-BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
-
-/// wofür der genau da ist, weiß ich nicht ups
-final absolutelyTopKeyForToplevelDialogsOnly = GlobalKey();
-
-/// ich würde mal behaupten, die Funktion erklärt sich am Namen (testet Zugriff auf Schüler- und Lehrerplan)
-/// returns: null = request error, usertype.(pupil|teacher) = success, usertype.nobody = invalid creds
-Future<UserType?> checkIndiwareData(String host, String username, String password) async {
-  try {
-    final lres = await authRequest(lUrlMLeXmlUrl(host), username, password);
-    // if null, throw -> to catch block
-    if (lres!.statusCode == 401) { // if teacher auth failed, try again with pupil auth
-      final sres = await authRequest(sUrlMKlXmlUrl(host), username, password);
-      if (sres!.statusCode == 401) return UserType.nobody;
-      if (sres.statusCode != 200) return null;
-      return UserType.pupil;
-    }
-    if (lres.statusCode != 200) return null;
-    return UserType.teacher;
-  } catch (e, s) {
-    logCatch("indiware-check", e, s);
-    return null;
-  }
-}
-
-/// überprüft alle Metadaten zum Stundenplanlogin:
-/// - aktuelle Klassen / Lehrercodes, um auf Vorhandensein des Ausgewählten zu prüfen
-/// - verfügbare Klassen und Fächer
-/// - schulfreie Tage
-/// Außerdem wird die letzte Aktualisierung gespeichert, damit der Benutzer auf alte Daten hingewiesen werden kann.
-/// (alte Daten = letzte Aktualisierung vor min. 14 Tagen)
-Future<String?> checkAndUpdateSPMetaData(String vpHost, String vpUser, String vpPass, UserType utype, StuPlanData stuPlanData) async {
-  List<DateTime>? updatedFreeDays;
-  String? output;
-  if (utype == UserType.teacher && stuPlanData.availableTeachers != null && stuPlanData.lastAvailTeachersUpdate.difference(DateTime.now()).abs().inDays >= 14) {
-    final (data, _) = await getLehrerXmlLeData(vpHost, vpUser, vpPass);
-    if (data != null) {
-      stuPlanData.loadDataFromLeData(data);
-      // check if selected teacher code doesn't exist anymore (because the school removed it)
-      if (stuPlanData.selectedTeacherName != null && data?.teachers.map((t) => t.teacherCode).contains(stuPlanData.selectedTeacherName!) == false) {
-        stuPlanData.selectedTeacherName = null;
-        output ??= "Achtung! Der gewählte Lehrer ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
-      }
-      updatedFreeDays = data.holidays.holidayDates;
-    } else {
-      output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-    }
-  } else if (
-    utype != UserType.nobody &&
-    (
-      (stuPlanData.availableClasses != null && stuPlanData.lastAvailClassesUpdate.difference(DateTime.now()).abs().inDays >= 14)
-      || (stuPlanData.availableSubjects.isNotEmpty && stuPlanData.lastAvailSubjectsUpdate.difference(DateTime.now()).abs().inDays >= 14)
-    )
-  ) {
-    final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
-    if (rawData != null) {
-      final data = xmlToKlData(rawData);
-      stuPlanData.loadDataFromKlData(data);
-      // check if selected class name doesn't exist anymore (because the school removed it)
-      if (stuPlanData.selectedClassName != null && data?.classes.map((t) => t.className).contains(stuPlanData.selectedClassName!) == false) {
-        stuPlanData.selectedClassName = null;
-        output ??= "Achtung! Die gewählte Klasse ist nicht mehr in den Schuldaten vorhanden. Der Stundenplan muss neu eingerichtet werden.";
-      }
-      IndiwareDataManager.setKlassenXmlData(rawData);
-      updatedFreeDays = data.holidays.holidayDates;
-    } else {
-      output ??= "Hinweis: Die Stundenplan-Daten sind nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-    }
-  }
-  if (stuPlanData.lastHolidayDatesUpdate.difference(DateTime.now()).abs().inDays >= 14) {
-    if (updatedFreeDays != null) {
-      stuPlanData.holidayDates = updatedFreeDays;
-      stuPlanData.lastHolidayDatesUpdate = DateTime.now();
-    } else {
-      final (rawData, _) = await getKlassenXML(vpHost, vpUser, vpPass);
-      if (rawData != null) {
-        final data = xmlToKlData(rawData);
-        stuPlanData.holidayDates = data.holidays.holidayDates;
-        stuPlanData.lastHolidayDatesUpdate = DateTime.now();
-        IndiwareDataManager.setKlassenXmlData(rawData);
-      } else {
-        output ??= "Hinweis: Die Liste der schulfreien Tage ist nicht mehr aktuell. Bitte mit dem Internet verbinden.";
-      }
-    }
-  }
-  return output;
-}
-
 /// Widget, was beim Initialisieren den Changelog der App lädt und anzeigt
-class OnStartLoader extends StatefulWidget {
+class ChangelogLoader extends StatefulWidget {
   final Widget child;
 
-  const OnStartLoader({super.key, required this.child});
+  const ChangelogLoader({super.key, required this.child});
 
   @override
-  State<OnStartLoader> createState() => _OnStartLoaderState();
+  State<ChangelogLoader> createState() => _ChangelogLoaderState();
 }
 
-class _OnStartLoaderState extends State<OnStartLoader> {
+class _ChangelogLoaderState extends State<ChangelogLoader> {
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -413,6 +269,27 @@ class _OnStartLoaderState extends State<OnStartLoader> {
       internal.lastChangelogShown = currentVersion;
     }
   }
+}
+
+/// teilweise muss in Funktionen/Bereichen, die keinen (geeigneten) Kontext haben, mit Provider.of auf Daten zugegriffen,
+/// Aspekte des Scaffolds (z.B. SnackBars) verändert oder neue Dialoge angezeigt werden
+/// damit dies auch in derartigen Bereichen passieren kann, wird ein "globaler" Kontext bereitgestellt, der überall
+/// verwendet werden kann - die Verwendung sollte aber auf ein Minimum beschränkt werden! eigentlich überall
+/// sind vor allem Daten von Provider.of auch mit dem lokalen Kontext erreichbar
+/// -> Key wird an das Scaffold mit dem Drawer angehangen
+final globalScaffoldKey = GlobalKey<ScaffoldState>();
+/// Direktzugriff auf Kontext, Vermeidung von sonst Verwendung "!" für Erzwingung nicht-null bei jeder Verwendung
+BuildContext get globalScaffoldContext => globalScaffoldKey.currentContext!;
+/// der State wird für Scaffold-Funktionen wie das Ein-/Ausblenden des Drawers benötigt
+ScaffoldState get globalScaffoldState => globalScaffoldKey.currentState!;
+
+
+/// primäres App-Widget
+class KeplerApp extends StatefulWidget {
+  const KeplerApp({super.key});
+
+  @override
+  State<KeplerApp> createState() => _KeplerAppState();
 }
 
 /// Hauptwidget-State für die Kepler-App
@@ -503,7 +380,7 @@ class _KeplerAppState extends State<KeplerApp> {
   Future<String?> _load() async {
     String? output;
 
-    await loadAndPrepareApp();
+    await initializeApp();
     utype = await calcUT();
     _internalState.lastUserType = utype;
 
@@ -560,46 +437,14 @@ class _KeplerAppState extends State<KeplerApp> {
   @override
   Widget build(BuildContext context) {
     /// der MultiProvider stellt (wie der Name schon sagt) mehrere Datenquellen für die darunterliegenden Widgets bereit
-    final mainWidget = MultiProvider(
-      key: absolutelyTopKeyForToplevelDialogsOnly,//const Key("mainWidget"),
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => _appState
-            ..infoScreen = introductionDisplay
-            ..userType = utype
-            ..selectedNavPageIDs = (){
-              /// damit beim Durchführen des Intros nicht schon im Hintergrund Daten geladen werden,
-              /// wird der Navigationsindex hier auf eine nicht existente Seite gesetzt.
-              if (introductionDisplay != null) return ["intro-non-existent"];
-              if (startingNavPageIDs != null) return startingNavPageIDs!;
-              return _prefs.startNavPageIDs;
-            }(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _prefs,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _internalState,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _newsCache,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _credStore,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _stuPlanData,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => _lernSaxData,
-        ),
-      ],
-      child: Consumer<AppState>(builder: (context, state, __) {
+    final mainWidget = Consumer<AppState>(
+      key: Key("mainWidget"),
+      builder: (context, state, __) {
         final index = state.selectedNavPageIDs;
         // PopScopes are weird in comparison to WillPopScope-s, if anyone wants to update them anyway, have fun
         // maybe helpful for async: https://stackoverflow.com/questions/77500680/willpopscope-is-deprecated-after-flutter-3-12
         final selectedNavEntry = currentlySelectedNavEntry(context);
-        return OnStartLoader(
+        return ChangelogLoader(
           // ignore: deprecated_member_use
           child: WillPopScope(
             /// der WillPopScope fängt das Schließen der aktuellen Route (hier: der App allgemein) ab und erwartet
@@ -690,7 +535,7 @@ class _KeplerAppState extends State<KeplerApp> {
             ),
           ),
         );
-      }),
+      },
     );
     const loadingWidget = Scaffold(
       key: Key("loadingWidget"),
@@ -701,14 +546,48 @@ class _KeplerAppState extends State<KeplerApp> {
     return AnimatedBuilder(
       animation: _prefs,
       builder: (context, home) {
-        return MaterialApp(
-          title: "Kepler-App",
-          home: home,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: keplerColorBlue,
-              brightness: (_prefs.darkTheme) ? Brightness.dark : Brightness.light,
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => _appState
+                ..infoScreen = introductionDisplay
+                ..userType = utype
+                ..selectedNavPageIDs = (){
+                  /// damit beim Durchführen des Intros nicht schon im Hintergrund Daten geladen werden,
+                  /// wird der Navigationsindex hier auf eine nicht existente Seite gesetzt.
+                  if (introductionDisplay != null) return ["intro-non-existent"];
+                  if (startingNavPageIDs != null) return startingNavPageIDs!;
+                  return _prefs.startNavPageIDs;
+                }(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _prefs,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _internalState,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _newsCache,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _credStore,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _stuPlanData,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _lernSaxData,
+            ),
+          ],
+          child: MaterialApp(
+            title: "Kepler-App",
+            home: home,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: keplerColorBlue,
+                brightness: (_prefs.darkTheme) ? Brightness.dark : Brightness.light,
+              ),
             ),
           ),
         );
@@ -721,30 +600,6 @@ class _KeplerAppState extends State<KeplerApp> {
     );
   }
 
-  /// da sich die Paket-ID geändert hat, damit ich nicht meine eigene URL verwenden muss, wird hier überprüft,
-  /// ob eine alte App-Version installiert ist - falls ja, muss diese erst vom Benutzer deinstalliert werden
-  /// (nur Android)
-  static const oldAndroidPkgId = "dev.gamer153.kepler_app";
-  void checkAndNotifyForOldPkgId() async {
-    if (!Platform.isAndroid) return;
-    await Future.delayed(const Duration(seconds: 1));
-    try {
-      final res = await AppCheck().checkAvailability(oldAndroidPkgId);
-      if (res == null) throw Exception();
-      
-      showDialog(context: absolutelyTopKeyForToplevelDialogsOnly.currentContext!, builder: (ctx) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          title: const Text("Alte App-Version gefunden!"),
-          content: const Text("Die Paket-ID der App hat sich mit Version 2.0.0 geändert - dadurch sind alle Daten weg, und die App ist jetzt zweimal installiert. Bitte deinstalliere die alte Variante der App (bis Version 1.8.3).\n\nDu kannst die App erst verwenden, nachdem die alte Version entfernt ist."),
-          actions: [
-            TextButton(onPressed: () => SystemNavigator.pop(), child: const Text("Ok, ich deinstalliere die alte Version")),
-          ],
-        ),
-      ));
-    } catch (_) {}
-  }
-
   @override
   void initState() {
     _load().then((text) {
@@ -755,8 +610,6 @@ class _KeplerAppState extends State<KeplerApp> {
           showSnackBar(text: text);
         }
       }
-      
-      checkAndNotifyForOldPkgId();
     });
     super.initState();
   }

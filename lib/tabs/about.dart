@@ -47,7 +47,7 @@ import 'package:url_launcher/url_launcher.dart';
 const keplerAppDSELink = "https://www.kepler-chemnitz.de/materialis/datenschutzerklaerung-kepler-app/";
 /// E-Mail, unter der der aktueller Hauptzuständige erreichbar ist
 /// für Kontakt und Fehlerbildschirm
-const creatorMail = "a.albert@gamer153.dev";
+const creatorMail = "antonio@vlant.de";
 
 /// sollte nicht mehr verändert werden, war bei Erstellung zum Ausprobieren, welche Größe gut aussieht
 const rainbowScale = 2.0;

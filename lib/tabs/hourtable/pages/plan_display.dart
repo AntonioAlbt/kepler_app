@@ -37,6 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
+import 'package:kepler_app/libs/checks.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
