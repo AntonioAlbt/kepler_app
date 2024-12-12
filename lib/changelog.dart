@@ -51,7 +51,7 @@ final versionChanges = {
   ),
   73: CLEntry(
     title: "Einstellungen übertragbar",
-    descGen: (sie) => "${sie ? "Sie können jetzt Ihre" : "Du kannst jetzt Deine"} Einstellungen auf ein anderes Gerät übertragen.",
+    descGen: (sie) => "${sie ? "Sie können jetzt Ihre" : "Du kannst jetzt deine"} Einstellungen auf ein anderes Gerät übertragen.",
   ),
 };
 
