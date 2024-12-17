@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -41,6 +42,7 @@ import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/libs/custom_color_picker.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
@@ -53,7 +55,9 @@ import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:file_picker/file_picker.dart';
 
 /// Tab für Einstellungen, zeigt mithilfe von settings_ui alle Einstellungen an
 /// und nimmt Veränderungen direkt in Preferences vor (die meisten Einstellungen sind ziemlich selbsterklärend
@@ -148,6 +152,34 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
                 /// da der Benutzer hier nichts ändern kann, gibt es tatsächlich mal ein passendes vorgefertigtes
                 /// SettingsTile, was bei Tippen einfach etwas ausführt
+                SettingsTile.navigation(
+                  onPressed: (context) {
+                    Navigator.push(context, MaterialPageRoute(builder: sharePreferencesPageBuilder()));
+                  },
+                  title: const Text("Einstellungen exportieren"),
+                  description: const Text("um diese auf einem anderen Gerät benutzen zu können"),
+                ),
+                SettingsTile.navigation(
+                  onPressed: (context) {
+                    loadFromExportJson(context).then((result) {
+                      switch (result) {
+                        case "success":
+                          setState(() {});
+                          showSnackBar(text: "Einstellungen erfolgreich importiert.", duration: const Duration(seconds: 2));
+                          break;
+                        case "abort":
+                          break;
+                        case "import_error":
+                          showSnackBar(text: "Fehler beim Import.", error: true, clear: true);
+                        default:
+                          /// sollte nicht eintreten können
+                          break;
+                      }
+                    });
+                  },
+                  title: const Text("Einstellungen importieren"),
+                  description: const Text("von einem anderen Gerät exportierte Einstellungen übernehmen"),
+                ),
                 SettingsTile.navigation(
                   title: Text.rich(
                     TextSpan(
@@ -346,7 +378,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
               ],
             ),
-            /// da die Kategorie LernSax selbst nur so wenig Inhalt hat, gibt es auch kaum Einstellungen 
+            /// da die Kategorie LernSax selbst nur so wenig Inhalt hat, gibt es auch kaum Einstellungen
             SettingsSection(
               title: const Text("LernSax"),
               tiles: [
@@ -376,7 +408,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("🏳️‍🌈 Regenbogenmodus aktivieren"),
                   description: const Text("Farbe vieler Oberflächen wird zu Regenbogenanimation geändert"),
                   // enabled: userType != UserType.nobody,
-                )//,
+                ),
                 /*rainbowSwitchTile(
                   initialValue: prefs.aprilFoolsEnabled,
                   onToggle: (val) => prefs.aprilFoolsEnabled = val,
@@ -973,7 +1005,7 @@ class _HostEntryDialogState extends State<HostEntryDialog> {
       });
       return;
     }
-    
+
     if (json is! Map || json["service"] != "logup") {
       setState(() {
         _error = "Keine funktionierende LogUp-Instanz.";
@@ -1017,15 +1049,12 @@ class _NavHideDialogState extends State<NavHideDialog> {
                 return ListTile(
                   title: Row(
                     children: [
-                      (data.label is Text) ? Text("${child ? " - " : ""}${(data.label as Text).data}") : (data.id == StuPlanPageIDs.yours) ? Text(" - Eigener Plan") : data.label,
                       Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton.outlined(
-                            onPressed: (data.ignoreHiding == true || parentHidden || startpage) ? null : () => hidden ? prefs.removeHiddenNavID(data.id) : prefs.addHiddenNavID(data.id),
-                            icon: Icon((hidden || parentHidden) ? MdiIcons.eyeOff : MdiIcons.eye),
-                          ),
-                        ),
+                        child: (data.label is Text) ? Text("${child ? " - " : ""}${(data.label as Text).data}") : (data.id == StuPlanPageIDs.yours) ? Text(" - Eigener Plan") : data.label,
+                      ),
+                      IconButton.outlined(
+                        onPressed: (data.ignoreHiding == true || parentHidden || startpage) ? null : () => hidden ? prefs.removeHiddenNavID(data.id) : prefs.addHiddenNavID(data.id),
+                        icon: Icon((hidden || parentHidden) ? MdiIcons.eyeOff : MdiIcons.eye),
                       ),
                     ],
                   ),
@@ -1045,6 +1074,116 @@ class _NavHideDialogState extends State<NavHideDialog> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text("Fertig"))
       ],
+    );
+  }
+}
+
+/// Prefs aus externer Datei laden
+Future<String> loadFromExportJson(BuildContext context) async {
+  final prefs = Provider.of<Preferences>(context, listen: false);
+  final sie = prefs.preferredPronoun == Pronoun.sie;
+  /// Datei-Auswahldialog
+  FilePickerResult? result = await FilePicker.platform.pickFiles();
+  /// Prüft, ob eine Datei ausgewählt wurde
+  if (result != null) {
+    File file = File(result.files.single.path!);
+    try {
+      var importJsonText = (await file.readAsString());
+      var importJson = jsonDecode(importJsonText);
+      if (importJson['prefs_version'] != prefsVersion) {
+        bool? abort = showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+              title: const Text("Achtung!"),
+              content: Text("Die Version dieser App stimmt nicht mit der Version der App überein, von der diese Datei erstellt wurde. ${sie ? "Bitte aktualisieren Sie": "Bitte aktualisiere"} beide Apps und ${sie ? "versuchen Sie" : "versuche"} es erneut. Das Fortfahren kann zu Fehlern führen und ${sie ? "Sie sollten dies nur benutzen, wenn Sie wissen, was Sie tun!": "Du solltest dies nur benutzen, wenn Du weißt, was du tust!"}"),
+              actions: [
+                TextButton(
+                  child: const Text("Trotzdem fortfahren"),
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+                TextButton(
+                  child: const Text("Abbrechen"),
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                ),
+              ]
+          ),
+        ) as bool?;
+        if (abort == null) return "abort";
+        if (abort) return "abort";
+      }
+      prefs.loadFromJson(importJson["prefs_json"].toString());
+      return "success";
+    } catch (e, s) {
+      logCatch("prefs_import", e, s);
+      return "import_error";
+    }
+  } else {
+    return "abort";
+  }
+}
+
+Widget Function(BuildContext) sharePreferencesPageBuilder() => (context) => SharePreferencesPage();
+class SharePreferencesPage extends StatefulWidget {
+  const SharePreferencesPage({super.key});
+
+  @override
+  State<SharePreferencesPage> createState() => _SharePreferencesPageState();
+}
+
+class _SharePreferencesPageState extends State<SharePreferencesPage> {
+  @override
+  Widget build(BuildContext context) {
+    final prefs = Provider.of<Preferences>(globalScaffoldContext, listen: false);
+    String prefsJson = prefs.serialize();
+    var exportJsonText = {
+      'prefs_version': prefsVersion,
+      'prefs_json': prefsJson,
+    };
+    var exportJson = jsonEncode(exportJsonText);
+    return Scaffold(
+      appBar: AppBar(title: const Text("Gespeicherte Einstellungen")),
+      body: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              final date = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}_${DateTime.now().hour}-${DateTime.now().minute}";
+              Share.shareXFiles([XFile.fromData(utf8.encode(exportJson.toString()),mimeType: 'application/json')], fileNameOverrides: ['Kepler_App_Einstellungen_Export_$date.json'],
+                sharePositionOrigin: Rect.fromLTWH(
+                  0, 0,
+                  MediaQuery.of(this.context).size.width,
+                  MediaQuery.of(this.context).size.height / 2
+                )
+              );
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(flex: 0, child: Text("Exportieren")),
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 4),
+                    child: Icon(Icons.ios_share, size: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SizedBox(
+              width: double.infinity,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  //child: Text(widget.data + (sharedPreferences.getString(prefsPrefKey) as String)),
+                  child: Text(exportJsonText.toString()),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
