@@ -47,7 +47,6 @@ import 'package:kepler_app/libs/notifications.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
@@ -200,8 +199,8 @@ class _SettingsTabState extends State<SettingsTab> {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
-                            Provider.of<InternalState>(globalScaffoldContext, listen: false).introShown = false;
+                            final creds = Provider.of<CredentialStore>(context, listen: false);
+                            Provider.of<InternalState>(context, listen: false).introShown = false;
                             () async {
                               if (creds.lernSaxToken != null && creds.lernSaxLogin != null) {
                                 // try to unregister this app from LernSax, but don't care if it doesn't work
@@ -270,7 +269,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: Text(userType == UserType.teacher ? "Lehrer ändern" : "Klasse oder Belegung ändern"),
                   description: Text("${sie ? "Ihre" : "Deine"} ${userType == UserType.teacher ? "Lehrer-Abkürzung" : "Klasse und/oder belegte Fächer ändern"} (für ${sie ? "Ihren" : "Deinen"} primären Stundenplan)"),
                   onPressed: (_) {
-                    final state = Provider.of<AppState>(globalScaffoldContext, listen: false);
+                    final state = Provider.of<AppState>(context, listen: false);
                     state.infoScreen ??= (state.userType != UserType.teacher)
                         ? stuPlanPupilIntroScreens()
                         : stuPlanTeacherIntroScreens();
@@ -925,7 +924,7 @@ class _HostEntryDialogState extends State<HostEntryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
     return AlertDialog(
       title: Text("VLANT-LogUp-Host ändern"),
       content: SingleChildScrollView(
@@ -1031,8 +1030,8 @@ class NavHideDialog extends StatefulWidget {
 class _NavHideDialogState extends State<NavHideDialog> {
   @override
   Widget build(BuildContext context) {
-    final prefs = Provider.of<Preferences>(globalScaffoldContext, listen: false);
-    final userType = Provider.of<AppState>(globalScaffoldContext, listen: false).userType;
+    final prefs = Provider.of<Preferences>(context, listen: false);
+    final userType = Provider.of<AppState>(context, listen: false).userType;
     return AlertDialog(
       title: Text("Einträge ausblenden"),
       content: SizedBox(
@@ -1044,7 +1043,7 @@ class _NavHideDialogState extends State<NavHideDialog> {
             shrinkWrap: true,
             children: destinations.map((dest) {
               ListTile? genLT(NavEntryData data, bool child, bool parentHidden) {
-                if (dest.isVisible?.call(globalScaffoldContext) == false || data.visibleFor?.contains(userType) == false) return null;
+                if (dest.isVisible?.call(context) == false || data.visibleFor?.contains(userType) == false) return null;
                 final hidden = prefs.hiddenNavIDs.contains(data.id);
                 final startpage = prefs.startNavPageIDs.contains(data.id);
                 return ListTile(

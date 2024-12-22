@@ -256,11 +256,11 @@ class _LogViewPageState extends State<LogViewPage> {
   void initState() {
     super.initState();
     _checkLogupAvailability();
-    _logUpHostSet = Provider.of<Preferences>(globalScaffoldContext, listen: false).logUpHost != null;
+    _logUpHostSet = Provider.of<Preferences>(context, listen: false).logUpHost != null;
   }
 
   Future<bool> _checkLogupAvailability() async {
-    final host = Provider.of<Preferences>(globalScaffoldContext, listen: false).logUpHost;
+    final host = Provider.of<Preferences>(context, listen: false).logUpHost;
     if (host != null) {
       try {
         return await http.get(Uri(scheme: "https", host: host, path: "/api/ping")).then((resp) {
@@ -298,8 +298,8 @@ class _LogUpDialogState extends State<LogUpDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final host = Provider.of<Preferences>(globalScaffoldContext, listen: false).logUpHost;
-    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    final host = Provider.of<Preferences>(context, listen: false).logUpHost;
+    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
     return AlertDialog(
       title: Text("Auf VLANT-LogUp hochladen"),
       content: Column(

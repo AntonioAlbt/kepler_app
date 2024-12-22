@@ -410,7 +410,7 @@ final destinations = [
         icon: const Icon(Icons.add),
         label: const Text("LernSax-Konto hinzufügen"),
         onTryOpen: (ctx) async {
-          final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+          final creds = Provider.of<CredentialStore>(ctx, listen: false);
           if (creds.lernSaxLogin == lernSaxDemoModeMail) {
             await showDialog(
               context: ctx,
@@ -427,7 +427,7 @@ final destinations = [
               title: const Text("LernSax-Konto hinzufügen"),
               content: LernSaxScreenMain(
                 onRegistered: (mail, token, context) {
-                  final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+                  final creds = Provider.of<CredentialStore>(ctx, listen: false);
                   creds.addAlternativeLSUser(mail, token);
                   Navigator.pop(context);
                   showSnackBar(text: "LernSax-Konto erfolgreich hinzugefügt.");

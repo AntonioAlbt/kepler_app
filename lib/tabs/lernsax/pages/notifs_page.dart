@@ -36,7 +36,6 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/lernsax.dart' as lernsax;
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
@@ -289,9 +288,9 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
           Navigator.pop(context);
           final appPageId = _appPageObjectMap[notif.object];
           if (appPageId != null) {
-            Provider.of<AppState>(globalScaffoldContext, listen: false).selectedNavPageIDs = [LernSaxPageIDs.main, appPageId];
+            Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [LernSaxPageIDs.main, appPageId];
           } else {
-            final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
+            final creds = Provider.of<CredentialStore>(context, listen: false);
             // the target url path is the link to the system notifications page
             lernsax.getSingleUseLoginLink(creds.lernSaxLogin!, creds.lernSaxToken!, targetUrlPath: "/wws/240761.php").then((data) {
               final (online, link) = data;

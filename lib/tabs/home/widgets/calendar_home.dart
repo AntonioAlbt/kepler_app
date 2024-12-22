@@ -34,7 +34,6 @@
 import 'package:flutter/material.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/state.dart';
-import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
 import 'package:kepler_app/tabs/school/calendar.dart';
@@ -67,8 +66,8 @@ class HomeCalendarWidgetState extends State<HomeCalendarWidget> {
           final (online, data) = out;
           if (!online) return;
           if (data == null) return;
-          if (!globalScaffoldContext.mounted) return;
-          Provider.of<NewsCache>(globalScaffoldContext, listen: false).replaceMonthInCalData(DateTime.now(), data);
+          if (!context.mounted) return;
+          Provider.of<NewsCache>(context, listen: false).replaceMonthInCalData(DateTime.now(), data);
         }),
         builder: (context, snapshot) => (snapshot.connectionState == ConnectionState.waiting) ?
         const Center(child: CircularProgressIndicator())

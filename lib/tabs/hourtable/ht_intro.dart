@@ -138,10 +138,9 @@ class _SPClassSelectorState extends State<SPClassSelector> {
 
   @override
   Widget build(BuildContext context) {
-    /// da dieses Widget teilweise in Dialogen verwendet wird, muss hier der globale Kontext verwendet werden
-    final userType = Provider.of<AppState>(globalScaffoldContext, listen: false).userType;
-    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
-    final stdata = Provider.of<StuPlanData>(globalScaffoldContext, listen: false);
+    final userType = Provider.of<AppState>(context, listen: false).userType;
+    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
+    final stdata = Provider.of<StuPlanData>(context, listen: false);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -216,9 +215,8 @@ class _SPClassSelectorState extends State<SPClassSelector> {
   }
 
   Future<StuPlanData?> _loadData() async {
-    /// auch hier globalen Kontext verwenden
-    final creds = Provider.of<CredentialStore>(globalScaffoldContext, listen: false);
-    final spdata = Provider.of<StuPlanData>(globalScaffoldContext, listen: false);
+    final creds = Provider.of<CredentialStore>(context, listen: false);
+    final spdata = Provider.of<StuPlanData>(context, listen: false);
     setState(() {
       _loading = true;
       _error = null;
@@ -451,8 +449,8 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AppState>(globalScaffoldContext, listen: false).userType;
-    final sie = Provider.of<Preferences>(globalScaffoldContext, listen: false).preferredPronoun == Pronoun.sie;
+    final user = Provider.of<AppState>(context, listen: false).userType;
+    final sie = Provider.of<Preferences>(context, listen: false).preferredPronoun == Pronoun.sie;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -679,7 +677,7 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final stdata = Provider.of<StuPlanData>(globalScaffoldContext, listen: false);
+    final stdata = Provider.of<StuPlanData>(context, listen: false);
     return AnimatedBuilder(
       animation: stdata,
       builder: (context, _) {
