@@ -34,6 +34,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:kepler_app/build_vars.dart';
@@ -154,7 +155,11 @@ class _SettingsTabState extends State<SettingsTab> {
                 /// SettingsTile, was bei Tippen einfach etwas ausführt
                 SettingsTile.navigation(
                   onPressed: (context) {
-                    Navigator.push(context, MaterialPageRoute(builder: sharePreferencesPageBuilder()));
+                    if (kDebugMode) {
+                      Navigator.push(context, MaterialPageRoute(builder: sharePreferencesDebugPageBuilder()));
+                    } else {
+                      exportJson(context);
+                    }
                   },
                   title: const Text("Einstellungen exportieren"),
                   description: const Text("um diese auf einem anderen Gerät benutzen zu können"),
@@ -1091,9 +1096,10 @@ Future<String> loadFromExportJson(BuildContext context) async {
       var importJsonText = (await file.readAsString());
       var importJson = jsonDecode(importJsonText);
       if (importJson['prefs_version'] != prefsVersion) {
-        bool? abort = showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
+        if (context.mounted) {
+          bool? abort = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
               title: const Text("Achtung!"),
               content: Text("Die Version dieser App stimmt nicht mit der Version der App überein, von der diese Datei erstellt wurde. ${sie ? "Bitte aktualisieren Sie": "Bitte aktualisiere"} beide Apps und ${sie ? "versuchen Sie" : "versuche"} es erneut. Das Fortfahren kann zu Fehlern führen und ${sie ? "Sie sollten dies nur benutzen, wenn Sie wissen, was Sie tun!": "Du solltest dies nur benutzen, wenn Du weißt, was du tust!"}"),
               actions: [
@@ -1103,15 +1109,13 @@ Future<String> loadFromExportJson(BuildContext context) async {
                 ),
                 TextButton(
                   child: const Text("Abbrechen"),
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
+                  onPressed: () => Navigator.pop(context, true),
                 ),
               ]
-          ),
-        ) as bool?;
-        if (abort == null) return "abort";
-        if (abort) return "abort";
+            ),
+          );
+          if (abort == null || abort) return "abort";
+        }
       }
       prefs.loadFromJson(importJson["prefs_json"].toString());
       return "success";
@@ -1124,39 +1128,45 @@ Future<String> loadFromExportJson(BuildContext context) async {
   }
 }
 
-Widget Function(BuildContext) sharePreferencesPageBuilder() => (context) => SharePreferencesPage();
-class SharePreferencesPage extends StatefulWidget {
-  const SharePreferencesPage({super.key});
-
-  @override
-  State<SharePreferencesPage> createState() => _SharePreferencesPageState();
+Map getExportJson(BuildContext context) {
+  final prefs = Provider.of<Preferences>(context, listen: false);
+  String prefsJson = prefs.serialize();
+  var exportJsonText = {
+    'prefs_version': prefsVersion,
+    'prefs_json': prefsJson,
+  };
+  return exportJsonText;
 }
 
-class _SharePreferencesPageState extends State<SharePreferencesPage> {
+void exportJson(BuildContext context) {
+  var exportJsonMap = jsonEncode(getExportJson(context));
+  final date = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}_${DateTime.now().hour}-${DateTime.now().minute}";
+  Share.shareXFiles([XFile.fromData(utf8.encode(exportJsonMap.toString()),mimeType: 'application/json')], fileNameOverrides: ['Kepler_App_Einstellungen_Export_$date.json'],
+      sharePositionOrigin: Rect.fromLTWH(
+          0, 0,
+          MediaQuery.of(context).size.width,
+          MediaQuery.of(context).size.height / 2
+      )
+  );
+}
+
+Widget Function(BuildContext) sharePreferencesDebugPageBuilder() => (context) => SharePreferencesDebugPage();
+class SharePreferencesDebugPage extends StatefulWidget {
+  const SharePreferencesDebugPage({super.key});
+
+  @override
+  State<SharePreferencesDebugPage> createState() => _SharePreferencesDebugPageState();
+}
+
+class _SharePreferencesDebugPageState extends State<SharePreferencesDebugPage> {
   @override
   Widget build(BuildContext context) {
-    final prefs = Provider.of<Preferences>(globalScaffoldContext, listen: false);
-    String prefsJson = prefs.serialize();
-    var exportJsonText = {
-      'prefs_version': prefsVersion,
-      'prefs_json': prefsJson,
-    };
-    var exportJson = jsonEncode(exportJsonText);
     return Scaffold(
       appBar: AppBar(title: const Text("Gespeicherte Einstellungen")),
       body: Column(
         children: [
           ElevatedButton(
-            onPressed: () {
-              final date = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}_${DateTime.now().hour}-${DateTime.now().minute}";
-              Share.shareXFiles([XFile.fromData(utf8.encode(exportJson.toString()),mimeType: 'application/json')], fileNameOverrides: ['Kepler_App_Einstellungen_Export_$date.json'],
-                sharePositionOrigin: Rect.fromLTWH(
-                  0, 0,
-                  MediaQuery.of(this.context).size.width,
-                  MediaQuery.of(this.context).size.height / 2
-                )
-              );
-            },
+            onPressed: () => exportJson(context),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1177,7 +1187,7 @@ class _SharePreferencesPageState extends State<SharePreferencesPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   //child: Text(widget.data + (sharedPreferences.getString(prefsPrefKey) as String)),
-                  child: Text(exportJsonText.toString()),
+                  child: Text(getExportJson(context).toString()),
                 ),
               ),
             ),
