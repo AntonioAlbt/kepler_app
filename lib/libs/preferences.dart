@@ -46,6 +46,10 @@ import 'package:provider/provider.dart';
 
 const prefsPrefKey = "user_preferences";
 
+/// Version der Einstellungen, muss für jede Änderung derselben geändert werden,
+/// damit die App keine Einstellungen importiert, welche aus einer anderen App-Version stammen
+const prefsVersion = 1;
+
 /// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
 
@@ -97,6 +101,7 @@ enum Pronoun {
     Pronoun.sie: "Mit Sie anreden",
   }[this]!;
 }
+
 /// Farbschema der App
 enum AppTheme {
   system,
@@ -268,9 +273,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool loaded = false;
 
   Future<void> save() async {
-    sharedPreferences.setString(prefsPrefKey, _serialize());
+    sharedPreferences.setString(prefsPrefKey, serialize());
   }
-  String _serialize() => _serializer.serialize(this);
+  String serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
     _serializer.deserialize(json, this);
     loaded = true;
