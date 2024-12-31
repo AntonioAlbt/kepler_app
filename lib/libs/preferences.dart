@@ -272,6 +272,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
   set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
 
+  /// soll die Möglichkeit zum Hinzufügen von Ereignissen auf der Seite "Dein Stundenplan" angezeigt werden?
+  bool get showYourPlanAddEvents => attributes["show_yp_addevt"] ?? true;
+  set showYourPlanAddEvents(bool val) => setSaveNotify("show_yp_addevt", val);
+
   /// Host für VLANT-LogUp
   String? get logUpHost => attributes["log_up_url"] ?? kBaseLogUpHost;
   set logUpHost(String? val) => setSaveNotify("log_up_url", val ?? kBaseLogUpHost);
