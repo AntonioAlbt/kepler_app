@@ -58,8 +58,8 @@ class YourPlanPage extends StatefulWidget {
 }
 
 class YourPlanPageState extends State<YourPlanPage> {
-  /// gerade ausgewählter Plan, bestehend aus ( id* + 1, Klassenname/Lehrerkürzel )
-  /// *wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
+  /// gerade ausgewählter Plan, bestehend aus ( id, Klassenname/Lehrerkürzel )
+  /// wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
   /// 
   /// -> Achtung: bei Verwendung als Index immer `- 1` rechnen!
   late (int, String) selected;
@@ -184,6 +184,22 @@ class YourPlanPageState extends State<YourPlanPage> {
                 ),
               ],
             ),
+            // Align(
+            //   alignment: Alignment.bottomRight,
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Container(
+            //       decoration: BoxDecoration(
+            //         boxShadow: [BoxShadow(blurRadius: 15, spreadRadius: -10, offset: Offset(2, 2))]
+            //       ),
+            //       child: FloatingActionButton(
+            //         elevation: 0,
+            //         onPressed: () {}, // add calendar entry
+            //         child: Icon(Icons.add),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         );
       }
