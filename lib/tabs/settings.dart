@@ -380,6 +380,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" Stundenpläne hinzufügen können"),
                   enabled: userType != UserType.nobody && Provider.of<StuPlanData>(context, listen: false).altSelectedClassNames.isEmpty,
                 ),
+                rainbowSwitchTile(
+                  initialValue: prefs.showYourPlanAddEvents,
+                  onToggle: (val) => prefs.showYourPlanAddEvents = val,
+                  title: const Text("Knopf für Ereignisse hinzufügen anzeigen"),
+                  description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" eigene Ereignisse hinzufügen können"),
+                  enabled: userType != UserType.nobody,
+                ),
               ],
             ),
             /// da die Kategorie LernSax selbst nur so wenig Inhalt hat, gibt es auch kaum Einstellungen

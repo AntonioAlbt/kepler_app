@@ -38,6 +38,7 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/checks.dart';
+import 'package:kepler_app/libs/custom_events.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
@@ -51,6 +52,9 @@ import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
     show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
+
+/// wie viel soll die Stundenplan-Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
+const kSPListExtraScrollSpace = 32.0;
 
 enum SPDisplayMode {
   /// "Dein/Ihr Stundenplan": Stundenplan für einzelne, ausgewählte Klasse, Fächer können ausgeblendet werden.
@@ -687,6 +691,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                           ),
                         );
                       }
+                      if (Provider.of<Preferences>(context, listen: false).showYourPlanAddEvents) list.add(SizedBox(height: kSPListExtraScrollSpace));
                       return ListView(
                         shrinkWrap: true,
                         children: list,
@@ -707,6 +712,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                             ),
                           );
                         }
+                        if (Provider.of<Preferences>(context, listen: false).showYourPlanAddEvents) list.add(SizedBox(height: kSPListExtraScrollSpace));
                         return ListView.separated(
                           itemCount: list.length,
                           shrinkWrap: true,
@@ -715,18 +721,24 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         );
                       }(),
                     )
-                  : LessonListContainer(
-                    lessons,
-                    widget.selected,
-                    widget.date,
-                    onSwipeLeft: widget.onSwipeLeft,
-                    onSwipeRight: widget.onSwipeRight,
-                    isOnline: isOnline,
-                    mode: widget.mode,
-                    fullLessonListForDate: allLessonsForDate,
-                    onRefresh: () async {
-                      showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
-                    },
+                  : Consumer<CustomEventManager>(
+                    builder: (context, evtmgr, _) {
+                      return LessonListContainer(
+                        lessons,
+                        widget.selected,
+                        widget.date,
+                        onSwipeLeft: widget.onSwipeLeft,
+                        onSwipeRight: widget.onSwipeRight,
+                        isOnline: isOnline,
+                        mode: widget.mode,
+                        fullLessonListForDate: allLessonsForDate,
+                        onRefresh: () async {
+                          showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
+                        },
+                        events: evtmgr.events.where((evt) => isSameDate(evt.startTime, widget.date)).toList(),
+                        extraScrollSpace: kSPListExtraScrollSpace,
+                      );
+                    }
                   ),
           ),
         ),
@@ -1227,7 +1239,69 @@ class SPListContainer extends StatelessWidget {
                       borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
                       color: color ?? Theme.of(context).colorScheme.surface,
                     ),
-                    child: subChild,
+                    child: subChild != null && prefs.showYourPlanAddEvents ? Stack(
+                      // mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Expanded(child: subChild),
+                        subChild,
+                        // Divider(indent: 32, endIndent: 32, color: hasDarkTheme(context) ? colorWithLightness(Colors.grey, .15) : null),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Transform.translate(
+                            offset: Offset(0, 4),
+                            child: Padding(
+                              // padding: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.only(),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // /// Abstand auf beiden Seiten ausbalancieren, damit ElevatedButton in der Mitte bleibt
+                                  // const IconButton(icon: Icon(Icons.abc, size: 20, color: Colors.transparent), onPressed: null),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(topLeft: Radius.circular(5), topRight: Radius.circular(5)),
+                                      ),
+                                      visualDensity: VisualDensity(vertical: -1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 4),
+                                            child: const Icon(Icons.event, size: 16),
+                                          ),
+                                        ),
+                                        Flexible(flex: 0, child: Text("Ereignis hinzufügen")),
+                                      ],
+                                    ),
+                                  ),
+                                  // IconButton(onPressed: () {
+                                  //   showDialog(context: context, builder: (ctx) => AlertDialog(
+                                  //     title: const Text("Ausblenden?"),
+                                  //     content: const Text("Soll die Möglichkeit zum Hinzufügen von Ereignissen wirklich ausgeblendet werden? Dies kann jederzeit in den Einstellungen geändert werden."),
+                                  //     actions: [
+                                  //       TextButton(onPressed: () {
+                                  //         prefs.showYourPlanAddEvents = false;
+                                  //         Navigator.pop(ctx);
+                                  //       }, child: const Text("Ja, ausblenden")),
+                                  //       TextButton(onPressed: () {
+                                  //         Navigator.pop(ctx);
+                                  //       }, child: const Text("Nein")),
+                                  //     ],
+                                  //   ));
+                                  // }, icon: const Icon(Icons.visibility_off), iconSize: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ) : subChild,
                   ),
                 ),
               );
@@ -1246,6 +1320,7 @@ class SPListContainer extends StatelessWidget {
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
   final List<VPLesson>? fullLessonListForDate;
+  final List<CustomEvent>? events;
   final String className;
   final DateTime date;
   final void Function()? onSwipeLeft;
@@ -1253,63 +1328,135 @@ class LessonListContainer extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final bool? isOnline;
   final SPDisplayMode? mode;
-  const LessonListContainer(this.lessons, this.className, this.date, {super.key, this.onSwipeLeft, this.onSwipeRight, this.isOnline, this.mode, required this.fullLessonListForDate, required this.onRefresh});
+  /// wie viel soll die Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
+  final double? extraScrollSpace;
+  LessonListContainer(
+    this.lessons,
+    this.className,
+    this.date, {
+    super.key,
+    this.onSwipeLeft,
+    this.onSwipeRight,
+    this.isOnline,
+    this.mode,
+    required this.fullLessonListForDate,
+    required this.onRefresh,
+    this.events,
+    this.extraScrollSpace,
+  }) {
+    events!.sort((a, b) {
+      if (a.startLesson != null && b.startLesson != null) return a.startLesson!.compareTo(b.startLesson!);
+      if (a.startLesson != null) return 1;
+      if (b.startLesson != null) return -1;
+      return a.startTime.compareTo(b.startTime);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return SPListContainer(
-        onSwipeLeft: onSwipeLeft,
-        onSwipeRight: onSwipeRight,
-        showBorder: lessons != null,
-        child: () {
-          if (lessons == null) {
-            return Center(
-              child: Text(
-                isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
-                style: const TextStyle(fontSize: 18),
-              ),
-            );
-          }
-          if (lessons!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "${getDayDescription(date)} kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
-                    style: const TextStyle(fontSize: 18),
-                    textAlign: TextAlign.center,
-                  ),
-                ]
-              ),
-            );
-          }
-          final stdata = Provider.of<StuPlanData>(context, listen: false);
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: RefreshIndicator(
-              onRefresh: onRefresh,
-              child: ListView.separated(
-                itemCount: lessons!.length,
-                itemBuilder: (context, index) => LessonDisplay(
-                  lessons![index],
-                  index > 0
-                      ? lessons!.elementAtOrNull(index - 1)?.schoolHour
-                      : null,
-                  fullLessonListForDate != null ? lessons![index].hasLastRoomUsageFromList(fullLessonListForDate!) : false,
-                  subject: stdata.availableSubjects[className]
-                      ?.cast<VPCSubjectS?>()
-                      .firstWhere(
-                        (s) => s!.subjectID == lessons![index].subjectID,
-                        orElse: () => null,
-                      ),
-                  classNameToStrip: className,
-                ),
-                separatorBuilder: (context, index) => const Divider(height: 24),
-              ),
-            ),
+      onSwipeLeft: onSwipeLeft,
+      onSwipeRight: onSwipeRight,
+      showBorder: lessons != null,
+      child: () {
+        if (lessons == null || lessons!.isEmpty) {
+          final infoText = Text(
+            lessons == null ? (isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
+              : "${getDayDescription(date)} kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
           );
-        }());
+          if (events == null || events!.isEmpty) {
+            return Center(child: infoText);
+          } else {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.separated(
+                itemCount: (events?.length ?? 0) + 2,
+                itemBuilder: (_, i) {
+                  if (i == 0) {
+                    return infoText;
+                  } else if (i == 1) {
+                    return Text(
+                      "Events ${getDayDescription(date).toLowerCase()}:",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    );
+                  } else {
+                    return CustomEventDisplay(events![i - 2], i > 2 ? events![i - 3].startLesson ?? -1 : -1);
+                  }
+                },
+                separatorBuilder: (_, __) => const Divider(),
+              ),
+            );
+          }
+        }
+        final stdata = Provider.of<StuPlanData>(context, listen: false);
+
+        final mixedList = <Object>[...lessons!];
+        /// Events werden nur im persönlichen Stundenplan angezeigt
+        if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
+          var insI = 0;
+          var lastHr = 0;
+          // var lastStartIns = 0;
+          for (final evt in events!) {
+            if (evt.startLesson == null) {
+              // mixedList.insert(lastStartIns, evt);
+              // lastStartIns++;
+              mixedList.add(evt);
+              continue;
+            }
+            if (lastHr > 0 && evt.startLesson == lastHr) {
+              mixedList.insert(insI, evt);
+              insI++;
+            } else {
+              while (lessons![insI].schoolHour <= evt.startLesson!) {
+                insI++;
+              }
+              lastHr = evt.startLesson!;
+              mixedList.insert(insI, evt);
+              insI++;
+            }
+          }
+        }
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView.separated(
+              itemCount: mixedList.length + (extraScrollSpace != null ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == mixedList.length) return SizedBox(height: extraScrollSpace);
+
+                final entry = mixedList[index];
+                final prevHour = index > 0 ? (){
+                  final p = mixedList[index - 1];
+                  return (p is VPLesson) ? p.schoolHour : (p is CustomEvent) ? (p.startLesson ?? -1) : -1;
+                }() : null;
+
+                if (entry is VPLesson) {
+                  return LessonDisplay(
+                    entry,
+                    prevHour,
+                    fullLessonListForDate != null ? entry.hasLastRoomUsageFromList(fullLessonListForDate!) : false,
+                    subject: stdata.availableSubjects[className]
+                        ?.cast<VPCSubjectS?>()
+                        .firstWhere(
+                          (s) => s!.subjectID == entry.subjectID,
+                          orElse: () => null,
+                        ),
+                    classNameToStrip: className,
+                  );
+                } else if (entry is CustomEvent) {
+                  return CustomEventDisplay(entry, prevHour);
+                } else {
+                  return SizedBox.shrink();
+                }
+              },
+              separatorBuilder: (context, index) => index < mixedList.length - 1 ? const Divider(height: 24) : const SizedBox.shrink(),
+            ),
+          ),
+        );
+      }(),
+    );
   }
 }
 
@@ -1343,20 +1490,23 @@ class LessonDisplay extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: (showInfoDialog)
-            ? () => showDialog(
-                context: context,
-                builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay))
-            : null,
+          ? () => showDialog(
+            context: context,
+            builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay),
+          ) : null,
         child: Column(
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                SizedBox(
-                  width: 26,
-                  child: (previousLessonHour != lesson.schoolHour)
-                      ? Text("${lesson.schoolHour}. ")
-                      : const SizedBox.shrink(),
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: SizedBox(
+                    width: 26,
+                    child: (previousLessonHour != lesson.schoolHour)
+                        ? Text("${lesson.schoolHour}. ")
+                        : const SizedBox.shrink(),
+                  ),
                 ),
                 Text(
                   lesson.subjectCode.replaceFirst(classNameToStrip ?? "funny joke.", ""),
@@ -1406,7 +1556,7 @@ class LessonDisplay extends StatelessWidget {
             if (lesson.infoText != "")
               Row(
                 children: [
-                  const SizedBox(width: 25),
+                  const SizedBox(width: 25 + 4),
                   Flexible(
                     child: Text(
                       lesson.infoText,
@@ -1483,4 +1633,4 @@ class ExamDisplay extends StatelessWidget {
   }
 }
 
-// boah. fast 1500 Zeilen "Code".
+// boah. mehr als 1600 Zeilen "Code".
