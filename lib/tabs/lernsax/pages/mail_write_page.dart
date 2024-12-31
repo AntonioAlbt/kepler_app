@@ -364,7 +364,9 @@ class _MailWritePageState extends State<MailWritePage> {
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Ja, jetzt senden")),
                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Abbrechen")),
                         ],
-                      ))) return;
+                      ))) {
+                        return;
+                      }
         
                       final (online, success) = await sendMail(
                         selectedLogin,

@@ -50,7 +50,7 @@ const keplerAppDSELink = "https://www.kepler-chemnitz.de/materialis/datenschutze
 const creatorMail = "antonio@vlant.de";
 
 /// sollte nicht mehr verändert werden, war bei Erstellung zum Ausprobieren, welche Größe gut aussieht
-const rainbowScale = 2.0;
+const _rainbowScale = 2.0;
 
 /// Tab für Infos über die App (und Debug-Logs)
 /// - Anzeige App-Version
@@ -87,7 +87,7 @@ class _AboutTabState extends State<AboutTab> {
                     builder: (context, datasn) {
                       if (!datasn.hasData) return const Text("App-Version: unbekannt");
                       return Text(
-                        "erstellt 2023/24 von Antonio Albert\nApp-Version: ${datasn.data?.version} (${datasn.data?.buildNumber})",
+                        "erstellt 2023 bis 2025\nvon Antonio Albert und Mitwirkenden\nApp-Version: ${datasn.data?.version} (${datasn.data?.buildNumber})",
                         textAlign: TextAlign.center,
                       );
                     }
@@ -187,8 +187,8 @@ class _AboutTabState extends State<AboutTab> {
                     decoration: BoxDecoration(border: Border.all(width: 2)),
                     child: Column(
                       children: List.generate(rainbowColors.length, (i) => Container(
-                        height: 20/6*rainbowScale,
-                        width: 30*rainbowScale,
+                        height: 20/6*_rainbowScale,
+                        width: 30*_rainbowScale,
                         color: rainbowColors[i],
                       )),
                     ),

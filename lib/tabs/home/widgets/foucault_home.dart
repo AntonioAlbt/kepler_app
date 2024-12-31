@@ -174,7 +174,7 @@ class FPDisplay extends StatelessWidget {
       padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+          color: colorWithLightness(keplerColorOrange.withValues(alpha: .75), hasDarkTheme(context) ? .025 : .9),
           borderRadius: BorderRadius.circular(8),
         ),
         child: () {

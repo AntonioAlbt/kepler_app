@@ -719,7 +719,8 @@ class ColorSelectSettingsTile extends AbstractSettingsTile {
                 ),
               ),
             ),
-            TextSpan(text: current != null ? " #${current?.value.toRadixString(16).padLeft(8, '0')}" : "keine"),
+            // ignore: deprecated_member_use
+            TextSpan(text: current != null ? " #${current?.value.toRadixString(16).padLeft(8, '0').substring(2)}" : "keine"),
           ],
         ),
       ),

@@ -175,7 +175,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                               final bgCol = hasDarkTheme(context) ? colorWithLightness(Colors.grey.shade900, .2) : Colors.grey.shade300;
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: color != null ? Color.alphaBlend(color.withOpacity(.25), bgCol) : bgCol,
+                                  color: color != null ? Color.alphaBlend(color.withValues(alpha: .25), bgCol) : bgCol,
                                 ),
                                 width: 350,
                                 height: 200,

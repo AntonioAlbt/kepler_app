@@ -57,7 +57,7 @@ class RoomPlanPageState extends State<RoomPlanPage> {
     return Consumer<CredentialStore>(
       builder: (context, creds, _) => Stack(
         children: [
-          RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+          RainbowWrapper(builder: (_, color) => Container(color: color?.withValues(alpha: .5))),
           Column(
             children: [
               SizedBox(

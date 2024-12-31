@@ -156,9 +156,6 @@ final finishScreen = InfoScreen(
                 return Text("Als Lehrer ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Lehrer und Schüler und alle LernSax-Funktionen.");
               case UserType.pupil:
                 return Text("Als Schüler ${sie ? "haben Sie" : "hast Du"} Zugriff auf den Vertretungsplan für Schüler und alle LernSax-Funktionen.");
-              default: // we absolutely should not reach this case! (maybe if someone adds new UserType-s)
-                return const Text("Aber irgendetwas ist schiefgelaufen... Ich schau mal schnell nach, ne?");
-                /// aber er hat nie nachgeschaut... :'(
             }
           }()),
           Consumer<AppState>(

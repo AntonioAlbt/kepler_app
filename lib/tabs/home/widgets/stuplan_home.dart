@@ -85,7 +85,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
               if (user == UserType.nobody) Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
                 child: SPListContainer(
-                  color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+                  color: colorWithLightness(keplerColorOrange.withValues(alpha: .75), hasDarkTheme(context) ? .025 : .9),
                   shadow: false,
                   padding: EdgeInsets.zero,
                   showBorder: false,
@@ -189,7 +189,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
               ) else Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
                 child: SPListContainer(
-                  color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+                  color: colorWithLightness(keplerColorOrange.withValues(alpha: .75), hasDarkTheme(context) ? .025 : .9),
                   shadow: false,
                   padding: EdgeInsets.zero,
                   showBorder: false,
@@ -265,7 +265,7 @@ class SPWidgetList extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
       child: SPListContainer(
-        color: colorWithLightness(keplerColorOrange.withOpacity(.75), hasDarkTheme(context) ? .025 : .9),
+        color: colorWithLightness(keplerColorOrange.withValues(alpha: .75), hasDarkTheme(context) ? .025 : .9),
         shadow: false,
         padding: EdgeInsets.zero,
         showBorder: false,

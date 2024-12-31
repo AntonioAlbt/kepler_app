@@ -51,7 +51,7 @@ class AllReplacesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+        RainbowWrapper(builder: (_, color) => Container(color: color?.withValues(alpha: .5))),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: StuPlanDisplay(

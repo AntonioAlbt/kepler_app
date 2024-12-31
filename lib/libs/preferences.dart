@@ -31,6 +31,8 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
@@ -116,7 +118,7 @@ enum AppTheme {
 }
 
 /// Farbe aus Farbwerten erstellen
-Color _color(List<int> args) => Color.fromARGB(args[0], args[1], args[2], args[3]);
+Color _color(List<double> args) => Color.from(alpha: args[0], red: args[1], green: args[2], blue: args[3]);
 
 /// alle Einstellungen, die vom Benutzer angepasst werden können
 class Preferences extends SerializableObject with ChangeNotifier {
@@ -148,12 +150,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
   /// Farbe der Umrandung für die Stundenplanansicht, falls Daten verfügbar sind
-  Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color((attributes["sp_border_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : keplerColorBlue;
-  set stuPlanDataAvailableBorderColor(Color val) => setSaveNotify("sp_border_col", [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(","));
+  Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color(jsonDecode(attributes["sp_border_col"]!).cast<double>()) : keplerColorBlue;
+  set stuPlanDataAvailableBorderColor(Color val) => setSaveNotify("sp_border_col", jsonEncode([val.a, val.r, val.g, val.b]));
 
   /// falls hier eine Farbe gewählt ist, wird sie mit der Hauptfarbe für einen Farbverlauf verwendet
-  Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _color((attributes["sp_border_gradient_col"]! as String).split(",").map((e) => int.parse(e)).toList()) : null;
-  set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? [val.alpha, val.red, val.green, val.blue].map((e) => e.toString()).join(",") : null);
+  Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _color(jsonDecode(attributes["sp_border_gradient_col"]!).cast<double>()) : null;
+  set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? jsonEncode([val.a, val.r, val.g, val.b]) : null);
 
   /// Breite der Farbumrandung in der Stundenplanansicht
   double get stuPlanDataAvailableBorderWidth => attributes["sp_border_width"] ?? 3;

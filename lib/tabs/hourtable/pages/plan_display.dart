@@ -747,7 +747,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     BoxShadow(
                       color: hasDarkTheme(context)
                           ? Colors.black26
-                          : Colors.grey.withOpacity(0.24),
+                          : Colors.grey.withValues(alpha: 0.24),
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),
@@ -795,7 +795,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: hasDarkTheme(context) ? Colors.black26 : Colors.grey.withOpacity(0.24),
+                    color: hasDarkTheme(context) ? Colors.black26 : Colors.grey.withValues(alpha: 0.24),
                     spreadRadius: 5,
                     blurRadius: 7,
                     offset: const Offset(0, 3),
@@ -852,7 +852,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     BoxShadow(
                       color: hasDarkTheme(context)
                           ? Colors.black26
-                          : Colors.grey.withOpacity(0.24),
+                          : Colors.grey.withValues(alpha: 0.24),
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),
@@ -1149,7 +1149,6 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         allLessonsForDate = leData?.teachers?.expand((cl) => cl.lessons)?.toList();
         additionalInfo = leData?.additionalInfo;
         break;
-      default:
     }
     lessons?.sort((l1, l2) {
       final t1 = l1.schoolHour.compareTo(l2.schoolHour);
@@ -1213,7 +1212,7 @@ class SPListContainer extends StatelessWidget {
                     BoxShadow(
                       color: hasDarkTheme(context)
                           ? Colors.black45
-                          : Colors.grey.withOpacity(0.5),
+                          : Colors.grey.withValues(alpha: 0.5),
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: const Offset(0, 3),

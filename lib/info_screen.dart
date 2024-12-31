@@ -233,7 +233,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                               borderRadius: const BorderRadius.all(Radius.circular(8))
                             ),
                             child: AnimatedBuilder(
@@ -284,7 +284,7 @@ class InfoScreenDisplayState extends State<InfoScreenDisplay> with SingleTickerP
                                 shape: BoxShape.circle,
                                 // gradient: RadialGradient(colors: [Theme.of(context).colorScheme.background, Theme.of(context).colorScheme.background.withAlpha(0)], stops: const [0.9, 1]),
                                 border: Border.all(color: Theme.of(context).highlightColor, width: 1.5),
-                                color: Theme.of(context).colorScheme.surface.withOpacity(0.5)
+                                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5)
                               ),
                               child: IconButton(
                                 padding: const EdgeInsets.all(5),

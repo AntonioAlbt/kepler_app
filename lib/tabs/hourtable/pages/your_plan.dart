@@ -71,7 +71,7 @@ class YourPlanPageState extends State<YourPlanPage> {
         final mainSelected = state.userType == UserType.teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!;
         return Stack(
           children: [
-            RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+            RainbowWrapper(builder: (_, color) => Container(color: color?.withValues(alpha: .5))),
             Column(
               children: [
                 if (prefs.showYourPlanAddDropdown) SizedBox(

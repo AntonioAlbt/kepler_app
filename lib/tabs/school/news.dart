@@ -243,7 +243,7 @@ class NewsEntry extends StatelessWidget with SerializableObject {
     return RainbowWrapper(
       builder: (context, rcolor) {
         return Card(
-          color: rcolor != null ? Color.alphaBlend(rcolor.withOpacity(.5), color) : color,
+          color: rcolor != null ? Color.alphaBlend(rcolor.withValues(alpha: .5), color) : color,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: ListTile(

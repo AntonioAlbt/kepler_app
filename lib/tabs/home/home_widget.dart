@@ -69,7 +69,7 @@ class HomeWidgetBase extends StatelessWidget {
       builder: (context, rcolor, rcolorTitle) {
         final titleColor = this.titleColor ?? colorWithLightness(color, hasDarkTheme(context) ? .2 : .8);
         return Card(
-          color: rcolor != null ? Color.alphaBlend(rcolor.withOpacity(.4), color) : color,
+          color: rcolor != null ? Color.alphaBlend(rcolor.withValues(alpha: .4), color) : color,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: SizedBox(
@@ -79,7 +79,7 @@ class HomeWidgetBase extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Card(
-                      color: rcolorTitle != null ? Color.alphaBlend(rcolorTitle.withOpacity(.4), titleColor) : titleColor,
+                      color: rcolorTitle != null ? Color.alphaBlend(rcolorTitle.withValues(alpha: .4), titleColor) : titleColor,
                       child: SizedBox(
                         width: double.infinity,
                         child: Padding(

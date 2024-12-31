@@ -66,7 +66,7 @@ class _ClassPlanPageState extends State<ClassPlanPage> {
     return Consumer<StuPlanData>(
       builder: (context, stdata, _) => Stack(
         children: [
-          RainbowWrapper(builder: (_, color) => Container(color: color?.withOpacity(.5))),
+          RainbowWrapper(builder: (_, color) => Container(color: color?.withValues(alpha: .5))),
           Column(
             children: [
               SizedBox(

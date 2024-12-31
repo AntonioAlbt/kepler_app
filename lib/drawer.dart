@@ -282,7 +282,7 @@ class _NavEntryState extends State<NavEntry> {
                 ),
                 selected: widget.selected || widget.parentOfSelected,
                 selectedColor: color,
-                splashColor: (widget.selected || widget.parentOfSelected) ? color.withOpacity(0.5) : null,
+                splashColor: (widget.selected || widget.parentOfSelected) ? color.withValues(alpha: 0.5) : null,
                 onTap: () {
                   if (widget.locked) {
                     showLockedDialog();
