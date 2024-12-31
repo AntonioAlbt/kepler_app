@@ -317,6 +317,7 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
 
 /// Dialog mit mehr Infos zu einer Stunde erstellen
 Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
+  // TODO: Knopf zum Erstellen von Event für diese Schulstunde an diesem Tag hinzufügen
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
     content: DefaultTextStyle.merge(

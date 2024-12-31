@@ -1,9 +1,11 @@
 import 'dart:developer' show log;
 
+import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
+import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:synchronized/synchronized.dart';
@@ -17,28 +19,32 @@ class CustomEvent extends SerializableObject {
   set title(String val) => attributes["title"] = val;
 
   /// Beschreibung
-  String get description => attributes["desc"];
-  set description(String val) => attributes["desc"] = val;
+  String? get description => attributes["desc"];
+  set description(String? val) => attributes["desc"] = val;
 
-  /// Startzeit, oder nur für Datum wenn an Schulstunden gebunden
-  DateTime get startTime => DateTime.parse(attributes["start"]);
-  set startTime(DateTime val) => attributes["start"] = val.toIso8601String();
+  /// Datum für Ereignis (Uhrzeit wird ignoriert)
+  DateTime? get date => attributes.containsKey("date") && attributes["date"] != null ? DateTime.parse(attributes["date"]) : null;
+  set date(DateTime? val) => attributes["date"] = val?.toString();
+
+  /// Startzeit, nur erforderlich, wenn nicht an Schulstunden gebunden
+  HMTime? get startTime => attributes.containsKey("start") && attributes["start"] != null ? HMTime.fromTimeString(attributes["start"]) : null;
+  set startTime(HMTime? val) => attributes["start"] = val?.toString();
   /// Endzeit, nur erforderlich, wenn nicht an Schulstunden gebunden
-  DateTime? get endTime => (attributes.containsKey("end") && attributes["end"] != null) ? DateTime.parse(attributes["end"]) : null;
-  set endTime(DateTime? val) => attributes["end"] = val?.toIso8601String();
+  HMTime? get endTime => (attributes.containsKey("end") && attributes["end"] != null) ? HMTime.fromTimeString(attributes["end"]) : null;
+  set endTime(HMTime? val) => attributes["end"] = val?.toString();
 
-  /// falls das Event an Schulstunden gebunden ist (start/endLesson != null), wird startTime als Datum verwendet (Zeit wird ignoriert)
+  /// Startschulstunde, nur erforderlich, wenn an Schulstunden gebunden
   int? get startLesson => attributes["start_l"];
   set startLesson(int? val) => attributes["start_l"] = val;
   /// Endschulstunde, nur erforderlich, wenn an Schulstunden gebunden
   int? get endLesson => attributes["end_l"];
   set endLesson(int? val) => attributes["end_l"] = val;
 
-  /// will der Ersteller davor benachrichtigt werden?
+  /// will der Ersteller über dieses Ereignis benachrichtigt werden?
   bool get notify => attributes["notif"];
   set notify(bool val) => attributes["notif"] = val;
 
-  /// wenn ein Event mehrfach wiederholt wird, können alle erstellten Events eine zufällige ID hier zugewiesen 
+  /// wenn ein Ereignis mehrfach wiederholt wird, können alle erstellten Ereignisse eine zufällige ID hier zugewiesen 
   /// bekommen, um dann z.B. alle zu löschen, wenn eins gelöscht wird (oder alle zu ändern)
   int? get repeatId => attributes["rid"];
   set repeatId(int? val) => attributes["rid"] = val;
@@ -46,8 +52,9 @@ class CustomEvent extends SerializableObject {
   CustomEvent({
     required String title,
     required String description,
-    required DateTime startTime,
-    DateTime? endTime,
+    required DateTime date,
+    HMTime? startTime,
+    HMTime? endTime,
     int? startLesson,
     int? endLesson,
     required bool notify,
@@ -55,6 +62,7 @@ class CustomEvent extends SerializableObject {
   }) {
     this.title = title;
     this.description = description;
+    this.date = date;
     this.startTime = startTime;
     this.endTime = endTime;
     this.startLesson = startLesson;
@@ -77,16 +85,19 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
     objectCreators["events.value"] = (_) => CustomEvent.empty();
   }
 
-  // List<CustomEvent> get events => attributes["events"] ?? [];
-  List<CustomEvent> get events => [
-    CustomEvent(title: "Test Event", description: "Hier könnte Werbung stehen?", startTime: DateTime.now(), startLesson: 2, notify: false),
-    CustomEvent(title: "keine Schule oder so", description: "sehr sehr viel Text der gar nicht mehr aufhört was ist denn hier los warum geht denn das immer weiter", startTime: DateTime.now(), startLesson: 2, notify: false),
-    CustomEvent(title: "Testere Eventere", description: "", startTime: DateTime.now(), startLesson: 2, notify: false),
-    CustomEvent(title: "Längeres Event", description: "mehrere Stunden", startTime: DateTime.now(), startLesson: 2, endLesson: 5, notify: false),
-    CustomEvent(title: "Testere Eventere", description: "", startTime: DateTime.now(), endTime: DateTime.now().add(const Duration(hours: 2)), notify: false),
-    CustomEvent(title: "Testere 2 Eventere: dbl fun, longer title than ever before", description: "das ist ein mehrstündiges direktes Event", startTime: DateTime.now().add(const Duration(minutes: -5, hours: -1)), endTime: DateTime.now().add(const Duration(minutes: -50)), notify: false),
-  ];
+  List<CustomEvent> get events => attributes["events"] ?? [];
+  // List<CustomEvent> get events => [
+  //   CustomEvent(title: "Test Event", description: "Hier könnte Werbung stehen?", date: DateTime.now(), startLesson: 2, notify: false),
+  //   CustomEvent(title: "keine Schule oder so", description: "sehr sehr viel Text der gar nicht mehr aufhört was ist denn hier los warum geht denn das immer weiter", date: DateTime.now(), startLesson: 2, notify: false),
+  //   CustomEvent(title: "Testere Eventere", description: "", date: DateTime.now(), startLesson: 2, notify: false),
+  //   CustomEvent(title: "Längeres Event", description: "mehrere Stunden", date: DateTime.now(), startLesson: 2, endLesson: 5, notify: false),
+  //   CustomEvent(title: "Testere Eventere", description: "", date: DateTime.now(), startTime: HMTime(10, 55), endTime: HMTime(15, 43), notify: false),
+  //   CustomEvent(title: "Testere 2 Eventere: dbl fun, longer title than ever before", description: "das ist ein mehrstündiges direktes Event", date: DateTime.now(), startTime: HMTime(2, 2), endTime: HMTime(14, 3), notify: false),
+  // ];
   set events(List<CustomEvent> events) => _setSaveNotify("events", events);
+  void addEvent(CustomEvent event) {
+    events = events..add(event);
+  }
 
   void _setSaveNotify(String key, dynamic data) {
     attributes[key] = data;
@@ -113,8 +124,6 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
     loaded = true;
   }
 }
-
-final _timeFormat = DateFormat("HH:mm");
 
 /// zeigt Event schön formatiert an (mit Dialog beim Antippen)
 class CustomEventDisplay extends StatelessWidget {
@@ -157,7 +166,7 @@ class CustomEventDisplay extends StatelessWidget {
             ) else Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Text(
-                "${_timeFormat.format(event.startTime)}${event.endTime != null ? "\nbis\n${_timeFormat.format(event.endTime!)}" : ""}",
+                "${event.startTime}${event.endTime != null ? "\nbis\n${event.endTime}" : ""}",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15),
               ),
@@ -182,8 +191,10 @@ class CustomEventDisplay extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (event.description != "") Text(
-                    event.description,
+                  if (event.description != null) Text(
+                    event.description!.split("\n").length < 2 ? event.description! : "${event.description!.split("\n").take(2).join("\n")}...",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 15, color: hasDarkTheme(context) ? Colors.blue.shade200 : Colors.blue.shade900),
                   ),
                 ],
@@ -194,4 +205,313 @@ class CustomEventDisplay extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<CustomEvent?> showAddEventDialog(BuildContext context, DateTime selected) async {
+  return await showDialog<CustomEvent>(
+    context: context,
+    builder: (ctx) => AddEventDialog(selectedDate: selected),
+  );
+}
+
+class AddEventDialog extends StatefulWidget {
+  final DateTime selectedDate;
+  const AddEventDialog({super.key, required this.selectedDate});
+
+  @override
+  State<AddEventDialog> createState() => _AddEventDialogState();
+}
+
+class _AddEventDialogState extends State<AddEventDialog> {
+  CustomEvent event = CustomEvent.empty();
+  String timeVariant = "s";
+  late TextEditingController _startLessonInput;
+  late TextEditingController _endLessonInput;
+  bool userChangedEndLesson = false;
+
+  bool showErrors = false;
+  bool titleValid = false;
+  String? timeError;
+
+  @override
+  void initState() {
+    _startLessonInput = TextEditingController();
+    _endLessonInput = TextEditingController();
+    super.initState();
+
+    event.date = widget.selectedDate;
+  }
+
+  @override
+  void dispose() {
+    _startLessonInput.dispose();
+    _endLessonInput.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Ereignis hinzufügen"),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                label: Text("Titel des Ereignisses"),
+                errorText: showErrors && !titleValid ? "Titel ist erforderlich." : null,
+              ),
+              onChanged: (val) {
+                event.title = val;
+                setState(() {
+                  titleValid = val.isNotEmpty;
+                });
+              },
+            ),
+            TextField(
+              minLines: 1,
+              maxLines: 10,
+              decoration: InputDecoration(
+                label: Text("Beschreibung des Ereignisses"),
+              ),
+              onChanged: (val) => event.description = val,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: DateTimeField(
+                initialValue: widget.selectedDate,
+                onChanged: (val) => setState(() => event.date = val),
+                format: DateFormat("dd.MM.yyyy"),
+                onShowPicker: (context, current) => showDatePicker(
+                  context: context,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  initialDate: current,
+                ),
+                decoration: InputDecoration(
+                  label: Text("Datum"),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.only(bottom: 4, top: 4),
+                ),
+                resetIcon: null,
+              ),
+            ),
+            if (event.date != null) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Align(alignment: Alignment.centerLeft, child: Text("Welches Zeitsystem verwenden?")),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DropdownButton(
+                  menuWidth: 200,
+                  value: timeVariant,
+                  items: [
+                    DropdownMenuItem(value: "s", child: Text("Schulstunden")),
+                    DropdownMenuItem(value: "z", child: Text("Zeitstunden")),
+                  ],
+                  onChanged: (val) {
+                    if (val == timeVariant) return;
+                    if (showErrors) checkTimeError();
+                    
+                    setState(() {
+                      timeVariant = val!;
+                      event.startLesson = null;
+                      event.endLesson = null;
+                      event.endTime = null;
+                      _startLessonInput.text = "";
+                      _endLessonInput.text = "";
+                    });
+                  },
+                ),
+              ),
+              if (timeVariant == "s") Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Text("von  "),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 25),
+                      child: TextField(
+                        controller: _startLessonInput,
+                        onChanged: (val) {
+                          event.startLesson = int.tryParse(val);
+                          if (!userChangedEndLesson) _endLessonInput.text = val;
+                          checkTimeError();
+                        },
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.only(),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    Text(". Stunde bis  "),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 25),
+                      child: TextField(
+                        controller: _endLessonInput,
+                        onChanged: (val) {
+                          setState(() => userChangedEndLesson = true);
+                          event.endLesson = int.tryParse(val);
+                          checkTimeError();
+                        },
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.only(),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    Text(". Stunde")
+                  ],
+                ),
+              ) else if (timeVariant == "z") Row(
+                children: [
+                  Text("von  "),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 75),
+                    child: DateTimeField(
+                      initialValue: event.startTime?.toDateTime(null),
+                      onChanged: (time) {
+                        event.startTime = time != null ? HMTime.fromDateTime(time) : null;
+                        checkTimeError();
+                      },
+                      format: DateFormat("HH:mm"),
+                      onShowPicker: (context, current) async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay.now(),
+                        );
+                        if (picked == null) return null;
+
+                        return HMTime(picked.hour, picked.minute).toDateTime(null);
+                      },
+                      decoration: InputDecoration(
+                        label: Text("Startzeit"),
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      resetIcon: null,
+                    ),
+                  ),
+                  Text(" bis  "),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 75),
+                    child: DateTimeField(
+                      initialValue: event.endTime?.toDateTime(null),
+                      format: DateFormat("HH:mm"),
+                      onShowPicker: (context, current) async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay.now(),
+                        );
+                        if (picked == null) return null;
+                        
+                        return HMTime(picked.hour, picked.minute).toDateTime(null);
+                      },
+                      decoration: InputDecoration(
+                        label: Text("Endzeit"),
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      resetIcon: null,
+                      onChanged: (time) {
+                        event.endTime = time != null ? HMTime.fromDateTime(time) : null;
+                        checkTimeError();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              if (timeError != null && showErrors) Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: Text(
+                    timeError!,
+                    style: TextStyle(
+                      color: hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            // TODO: allow to choose event.notify, add inputs for repeating events
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () {
+          setState(() {
+            showErrors = true;
+          });
+          checkTimeError();
+
+          if (!titleValid || timeError != null) return;
+          Navigator.pop(context, event);
+        }, child: Text("Speichern")),
+        TextButton(onPressed: () => Navigator.pop(context, null), child: Text("Abbrechen")),
+      ],
+    );
+  }
+
+  void checkTimeError() {
+    final err = determineTimeError();
+    setState(() {
+      timeError = err;
+    });
+  }
+  String? determineTimeError() {
+    if (event.date == null) {
+      // return "Kein Datum ausgewählt.";
+      return "";
+    }
+    if (timeVariant == "s") {
+      if (event.startLesson == null) return "Keine Startstunde angegeben.";
+      if (event.startLesson! < 0 || (event.endLesson != null && event.endLesson! < 0)) return "Stunde muss größer als 0 sein.";
+      if (event.endLesson != null && event.startLesson! > event.endLesson!) return "Endstunde liegt vor Startstunde.";
+    } else if (timeVariant == "z") {
+      if (event.startTime == null) return "Kein Start angegeben.";
+      if (event.endTime == null) return "Kein Ende angegeben.";
+      if (event.startTime! > event.endTime!) return "Ende liegt vor Start.";
+    }
+    return null;
+  }
+}
+
+Future<DateTime?> showDateTimePicker({
+  required BuildContext context,
+  DateTime? initialDate,
+  DateTime? firstDate,
+  DateTime? lastDate,
+}) async {
+  initialDate ??= DateTime.now();
+  firstDate ??= initialDate.subtract(const Duration(days: 365 * 100));
+  lastDate ??= firstDate.add(const Duration(days: 365 * 200));
+
+  final DateTime? selectedDate = await showDatePicker(
+    context: context,
+    initialDate: initialDate,
+    firstDate: firstDate,
+    lastDate: lastDate,
+  );
+
+  if (selectedDate == null) return null;
+
+  if (!context.mounted) return selectedDate;
+
+  final TimeOfDay? selectedTime = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay.fromDateTime(selectedDate),
+  );
+
+  return selectedTime == null
+      ? selectedDate
+      : DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
 }
