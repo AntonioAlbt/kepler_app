@@ -691,7 +691,6 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                           ),
                         );
                       }
-                      if (Provider.of<Preferences>(context, listen: false).showYourPlanAddEvents) list.add(SizedBox(height: kSPListExtraScrollSpace));
                       return ListView(
                         shrinkWrap: true,
                         children: list,
@@ -712,7 +711,6 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                             ),
                           );
                         }
-                        if (Provider.of<Preferences>(context, listen: false).showYourPlanAddEvents) list.add(SizedBox(height: kSPListExtraScrollSpace));
                         return ListView.separated(
                           itemCount: list.length,
                           shrinkWrap: true,
@@ -735,8 +733,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         onRefresh: () async {
                           showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
                         },
-                        events: evtmgr.events.where((evt) => isSameDate(evt.startTime, widget.date)).toList(),
-                        extraScrollSpace: kSPListExtraScrollSpace,
+                        events: widget.mode == SPDisplayMode.yourPlan ? evtmgr.events.where((evt) => isSameDate(evt.date ?? DateTime(1900), widget.date)).toList() : null,
+                        // events: evtmgr.events,
+                        extraScrollSpace: widget.mode == SPDisplayMode.yourPlan ? kSPListExtraScrollSpace : null,
                       );
                     }
                   ),
@@ -1186,7 +1185,20 @@ class SPListContainer extends StatelessWidget {
   final Color? color;
   final void Function()? onSwipeLeft;
   final void Function()? onSwipeRight;
-  const SPListContainer({super.key, this.showBorder = false, this.padding, this.shadow = true, this.child, this.color, this.onSwipeLeft, this.onSwipeRight});
+  final bool showAddEventButton;
+  final DateTime? addEventSelectedDate;
+  const SPListContainer({
+    super.key,
+    this.showBorder = false,
+    this.padding,
+    this.shadow = true,
+    this.child,
+    this.color,
+    this.onSwipeLeft,
+    this.onSwipeRight,
+    this.showAddEventButton = false,
+    this.addEventSelectedDate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1239,64 +1251,50 @@ class SPListContainer extends StatelessWidget {
                       borderRadius: BorderRadius.circular(prefs.stuPlanDataAvailableBorderWidth > 5 ? 0 : 8),
                       color: color ?? Theme.of(context).colorScheme.surface,
                     ),
-                    child: subChild != null && prefs.showYourPlanAddEvents ? Stack(
-                      // mainAxisSize: MainAxisSize.min,
+                    child: subChild != null && showAddEventButton && prefs.showYourPlanAddEvents ? Stack(
                       children: [
-                        // Expanded(child: subChild),
                         subChild,
-                        // Divider(indent: 32, endIndent: 32, color: hasDarkTheme(context) ? colorWithLightness(Colors.grey, .15) : null),
                         Align(
                           alignment: Alignment.bottomCenter,
                           child: Transform.translate(
                             offset: Offset(0, 4),
-                            child: Padding(
-                              // padding: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.only(),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // /// Abstand auf beiden Seiten ausbalancieren, damit ElevatedButton in der Mitte bleibt
-                                  // const IconButton(icon: Icon(Icons.abc, size: 20, color: Colors.transparent), onPressed: null),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.only(topLeft: Radius.circular(5), topRight: Radius.circular(5)),
-                                      ),
-                                      visualDensity: VisualDensity(vertical: -1),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final event = await showAddEventDialog(context, addEventSelectedDate ?? DateTime.now());
+                                    if (event != null) {
+                                      if (!context.mounted) return;
+                                      Provider.of<CustomEventManager>(context, listen: false).addEvent(event);
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(topLeft: Radius.circular(5), topRight: Radius.circular(5)),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Flexible(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(right: 4),
-                                            child: const Icon(Icons.event, size: 16),
-                                          ),
-                                        ),
-                                        Flexible(flex: 0, child: Text("Ereignis hinzufügen")),
-                                      ],
-                                    ),
+                                    visualDensity: VisualDensity(vertical: -1),
+                                    backgroundColor: colorWithLightness(Colors.blue, hasDarkTheme(context) ? .15 : .935),
+                                    shadowColor: Colors.transparent,
                                   ),
-                                  // IconButton(onPressed: () {
-                                  //   showDialog(context: context, builder: (ctx) => AlertDialog(
-                                  //     title: const Text("Ausblenden?"),
-                                  //     content: const Text("Soll die Möglichkeit zum Hinzufügen von Ereignissen wirklich ausgeblendet werden? Dies kann jederzeit in den Einstellungen geändert werden."),
-                                  //     actions: [
-                                  //       TextButton(onPressed: () {
-                                  //         prefs.showYourPlanAddEvents = false;
-                                  //         Navigator.pop(ctx);
-                                  //       }, child: const Text("Ja, ausblenden")),
-                                  //       TextButton(onPressed: () {
-                                  //         Navigator.pop(ctx);
-                                  //       }, child: const Text("Nein")),
-                                  //     ],
-                                  //   ));
-                                  // }, icon: const Icon(Icons.visibility_off), iconSize: 20),
-                                ],
-                              ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 4),
+                                          child: const Icon(Icons.event, size: 16),
+                                        ),
+                                      ),
+                                      Flexible(
+                                        flex: 0,
+                                        child: Text("Ereignis hinzufügen"),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -1344,20 +1342,28 @@ class LessonListContainer extends StatelessWidget {
     this.events,
     this.extraScrollSpace,
   }) {
-    events!.sort((a, b) {
-      if (a.startLesson != null && b.startLesson != null) return a.startLesson!.compareTo(b.startLesson!);
-      if (a.startLesson != null) return 1;
-      if (b.startLesson != null) return -1;
-      return a.startTime.compareTo(b.startTime);
+    events?.sort((a, b) {
+      if (a.date != null && b.date != null) {
+        if (a.date != b.date) return a.date!.compareTo(b.date!);
+
+        if (a.startTime != null && b.startTime != null) return a.startTime!.compareTo(b.startTime!);
+
+        if (a.startLesson != null && b.startLesson != null) return a.startLesson!.compareTo(b.startLesson!);
+        if (a.startLesson != null) return 1;
+        if (b.startLesson != null) return -1;
+      }
+      return 0;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return SPListContainer(
+      addEventSelectedDate: date,
       onSwipeLeft: onSwipeLeft,
       onSwipeRight: onSwipeRight,
       showBorder: lessons != null,
+      showAddEventButton: mode == SPDisplayMode.yourPlan,
       child: () {
         if (lessons == null || lessons!.isEmpty) {
           final infoText = Text(
