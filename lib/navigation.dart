@@ -74,6 +74,8 @@ import 'package:provider/provider.dart';
 /// Jede Seite hat ihre eigene ID, und damit keine Strings händig verglichen werden müssen
 /// bekommt alles einen Eintrag in der entsprechenden Klasse
 
+const kLernSaxUserNavPrefix = "lslogin:";
+
 /// Haupteinträge (ohne Unterseiten)
 class PageIDs {
   static const home = "home";
@@ -504,7 +506,7 @@ final destinations = [
             /// der Login des Benutzers wird in der ID des NavEntrys und damit im Navigations-Index "verschlüsselt"
             /// platziert (base64Url statt base64 da ich mir nicht sicher war ob base64 vielleicht den "." enthält
             /// und ich zu faul war, nachzulesen - base64Url geht auf jeden Fall)
-            id: "lslogin:${base64UrlEncode(utf8.encode(entry.value))}",
+            id: "$kLernSaxUserNavPrefix${base64UrlEncode(utf8.encode(entry.value))}",
             icon: const Icon(Icons.person_outline),
             label: Text(entry.value + (entry.key == 0 ? " (primär)" : "")),
             /// removeEntry wird beim Hauptbenutzer (index = 0) nicht hinzugefügt

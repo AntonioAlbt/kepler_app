@@ -112,10 +112,12 @@ class _HomeLSNotifsWidgetState extends State<HomeLSNotifsWidget> {
                       ],
                     ),
                     onTap: () {
-                      Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [
-                        LernSaxPageIDs.main,
-                        LernSaxPageIDs.notifications
-                      ];
+                      final navId = [LernSaxPageIDs.main];
+                      final lsEntry = destinations.firstWhere((e) => e.id == LernSaxPageIDs.main);
+                      final lsChildren = lsEntry.getChildren(context);
+                      if (lsChildren.first.id.startsWith(kLernSaxUserNavPrefix)) navId.add(lsChildren.first.id);
+                      navId.add(LernSaxPageIDs.notifications);
+                      Provider.of<AppState>(context, listen: false).selectedNavPageIDs = navId;
                     },
                     visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                   ),

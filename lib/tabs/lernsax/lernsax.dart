@@ -62,9 +62,9 @@ class _LernSaxTabState extends State<LernSaxTab> {
   Widget build(BuildContext context) {
     return Consumer2<AppState, CredentialStore>(
       builder: (context, state, creds, _) {
-        /// "entschlüssele" LS-Login aus Navigationspfad - Schema: "lslogin:<base64url(login)>"
+        /// "entschlüssele" LS-Login aus Navigationspfad - Schema: "<kLernSaxUserNavPrefix>:<base64url(login)>"
         final navpid = state.selectedNavPageIDs[1];
-        final login = navpid.startsWith("lslogin:") ? utf8.decode(base64Url.decode(navpid.substring(8))) : creds.lernSaxLogin;
+        final login = navpid.startsWith(kLernSaxUserNavPrefix) ? utf8.decode(base64Url.decode(navpid.substring(kLernSaxUserNavPrefix.length))) : creds.lernSaxLogin;
         final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
         if (token == null || login == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
         final navPage = state.selectedNavPageIDs.last;

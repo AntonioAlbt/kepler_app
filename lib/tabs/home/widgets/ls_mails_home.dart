@@ -130,10 +130,12 @@ class _HomeLSMailsWidgetState extends State<HomeLSMailsWidget> {
                       ],
                     ),
                     onTap: () {
-                      Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [
-                        LernSaxPageIDs.main,
-                        LernSaxPageIDs.emails,
-                      ];
+                      final navId = [LernSaxPageIDs.main];
+                      final lsEntry = destinations.firstWhere((e) => e.id == LernSaxPageIDs.main);
+                      final lsChildren = lsEntry.getChildren(context);
+                      if (lsChildren.first.id.startsWith(kLernSaxUserNavPrefix)) navId.add(lsChildren.first.id);
+                      navId.add(LernSaxPageIDs.emails);
+                      Provider.of<AppState>(context, listen: false).selectedNavPageIDs = navId;
                     },
                     visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                   ),
