@@ -165,7 +165,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
                 SettingsTile.navigation(
                   onPressed: (context) {
-                    loadFromExportJson(context).then((result) {
+                    pickAndLoadPrefsFile(context).then((result) {
                       switch (result) {
                         case "success":
                           setState(() {});
@@ -1084,7 +1084,7 @@ class _NavHideDialogState extends State<NavHideDialog> {
 }
 
 /// Prefs aus externer Datei laden
-Future<String> loadFromExportJson(BuildContext context) async {
+Future<String> pickAndLoadPrefsFile(BuildContext context) async {
   final prefs = Provider.of<Preferences>(context, listen: false);
   final sie = prefs.preferredPronoun == Pronoun.sie;
   /// Datei-Auswahldialog

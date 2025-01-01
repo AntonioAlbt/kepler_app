@@ -279,6 +279,7 @@ class Preferences extends SerializableObject with ChangeNotifier {
   }
   String serialize() => _serializer.serialize(this);
   void loadFromJson(String json) {
+    attributes.clear();
     _serializer.deserialize(json, this);
     loaded = true;
     _loggingEnabled = loggingEnabled;
