@@ -121,6 +121,13 @@ class _HomepageTabState extends State<HomepageTab> {
                     },
                     child: const Text("Send stuplan notif"),
                   ),
+                  if (kDebugFeatures) ElevatedButton(
+                    onPressed: () {
+                      Provider.of<Preferences>(context, listen: false).setOldColorSchemeAsTest();
+                      showSnackBar(text: "done");
+                    },
+                    child: const Text("do color test thing"),
+                  ),
                 ],
               );
             }

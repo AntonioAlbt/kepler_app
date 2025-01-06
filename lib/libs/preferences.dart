@@ -50,7 +50,7 @@ const prefsPrefKey = "user_preferences";
 
 /// Version der Einstellungen, muss für jede Änderung derselben geändert werden,
 /// damit die App keine Einstellungen importiert, welche aus einer anderen App-Version stammen
-const prefsVersion = 1;
+const prefsVersion = 2;
 
 /// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
@@ -131,6 +131,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
     save();
   }
 
+  Color _parseColorWithOld(dynamic value) {
+    return value.toString().startsWith("[") ? _color(jsonDecode(value!).cast<double>()) : _color(value.toString().split(",").map((e) => int.parse(e) / 255.0).toList());
+  }
+
   /// Farbschema der App
   AppTheme get theme => AppTheme.values.firstWhere((element) => element.name == (attributes["theme"] ?? ""), orElse: () => AppTheme.system);
   set theme(AppTheme theme) => setSaveNotify("theme", theme.name);
@@ -150,11 +154,11 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set timeToDefaultToNextPlanDay(HMTime val) => setSaveNotify("time_to_next_plan", val);
 
   /// Farbe der Umrandung für die Stundenplanansicht, falls Daten verfügbar sind
-  Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _color(jsonDecode(attributes["sp_border_col"]!).cast<double>()) : keplerColorBlue;
+  Color get stuPlanDataAvailableBorderColor => attributes.containsKey("sp_border_col") ? _parseColorWithOld(attributes["sp_border_col"]) : keplerColorBlue;
   set stuPlanDataAvailableBorderColor(Color val) => setSaveNotify("sp_border_col", jsonEncode([val.a, val.r, val.g, val.b]));
 
   /// falls hier eine Farbe gewählt ist, wird sie mit der Hauptfarbe für einen Farbverlauf verwendet
-  Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _color(jsonDecode(attributes["sp_border_gradient_col"]!).cast<double>()) : null;
+  Color? get stuPlanDataAvailableBorderGradientColor => (attributes.containsKey("sp_border_gradient_col") && attributes["sp_border_gradient_col"] != null) ? _parseColorWithOld(attributes["sp_border_gradient_col"]) : null;
   set stuPlanDataAvailableBorderGradientColor(Color? val) => setSaveNotify("sp_border_gradient_col", val != null ? jsonEncode([val.a, val.r, val.g, val.b]) : null);
 
   /// Breite der Farbumrandung in der Stundenplanansicht
@@ -288,5 +292,12 @@ class Preferences extends SerializableObject with ChangeNotifier {
   Preferences() {
     objectCreators["time_to_next_plan"] = (_) => HMTime(14, 45);
     objectCreators["stuplan_names"] = (_) => <String>[];
+  }
+
+  void setOldColorSchemeAsTest() {
+    if (kDebugFeatures) {
+      attributes["sp_border_col"] = "255,74,138,186";
+      attributes["sp_border_gradient_col"] = "255,45,122,152";
+    }
   }
 }

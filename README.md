@@ -1,6 +1,6 @@
 # Die Kepler-App
 
-## Neu: verfügbar in Stores!
+## Verfügbar in Stores
 
 <table>
   <tr>
@@ -8,7 +8,7 @@
 <a href='https://play.google.com/store/apps/details?id=de.keplerchemnitz.kepler_app'><img alt='Jetzt bei Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/de_badge_web_generic.png' height="75"/>
 </a></td>
     <td>
-<a href="https://apps.apple.com/de/app/kepler-app/id6499428205"><img src="https://svgshare.com/i/15nS.svg" alt="d" height="56" />
+<a href="https://apps.apple.com/de/app/kepler-app/id6499428205"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/640px-Download_on_the_App_Store_Badge.svg.png" height="56" />
 </a></td>
     <td>
 <a href="https://f-droid.org/packages/de.keplerchemnitz.kepler_app">
@@ -30,13 +30,14 @@
   </tr>
 </table>
 
-Hinweis: Die Android-Veröffentlichungen werden mit drei verschiedenen Zertifikaten bereitgestellt:
+Hinweis: Die Android-Veröffentlichungen werden mit zwei verschiedenen Zertifikaten bereitgestellt:
 
 1. Google Play (im Play Store)
-2. F-Droid (in F-Droid)
-3. GitHub-Releases
+2. F-Droid (in F-Droid) und GitHub Releases
 
 Beim Wechseln zwischen den Varianten muss die App immer deinstalliert werden, wobei alle Daten verloren gehen.
+
+Wichtiger Hinweis für Veröffentlichung: nicht vergessen, `logup_host` zu setzen! Die Buildkonstante hat keinen Standardwert.
 
 ---
 
@@ -46,9 +47,9 @@ Die Kepler-App ist lizensiert unter der GPLv3 (GNU Public License Version 3), si
 
 Hinweis zu Kommentaren im Code: Kommentare auf Englisch sind älter und nur vereinzeilt an wichtigen/lustigen Stellen verwendet, Kommentare auf Deutsch dienen der Erklärung der Funktionsweise von so vielen Elementen im Code wie möglich und sind auch meist detaillierter. Ich wollte aber die alten englischen Kommentare nicht löschen.
 
-## Build-Varianten
+## Build-Konstanten
 
-Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dabei gibt es diese Konstanten:
+Durch Build-Konstanten können verschiedene Varianten der App gebaut und Werte gesetzt werden. Dabei gibt es diese Konstanten:
 
 - `beta` = ist Build eine Beta-Version (Standard: `false`)
   - Schrift "BETA-VERSION" wird auf Ladebildschirm angezeigt
@@ -64,6 +65,7 @@ Durch Build-Konstanten können verschiedene Varianten der App gebaut werden. Dab
   - fügt jedes Mal beim Ausführen des Hintergrund-Tasks Testdaten an
   - zeigt damit jedes Mal zwei Benachrichtigungen (Stundenplan-Änderungen und neue News) an
 - `creds_debug` = sollen Debugausgaben zu Stundenplan-Anmeldedaten zum Log hinzugefügt werden (Standard: `false`)
+- `logup_host` = Standardhost für LogUp (Standard: `null` → Log hochladen deaktiviert)
 
 Zum Aktivieren beim App-Build `--dart-define=<varname>=[true|false]` an `flutter run` oder `flutter build` übergeben, z.B.:
 
