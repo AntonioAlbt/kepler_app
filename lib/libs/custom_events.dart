@@ -8,6 +8,8 @@ import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/main.dart';
+import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
 
 /// Speicherpfad für die Events
@@ -41,7 +43,7 @@ class CustomEvent extends SerializableObject {
   set endLesson(int? val) => attributes["end_l"] = val;
 
   /// will der Ersteller über dieses Ereignis benachrichtigt werden?
-  bool get notify => attributes["notif"];
+  bool get notify => attributes["notif"] ?? true;
   set notify(bool val) => attributes["notif"] = val;
 
   /// wenn ein Ereignis mehrfach wiederholt wird, können alle erstellten Ereignisse eine zufällige ID hier zugewiesen 
@@ -51,7 +53,7 @@ class CustomEvent extends SerializableObject {
 
   CustomEvent({
     required String title,
-    required String description,
+    String? description,
     required DateTime date,
     HMTime? startTime,
     HMTime? endTime,
@@ -72,6 +74,30 @@ class CustomEvent extends SerializableObject {
   }
 
   CustomEvent.empty();
+
+  CustomEvent copyWith({
+    String? title,
+    String? description,
+    DateTime? date,
+    HMTime? startTime,
+    HMTime? endTime,
+    int? startLesson,
+    int? endLesson,
+    bool? notify,
+    int? repeatId,
+  }) {
+    return CustomEvent(
+      title: title ?? this.title,
+      description: description ?? this.description,
+      date: date ?? this.date!,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      startLesson: startLesson ?? this.startLesson,
+      endLesson: endLesson ?? this.endLesson,
+      notify: notify ?? this.notify,
+      repeatId: repeatId ?? this.repeatId,
+    );
+  }
 
   @override
   String toString() {
@@ -191,7 +217,7 @@ class CustomEventDisplay extends StatelessWidget {
                     ],
                   ),
                   if (event.description != null) Text(
-                    event.description!.split("\n").length < 2 ? event.description! : "${event.description!.split("\n").take(2).join("\n")}...",
+                    event.description!.split("\n").length <= 2 ? event.description! : "${event.description!.split("\n").take(2).join("\n")}...",
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 15, color: hasDarkTheme(context) ? Colors.blue.shade200 : Colors.blue.shade900),
@@ -246,10 +272,14 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
     event.date = widget.selectedDate;
 
     if (widget.prefilledData != null) {
-      event = widget.prefilledData!;
-      userChangedEndLesson = event.startLesson != event.endLesson;
+      event = widget.prefilledData!.copyWith();
+      userChangedEndLesson = event.startLesson != event.endLesson && !(event.startLesson != null && event.endLesson == null);
       _titleInput.text = event.title;
       if (event.description != null) _descInput.text = event.description!;
+      if (event.startLesson != null) {
+        _startLessonInput.text = event.startLesson.toString();
+        _endLessonInput.text = (event.endLesson ?? event.startLesson).toString();
+      }
       showErrors = true;
       titleValid = true;
       timeVariant = event.startTime != null && event.endTime != null ? "z" : "s";
@@ -490,6 +520,7 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
       if (event.startLesson == null) return "Keine Startstunde angegeben.";
       if (event.startLesson! < 0 || (event.endLesson != null && event.endLesson! < 0)) return "Stunde muss größer als 0 sein.";
       if (event.endLesson != null && event.startLesson! > event.endLesson!) return "Endstunde liegt vor Startstunde.";
+      if (event.startLesson! > 16 || (event.endLesson ?? 0) > 16) return "Kann maximal bis zur 16. Stunde gehen.";
     } else if (timeVariant == "z") {
       if (event.startTime == null) return "Kein Start angegeben.";
       if (event.endTime == null) return "Kein Ende angegeben.";
@@ -539,87 +570,135 @@ Future<DateTime?> showDateTimePicker({
 Widget generateEventInfoDialog(BuildContext context, CustomEvent event) {
   return AlertDialog(
     title: Text("Info zum Ereignis"),
-    content: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.label),
-              Expanded(child: Text(event.title)),
-            ],
-          ),
-          if (event.description != null) Row(
-            children: [
-              Icon(Icons.description),
-              Expanded(child: Text(event.description ?? "???")),
-            ],
-          ),
-          if (event.date != null) Row(
-            children: [
-              Icon(Icons.calendar_today),
-              Expanded(child: Text(DateFormat("dd.MM.yyyy").format(event.date!))),
-            ],
-          ),
-          if (event.startTime != null && event.endTime != null) Row(
-            children: [
-              Icon(Icons.timer),
-              Expanded(child: Text("von ${event.startTime} bis ${event.endTime}")),
-            ],
-          ),
-          if (event.startLesson != null) Row(
-            children: [
-              Icon(Icons.timer),
-              Expanded(child: Text("${event.endLesson != null ? "von " : ""}${event.startLesson}. Stunde${event.endLesson != null ? "bis ${event.endLesson}. Stunde" : ""}")),
-            ],
-          ),
-          Row(
-            children: [
-              Icon(Icons.notifications),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: "Benachrichtigung: "),
-                      TextSpan(
-                        text: "bald verfügbar",
-                        style: TextStyle(fontStyle: FontStyle.italic),
-                      ),
-                    ],
-                  ),
-                ),
+    content: DefaultTextStyle(
+      style: TextStyle(fontSize: 18),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.label),
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(event.title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20)),
+                )),
+              ],
+            ),
+            if (event.description != null) Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Row(
+                children: [
+                  Icon(Icons.description),
+                  Expanded(child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(event.description ?? "???"),
+                  )),
+                ],
               ),
-            ],
-          ),
-          Row(
-            children: [
-              Icon(Icons.notifications),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: "Wiederholtes Ereignis: "),
-                      TextSpan(
-                        text: "bald verfügbar",
-                        style: TextStyle(fontStyle: FontStyle.italic),
-                      ),
-                    ],
-                  ),
-                ),
+            ),
+            if (event.date != null) Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_today),
+                  Expanded(child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(DateFormat("dd.MM.yyyy").format(event.date!)),
+                  )),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+            if (event.startTime != null && event.endTime != null) Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Row(
+                children: [
+                  Icon(Icons.timer),
+                  Expanded(child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text("von ${event.startTime} bis ${event.endTime}"),
+                  )),
+                ],
+              ),
+            ),
+            if (event.startLesson != null) Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Row(
+                children: [
+                  Icon(Icons.timer),
+                  Expanded(child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text("${event.endLesson != null ? "von " : ""}${event.startLesson}. Stunde${event.endLesson != null ? " bis ${event.endLesson}. Stunde" : ""}"),
+                  )),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Row(
+                children: [
+                  Icon(Icons.notifications),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: "Benachrichtigung: "),
+                            TextSpan(
+                              text: "bald verfügbar",
+                              style: TextStyle(fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Padding(
+            //   padding: const EdgeInsets.only(top: 1),
+            //   child: Row(
+            //     children: [
+            //       Icon(Icons.refresh),
+            //       Expanded(
+            //         child: Padding(
+            //           padding: const EdgeInsets.all(8.0),
+            //           child: Text.rich(
+            //             TextSpan(
+            //               children: [
+            //                 TextSpan(text: "Wiederholtes Ereignis: "),
+            //                 TextSpan(
+            //                   text: "bald verfügbar",
+            //                   style: TextStyle(fontStyle: FontStyle.italic),
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+          ],
+        ),
       ),
     ),
     actions: [
       TextButton(
         onPressed: () {
+          Navigator.pop(context);
           showDialog(
             context: context,
             builder: (ctx) => ManageEventDialog(selectedDate: event.date ?? DateTime.now(), add: false, prefilledData: event),
-          );
-          Navigator.pop(context);
+          ).then((newEvt) {
+            if (newEvt == null) return;
+            // ignore: use_build_context_synchronously
+            final customEvtMgr = Provider.of<CustomEventManager>(globalScaffoldContext, listen: false);
+            customEvtMgr.events.remove(event);
+            customEvtMgr.addEvent(newEvt);
+          });
         },
         child: Text("Bearbeiten"),
       ),

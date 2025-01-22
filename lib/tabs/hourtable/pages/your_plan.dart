@@ -315,6 +315,8 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
 
 // TODO: Dialog-Funktionen verschieben -> werden nur in plan_display.dart verwendet
 
+// TODO: Dialoge stattdessen als Popup-Panels von unten erstellen
+
 /// Dialog mit mehr Infos zu einer Stunde erstellen
 Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
   // TODO: Knopf zum Erstellen von Event für diese Schulstunde an diesem Tag hinzufügen
