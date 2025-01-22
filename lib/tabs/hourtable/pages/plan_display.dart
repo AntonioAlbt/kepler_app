@@ -1267,7 +1267,7 @@ class SPListContainer extends StatelessWidget {
                               children: [
                                 ElevatedButton(
                                   onPressed: () async {
-                                    final event = await showAddEventDialog(context, addEventSelectedDate ?? DateTime.now());
+                                    final event = await showModifyEventDialog(context, addEventSelectedDate ?? DateTime.now());
                                     if (event != null) {
                                       if (!context.mounted) return;
                                       Provider.of<CustomEventManager>(context, listen: false).addEvent(event);
@@ -1346,9 +1346,9 @@ class LessonListContainer extends StatelessWidget {
     this.events,
     this.extraScrollSpace,
   }) {
-    events?.sort((a, b) {
+    events!.sort((a, b) {
       if (a.date != null && b.date != null) {
-        if (a.date != b.date) return a.date!.compareTo(b.date!);
+        if (!isSameDate(a.date!, b.date!)) return a.date!.compareTo(b.date!);
 
         if (a.startTime != null && b.startTime != null) return a.startTime!.compareTo(b.startTime!);
 
@@ -1402,13 +1402,17 @@ class LessonListContainer extends StatelessWidget {
         final stdata = Provider.of<StuPlanData>(context, listen: false);
 
         final mixedList = <Object>[...lessons!];
+        int hourAt(int i) {
+          final o = mixedList[i];
+          if (o is CustomEvent) return o.startLesson ?? -1;
+          if (o is VPLesson) return o.schoolHour;
+          return -1;
+        }
         /// Events werden nur im persönlichen Stundenplan angezeigt
         if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
           var insI = 0;
           var lastHr = 0;
-          final afterLessonsSHBound = <CustomEvent>[];
           // var lastStartIns = 0;
-          // -> reversed only matters for
           for (final evt in events!) {
             if (evt.startLesson == null) {
               // mixedList.insert(lastStartIns, evt);
@@ -1420,37 +1424,14 @@ class LessonListContainer extends StatelessWidget {
               mixedList.insert(insI, evt);
               insI++;
             } else {
-              while (insI < lessons!.length && lessons![insI].schoolHour <= evt.startLesson!) {
+              while (insI < lessons!.length && hourAt(insI) <= evt.startLesson!) {
                 insI++;
               }
               lastHr = evt.startLesson!;
-              if (insI < lessons!.length) {
-                mixedList.insert(insI, evt);
-              } else {
-                // Events, die an Schulstunden gebunden sind, aber nach der letzten im Plan eingetragenen Stunde
-                // stattfinden, müssen erst in eine separate Liste übertragen werden, da sie sonst in umgedrehter
-                // Reihenfolge eingefügt werden würden
-                afterLessonsSHBound.add(evt);
-              }
+              mixedList.insert(insI, evt);
               insI++;
             }
           }
-
-          // die Liste nochmal sortieren (.reversed sollte eigentlich reichen, aber naja)
-          afterLessonsSHBound.sort((a, b) => a.startLesson!.compareTo(b.startLesson!));
-          // damit die Einträge aus afterLessonsSHBound an die richtige Stelle eingefügt werden (vor die Events, die an
-          // Zeitstunden gebunden sind), wird hier der Index des ersten an Zeitstunden gebundenen Events bestimmt und
-          // dann die ganze Liste davor eingefügt
-          var lastSchoolHrThingI = -1;
-          for (var i = 0; i < mixedList.length; i++) {
-            final entry = mixedList[i];
-            if (entry is CustomEvent && entry.startTime != null) {
-              lastSchoolHrThingI = i;
-              break;
-            }
-          }
-          if (lastSchoolHrThingI < 0) lastSchoolHrThingI = mixedList.length;
-          mixedList.insertAll(lastSchoolHrThingI, afterLessonsSHBound);
         }
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
