@@ -146,12 +146,11 @@ class CustomEventDisplay extends StatelessWidget {
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        /// TODO: add event info dialog, with edit option
-        // onTap: (showInfoDialog)
-        //     ? () => showDialog(
-        //         context: context,
-        //         builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay))
-        //     : null,
+        onTap: (showInfoDialog)
+          ? () => showDialog(
+              context: context,
+              builder: (dialogCtx) => generateEventInfoDialog(dialogCtx, event))
+          : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -210,21 +209,25 @@ class CustomEventDisplay extends StatelessWidget {
 Future<CustomEvent?> showAddEventDialog(BuildContext context, DateTime selected) async {
   return await showDialog<CustomEvent>(
     context: context,
-    builder: (ctx) => AddEventDialog(selectedDate: selected),
+    builder: (ctx) => ManageEventDialog(selectedDate: selected, add: true),
   );
 }
 
-class AddEventDialog extends StatefulWidget {
+class ManageEventDialog extends StatefulWidget {
+  final bool add;
+  final CustomEvent? prefilledData;
   final DateTime selectedDate;
-  const AddEventDialog({super.key, required this.selectedDate});
+  const ManageEventDialog({super.key, required this.selectedDate, required this.add, this.prefilledData});
 
   @override
-  State<AddEventDialog> createState() => _AddEventDialogState();
+  State<ManageEventDialog> createState() => _ManageEventDialogState();
 }
 
-class _AddEventDialogState extends State<AddEventDialog> {
+class _ManageEventDialogState extends State<ManageEventDialog> {
   CustomEvent event = CustomEvent.empty();
   String timeVariant = "s";
+  late TextEditingController _titleInput;
+  late TextEditingController _descInput;
   late TextEditingController _startLessonInput;
   late TextEditingController _endLessonInput;
   bool userChangedEndLesson = false;
@@ -235,15 +238,30 @@ class _AddEventDialogState extends State<AddEventDialog> {
 
   @override
   void initState() {
+    _titleInput = TextEditingController();
+    _descInput = TextEditingController();
     _startLessonInput = TextEditingController();
     _endLessonInput = TextEditingController();
-    super.initState();
 
     event.date = widget.selectedDate;
+
+    if (widget.prefilledData != null) {
+      event = widget.prefilledData!;
+      userChangedEndLesson = event.startLesson != event.endLesson;
+      _titleInput.text = event.title;
+      if (event.description != null) _descInput.text = event.description!;
+      showErrors = true;
+      titleValid = true;
+      timeVariant = event.startTime != null && event.endTime != null ? "z" : "s";
+    }
+
+    super.initState();
   }
 
   @override
   void dispose() {
+    _titleInput.dispose();
+    _descInput.dispose();
     _startLessonInput.dispose();
     _endLessonInput.dispose();
     super.dispose();
@@ -252,7 +270,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Ereignis hinzufügen"),
+      title: Text("Ereignis ${widget.add ? "hinzufügen" : "bearbeiten"}"),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -268,6 +286,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
                   titleValid = val.isNotEmpty;
                 });
               },
+              controller: _titleInput,
             ),
             TextField(
               minLines: 1,
@@ -276,6 +295,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
                 label: Text("Beschreibung des Ereignisses"),
               ),
               onChanged: (val) => event.description = val,
+              controller: _descInput,
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -514,4 +534,101 @@ Future<DateTime?> showDateTimePicker({
           selectedTime.hour,
           selectedTime.minute,
         );
+}
+
+Widget generateEventInfoDialog(BuildContext context, CustomEvent event) {
+  return AlertDialog(
+    title: Text("Info zum Ereignis"),
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.label),
+              Expanded(child: Text(event.title)),
+            ],
+          ),
+          if (event.description != null) Row(
+            children: [
+              Icon(Icons.description),
+              Expanded(child: Text(event.description ?? "???")),
+            ],
+          ),
+          if (event.date != null) Row(
+            children: [
+              Icon(Icons.calendar_today),
+              Expanded(child: Text(DateFormat("dd.MM.yyyy").format(event.date!))),
+            ],
+          ),
+          if (event.startTime != null && event.endTime != null) Row(
+            children: [
+              Icon(Icons.timer),
+              Expanded(child: Text("von ${event.startTime} bis ${event.endTime}")),
+            ],
+          ),
+          if (event.startLesson != null) Row(
+            children: [
+              Icon(Icons.timer),
+              Expanded(child: Text("${event.endLesson != null ? "von " : ""}${event.startLesson}. Stunde${event.endLesson != null ? "bis ${event.endLesson}. Stunde" : ""}")),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(Icons.notifications),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: "Benachrichtigung: "),
+                      TextSpan(
+                        text: "bald verfügbar",
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(Icons.notifications),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: "Wiederholtes Ereignis: "),
+                      TextSpan(
+                        text: "bald verfügbar",
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (ctx) => ManageEventDialog(selectedDate: event.date ?? DateTime.now(), add: false, prefilledData: event),
+          );
+          Navigator.pop(context);
+        },
+        child: Text("Bearbeiten"),
+      ),
+      TextButton(
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        child: Text("Schließen"),
+      ),
+    ],
+  );
 }
