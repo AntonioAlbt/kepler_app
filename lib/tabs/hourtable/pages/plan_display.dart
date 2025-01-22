@@ -886,10 +886,12 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     );
   }
 
+  void onEventUpdate() { loadData(forceRefresh: false); }
   @override
   void initState() {
     loadData(forceRefresh: false);
     widget.controller?.setRefreshListener((force) => loadData(forceRefresh: force));
+    Provider.of<CustomEventManager>(context, listen: false).addListener(onEventUpdate);
     super.initState();
   }
 
@@ -1173,6 +1175,8 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   @override
   void dispose() {
     globalConfettiController.stop();
+    // can't use context because widget is being disposed
+    Provider.of<CustomEventManager>(globalScaffoldContext, listen: false).removeListener(onEventUpdate);
     super.dispose();
   }
 }
@@ -1402,7 +1406,9 @@ class LessonListContainer extends StatelessWidget {
         if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
           var insI = 0;
           var lastHr = 0;
+          final afterLessonsSHBound = <CustomEvent>[];
           // var lastStartIns = 0;
+          // -> reversed only matters for
           for (final evt in events!) {
             if (evt.startLesson == null) {
               // mixedList.insert(lastStartIns, evt);
@@ -1414,14 +1420,37 @@ class LessonListContainer extends StatelessWidget {
               mixedList.insert(insI, evt);
               insI++;
             } else {
-              while (lessons![insI].schoolHour <= evt.startLesson!) {
+              while (insI < lessons!.length && lessons![insI].schoolHour <= evt.startLesson!) {
                 insI++;
               }
               lastHr = evt.startLesson!;
-              mixedList.insert(insI, evt);
+              if (insI < lessons!.length) {
+                mixedList.insert(insI, evt);
+              } else {
+                // Events, die an Schulstunden gebunden sind, aber nach der letzten im Plan eingetragenen Stunde
+                // stattfinden, müssen erst in eine separate Liste übertragen werden, da sie sonst in umgedrehter
+                // Reihenfolge eingefügt werden würden
+                afterLessonsSHBound.add(evt);
+              }
               insI++;
             }
           }
+
+          // die Liste nochmal sortieren (.reversed sollte eigentlich reichen, aber naja)
+          afterLessonsSHBound.sort((a, b) => a.startLesson!.compareTo(b.startLesson!));
+          // damit die Einträge aus afterLessonsSHBound an die richtige Stelle eingefügt werden (vor die Events, die an
+          // Zeitstunden gebunden sind), wird hier der Index des ersten an Zeitstunden gebundenen Events bestimmt und
+          // dann die ganze Liste davor eingefügt
+          var lastSchoolHrThingI = -1;
+          for (var i = 0; i < mixedList.length; i++) {
+            final entry = mixedList[i];
+            if (entry is CustomEvent && entry.startTime != null) {
+              lastSchoolHrThingI = i;
+              break;
+            }
+          }
+          if (lastSchoolHrThingI < 0) lastSchoolHrThingI = mixedList.length;
+          mixedList.insertAll(lastSchoolHrThingI, afterLessonsSHBound);
         }
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
