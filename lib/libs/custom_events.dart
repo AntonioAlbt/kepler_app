@@ -101,7 +101,7 @@ class CustomEvent extends SerializableObject {
 
   @override
   String toString() {
-    return 'CustomEvent{title: $title, description: $description, startTime: $startTime, endTime: $endTime, startLesson: $startLesson, endLesson: $endLesson, notify: $notify, repeatId: $repeatId}';
+    return 'CustomEvent{title: $title, description: $description, date: $date, startTime: $startTime, endTime: $endTime, startLesson: $startLesson, endLesson: $endLesson, notify: $notify, repeatId: $repeatId}';
   }
 }
 
@@ -232,24 +232,32 @@ class CustomEventDisplay extends StatelessWidget {
   }
 }
 
-Future<CustomEvent?> showAddEventDialog(BuildContext context, DateTime selected) async {
-  return await showDialog<CustomEvent>(
+Future<CustomEvent?> showModifyEventDialog(BuildContext context, DateTime selected, [CustomEvent? toEdit]) async {
+  return await showModalBottomSheet<CustomEvent>(
     context: context,
-    builder: (ctx) => ManageEventDialog(selectedDate: selected, add: true),
+    isScrollControlled: true,
+    builder: (ctx) => ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: ManageEventSheet(
+        selectedDate: selected,
+        add: toEdit == null,
+        prefilledData: toEdit,
+      ),
+    ),
   );
 }
 
-class ManageEventDialog extends StatefulWidget {
+class ManageEventSheet extends StatefulWidget {
   final bool add;
   final CustomEvent? prefilledData;
   final DateTime selectedDate;
-  const ManageEventDialog({super.key, required this.selectedDate, required this.add, this.prefilledData});
+  const ManageEventSheet({super.key, required this.selectedDate, required this.add, this.prefilledData});
 
   @override
-  State<ManageEventDialog> createState() => _ManageEventDialogState();
+  State<ManageEventSheet> createState() => _ManageEventSheetState();
 }
 
-class _ManageEventDialogState extends State<ManageEventDialog> {
+class _ManageEventSheetState extends State<ManageEventSheet> {
   CustomEvent event = CustomEvent.empty();
   String timeVariant = "s";
   late TextEditingController _titleInput;
@@ -299,16 +307,24 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text("Ereignis ${widget.add ? "hinzufügen" : "bearbeiten"}"),
-      content: SingleChildScrollView(
+    return Padding(
+      padding: EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 24 + MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                "Ereignis ${widget.add ? "hinzufügen" : "bearbeiten"}",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
             TextField(
               decoration: InputDecoration(
                 label: Text("Titel des Ereignisses"),
                 errorText: showErrors && !titleValid ? "Titel ist erforderlich." : null,
+                icon: Icon(Icons.label),
               ),
               onChanged: (val) {
                 event.title = val;
@@ -318,17 +334,21 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
               },
               controller: _titleInput,
             ),
-            TextField(
-              minLines: 1,
-              maxLines: 10,
-              decoration: InputDecoration(
-                label: Text("Beschreibung des Ereignisses"),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextField(
+                minLines: 1,
+                maxLines: 10,
+                decoration: InputDecoration(
+                  label: Text("Beschreibung des Ereignisses"),
+                  icon: Icon(Icons.description),
+                ),
+                onChanged: (val) => event.description = val,
+                controller: _descInput,
               ),
-              onChanged: (val) => event.description = val,
-              controller: _descInput,
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 12),
               child: DateTimeField(
                 initialValue: widget.selectedDate,
                 onChanged: (val) => setState(() => event.date = val),
@@ -341,8 +361,8 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                 ),
                 decoration: InputDecoration(
                   label: Text("Datum"),
-                  isDense: true,
                   contentPadding: const EdgeInsets.only(bottom: 4, top: 4),
+                  icon: Icon(Icons.calendar_today),
                 ),
                 resetIcon: null,
               ),
@@ -380,6 +400,10 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 14, left: 2),
+                      child: Icon(Icons.schedule, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 24),
+                    ),
                     Text("von  "),
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: 25),
@@ -393,6 +417,8 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                         decoration: InputDecoration(
                           contentPadding: EdgeInsets.only(),
                           isDense: true,
+                          enabledBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
+                          focusedBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
                         ),
                       ),
                     ),
@@ -409,6 +435,8 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                         decoration: InputDecoration(
                           contentPadding: EdgeInsets.only(),
                           isDense: true,
+                          enabledBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
+                          focusedBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
                         ),
                       ),
                     ),
@@ -417,6 +445,10 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                 ),
               ) else if (timeVariant == "z") Row(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 14, left: 2),
+                    child: Icon(Icons.schedule, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 24),
+                  ),
                   Text("von  "),
                   ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 75),
@@ -433,13 +465,15 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                           initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay.now(),
                         );
                         if (picked == null) return null;
-
+      
                         return HMTime(picked.hour, picked.minute).toDateTime(null);
                       },
                       decoration: InputDecoration(
                         label: Text("Startzeit"),
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
+                        enabledBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
+                        focusedBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
                       ),
                       resetIcon: null,
                     ),
@@ -463,6 +497,8 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
                         label: Text("Endzeit"),
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
+                        enabledBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
+                        focusedBorder: (timeError != null && showErrors) ? UnderlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.error)) : null,
                       ),
                       resetIcon: null,
                       onChanged: (time) {
@@ -476,32 +512,38 @@ class _ManageEventDialogState extends State<ManageEventDialog> {
               if (timeError != null && showErrors) Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  padding: const EdgeInsets.only(top: 6, bottom: 4, left: 40),
                   child: Text(
                     timeError!,
                     style: TextStyle(
-                      color: hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                 ),
               ),
             ],
             // TODO: allow to choose event.notify, add inputs for repeating events
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Navigator.pop(context, null), child: Text("Abbrechen")),
+                  TextButton(onPressed: () {
+                    setState(() {
+                      showErrors = true;
+                    });
+                    checkTimeError();
+              
+                    if (!titleValid || timeError != null) return;
+                    Navigator.pop(context, event);
+                  }, child: Text("Speichern")),
+                ],
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(onPressed: () {
-          setState(() {
-            showErrors = true;
-          });
-          checkTimeError();
-
-          if (!titleValid || timeError != null) return;
-          Navigator.pop(context, event);
-        }, child: Text("Speichern")),
-        TextButton(onPressed: () => Navigator.pop(context, null), child: Text("Abbrechen")),
-      ],
     );
   }
 
@@ -689,10 +731,7 @@ Widget generateEventInfoDialog(BuildContext context, CustomEvent event) {
       TextButton(
         onPressed: () {
           Navigator.pop(context);
-          showDialog(
-            context: context,
-            builder: (ctx) => ManageEventDialog(selectedDate: event.date ?? DateTime.now(), add: false, prefilledData: event),
-          ).then((newEvt) {
+          showModifyEventDialog(context, event.date ?? DateTime.now(), event).then((newEvt) {
             if (newEvt == null) return;
             // ignore: use_build_context_synchronously
             final customEvtMgr = Provider.of<CustomEventManager>(globalScaffoldContext, listen: false);
