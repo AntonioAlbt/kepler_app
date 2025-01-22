@@ -124,6 +124,9 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
   void addEvent(CustomEvent event) {
     events = events..add(event);
   }
+  void removeEvent(CustomEvent event) {
+    events = events..remove(event);
+  }
 
   void _setSaveNotify(String key, dynamic data) {
     attributes[key] = data;
@@ -173,9 +176,9 @@ class CustomEventDisplay extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: (showInfoDialog)
-          ? () => showDialog(
+          ? () => showModalBottomSheet(
               context: context,
-              builder: (dialogCtx) => generateEventInfoDialog(dialogCtx, event))
+              builder: (dialogCtx) => generateEventInfoSheet(dialogCtx, event))
           : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -232,8 +235,8 @@ class CustomEventDisplay extends StatelessWidget {
   }
 }
 
-Future<CustomEvent?> showModifyEventDialog(BuildContext context, DateTime selected, [CustomEvent? toEdit]) async {
-  return await showModalBottomSheet<CustomEvent>(
+Future<CustomEvent?> showModifyEventDialog(BuildContext context, DateTime selected, [CustomEvent? toEdit, bool openInfoAfterEdit = true]) async {
+  final evt = await showModalBottomSheet<CustomEvent>(
     context: context,
     isScrollControlled: true,
     builder: (ctx) => ConstrainedBox(
@@ -245,6 +248,14 @@ Future<CustomEvent?> showModifyEventDialog(BuildContext context, DateTime select
       ),
     ),
   );
+  if (toEdit != null && openInfoAfterEdit && globalScaffoldContext.mounted) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: globalScaffoldContext,
+      builder: (ctx) => generateEventInfoSheet(ctx, evt ?? toEdit),
+    );
+  }
+  return evt;
 }
 
 class ManageEventSheet extends StatefulWidget {
@@ -343,7 +354,7 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                   label: Text("Beschreibung des Ereignisses"),
                   icon: Icon(Icons.description),
                 ),
-                onChanged: (val) => event.description = val,
+                onChanged: (val) => event.description = (val == "") ? null : val,
                 controller: _descInput,
               ),
             ),
@@ -609,29 +620,41 @@ Future<DateTime?> showDateTimePicker({
         );
 }
 
-Widget generateEventInfoDialog(BuildContext context, CustomEvent event) {
-  return AlertDialog(
-    title: Text("Info zum Ereignis"),
-    content: DefaultTextStyle(
+Widget generateEventInfoSheet(BuildContext context, CustomEvent event) {
+  return Padding(
+    padding: const EdgeInsets.all(24),
+    child: DefaultTextStyle.merge(
       style: TextStyle(fontSize: 18),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.label),
-                Expanded(child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(event.title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20)),
-                )),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Icon(Icons.label),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(event.title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 24)),
+                  ),
+                ),
               ],
             ),
             if (event.description != null) Padding(
               padding: const EdgeInsets.only(top: 1),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.description),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Icon(Icons.description),
+                  ),
                   Expanded(child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(event.description ?? "???"),
@@ -723,30 +746,52 @@ Widget generateEventInfoDialog(BuildContext context, CustomEvent event) {
             //     ],
             //   ),
             // ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    showDialog(context: context, builder: (ctx) => AlertDialog(
+                      title: Text("Wirklich löschen?"),
+                      content: Text("Soll das Ereignis \"${event.title}\" wirklich gelöscht werden?"),
+                      actions: [
+                        TextButton(onPressed: () {
+                          Provider.of<CustomEventManager>(globalScaffoldContext, listen: false).removeEvent(event);
+                          Navigator.pop(ctx, true);
+                        }, child: Text("Ja, löschen")),
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text("Nein, abbrechen")),
+                      ],
+                    )).then((b) {
+                      if (b == false) return;
+                      if (context.mounted) Navigator.pop(context);
+                    });
+                  },
+                  child: Text("Löschen", style: TextStyle(color: Colors.red)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (context.mounted) Navigator.pop(context);
+                    showModifyEventDialog(context, event.date ?? DateTime.now(), event).then((newEvt) {
+                      if (newEvt == null) return;
+                      // ignore: use_build_context_synchronously
+                      final customEvtMgr = Provider.of<CustomEventManager>(globalScaffoldContext, listen: false);
+                      customEvtMgr.events.remove(event);
+                      customEvtMgr.addEvent(newEvt);
+                    });
+                  },
+                  child: Text("Bearbeiten"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Schließen"),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     ),
-    actions: [
-      TextButton(
-        onPressed: () {
-          Navigator.pop(context);
-          showModifyEventDialog(context, event.date ?? DateTime.now(), event).then((newEvt) {
-            if (newEvt == null) return;
-            // ignore: use_build_context_synchronously
-            final customEvtMgr = Provider.of<CustomEventManager>(globalScaffoldContext, listen: false);
-            customEvtMgr.events.remove(event);
-            customEvtMgr.addEvent(newEvt);
-          });
-        },
-        child: Text("Bearbeiten"),
-      ),
-      TextButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        child: Text("Schließen"),
-      ),
-    ],
   );
 }

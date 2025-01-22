@@ -1350,11 +1350,17 @@ class LessonListContainer extends StatelessWidget {
       if (a.date != null && b.date != null) {
         if (!isSameDate(a.date!, b.date!)) return a.date!.compareTo(b.date!);
 
-        if (a.startTime != null && b.startTime != null) return a.startTime!.compareTo(b.startTime!);
+        if (a.startTime != null && b.startTime != null) {
+          if (a.startTime == b.startTime) return a.title.compareTo(b.title);
+          return a.startTime!.compareTo(b.startTime!);
+        }
 
-        if (a.startLesson != null && b.startLesson != null) return a.startLesson!.compareTo(b.startLesson!);
-        if (a.startLesson != null) return 1;
-        if (b.startLesson != null) return -1;
+        if (a.startLesson != null && b.startLesson != null) {
+          if (a.startLesson == b.startLesson) return a.title.compareTo(b.title);
+          return a.startLesson!.compareTo(b.startLesson!);
+        }
+        if (a.startLesson != null) return -1;
+        if (b.startLesson != null) return 1;
       }
       return 0;
     });
@@ -1404,9 +1410,9 @@ class LessonListContainer extends StatelessWidget {
         final mixedList = <Object>[...lessons!];
         int hourAt(int i) {
           final o = mixedList[i];
-          if (o is CustomEvent) return o.startLesson ?? -1;
+          if (o is CustomEvent) return o.startLesson ?? 1000;
           if (o is VPLesson) return o.schoolHour;
-          return -1;
+          return 1000;
         }
         /// Events werden nur im persönlichen Stundenplan angezeigt
         if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
@@ -1424,7 +1430,7 @@ class LessonListContainer extends StatelessWidget {
               mixedList.insert(insI, evt);
               insI++;
             } else {
-              while (insI < lessons!.length && hourAt(insI) <= evt.startLesson!) {
+              while (insI < mixedList.length && hourAt(insI) <= evt.startLesson!) {
                 insI++;
               }
               lastHr = evt.startLesson!;
