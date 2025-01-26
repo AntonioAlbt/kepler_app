@@ -425,6 +425,7 @@ class _KeplerAppState extends State<KeplerApp> {
         case newsNotificationKey:
           startingNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
           break;
+        case eventNotificationKey:
         case stuPlanNotificationKey:
           startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
           break;

@@ -7,15 +7,20 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/logging.dart';
+import 'package:kepler_app/libs/notifications.dart';
+import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
+import 'package:uuid/uuid.dart';
 
 /// Speicherpfad für die Events
 Future<String> get customEventDataFilePath async => "${await userDataDirPath}/custom-events.json";
 
 class CustomEvent extends SerializableObject {
+  String get uuid => attributes["uuid"];
+
   /// Titel des Events
   String get title => attributes["title"];
   set title(String val) => attributes["title"] = val;
@@ -39,19 +44,18 @@ class CustomEvent extends SerializableObject {
   int? get startLesson => attributes["start_l"];
   set startLesson(int? val) => attributes["start_l"] = val;
   /// Endschulstunde, nur erforderlich, wenn an Schulstunden gebunden
-  int? get endLesson => attributes["end_l"];
+  int? get endLesson => attributes.containsKey("end_l") ? (attributes["end_l"] == startLesson ? null : attributes["end_l"]) : null;
   set endLesson(int? val) => attributes["end_l"] = val;
 
   /// will der Ersteller über dieses Ereignis benachrichtigt werden?
   bool get notify => attributes["notif"] ?? true;
   set notify(bool val) => attributes["notif"] = val;
-
-  /// wenn ein Ereignis mehrfach wiederholt wird, können alle erstellten Ereignisse eine zufällige ID hier zugewiesen 
-  /// bekommen, um dann z.B. alle zu löschen, wenn eins gelöscht wird (oder alle zu ändern)
-  int? get repeatId => attributes["rid"];
-  set repeatId(int? val) => attributes["rid"] = val;
+  DateTime? get notificationTime => attributes.containsKey("nttime") && attributes["nttime"] != null ? DateTime.parse(attributes["nttime"]) : null;
+  set notificationTime(DateTime? val) => attributes["nttime"] = val?.toString();
+  bool get shouldNotify => notify && notificationTime != null;
 
   CustomEvent({
+    String? uuid,
     required String title,
     String? description,
     required DateTime date,
@@ -60,8 +64,9 @@ class CustomEvent extends SerializableObject {
     int? startLesson,
     int? endLesson,
     required bool notify,
-    int? repeatId,
+    DateTime? notificationTime,
   }) {
+    attributes["uuid"] = uuid ?? Uuid().v4();
     this.title = title;
     this.description = description;
     this.date = date;
@@ -70,12 +75,15 @@ class CustomEvent extends SerializableObject {
     this.startLesson = startLesson;
     this.endLesson = endLesson;
     this.notify = notify;
-    this.repeatId = repeatId;
+    this.notificationTime = notificationTime;
   }
 
-  CustomEvent.empty();
+  CustomEvent.empty() {
+    attributes["uuid"] = Uuid().v4();
+  }
 
   CustomEvent copyWith({
+    String? uuid,
     String? title,
     String? description,
     DateTime? date,
@@ -85,8 +93,10 @@ class CustomEvent extends SerializableObject {
     int? endLesson,
     bool? notify,
     int? repeatId,
+    DateTime? notificationTime,
   }) {
     return CustomEvent(
+      uuid: uuid ?? this.uuid,
       title: title ?? this.title,
       description: description ?? this.description,
       date: date ?? this.date!,
@@ -95,13 +105,13 @@ class CustomEvent extends SerializableObject {
       startLesson: startLesson ?? this.startLesson,
       endLesson: endLesson ?? this.endLesson,
       notify: notify ?? this.notify,
-      repeatId: repeatId ?? this.repeatId,
+      notificationTime: notificationTime ?? this.notificationTime,
     );
   }
 
   @override
   String toString() {
-    return 'CustomEvent{title: $title, description: $description, date: $date, startTime: $startTime, endTime: $endTime, startLesson: $startLesson, endLesson: $endLesson, notify: $notify, repeatId: $repeatId}';
+    return 'CustomEvent{uuid: $uuid, title: $title, description: $description, date: $date, startTime: $startTime, endTime: $endTime, startLesson: $startLesson, endLesson: $endLesson, notify: $notify, notificationTime: $notificationTime}';
   }
 }
 
@@ -109,6 +119,7 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
   CustomEventManager() {
     objectCreators["events"] = (_) => <CustomEvent>[];
     objectCreators["events.value"] = (_) => CustomEvent.empty();
+    objectCreators["scheduled"] = (map) => <String, int>{};
   }
 
   List<CustomEvent> get events => attributes["events"] ?? [];
@@ -121,12 +132,24 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
   //   CustomEvent(title: "Testere 2 Eventere: dbl fun, longer title than ever before", description: "das ist ein mehrstündiges direktes Event", date: DateTime.now(), startTime: HMTime(2, 2), endTime: HMTime(14, 3), notify: false),
   // ];
   set events(List<CustomEvent> events) => _setSaveNotify("events", events);
-  void addEvent(CustomEvent event) {
+  void addEvent(CustomEvent event, [bool scheduleNotif = true]) {
     events = events..add(event);
+    if (scheduleNotif && event.shouldNotify) {
+      scheduleNotification(title: "Ereignis: ${event.title}", body: event.description ?? "keine Beschreibung", notifKey: eventNotificationKey, when: event.notificationTime!).then((nid) {
+        if (nid == null) return showSnackBar(text: "Benachrichtigung konnte nicht erstellt werden.");
+        scheduledNotifs = (scheduledNotifs..[event.uuid] = nid);
+      });
+    }
   }
-  void removeEvent(CustomEvent event) {
+  void removeEvent(CustomEvent event, [bool cancelNotif = true]) {
     events = events..remove(event);
+    if (cancelNotif && scheduledNotifs.containsKey(event.uuid)) {
+      cancelNotification(scheduledNotifs[event.uuid]!);
+    }
   }
+
+  Map<String, int> get scheduledNotifs => attributes["scheduled"] ?? {};
+  set scheduledNotifs(Map<String, int> val) => _setSaveNotify("scheduled", val);
 
   void _setSaveNotify(String key, dynamic data) {
     attributes[key] = data;
@@ -532,8 +555,51 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: CheckboxListTile(
+                  value: event.notify,
+                  onChanged: (val) async {
+                    if (val == null) return;
+                    if (event.notify && !(await checkNotificationPermission())) {
+                      if (await requestNotificationPermission()) {
+                        if (!context.mounted) return;
+                        setState(() => event.notify = true);
+                      } else {
+                        if (!context.mounted) return;
+                        setState(() => event.notify = false);
+                      }
+                    } else {
+                      setState(() => event.notify = val);
+                    }
+                  },
+                  title: Text("Am ${DateFormat("dd.MM.").format(event.date!)} benachrichtigen"),
+                ),
+              ),
+              if (event.notify) DateTimeField(
+                initialValue: event.startTime?.toDateTime(event.date) ?? HMTime(7, 30).toDateTime(event.date),
+                format: DateFormat("dd.MM. HH:mm"),
+                onShowPicker: (context, current) async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay.now(),
+                  );
+                  if (picked == null) return null;
+                  
+                  return HMTime(picked.hour, picked.minute).toDateTime(event.date);
+                },
+                decoration: InputDecoration(
+                  label: Text("Zeit für Benachrichtigung"),
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                resetIcon: null,
+                onChanged: (time) {
+                  event.notificationTime = time;
+                },
+              ),
             ],
-            // TODO: allow to choose event.notify, add inputs for repeating events
+            // TODO: add inputs for repeating events
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Row(
@@ -775,7 +841,7 @@ Widget generateEventInfoSheet(BuildContext context, CustomEvent event) {
                       if (newEvt == null) return;
                       // ignore: use_build_context_synchronously
                       final customEvtMgr = Provider.of<CustomEventManager>(globalScaffoldContext, listen: false);
-                      customEvtMgr.events.remove(event);
+                      customEvtMgr.removeEvent(event);
                       customEvtMgr.addEvent(newEvt);
                     });
                   },
