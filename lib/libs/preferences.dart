@@ -235,7 +235,14 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set aprilFoolsEnabled(bool val) => setSaveNotify("aprilfools_enabled", val);
 
   /// IDs aller aktivierten Benachrichtigungen
-  List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
+  List<String> get enabledNotifs {
+    final str = cast<String>(attributes["notif_enabled"]);
+    if (str != null && str.isNotEmpty) {
+      return str.split(",");
+    } else {
+      return [];
+    }
+  }
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
   void addEnabledNotif(String val) {
     if (enabledNotifs.contains(val)) return;

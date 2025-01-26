@@ -1,4 +1,5 @@
 import 'dart:developer' show log;
+import 'dart:io';
 
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 import 'package:enough_serialization/enough_serialization.dart';
@@ -8,9 +9,11 @@ import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
+import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
@@ -48,10 +51,13 @@ class CustomEvent extends SerializableObject {
   set endLesson(int? val) => attributes["end_l"] = val;
 
   /// will der Ersteller über dieses Ereignis benachrichtigt werden?
-  bool get notify => attributes["notif"] ?? true;
+  bool get notify => attributes["notif"] ?? false;
   set notify(bool val) => attributes["notif"] = val;
-  DateTime? get notificationTime => attributes.containsKey("nttime") && attributes["nttime"] != null ? DateTime.parse(attributes["nttime"]) : null;
-  set notificationTime(DateTime? val) => attributes["nttime"] = val?.toString();
+  /// um welche Zeit soll benachrichtigt werden
+  HMTime? get notificationTime => attributes.containsKey("notiftime") && attributes["notiftime"] != null ? HMTime.fromTimeString(attributes["notiftime"]) : null;
+  set notificationTime(HMTime? val) => attributes["notiftime"] = val?.toString();
+  // DateTime? get notificationTime => attributes.containsKey("nttime") && attributes["nttime"] != null ? DateTime.parse(attributes["nttime"]) : null;
+  // set notificationTime(DateTime? val) => attributes["nttime"] = val?.toString();
   bool get shouldNotify => notify && notificationTime != null;
 
   CustomEvent({
@@ -64,7 +70,8 @@ class CustomEvent extends SerializableObject {
     int? startLesson,
     int? endLesson,
     required bool notify,
-    DateTime? notificationTime,
+    // DateTime? notificationTime,
+    HMTime? notificationTime,
   }) {
     attributes["uuid"] = uuid ?? Uuid().v4();
     this.title = title;
@@ -93,7 +100,8 @@ class CustomEvent extends SerializableObject {
     int? endLesson,
     bool? notify,
     int? repeatId,
-    DateTime? notificationTime,
+    // DateTime? notificationTime,
+    HMTime? notificationTime,
   }) {
     return CustomEvent(
       uuid: uuid ?? this.uuid,
@@ -123,19 +131,11 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
   }
 
   List<CustomEvent> get events => attributes["events"] ?? [];
-  // List<CustomEvent> get events => [
-  //   CustomEvent(title: "Test Event", description: "Hier könnte Werbung stehen?", date: DateTime.now(), startLesson: 2, notify: false),
-  //   CustomEvent(title: "keine Schule oder so", description: "sehr sehr viel Text der gar nicht mehr aufhört was ist denn hier los warum geht denn das immer weiter", date: DateTime.now(), startLesson: 2, notify: false),
-  //   CustomEvent(title: "Testere Eventere", description: "", date: DateTime.now(), startLesson: 2, notify: false),
-  //   CustomEvent(title: "Längeres Event", description: "mehrere Stunden", date: DateTime.now(), startLesson: 2, endLesson: 5, notify: false),
-  //   CustomEvent(title: "Testere Eventere", description: "", date: DateTime.now(), startTime: HMTime(10, 55), endTime: HMTime(15, 43), notify: false),
-  //   CustomEvent(title: "Testere 2 Eventere: dbl fun, longer title than ever before", description: "das ist ein mehrstündiges direktes Event", date: DateTime.now(), startTime: HMTime(2, 2), endTime: HMTime(14, 3), notify: false),
-  // ];
   set events(List<CustomEvent> events) => _setSaveNotify("events", events);
   void addEvent(CustomEvent event, [bool scheduleNotif = true]) {
     events = events..add(event);
     if (scheduleNotif && event.shouldNotify) {
-      scheduleNotification(title: "Ereignis: ${event.title}", body: event.description ?? "keine Beschreibung", notifKey: eventNotificationKey, when: event.notificationTime!).then((nid) {
+      scheduleNotification(title: "Ereignis: ${event.title}", body: "heute ab ${event.startLesson != null ? "${event.startLesson}. Stunde" : event.startTime.toString()}\n${event.description ?? "keine Beschreibung"}", notifKey: eventNotificationKey, when: event.notificationTime!.toDateTime(event.date)).then((nid) {
         if (nid == null) return showSnackBar(text: "Benachrichtigung konnte nicht erstellt werden.");
         scheduledNotifs = (scheduledNotifs..[event.uuid] = nid);
       });
@@ -372,7 +372,7 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
               padding: const EdgeInsets.only(top: 8),
               child: TextField(
                 minLines: 1,
-                maxLines: 10,
+                maxLines: 5,
                 decoration: InputDecoration(
                   label: Text("Beschreibung des Ereignisses"),
                   icon: Icon(Icons.description),
@@ -561,7 +561,7 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                   value: event.notify,
                   onChanged: (val) async {
                     if (val == null) return;
-                    if (event.notify && !(await checkNotificationPermission())) {
+                    if (val && !(await checkNotificationPermission())) {
                       if (await requestNotificationPermission()) {
                         if (!context.mounted) return;
                         setState(() => event.notify = true);
@@ -577,16 +577,16 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                 ),
               ),
               if (event.notify) DateTimeField(
-                initialValue: event.startTime?.toDateTime(event.date) ?? HMTime(7, 30).toDateTime(event.date),
-                format: DateFormat("dd.MM. HH:mm"),
+                initialValue: event.notificationTime?.toDateTime(null) ?? HMTime(7, 30).toDateTime(null),
+                format: DateFormat("HH:mm"),
                 onShowPicker: (context, current) async {
                   final picked = await showTimePicker(
                     context: context,
-                    initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay.now(),
+                    initialTime: current != null ? TimeOfDay.fromDateTime(current) : TimeOfDay(hour: 7, minute: 30),
                   );
                   if (picked == null) return null;
                   
-                  return HMTime(picked.hour, picked.minute).toDateTime(event.date);
+                  return HMTime(picked.hour, picked.minute).toDateTime(null);
                 },
                 decoration: InputDecoration(
                   label: Text("Zeit für Benachrichtigung"),
@@ -595,7 +595,7 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                 ),
                 resetIcon: null,
                 onChanged: (time) {
-                  event.notificationTime = time;
+                  event.notificationTime = time != null ? HMTime.fromDateTime(time) : null;
                 },
               ),
             ],
@@ -606,13 +606,50 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(onPressed: () => Navigator.pop(context, null), child: Text("Abbrechen")),
-                  TextButton(onPressed: () {
+                  TextButton(onPressed: () async {
                     setState(() {
                       showErrors = true;
                     });
                     checkTimeError();
               
                     if (!titleValid || timeError != null) return;
+
+                    if (event.notify) event.notificationTime ??= HMTime(7, 30);
+
+                    if (event.shouldNotify && !(await checkNotificationPermission())) {
+                      if (await requestNotificationPermission()) {
+                        if (!context.mounted) return;
+                        event.notify = true;
+                      } else {
+                        if (!context.mounted) return;
+                        event.notify = false;
+                      }
+                    }
+
+                    if (event.shouldNotify && Platform.isAndroid && !(await Permission.scheduleExactAlarm.isGranted)) {
+                      if (!context.mounted) return;
+                      final res = await showDialog(context: context, builder: (ctx) => AlertDialog(
+                        title: Text("Pünktliche Benachrichtigungen"),
+                        content: Selector<Preferences, bool>(
+                          selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+                          builder: (ctx, sie, _) => Text("${sie ? "Sie verwenden" : "Du verwendest"} eine moderne Version von Android. Um die Erinnerung pünktlich anzeigen zu können, benötigt die App die Berechtigung dafür. Bitte ${sie ? "stimmen Sie" : "stimme"} dafür im folgenden Dialog zu."),
+                        ),
+                        actions: [
+                          TextButton(onPressed: () {
+                            Navigator.pop(ctx, true);
+                          }, child: Text("Abschließen")),
+                        ],
+                      ));
+                      if (res == true) {
+                        if (await Permission.scheduleExactAlarm.request() == PermissionStatus.granted) {
+                          showSnackBar(text: "Danke für deine Zustimmung.");
+                        } else {
+                          showSnackBar(text: "Benachrichtigungen werden damit unzuverlässig angezeigt.");
+                        }
+                      }
+                    }
+
+                    if (!context.mounted) return;
                     Navigator.pop(context, event);
                   }, child: Text("Speichern")),
                 ],
@@ -772,17 +809,7 @@ Widget generateEventInfoSheet(BuildContext context, CustomEvent event) {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(text: "Benachrichtigung: "),
-                            TextSpan(
-                              text: "bald verfügbar",
-                              style: TextStyle(fontStyle: FontStyle.italic),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: Text(event.shouldNotify ? "Benachrichtigung um ${event.notificationTime!}" : "keine Benachrichtigung"),
                     ),
                   ),
                 ],
