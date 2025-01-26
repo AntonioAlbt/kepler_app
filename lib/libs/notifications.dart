@@ -37,12 +37,16 @@ import 'dart:math';
 // import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:kepler_app/libs/logging.dart';
 // import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 // import 'package:shared_preferences/shared_preferences.dart';
 
 /// 
@@ -59,6 +63,10 @@ import 'package:provider/provider.dart';
 const newsNotificationKey = "news_notification";
 /// für Änderungen im Stundenplan
 const stuPlanNotificationKey = "stu_plan_notification";
+/// für Ereignisse
+const eventNotificationKey = "event_notification";
+
+var _timezonesInitialised = false;
 
 /// Nicht verwendet, da alle Funktionen im Bezug darauf schon selbst damit umgehen.
 // /// ab welchem Android-API-Level benötigt man eine Berechtigung für Benachrichtigungen?
@@ -101,7 +109,17 @@ Future<bool> checkNotificationPermission() async {
 
 /// alles nötige für Benachrichtigungen initialisieren (FlutterLocalNotificationsPlugin.initialize aufrufen)
 /// - registriert auch Handler für angetippte Benachrichtigungen
+/// - kümmert sich auch um Einrichtung von timezone für geplante Benachrichtigungen
 void initializeNotifications() {
+  try {
+    tz.initializeTimeZones();
+    FlutterTimezone.getLocalTimezone().then((timeZone) => tz.setLocalLocation(tz.getLocation(timeZone)));
+    _timezonesInitialised = true;
+  } on tz.TimeZoneInitException catch (e, s) {
+    _timezonesInitialised = false;
+    logCatch("tz-init", e, s);
+  }
+
   flutterLocalNotificationsPlugin.initialize(
     const InitializationSettings(
       android: AndroidInitializationSettings("transparent_app_icon"),
@@ -163,12 +181,23 @@ NotificationDetails stuPlanNotificationDetails(String bigText) => NotificationDe
     threadIdentifier: stuPlanNotificationKey,
   ),
 );
+NotificationDetails eventNotificationDetails() => NotificationDetails(
+  android: AndroidNotificationDetails(
+    eventNotificationKey,
+    "Erinnerung an Ereignisse",
+    channelDescription: "Benachrichtigungen bei anstehenden Ereignissen",
+    category: AndroidNotificationCategory.event,
+  ),
+  iOS: const DarwinNotificationDetails(
+    threadIdentifier: eventNotificationKey,
+  ),
+);
 
 /// Benachrichtigung senden (wenn notifId gesetzt ist, wird die Benachrichtigung mit der ID ersetzt)
 Future<void> sendNotification({required String title, required String body, required String notifKey, int? notifId}) async {
   if (notifKey != newsNotificationKey && notifKey != stuPlanNotificationKey) return;
   await flutterLocalNotificationsPlugin.show(
-    notifId ?? Random().nextInt(153000),
+    notifId ?? Random().nextInt(153000000),
     title,
     body,
     (notifKey == newsNotificationKey) ? newsNotificationDetails(body) : stuPlanNotificationDetails(body),
@@ -178,3 +207,25 @@ Future<void> sendNotification({required String title, required String body, requ
 
 /// wenn die App über eine Benachrichtigung gestartet wird, lassen sich so die Infos über den Start abfragen
 Future<NotificationAppLaunchDetails?> getNotifLaunchInfo() async => flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+
+/// Senden einer Benachrichtigung planen
+Future<int?> scheduleNotification({required String title, required String body, required String notifKey, required DateTime when}) async {
+  if (!_timezonesInitialised) return null;
+  if (notifKey != eventNotificationKey) return null;
+  final nid = Random().nextInt(153000000);
+  await flutterLocalNotificationsPlugin.zonedSchedule(
+    nid,
+    title,
+    body,
+    tz.TZDateTime.from(when, tz.local),
+    eventNotificationDetails(),
+    androidScheduleMode: (await Permission.scheduleExactAlarm.isGranted) ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.exactAllowWhileIdle,
+    uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
+    payload: notifKey,
+  );
+  return nid;
+}
+
+Future<void> cancelNotification(int id) {
+  return flutterLocalNotificationsPlugin.cancel(id);
+}

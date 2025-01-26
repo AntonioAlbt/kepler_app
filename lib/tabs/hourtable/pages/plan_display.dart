@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -51,6 +52,7 @@ import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
     show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 /// wie viel soll die Stundenplan-Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
@@ -1269,6 +1271,19 @@ class SPListContainer extends StatelessWidget {
                                   onPressed: () async {
                                     final event = await showModifyEventDialog(context, addEventSelectedDate ?? DateTime.now());
                                     if (event != null) {
+                                      if (event.shouldNotify && Platform.isAndroid && !(await Permission.scheduleExactAlarm.isGranted)) {
+                                        if (!context.mounted) return;
+                                        await showDialog(context: context, builder: (ctx) => AlertDialog(
+                                          title: Text("Pünktliche Benachrichtigungen"),
+                                          content: Selector<Preferences, bool>(
+                                            selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
+                                            builder: (ctx, sie, _) => Text("${sie ? "Sie verwenden" : "Du verwendest"} eine moderne Version von Android. Um die Erinnerung pünktlich anzeigen zu können, benötigt die App die Berechtigung dafür. Bitte ${sie ? "stimmen Sie" : "stimme"} dafür im folgenden Dialog zu."),
+                                          ),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Abschließen")),
+                                          ],
+                                        ));
+                                      }
                                       if (!context.mounted) return;
                                       Provider.of<CustomEventManager>(context, listen: false).addEvent(event);
                                     }

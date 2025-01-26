@@ -87,7 +87,7 @@ dependencies:
       ref: main
 
   # notification lib
-  flutter_local_notifications: ^17.2.1+2
+  flutter_local_notifications: ^18.0.1
 
   # icon lib
   material_design_icons_flutter: ^7.0.7296
@@ -133,6 +133,9 @@ dependencies:
 
   # libs for events
   datetime_picker_formfield_new: ^2.1.0
+  timezone: ^0.10.0
+  flutter_timezone: ^4.0.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
