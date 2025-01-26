@@ -187,6 +187,7 @@ NotificationDetails eventNotificationDetails() => NotificationDetails(
     "Erinnerung an Ereignisse",
     channelDescription: "Benachrichtigungen bei anstehenden Ereignissen",
     category: AndroidNotificationCategory.event,
+    importance: Importance.max,
   ),
   iOS: const DarwinNotificationDetails(
     threadIdentifier: eventNotificationKey,
@@ -212,6 +213,7 @@ Future<NotificationAppLaunchDetails?> getNotifLaunchInfo() async => flutterLocal
 Future<int?> scheduleNotification({required String title, required String body, required String notifKey, required DateTime when}) async {
   if (!_timezonesInitialised) return null;
   if (notifKey != eventNotificationKey) return null;
+  if (when.isBefore(DateTime.now())) return null;
   final nid = Random().nextInt(153000000);
   await flutterLocalNotificationsPlugin.zonedSchedule(
     nid,
