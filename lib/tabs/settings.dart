@@ -50,6 +50,7 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -379,6 +380,11 @@ class _SettingsTabState extends State<SettingsTab> {
                   title: const Text("Möglichkeit für Stundenpläne hinzufügen anzeigen"),
                   description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" Stundenpläne hinzufügen können"),
                   enabled: userType != UserType.nobody && Provider.of<StuPlanData>(context, listen: false).altSelectedClassNames.isEmpty,
+                ),
+                SettingsTile.navigation(
+                  title: Text("Einzelne Raumtypen ausblenden"),
+                  description: Text("Auswählen, welche Raumtypen angezeigt werden sollen"),
+                  onPressed: (_) => showDialog(context: context, builder: (ctx) => SetRoomTypeFilterDialog()),
                 ),
               ],
             ),

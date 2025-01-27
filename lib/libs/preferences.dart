@@ -44,6 +44,7 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:provider/provider.dart';
 
 const prefsPrefKey = "user_preferences";
@@ -173,7 +174,13 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get stuPlanShowLastRoomUsage => attributes["sp_show_lru"] ?? true;
   set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
 
-  /// ungenutzt - eigentlich, damit der Benutzer Einträge in der Navigationsliste ausblenden kann
+  /// Filterliste für die anzuzeigenden Raumtypen
+  List<String> get filteredRoomTypes => cast<String>(attributes["filtered_room_types"])?.split(",") ?? listOfRoomTypeIdStrings();
+  set filteredRoomTypes(List<String> val) => setSaveNotify("filtered_room_types", val.join(","));
+  void addfilteredRoomType(String id) => filteredRoomTypes = filteredRoomTypes..add(id);
+  void removefilteredRoomType(String id) => filteredRoomTypes = filteredRoomTypes..remove(id);
+
+  /// Liste der ausgeblendeten Einträge in der Navigationsliste
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val.join(","));
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);
