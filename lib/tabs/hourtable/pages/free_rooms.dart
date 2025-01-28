@@ -208,34 +208,28 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
   Widget build(BuildContext context) {
     final prefs = Provider.of<Preferences>(context);
     return AlertDialog(
-      title: Text("Räume ausblenden"),
+      title: Text("Raumtypen ausblenden"),
       content: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .55,
         width: MediaQuery.sizeOf(context).width,
         child: ListenableBuilder(
           listenable: prefs,
           builder: (ctx, _) => ListView(
+            padding: EdgeInsets.zero,
             shrinkWrap: true,
             children: listOfRoomTypeIdStrings().map((data) {
               ListTile? genLT(String roomTypeID) {
                 return ListTile(
-                  title: Row(
-                    key: ValueKey(roomTypeID),
-                    children: [
-                      IconButton(
-                        icon: Icon(prefs.filteredRoomTypes.contains(roomTypeID) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
-                        onPressed: () =>
-                          prefs.filteredRoomTypes.contains(roomTypeID) //? (print(prefs.filteredRoomTypes.toString())) : (print(prefs.filteredRoomTypes.toString()))
-                              ? (prefs.removefilteredRoomType(roomTypeID))
-                              : (prefs.addfilteredRoomType(roomTypeID))
-                      ),
-                      Flexible(
-                        child: Text(
-                          fromIdStringToString(roomTypeID),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    ],
+                  contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
+                  leading: IconButton.outlined(
+                      icon: Icon(prefs.filteredRoomTypes.contains(roomTypeID) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
+                      onPressed: () =>
+                        prefs.filteredRoomTypes.contains(roomTypeID)
+                            ? (prefs.removefilteredRoomType(roomTypeID))
+                            : (prefs.addfilteredRoomType(roomTypeID))
+                  ),
+                  title: Text(
+                   fromIdStringToString(roomTypeID),
+                   style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 );
               }

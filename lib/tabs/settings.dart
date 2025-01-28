@@ -382,7 +382,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   enabled: userType != UserType.nobody && Provider.of<StuPlanData>(context, listen: false).altSelectedClassNames.isEmpty,
                 ),
                 SettingsTile.navigation(
-                  title: Text("Einzelne Raumtypen ausblenden"),
+                  title: Text("Raumtypen ausblenden"),
                   description: Text("Auswählen, welche Raumtypen angezeigt werden sollen"),
                   onPressed: (_) => showDialog(context: context, builder: (ctx) => SetRoomTypeFilterDialog()),
                 ),

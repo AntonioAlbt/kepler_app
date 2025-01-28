@@ -564,7 +564,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               Flexible(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  spacing: 3,
+                  spacing: 5,
                   children: filteredFreeRoomsList
                     .map((e) => Flexible(
                       child: Row(

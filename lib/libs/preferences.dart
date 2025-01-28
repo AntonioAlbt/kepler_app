@@ -51,7 +51,7 @@ const prefsPrefKey = "user_preferences";
 
 /// Version der Einstellungen, muss für jede Änderung derselben geändert werden,
 /// damit die App keine Einstellungen importiert, welche aus einer anderen App-Version stammen
-const prefsVersion = 2;
+const prefsVersion = 3;
 
 /// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
