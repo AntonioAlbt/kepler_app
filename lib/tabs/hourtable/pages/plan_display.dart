@@ -1346,7 +1346,7 @@ class LessonListContainer extends StatelessWidget {
     this.events,
     this.extraScrollSpace,
   }) {
-    events!.sort((a, b) {
+    events?.sort((a, b) {
       if (a.date != null && b.date != null) {
         if (!isSameDate(a.date!, b.date!)) return a.date!.compareTo(b.date!);
 
