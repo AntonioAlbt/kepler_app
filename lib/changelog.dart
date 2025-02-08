@@ -52,6 +52,10 @@ final versionChanges = {
     title: "Einstellungen übertragbar",
     descGen: (sie) => "${sie ? "Sie können jetzt Ihre" : "Du kannst jetzt deine"} Einstellungen auf ein anderes Gerät übertragen.",
   ),
+  76: CLEntry(
+    title: "Eigene Ereignisse erstellen",
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt eigene Ereignisse im Stundenplan erstellen, und auch dafür benachrichtigt werden.",
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen

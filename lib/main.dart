@@ -45,6 +45,7 @@ import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/checks.dart';
+import 'package:kepler_app/libs/custom_events.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
@@ -75,6 +76,7 @@ final _credStore = CredentialStore();
 final _appState = AppState();
 final _stuPlanData = StuPlanData();
 final _lernSaxData = LernSaxData();
+final _eventManager = CustomEventManager();
 
 /// global, damit nicht jede Seite sich selbst um Konfetti kümmern muss
 final ConfettiController globalConfettiController = ConfettiController();
@@ -113,6 +115,11 @@ Future<void> initializeApp() async {
   if (await fs.fileExists(await lernSaxDataFilePath)) {
     final data = await fs.readFile(await lernSaxDataFilePath);
     if (data != null) _lernSaxData.loadFromJson(data);
+  }
+  // in Datei gespeichert (CustomEventsManager)
+  if (await fs.fileExists(await customEventDataFilePath)) {
+    final data = await fs.readFile(await customEventDataFilePath);
+    if (data != null) _eventManager.loadFromJson(data);
   }
 
   /// Bei iOS werden die Credentials auch nach Deinstallation der App noch in der System-Keychain gespeichert, was
@@ -418,6 +425,7 @@ class _KeplerAppState extends State<KeplerApp> {
         case newsNotificationKey:
           startingNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
           break;
+        case eventNotificationKey:
         case stuPlanNotificationKey:
           startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
           break;
@@ -577,6 +585,9 @@ class _KeplerAppState extends State<KeplerApp> {
             ),
             ChangeNotifierProvider(
               create: (_) => _lernSaxData,
+            ),
+            ChangeNotifierProvider(
+              create: (_) => _eventManager,
             ),
           ],
           child: MaterialApp(

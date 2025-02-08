@@ -242,7 +242,14 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set aprilFoolsEnabled(bool val) => setSaveNotify("aprilfools_enabled", val);
 
   /// IDs aller aktivierten Benachrichtigungen
-  List<String> get enabledNotifs => cast<String>(attributes["notif_enabled"])?.split(",") ?? [];
+  List<String> get enabledNotifs {
+    final str = cast<String>(attributes["notif_enabled"]);
+    if (str != null && str.isNotEmpty) {
+      return str.split(",");
+    } else {
+      return [];
+    }
+  }
   set enabledNotifs(List<String> val) => setSaveNotify("notif_enabled", val.join(","));
   void addEnabledNotif(String val) {
     if (enabledNotifs.contains(val)) return;
@@ -278,6 +285,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
   /// soll die Möglichkeit zum Hinzufügen von Stundenplänen/Klassen auf der Seite "Dein Stundenplan" angezeigt werden?
   bool get showYourPlanAddDropdown => attributes["show_yp_addrop"] ?? true;
   set showYourPlanAddDropdown(bool val) => setSaveNotify("show_yp_addrop", val);
+
+  /// soll die Möglichkeit zum Hinzufügen von Ereignissen auf der Seite "Dein Stundenplan" angezeigt werden?
+  bool get showYourPlanAddEvents => attributes["show_yp_addevt"] ?? true;
+  set showYourPlanAddEvents(bool val) => setSaveNotify("show_yp_addevt", val);
 
   /// Host für VLANT-LogUp
   String? get logUpHost => attributes["log_up_url"] ?? kBaseLogUpHost;

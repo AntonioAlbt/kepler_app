@@ -58,8 +58,8 @@ class YourPlanPage extends StatefulWidget {
 }
 
 class YourPlanPageState extends State<YourPlanPage> {
-  /// gerade ausgewählter Plan, bestehend aus ( id* + 1, Klassenname/Lehrerkürzel )
-  /// *wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
+  /// gerade ausgewählter Plan, bestehend aus ( id, Klassenname/Lehrerkürzel )
+  /// wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
   /// 
   /// -> Achtung: bei Verwendung als Index immer `- 1` rechnen!
   late (int, String) selected;
@@ -184,6 +184,22 @@ class YourPlanPageState extends State<YourPlanPage> {
                 ),
               ],
             ),
+            // Align(
+            //   alignment: Alignment.bottomRight,
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Container(
+            //       decoration: BoxDecoration(
+            //         boxShadow: [BoxShadow(blurRadius: 15, spreadRadius: -10, offset: Offset(2, 2))]
+            //       ),
+            //       child: FloatingActionButton(
+            //         elevation: 0,
+            //         onPressed: () {}, // add calendar entry
+            //         child: Icon(Icons.add),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         );
       }
@@ -299,8 +315,11 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
 
 // TODO: Dialog-Funktionen verschieben -> werden nur in plan_display.dart verwendet
 
+// TODO: Dialoge stattdessen als Popup-Panels von unten erstellen
+
 /// Dialog mit mehr Infos zu einer Stunde erstellen
 Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
+  // TODO: Knopf zum Erstellen von Event für diese Schulstunde an diesem Tag hinzufügen
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
     content: DefaultTextStyle.merge(

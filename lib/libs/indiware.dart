@@ -99,6 +99,11 @@ class HMTime extends SerializableObject {
     hour = int.parse(timeString.split(':')[0]);
     minute = int.parse(timeString.split(':')[1]);
   }
+
+  HMTime.fromDateTime(DateTime dt) {
+    hour = dt.hour;
+    minute = dt.minute;
+  }
   
   @override
   String toString() {
@@ -113,6 +118,15 @@ class HMTime extends SerializableObject {
 
   @override
   int get hashCode => toString().hashCode;
+
+  int compareTo(HMTime other) {
+    if (hour != other.hour) {
+      return hour.compareTo(other.hour);
+    }
+    return minute.compareTo(other.minute);
+  }
+  bool operator <(HMTime other) => compareTo(other) < 0;
+  bool operator >(HMTime other) => compareTo(other) > 0;
 }
 
 /// Root-Objekt für Schülermobildaten
