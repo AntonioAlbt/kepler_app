@@ -56,6 +56,10 @@ final versionChanges = {
     title: "Eigene Ereignisse erstellen",
     descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt eigene Ereignisse im Stundenplan erstellen, und auch dafür benachrichtigt werden.",
   ),
+  78: CLEntry(
+    title: "Raumtypen filterbar",
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt Raumtypen in der \"Freie Zimmer\"-Ansicht ausblenden.",
+  )
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen

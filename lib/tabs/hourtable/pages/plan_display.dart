@@ -157,6 +157,10 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
 
+  void refreshData() {
+    _ctr.triggerRefresh(forceOnline: false);
+  }
+
   /// versucht erstmal nur, Daten für heute neu zu laden - wenn erfolgreich, löscht auch andere Daten im Cache
   void forceRefreshData() {
     // only clear the cache if loading the new data succeeded (if connected to indiware)

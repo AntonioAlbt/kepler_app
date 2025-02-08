@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/main.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:kepler_app/rainbow.dart';
@@ -103,8 +104,8 @@ final specialRoomInfo = {
   RoomType.technic: ["004", "006"],
   RoomType.sports: ["TH", "Jb1", "Jb2"],
   RoomType.specialist: ["113", "115", "213", "215", "313", "315"],
-  RoomType.music: ["312", "317"],
-  RoomType.art: ["301", "302"],
+  RoomType.music: ["317"],
+  RoomType.art: ["302"],
 };
 /// Generierung einer Map Raumnummer -> Raumtyp
 final specialRoomMap = (){
@@ -159,6 +160,10 @@ class FreeRoomsPage extends StatelessWidget {
 
 void freeRoomRefreshAction() {
   freeRoomDisplayKey.currentState?.forceRefreshData();
+}
+
+void setRoomTypeFilterAction() {
+  showDialog(context: globalScaffoldContext, builder: (ctx) => SetRoomTypeFilterDialog());
 }
 
 /// Dialog mit Details zur Stunde - Kategorisierung freie Räume mit Text statt Icon
@@ -241,7 +246,10 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+            freeRoomDisplayKey.currentState?.refreshData();
+          },
           child: const Text("Schließen"),
         ),
       ],
