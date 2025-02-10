@@ -229,8 +229,8 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
                       icon: Icon(prefs.filteredRoomTypes.contains(roomTypeID) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
                       onPressed: () =>
                         prefs.filteredRoomTypes.contains(roomTypeID)
-                            ? (prefs.removefilteredRoomType(roomTypeID))
-                            : (prefs.addfilteredRoomType(roomTypeID))
+                            ? (prefs.removeFilteredRoomType(roomTypeID))
+                            : (prefs.addFilteredRoomType(roomTypeID))
                   ),
                   title: Text(
                    fromIdStringToString(roomTypeID),

@@ -157,6 +157,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
 
+  /// Lädt die Daten aus dem Cache neu - nur verwenden, wenn es schon Daten im Cache gibt
   void refreshData() {
     _ctr.triggerRefresh(forceOnline: false);
   }
@@ -504,7 +505,6 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
 
   /// generiert anzuzeigende Widgets in Liste für Modus Freie Räume
   List<Widget> _buildFreeRoomList() {
-    // final prefs = Provider.of<Preferences>(context, listen: true);
     /// nur für 1. bis 9. Stunde, alles andere gibt es nur extrem selten -> eh alle Räume frei, oder Schule geschlossen
     final occupiedRooms = <int, List<String>>{
       1: [],
