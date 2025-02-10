@@ -545,7 +545,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       final freeRoomsList = freeRooms.entries.toList();
       freeRoomsList.sort((e1, e2) =>
           (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
-      final filteredFreeRoomsList = freeRoomsList.where((e) => matchesRoomTypeFilter((e.key.toIdString()), context));
+      final filteredFreeRoomsList = freeRoomsList.where((e) => matchesRoomTypeFilter((e.key), context));
       children.add(TextButton(
         style: TextButton.styleFrom(
           shape:

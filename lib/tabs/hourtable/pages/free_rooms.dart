@@ -69,32 +69,14 @@ enum RoomType {
     RoomType.technic: "TC-Räume",
     RoomType.unassigned: "Allgemein",
   }[this]!;
-  String toIdString() => {
-    RoomType.art: "art",
-    RoomType.compSci: "compSci",
-    RoomType.music: "music",
-    RoomType.specialist: "specialist",
-    RoomType.sports: "sports",
-    RoomType.technic: "technic",
-    RoomType.unassigned: "unassigned",
-  }[this]!;
 }
-String fromIdStringToString(String idString) => {
-  "art": "Kunstzimmer",
-  "compSci": "Informatikkabinette",
-  "music": "Musikzimmer",
-  "specialist": "Fachräume",
-  "sports": "Sporthallen",
-  "technic": "TC-Räume",
-  "unassigned": "Allgemeine Räume",
-}[idString] ?? "Unbekannter Raumtyp"; // dieser Fall sollte nie eintreten
 // this even more
 /// Generierung einer Liste der Raumtyp-IDs als Strings
 List<String> listOfRoomTypeIdStrings() {
   final rtlist = RoomType.values.toList();
   List<String> result = [];
   for (var roomtype in rtlist) {
-    result.add(roomtype.toIdString());
+    result.add(roomtype.name);
   }
   return result;
 }
@@ -131,9 +113,9 @@ List<String> rooms(String prefix, int start, int end, List<int> excludes) {
 }
 
 /// prüft, ob ein bestimmter Raumtyp dem Filter entspricht
-bool matchesRoomTypeFilter(String roomtype, BuildContext context) {
+bool matchesRoomTypeFilter(RoomType roomtype, BuildContext context) {
   final prefs = Provider.of<Preferences>(context, listen: false);
-  return prefs.filteredRoomTypes.contains(roomtype);
+  return prefs.filteredRoomTypes.contains(roomtype.name);
 }
 
 /// zeigt freie Räume für ausgewählten Tag und je nach Stunde kategorisiert nach RoomType an
@@ -221,19 +203,20 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
           builder: (ctx, _) => ListView(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
-            children: listOfRoomTypeIdStrings().map((data) {
-              ListTile? genLT(String roomTypeID) {
+            children: RoomType.values.map((data) {
+              ListTile? genLT(RoomType roomTypeID) {
+                final String roomTypeIDString = roomTypeID.name;
                 return ListTile(
                   contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
                   leading: IconButton.outlined(
-                      icon: Icon(prefs.filteredRoomTypes.contains(roomTypeID) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
+                      icon: Icon(prefs.filteredRoomTypes.contains(roomTypeIDString) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
                       onPressed: () =>
-                        prefs.filteredRoomTypes.contains(roomTypeID)
+                        prefs.filteredRoomTypes.contains(roomTypeIDString)
                             ? (prefs.removeFilteredRoomType(roomTypeID))
                             : (prefs.addFilteredRoomType(roomTypeID))
                   ),
                   title: Text(
-                   fromIdStringToString(roomTypeID),
+                    (roomTypeID.toString() != "Allgemein") ? roomTypeID.toString() : "Allgemeine Räume",
                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 );
