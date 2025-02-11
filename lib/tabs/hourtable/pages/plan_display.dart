@@ -157,6 +157,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   late DateTime startDate;
   final _ctr = StuPlanDayDisplayController();
 
+  /// Lädt die Daten neu
+  void refreshData() {
+    _ctr.triggerRefresh(forceOnline: false);
+  }
+
   /// versucht erstmal nur, Daten für heute neu zu laden - wenn erfolgreich, löscht auch andere Daten im Cache
   void forceRefreshData() {
     // only clear the cache if loading the new data succeeded (if connected to indiware)
@@ -488,18 +493,19 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   }
 
   /// für Mapping RoomType -> IconData
-  IconData roomTypeIcon(RoomType? type) => switch (type) {
+  IconData roomTypeIcon(RoomType type) => switch (type) {
         RoomType.art => MdiIcons.palette,
         RoomType.compSci => MdiIcons.desktopClassic,
         RoomType.music => MdiIcons.music,
         RoomType.specialist => Icons.science,
         RoomType.sports => MdiIcons.handball,
         RoomType.technic => MdiIcons.hammerScrewdriver,
-        null => MdiIcons.school,
+        RoomType.unassigned => MdiIcons.school,
       };
 
   /// generiert anzuzeigende Widgets in Liste für Modus Freie Räume
   List<Widget> _buildFreeRoomList() {
+    final prefs = Provider.of<Preferences>(context, listen: false);
     /// nur für 1. bis 9. Stunde, alles andere gibt es nur extrem selten -> eh alle Räume frei, oder Schule geschlossen
     final occupiedRooms = <int, List<String>>{
       1: [],
@@ -524,11 +530,11 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         hour,
         allKeplerRooms.where((room) => !occupied.contains(room)).toList()));
     final freeRoomsWithTypePerHour = () {
-      final map = <int, Map<RoomType?, List<String>>>{};
+      final map = <int, Map<RoomType, List<String>>>{};
       freeRoomsPerHour.forEach((hour, rooms) {
         if (!map.containsKey(hour)) map[hour] = {};
         for (final room in rooms) {
-          final type = specialRoomMap[room];
+          final type = specialRoomMap[room] ?? RoomType.unassigned;
           if (!map[hour]!.containsKey(type)) map[hour]![type] = [];
           map[hour]![type]!.add(room);
         }
@@ -540,6 +546,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       final freeRoomsList = freeRooms.entries.toList();
       freeRoomsList.sort((e1, e2) =>
           (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
+      final filteredFreeRoomsList = freeRoomsList.where((e) => prefs.filteredRoomTypes.contains(e.key));
       children.add(TextButton(
         style: TextButton.styleFrom(
           shape:
@@ -566,23 +573,24 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
               Flexible(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: freeRoomsList
-                      .map((e) => Flexible(
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  child: Icon(
-                                    roomTypeIcon(e.key),
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Flexible(child: Text(e.value.join(", "))),
-                              ],
+                  spacing: 5,
+                  children: filteredFreeRoomsList
+                    .map((e) => Flexible(
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            child: Icon(
+                              roomTypeIcon(e.key),
+                              color: Colors.grey,
                             ),
-                          ))
-                      .toList(),
+                          ),
+                          Flexible(child: Text(e.value.join(", "))),
+                        ],
+                      ),
+                    ))
+                    .toList(),
                 ),
               ),
             ],

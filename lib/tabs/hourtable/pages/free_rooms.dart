@@ -32,8 +32,12 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/main.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
+import 'package:kepler_app/libs/preferences.dart';
 
 /// all of this is subject to change because of building "updates"
 /// - maaaybe the building updates will still take a good while
@@ -52,7 +56,9 @@ final allKeplerRooms = [
 ];
 /// Varianten für Räume, Einteilung für Benutzer
 enum RoomType {
-  compSci, technic, sports, specialist, music, art;
+  /// unassigned sollte eigentlich none heißen;
+  /// die alphabetische Reihenfolge ist aber wichtig, damit dieser Typ zuletzt angezeigt wird
+  compSci, technic, sports, specialist, music, art, unassigned;
   @override
   String toString() => {
     RoomType.art: "Kunstzimmer",
@@ -61,6 +67,7 @@ enum RoomType {
     RoomType.specialist: "Fachräume",
     RoomType.sports: "Sporthallen",
     RoomType.technic: "TC-Räume",
+    RoomType.unassigned: "Allgemein",
   }[this]!;
 }
 // this even more
@@ -122,8 +129,12 @@ void freeRoomRefreshAction() {
   freeRoomDisplayKey.currentState?.forceRefreshData();
 }
 
+void setRoomTypeFilterAction() {
+  showDialog(context: globalScaffoldContext, builder: (ctx) => SetRoomTypeFilterDialog());
+}
+
 /// Dialog mit Details zur Stunde - Kategorisierung freie Räume mit Text statt Icon
-Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType?, List<String>>> freeRoomsList, int hour) {
+Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType, List<String>>> freeRoomsList, int hour) {
   return AlertDialog(
     title: Text("Freie Räume in Stunde $hour"),
     content: Column(
@@ -136,7 +147,7 @@ Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType
               style: const TextStyle(fontSize: 16),
               children: [
                 TextSpan(
-                  text: data.key?.toString() ?? "Allgemein",
+                  text: data.key.toString(),
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
                 const TextSpan(text: ": "),
@@ -154,4 +165,57 @@ Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType
       ),
     ],
   );
+}
+
+/// Dialog zum Auswählen der gewünschten anzuzeigenden Raumtypen
+class SetRoomTypeFilterDialog extends StatefulWidget {
+  const SetRoomTypeFilterDialog({super.key});
+
+  @override
+  State<SetRoomTypeFilterDialog> createState() => _SetRoomTypeFilterDialogState();
+}
+
+class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final prefs = Provider.of<Preferences>(context);
+    return AlertDialog(
+      title: Text("Raumtypen ausblenden"),
+      content: SizedBox(
+        width: MediaQuery.sizeOf(context).width,
+        child: ListenableBuilder(
+          listenable: prefs,
+          builder: (ctx, _) => ListView(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            children: RoomType.values.map((roomType) {
+              return ListTile(
+                contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
+                leading: IconButton.outlined(
+                    icon: Icon(prefs.filteredRoomTypes.contains(roomType) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
+                    onPressed: () =>
+                    prefs.filteredRoomTypes.contains(roomType)
+                        ? (prefs.removeFilteredRoomType(roomType))
+                        : (prefs.addFilteredRoomType(roomType))
+                ),
+                title: Text(
+                  (roomType == RoomType.unassigned) ? "Allgemeine Räume" : roomType.toString(),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
+            }).toList().cast(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            freeRoomDisplayKey.currentState?.refreshData();
+          },
+          child: const Text("Schließen"),
+        ),
+      ],
+    );
+  }
 }

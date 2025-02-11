@@ -306,6 +306,7 @@ final destinations = [
         label: Text("Freie Zimmer"),
         selectedIcon: Icon(Icons.door_back_door),
         navbarActions: [
+          IconButton(onPressed: setRoomTypeFilterAction, icon: Icon(Icons.tune)),
           IconButton(onPressed: freeRoomRefreshAction, icon: Icon(Icons.refresh)),
         ],
         onTryOpen: stuPlanShowInfoDialog,

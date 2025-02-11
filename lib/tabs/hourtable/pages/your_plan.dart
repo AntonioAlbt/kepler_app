@@ -36,6 +36,7 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
+import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
@@ -434,6 +435,23 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
       ),
     ),
     actions: [
+      /// Shortcut zum entsprechenden Raumplan - natürlich nur sichtbar, wenn ein Raum existiert
+      /// und die betreffende Seite nicht schon der Raumplan ist - dann würde der Link
+      /// auf genau diese Seite mit genau dem aktuellen Raum verweisen -> das wäre sinnlos
+      /// Dabei wird immer der erste Raum von evtl. mehreren vorhandenen verwendet
+      /// toString, weil es ohne seltsamerweise nicht funktioniert hat
+      if (lesson.roomCodes.isNotEmpty
+          && ((Provider.of<AppState>(context, listen: false).selectedNavPageIDs).toString() != [StuPlanPageIDs.main, StuPlanPageIDs.roomPlans].toString())
+          && Provider.of<Preferences>(context, listen: false).stuPlanShowRoomPlanLink
+      )
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Provider.of<InternalState>(context, listen: false).lastSelectedRoomPlan = lesson.roomCodes.first;
+            Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.roomPlans];
+          },
+          child: const Text("Zum Raumplan"),
+        ),
       TextButton(
         onPressed: () => Navigator.pop(context),
         child: const Text("Schließen"),
