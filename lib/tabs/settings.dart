@@ -397,7 +397,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 ),
                 SettingsTile.navigation(
                   title: const Text("Raumtypen ausblenden"),
-                  description: const Text("Auswählen, welche Raumtypen in der Liste der freien Räume angezeigt werden sollen"),
+                  description: const Text("auswählen, welche Raumtypen in der Liste der freien Räume angezeigt werden sollen"),
                   onPressed: (_) => showDialog(context: context, builder: (ctx) => SetRoomTypeFilterDialog()),
                   enabled: userType != UserType.nobody,
                 ),

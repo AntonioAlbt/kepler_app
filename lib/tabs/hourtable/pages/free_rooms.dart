@@ -71,15 +71,6 @@ enum RoomType {
   }[this]!;
 }
 // this even more
-/// Generierung einer Liste der Raumtyp-IDs als Strings
-List<String> listOfRoomTypeIdStrings() {
-  final rtlist = RoomType.values.toList();
-  List<String> result = [];
-  for (var roomtype in rtlist) {
-    result.add(roomtype.name);
-  }
-  return result;
-}
 /// Zuteilung Räume zu Raumtyp
 final specialRoomInfo = {
   RoomType.compSci: ["K08", "K10", "202"],
@@ -110,12 +101,6 @@ List<String> rooms(String prefix, int start, int end, List<int> excludes) {
     rooms.add("$prefix${i.toString().padLeft(2, "0")}");
   }
   return rooms;
-}
-
-/// prüft, ob ein bestimmter Raumtyp dem Filter entspricht
-bool matchesRoomTypeFilter(RoomType roomtype, BuildContext context) {
-  final prefs = Provider.of<Preferences>(context, listen: false);
-  return prefs.filteredRoomTypes.contains(roomtype.name);
 }
 
 /// zeigt freie Räume für ausgewählten Tag und je nach Stunde kategorisiert nach RoomType an
@@ -203,27 +188,22 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
           builder: (ctx, _) => ListView(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
-            children: RoomType.values.map((data) {
-              ListTile? genLT(RoomType roomTypeID) {
-                final String roomTypeIDString = roomTypeID.name;
-                return ListTile(
-                  contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
-                  leading: IconButton.outlined(
-                      icon: Icon(prefs.filteredRoomTypes.contains(roomTypeIDString) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
-                      onPressed: () =>
-                        prefs.filteredRoomTypes.contains(roomTypeIDString)
-                            ? (prefs.removeFilteredRoomType(roomTypeID))
-                            : (prefs.addFilteredRoomType(roomTypeID))
-                  ),
-                  title: Text(
-                    (roomTypeID.toString() != "Allgemein") ? roomTypeID.toString() : "Allgemeine Räume",
-                   style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                );
-              }
-              final lt = genLT(data);
-              return lt;
-            }).where((lt) => lt != null).toList().cast(),
+            children: RoomType.values.map((roomType) {
+              return ListTile(
+                contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
+                leading: IconButton.outlined(
+                    icon: Icon(prefs.filteredRoomTypes.contains(roomType) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
+                    onPressed: () =>
+                    prefs.filteredRoomTypes.contains(roomType)
+                        ? (prefs.removeFilteredRoomType(roomType))
+                        : (prefs.addFilteredRoomType(roomType))
+                ),
+                title: Text(
+                  (roomType == RoomType.unassigned) ? "Allgemeine Räume" : roomType.toString(),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
+            }).toList().cast(),
           ),
         ),
       ),
