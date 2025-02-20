@@ -47,10 +47,10 @@ import 'package:kepler_app/libs/preferences.dart';
 /// -> die App könnte ja sonst nur vom Stundenplan rausfinden, welche Räume es gibt, d.h. wenn ein Raum an
 ///   einem Tag nicht verwendet wird, weiß die App nicht über die Existenz des Raumes
 final allKeplerRooms = [
-  "K08", "K10",
-  ...rooms("0", 4, 12, [5, 7]),
-  ...rooms("1", 8, 15, [12, 14]),
-  ...rooms("2", 1, 16, [6, 7, 12, 14]),
+  "K10", "K12",
+  ...rooms("0", 1, 7, [2]), "021",
+  ...rooms("1", 7, 17, [13, 14, 15, 16]),
+  ...rooms("2", 1, 19, [6, 12, 14, 15, 16, 17]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
   "TH", "Jb1", "Jb2",
 ];
@@ -73,10 +73,10 @@ enum RoomType {
 // this even more
 /// Zuteilung Räume zu Raumtyp
 final specialRoomInfo = {
-  RoomType.compSci: ["K08", "K10", "202"],
-  RoomType.technic: ["004", "006"],
+  RoomType.compSci: ["K10", "K12", "202"],
+  RoomType.technic: ["001", "021"],
   RoomType.sports: ["TH", "Jb1", "Jb2"],
-  RoomType.specialist: ["113", "115", "213", "215", "313", "315"],
+  RoomType.specialist: ["112", "117", "213", "218", "313", "315"],
   RoomType.music: ["317"],
   RoomType.art: ["302"],
 };
