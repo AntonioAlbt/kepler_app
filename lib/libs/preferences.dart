@@ -44,13 +44,14 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:provider/provider.dart';
 
 const prefsPrefKey = "user_preferences";
 
 /// Version der Einstellungen, muss für jede Änderung derselben geändert werden,
 /// damit die App keine Einstellungen importiert, welche aus einer anderen App-Version stammen
-const prefsVersion = 2;
+const prefsVersion = 3;
 
 /// globale Variable für aktuelles Gerätefarbschema
 bool? deviceInDarkMode;
@@ -173,7 +174,17 @@ class Preferences extends SerializableObject with ChangeNotifier {
   bool get stuPlanShowLastRoomUsage => attributes["sp_show_lru"] ?? true;
   set stuPlanShowLastRoomUsage(bool val) => setSaveNotify("sp_show_lru", val);
 
-  /// ungenutzt - eigentlich, damit der Benutzer Einträge in der Navigationsliste ausblenden kann
+  /// soll in der Detailansicht einer Stunde ein Link zum entsprechenden Raumplan angezeigt werden
+  bool get stuPlanShowRoomPlanLink => attributes["sp_show_rpl"] ?? true;
+  set stuPlanShowRoomPlanLink(bool val) => setSaveNotify("sp_show_rpl", val);
+
+  /// Filterliste für die anzuzeigenden Raumtypen
+  List<RoomType> get filteredRoomTypes => cast<String>(attributes["filtered_room_types"])?.split(",").map((val) => RoomType.values.firstWhere((t) => t.name == val, orElse: () => RoomType.unassigned)).toList() ?? RoomType.values;
+  set filteredRoomTypes(List<RoomType> val) => setSaveNotify("filtered_room_types", val.map((t) => t.name).join(","));
+  void addFilteredRoomType(RoomType id) => filteredRoomTypes = filteredRoomTypes..add(id);
+  void removeFilteredRoomType(RoomType id) => filteredRoomTypes = filteredRoomTypes..remove(id);
+
+  /// Liste der ausgeblendeten Einträge in der Navigationsliste
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
   set hiddenNavIDs(List<String> val) => setSaveNotify("hidden_nav_ids", val.join(","));
   void addHiddenNavID(String id) => hiddenNavIDs = hiddenNavIDs..add(id);

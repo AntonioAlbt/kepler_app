@@ -50,6 +50,7 @@ import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/home/home.dart';
+import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -385,6 +386,19 @@ class _SettingsTabState extends State<SettingsTab> {
                   onToggle: (val) => prefs.showYourPlanAddEvents = val,
                   title: const Text("Knopf für Ereignisse hinzufügen anzeigen"),
                   description: Text("aktivieren, um auf Seite \"${sie ? "Ihr" : "Dein"} Stundenplan\" eigene Ereignisse hinzufügen können"),
+                  enabled: userType != UserType.nobody,
+                ),
+                rainbowSwitchTile(
+                  initialValue: prefs.stuPlanShowRoomPlanLink, 
+                  onToggle: (val) => prefs.stuPlanShowRoomPlanLink = val,
+                  title: const Text("Direktlink zum Raumplan anzeigen"),
+                  description: const Text("zeigt in der Detailansicht einer Stunde einen Link zum Plan des jeweiligen Raumes"),
+                  enabled: userType != UserType.nobody,
+                ),
+                SettingsTile.navigation(
+                  title: const Text("Raumtypen ausblenden"),
+                  description: const Text("auswählen, welche Raumtypen in der Liste der freien Räume angezeigt werden sollen"),
+                  onPressed: (_) => showDialog(context: context, builder: (ctx) => SetRoomTypeFilterDialog()),
                   enabled: userType != UserType.nobody,
                 ),
               ],

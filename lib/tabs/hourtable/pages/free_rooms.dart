@@ -32,8 +32,12 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/main.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
+import 'package:kepler_app/libs/preferences.dart';
 
 /// all of this is subject to change because of building "updates"
 /// - maaaybe the building updates will still take a good while
@@ -43,16 +47,18 @@ import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
 /// -> die App könnte ja sonst nur vom Stundenplan rausfinden, welche Räume es gibt, d.h. wenn ein Raum an
 ///   einem Tag nicht verwendet wird, weiß die App nicht über die Existenz des Raumes
 final allKeplerRooms = [
-  "K08", "K10",
-  ...rooms("0", 4, 12, [5, 7]),
-  ...rooms("1", 8, 15, [12, 14]),
-  ...rooms("2", 1, 16, [6, 7, 12, 14]),
+  "K10", "K12",
+  ...rooms("0", 1, 7, [2]), "021",
+  ...rooms("1", 7, 17, [13, 14, 15, 16]),
+  ...rooms("2", 1, 19, [6, 12, 14, 15, 16, 17]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
   "TH", "Jb1", "Jb2",
 ];
 /// Varianten für Räume, Einteilung für Benutzer
 enum RoomType {
-  compSci, technic, sports, specialist, music, art;
+  /// unassigned sollte eigentlich none heißen;
+  /// die alphabetische Reihenfolge ist aber wichtig, damit dieser Typ zuletzt angezeigt wird
+  compSci, technic, sports, specialist, music, art, unassigned;
   @override
   String toString() => {
     RoomType.art: "Kunstzimmer",
@@ -61,15 +67,16 @@ enum RoomType {
     RoomType.specialist: "Fachräume",
     RoomType.sports: "Sporthallen",
     RoomType.technic: "TC-Räume",
+    RoomType.unassigned: "Allgemein",
   }[this]!;
 }
 // this even more
 /// Zuteilung Räume zu Raumtyp
 final specialRoomInfo = {
-  RoomType.compSci: ["K08", "K10", "202"],
-  RoomType.technic: ["004", "006"],
+  RoomType.compSci: ["K10", "K12", "202"],
+  RoomType.technic: ["001", "021"],
   RoomType.sports: ["TH", "Jb1", "Jb2"],
-  RoomType.specialist: ["113", "115", "213", "215", "313", "315"],
+  RoomType.specialist: ["112", "117", "213", "218", "313", "315"],
   RoomType.music: ["317"],
   RoomType.art: ["302"],
 };
@@ -122,8 +129,12 @@ void freeRoomRefreshAction() {
   freeRoomDisplayKey.currentState?.forceRefreshData();
 }
 
+void setRoomTypeFilterAction() {
+  showDialog(context: globalScaffoldContext, builder: (ctx) => SetRoomTypeFilterDialog());
+}
+
 /// Dialog mit Details zur Stunde - Kategorisierung freie Räume mit Text statt Icon
-Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType?, List<String>>> freeRoomsList, int hour) {
+Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType, List<String>>> freeRoomsList, int hour) {
   return AlertDialog(
     title: Text("Freie Räume in Stunde $hour"),
     content: Column(
@@ -136,7 +147,7 @@ Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType
               style: const TextStyle(fontSize: 16),
               children: [
                 TextSpan(
-                  text: data.key?.toString() ?? "Allgemein",
+                  text: data.key.toString(),
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                 ),
                 const TextSpan(text: ": "),
@@ -154,4 +165,57 @@ Widget generateFreeRoomsClickDialog(BuildContext context, List<MapEntry<RoomType
       ),
     ],
   );
+}
+
+/// Dialog zum Auswählen der gewünschten anzuzeigenden Raumtypen
+class SetRoomTypeFilterDialog extends StatefulWidget {
+  const SetRoomTypeFilterDialog({super.key});
+
+  @override
+  State<SetRoomTypeFilterDialog> createState() => _SetRoomTypeFilterDialogState();
+}
+
+class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final prefs = Provider.of<Preferences>(context);
+    return AlertDialog(
+      title: Text("Raumtypen ausblenden"),
+      content: SizedBox(
+        width: MediaQuery.sizeOf(context).width,
+        child: ListenableBuilder(
+          listenable: prefs,
+          builder: (ctx, _) => ListView(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            children: RoomType.values.map((roomType) {
+              return ListTile(
+                contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
+                leading: IconButton.outlined(
+                    icon: Icon(prefs.filteredRoomTypes.contains(roomType) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
+                    onPressed: () =>
+                    prefs.filteredRoomTypes.contains(roomType)
+                        ? (prefs.removeFilteredRoomType(roomType))
+                        : (prefs.addFilteredRoomType(roomType))
+                ),
+                title: Text(
+                  (roomType == RoomType.unassigned) ? "Allgemeine Räume" : roomType.toString(),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
+            }).toList().cast(),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            freeRoomDisplayKey.currentState?.refreshData();
+          },
+          child: const Text("Schließen"),
+        ),
+      ],
+    );
+  }
 }
