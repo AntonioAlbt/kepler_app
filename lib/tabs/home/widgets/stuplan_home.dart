@@ -144,7 +144,7 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
                       }
                       final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
                         ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
-                        .where((e) => stdata.selectedCourseIDs.contains(e.subjectID) || e.subjectID == null).toList();
+                        .where((e) => !stdata.hiddenCourseIDs.contains(e.subjectID)).toList();
                       return SPWidgetList(
                         stillLoading: datasn.connectionState != ConnectionState.done,
                         lessons: lessons,

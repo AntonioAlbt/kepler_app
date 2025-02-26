@@ -102,7 +102,7 @@ class _HourtableTabState extends State<HourtableTab> {
 
 /// fehlen Daten für den Stundenplan -> sollte die Stundenplan-Einrichtung angezeigt werden?
 bool shouldShowStuPlanIntro(StuPlanData data, bool teacher) =>
-    teacher ? (data.selectedTeacherName == null) : (data.selectedClassName == null || data.selectedCourseIDs.isEmpty);
+    teacher ? (data.selectedTeacherName == null) : (data.selectedClassName == null);
 
 // returns true if all data is given and the stuplan page should be shown
 // and false if the intro screens have to be shown -> for Drawer onTryOpen

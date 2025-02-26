@@ -157,8 +157,8 @@ Future<void> runStuPlanFetchTask() async {
   if (!spdata.loaded || !(spdata.selectedClassName != null || spdata.selectedTeacherName != null)) return;
 
   // this does look like it'll use quite some of the users data, but for 12 times a day with 5 plans, each one only 12kB it's actually only about 720kB per day, which is fine
-  var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.selectedCourseIDs);
-  differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.selectedCourseIDs) : null;
+  var differentLessons = (spdata.selectedTeacherName != null) ? await getDifferentTeacherLessons(creds, spdata.selectedTeacherName!) : await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.hiddenCourseIDs);
+  differentLessons ??= (spdata.selectedTeacherName != null && spdata.selectedClassName != null) ? await getDifferentClassLessons(creds, spdata.selectedClassName!, spdata.hiddenCourseIDs) : null;
 
   if (kDebugNotifData) {
     differentLessons ??= {
@@ -193,7 +193,7 @@ Future<void> runStuPlanFetchTask() async {
 }
 
 /// fragt neuen Stundenplan ab, vergleicht Änderungen und gibt geänderte Stunden der Klasse zurück
-Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className, List<int> selectedCourseIds) async {
+Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore creds, String className, List<int> hiddenCourseIds) async {
   final newDatas = <DateTime, VPKlData>{};
   final oldDatas = <DateTime, VPKlData>{};
   for (var i = 0; i < 5; i++) {
@@ -230,7 +230,7 @@ Future<Map<DateTime, List<VPLesson>>?> getDifferentClassLessons(CredentialStore 
       final oldKlasse = oldDatas[date]?.classes.cast<VPClass?>().firstWhere((c) => c!.className == klasse.className, orElse: () => null);
       for (var lesson in klasse.lessons) {
         if (lesson.startTime == null || lesson.endTime == null) continue;
-        if (!selectedCourseIds.contains(lesson.subjectID) && lesson.subjectID != null) continue;
+        if (hiddenCourseIds.contains(lesson.subjectID) || lesson.subjectID == null) continue;
         final multipleInHour = (oldKlasse?.lessons.where((l) => l.schoolHour == lesson.schoolHour).length ?? 0) > 1;
         final oldLesson = oldKlasse?.lessons.cast<VPLesson?>().firstWhere((l) => l!.schoolHour == lesson.schoolHour && (multipleInHour ? l.subjectID == lesson.subjectID : true), orElse: () => null);
         if (oldLesson == null) {

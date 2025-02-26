@@ -391,12 +391,12 @@ class SubjectSelectScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StuPlanData>(
       builder: (context, stdata, _) {
-        return SPSubjectSelector(
+        return SPHiddenSubjectSelector(
           onGoBack: () {
             infoScreenState.previous();
           },
-          onFinish: (selected) {
-            Provider.of<StuPlanData>(context, listen: false).selectedCourseIDs = selected;
+          onFinish: (hidden) {
+            Provider.of<StuPlanData>(context, listen: false).hiddenCourseIDs = hidden;
             infoScreenState.next();
           },
           availableSubjects: stdata.availableClassSubjects!,
@@ -413,38 +413,39 @@ class SubjectSelectScreen extends StatelessWidget {
 }
 
 /// Widget für das Auswählen von anzuzeigenden Fächern für eine Klasse
-class SPSubjectSelector extends StatefulWidget {
+class SPHiddenSubjectSelector extends StatefulWidget {
   /// wird aufgerufen, wenn Auswahl erfolgreich abgeschlossen und auf Weiter getippt
-  final void Function(List<int> subjectIDs) onFinish;
+  final void Function(List<int> hiddenSubjectIDs) onFinish;
   /// wird aufgerufen, wenn Benutzer auf "zurück" tippt
   final void Function() onGoBack;
   /// wird aufgerufen, wenn Benutzer Checkbox an- oder abwählt (Zustand ändert)
   final void Function(bool enabled)? onShowExams;
   /// Fächer, aus denen ausgewählt werden kann
   final List<VPCSubjectS> availableSubjects;
-  /// Fächer, die standardmäßig angewählt sein sollen
-  final List<VPCSubjectS>? preselectedSubjects;
+  /// Fächer, die standardmäßig nicht angewählt sein sollen
+  final List<VPCSubjectS>? preDeselectedSubjects;
   /// Voreinstellung für Checkbox für Klausuren
   final bool currentShowExams;
 
-  const SPSubjectSelector({
+  const SPHiddenSubjectSelector({
     super.key,
     required this.onFinish,
     required this.onGoBack,
     this.onShowExams,
     required this.availableSubjects,
     this.currentShowExams = false,
-    this.preselectedSubjects,
+    this.preDeselectedSubjects,
   });
 
   @override
-  State<SPSubjectSelector> createState() => _SPSubjectSelectorState();
+  State<SPHiddenSubjectSelector> createState() => _SPHiddenSubjectSelectorState();
 }
 
-class _SPSubjectSelectorState extends State<SPSubjectSelector> {
+class _SPHiddenSubjectSelectorState extends State<SPHiddenSubjectSelector> {
   /// warum der existiert, weiß ich nicht (vielleicht für eventuelle ScrollBar?)
   late final ScrollController _scctr;
   final List<int> _selected = [];
+  final List<int> _toBeHidden = [];
   bool _showExams = false;
 
   @override
@@ -466,6 +467,7 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
                 onPressed: () {
                   for (var e in widget.availableSubjects) {
                     _selected.add(e.subjectID);
+                    _toBeHidden.remove(e.subjectID);
                   }
                   setState(() {});
                 },
@@ -476,6 +478,7 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
               onPressed: () {
                 for (var e in widget.availableSubjects) {
                   _selected.remove(e.subjectID);
+                  _toBeHidden.add(e.subjectID);
                 }
                 setState(() {});
               },
@@ -497,8 +500,10 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
                   onTap: () {
                     if (_selected.contains(subject.subjectID)) {
                       _selected.remove(subject.subjectID);
+                      _toBeHidden.add(subject.subjectID);
                     } else {
                       _selected.add(subject.subjectID);
+                      _toBeHidden.remove(subject.subjectID);
                     }
                     setState(() {});
                   },
@@ -510,8 +515,10 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
                         onChanged: (val) {
                           if (val == true) {
                             _selected.add(subject.subjectID);
+                            _toBeHidden.remove(subject.subjectID);
                           } else {
                             _selected.remove(subject.subjectID);
+                            _toBeHidden.add(subject.subjectID);
                           }
                           setState(() {});
                         },
@@ -557,7 +564,7 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: ElevatedButton(
-                  onPressed: () => widget.onFinish(_selected),
+                  onPressed: () => widget.onFinish(_toBeHidden),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -582,10 +589,8 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
     super.initState();
     _scctr = ScrollController();
     _showExams = widget.currentShowExams;
-    _selected.addAll(widget.preselectedSubjects?.map((e) => e.subjectID) ?? []);
-    if (widget.preselectedSubjects == null) {
-      _selected.addAll(widget.availableSubjects.map((e) => e.subjectID));
-    }
+    _selected.addAll(widget.availableSubjects.map((e) => e.subjectID));
+    widget.preDeselectedSubjects?.forEach((s) => _selected.remove(s.subjectID));
   }
 
   @override
@@ -692,16 +697,16 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
             },
             onCancel: () => Navigator.pop(context, false),
             alternativeAccount: true,
-          ) : SPSubjectSelector(
-            onFinish: (selected) {
+          ) : SPHiddenSubjectSelector(
+            onFinish: (hidden) {
               if (widget.editId == null) {
                 /// da zum Benachrichtigen von Änderungen das immer neu gesetzt werden muss, wird hier eine
                 /// Zuweisung verwendet, obwohl nur `add` aufgerufen wurde
                 stdata.altSelectedClassNames = stdata.altSelectedClassNames..add(_newClass!);
-                stdata.altSelectedCourseIDs = stdata.altSelectedCourseIDs..add(selected.join("|"));
+                stdata.altHiddenCourseIDs = stdata.altHiddenCourseIDs..add(hidden.join("|"));
               } else {
                 stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
-                stdata.setSelectedCoursesForAlt(widget.editId!, selected);
+                stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
               }
               Navigator.pop(context, true);
             },

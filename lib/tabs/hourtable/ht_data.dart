@@ -61,7 +61,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     objectCreators["available_teachers"] = (_) => <String>[];
 
     objectCreators["alt_selected_class_name"] = (_) => <String>[];
-    objectCreators["alt_selected_course_ids"] = (_) => <String>[];
+    objectCreators["alt_hidden_course_ids"] = (_) => <String>[];
   }
 
   Map<String, List<VPCSubjectS>> _jsonDataStrToMap(String json) {
@@ -110,31 +110,43 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   /// Eintrag mit Index `alt` aus altSelectedClassNames und altSelectedCourseIDs entfernen
   void removeAltSelection(int alt) {
     altSelectedClassNames = altSelectedClassNames..removeAt(alt);
-    altSelectedCourseIDs = altSelectedCourseIDs..removeAt(alt);
+    altHiddenCourseIDs = altHiddenCourseIDs..removeAt(alt);
   }
 
-  /// angewählte Kurse/Fächer für Schüler/Elternteil (bei Lehrern Auswahl nicht möglich)
-  List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
-  set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);
-  void addSelectedCourse(int id) {
-    final l = selectedCourseIDs;
-    if (l.contains(id)) return;
-    l.add(id);
-    selectedCourseIDs = l;
-  }
-  void removeSelectedCourse(int id) {
-    final l = selectedCourseIDs;
-    l.remove(id);
-    selectedCourseIDs = l;
-  }
+  /// hier zur Dokumentation, weil "selected_course_ids" bei vielen Nutzern noch in den Daten enthalten sein wird
+  // /// angewählte Kurse/Fächer für Schüler/Elternteil (bei Lehrern Auswahl nicht möglich)
+  // List<int> get selectedCourseIDs => attributes["selected_course_ids"] ?? [];
+  // set selectedCourseIDs(List<int> sc) => _setSaveNotify("selected_course_ids", sc);
+  // void addSelectedCourse(int id) {
+  //   final l = selectedCourseIDs;
+  //   if (l.contains(id)) return;
+  //   l.add(id);
+  //   selectedCourseIDs = l;
+  // }
+  // void removeSelectedCourse(int id) {
+  //   final l = selectedCourseIDs;
+  //   l.remove(id);
+  //   selectedCourseIDs = l;
+  // }
 
-  // to make it easier to store multiple I don't want to store nested lists (so sadly the data format doesn't match selectedCourseIDs)
-  // so instead just merge the ints to string
-  /// alternative angewählte Fächer für andere Stundenpläne, muss gleich lang sein wie alternative Klassen-Liste
-  List<String> get altSelectedCourseIDs => attributes["alt_selected_course_ids"] ?? [];
-  set altSelectedCourseIDs(List<String> sc) => _setSaveNotify("alt_selected_course_ids", sc);
-  void setSelectedCoursesForAlt(int alt, List<int> selected) {
-    altSelectedCourseIDs = altSelectedCourseIDs..[alt] = selected.join("|");
+  /// statt anzuzeigenden Fächern müssen jetzt die auszublendenden Fächer ausgewählt werden,
+  /// damit in einem neuen Schuljahr erstmal alle Fächer einer neuen Klasse sichtbar sind
+  List<int> get hiddenCourseIDs => attributes["hidden_course_ids"] ?? [];
+  set hiddenCourseIDs(List<int> sc) => _setSaveNotify("hidden_course_ids", sc);
+
+  // // to make it easier to store multiple I don't want to store nested lists (so sadly the data format doesn't match selectedCourseIDs)
+  // // so instead just merge the ints to string
+  // /// alternative angewählte Fächer für andere Stundenpläne, muss gleich lang sein wie alternative Klassen-Liste
+  // List<String> get altSelectedCourseIDs => attributes["alt_selected_course_ids"] ?? [];
+  // set altSelectedCourseIDs(List<String> sc) => _setSaveNotify("alt_selected_course_ids", sc);
+  // void setSelectedCoursesForAlt(int alt, List<int> selected) {
+  //   altSelectedCourseIDs = altSelectedCourseIDs..[alt] = selected.join("|");
+  // }
+  /// alternative ausgeblendete Fächer für andere Stundenpläne, muss gleich lang sein wie alternative Klassen-Liste
+  List<String> get altHiddenCourseIDs => attributes["alt_hidden_course_ids"] ?? [];
+  set altHiddenCourseIDs(List<String> sc) => _setSaveNotify("alt_hidden_course_ids", sc);
+  void setHiddenCoursesForAlt(int alt, List<int> hidden) {
+    altHiddenCourseIDs = altHiddenCourseIDs..[alt] = hidden.join("|");
   }
 
   /// letzter Zeitpunkt, an dem die verfügbaren Klassen aktualisiert wurden
@@ -221,10 +233,10 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     lastAvailTeachersUpdate = DateTime(1900);
     lastHolidayDatesUpdate = DateTime(1900);
     selectedClassName = null;
-    selectedCourseIDs = [];
+    hiddenCourseIDs = [];
     selectedTeacherName = null;
     altSelectedClassNames = [];
-    altSelectedCourseIDs = [];
+    altHiddenCourseIDs = [];
   }
 }
 

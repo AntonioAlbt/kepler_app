@@ -414,6 +414,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   bool _loading = true;
   /// gets selected lessons loaded when no special mode selected, if `freeRoomsMode` gets loaded all lessons for all classes, otherwise is null
   List<VPLesson>? lessons;
+  /// damit unterschieden werden kann, ob keine Stunden vorhanden sind oder alle Stunden ausgefiltert wurden,
+  /// gibt es diese Liste von allen Stunden der Klasse an einem Tag ohne Berücksichtigung der Filterung (nur relevant für persönlichen Stundenplan)
+  List<VPLesson>? unfilteredLessons;
   /// gets loaded with all lessons for determining last room usage
   List<VPLesson>? allLessonsForDate;
   /// only gets loaded with changed class lessons if `allReplacesMode`
@@ -748,6 +751,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         events: widget.mode == SPDisplayMode.yourPlan ? evtmgr.events.where((evt) => isSameDate(evt.date ?? DateTime(1900), widget.date)).toList() : null,
                         // events: evtmgr.events,
                         extraScrollSpace: widget.mode == SPDisplayMode.yourPlan ? kSPListExtraScrollSpace : null,
+                        classHasLessons: unfilteredLessons?.isNotEmpty ?? false,
                       );
                     }
                   ),
@@ -1056,14 +1060,15 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           if (!mounted) return false;
           isOnline = online;
           lastUpdated = data?.header.lastUpdated;
-          lessons = data?.classes
-              .cast<VPClass?>()
-              .firstWhere((cl) => cl?.className == widget.selected,
-                  orElse: () => null)
-              ?.lessons
-              // include lessons with subjectID == null, because they are usually important changed lessons for every pupil
-              .where((element) => ((widget.selectedId ?? 0) < 1 ? stdata.selectedCourseIDs : stdata.altSelectedCourseIDs[(widget.selectedId ?? 1) - 1].split("|").map((m) => int.parse(m))).contains(element.subjectID) || element.subjectID == null)
-              .toList();
+          unfilteredLessons = data?.classes
+            .cast<VPClass?>()
+            .firstWhere((cl) => cl?.className == widget.selected,
+                orElse: () => null)
+            ?.lessons;
+          lessons = unfilteredLessons
+            /// nur Stunden anzeigen, bei denen subjectID nicht in der entsprechenden Ausblendungsliste enthalten ist
+            ?.where((element) => !((widget.selectedId ?? 0) < 1 ? stdata.hiddenCourseIDs : stdata.altHiddenCourseIDs[(widget.selectedId ?? 1) - 1].split("|").map((m) => int.parse(m))).contains(element.subjectID))
+            .toList();
           allLessonsForDate = data?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = data?.additionalInfo;
           if (prefs.stuPlanShowExams) {
@@ -1333,6 +1338,7 @@ class SPListContainer extends StatelessWidget {
 
 class LessonListContainer extends StatelessWidget {
   final List<VPLesson>? lessons;
+  final bool classHasLessons;
   final List<VPLesson>? fullLessonListForDate;
   final List<CustomEvent>? events;
   final String className;
@@ -1357,6 +1363,7 @@ class LessonListContainer extends StatelessWidget {
     required this.onRefresh,
     this.events,
     this.extraScrollSpace,
+    this.classHasLessons = false,
   }) {
     events?.sort((a, b) {
       if (a.date != null && b.date != null) {
@@ -1392,6 +1399,7 @@ class LessonListContainer extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               lessons == null ? (isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
+                : classHasLessons ? "Alle Stunden werden ausgeblendet."
                 : "${getDayDescription(date)} ist kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
               textAlign: TextAlign.center,
