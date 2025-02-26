@@ -599,6 +599,8 @@ class _KeplerAppState extends State<KeplerApp> {
                 seedColor: keplerColorBlue,
                 brightness: (_prefs.darkTheme) ? Brightness.dark : Brightness.light,
               ),
+              // ignore: deprecated_member_use
+              progressIndicatorTheme: ProgressIndicatorThemeData(year2023: false),
             ),
           ),
         );

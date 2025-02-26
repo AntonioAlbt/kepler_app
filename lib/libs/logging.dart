@@ -193,7 +193,7 @@ class KeplerLogging {
     };
     PlatformDispatcher.instance.onError = (error, stack) {
       logCatch("platform-dispatcher-error", error, stack);
-      if (!loggingEnabled) debugPrintStack(label: error.toString(), stackTrace: stack);
+      if (!loggingEnabled || kDebugMode) debugPrintStack(label: error.toString(), stackTrace: stack);
       return true;
     };
   }

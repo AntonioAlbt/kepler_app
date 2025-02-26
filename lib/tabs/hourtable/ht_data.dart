@@ -54,9 +54,8 @@ Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPl
 /// und alle Einstellungen/ausgewählte Optionen bzgl. des Stundenplanes
 class StuPlanData extends SerializableObject with ChangeNotifier {
   StuPlanData() {
-    objectCreators["selected_courses"] = (_) => <String>[];
     objectCreators["available_classes"] = (_) => <String>[];
-    objectCreators["selected_course_ids"] = (_) => <int>[];
+    objectCreators["hidden_course_ids"] = (_) => <int>[];
 
     objectCreators["available_teachers"] = (_) => <String>[];
 

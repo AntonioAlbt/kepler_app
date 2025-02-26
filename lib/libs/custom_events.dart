@@ -18,13 +18,13 @@ import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
-/// Speicherpfad für die Events
+/// Speicherpfad für die Ereignisse
 Future<String> get customEventDataFilePath async => "${await userDataDirPath}/custom-events.json";
 
 class CustomEvent extends SerializableObject {
   String get uuid => attributes["uuid"];
 
-  /// Titel des Events
+  /// Titel des Ereignisse
   String get title => attributes["title"];
   set title(String val) => attributes["title"] = val;
 
@@ -177,11 +177,11 @@ class CustomEventManager extends SerializableObject with ChangeNotifier {
   }
 }
 
-/// zeigt Event schön formatiert an (mit Dialog beim Antippen)
+/// zeigt Ereignis schön formatiert an (mit Dialog beim Antippen)
 class CustomEventDisplay extends StatelessWidget {
-  /// anzuzeigendes Event
+  /// anzuzeigendes Ereignis
   final CustomEvent event;
-  /// Stunde des vorherigen Events (damit Text mit Stunde nur einmal vor mehreren Events in derselben Stunde
+  /// Stunde des vorherigen Ereignisse (damit Text mit Stunde nur einmal vor mehreren Ereignisse in derselben Stunde
   /// angezeigt wird)
   final int? previousDisplayHour;
   /// soll der Info-Dialog beim Antippen angezeigt werden?

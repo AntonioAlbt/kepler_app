@@ -172,7 +172,7 @@ class VPHeader {
   final String dataDate;
   /// Dateiname des Planes (auf dem Server?) - aus Element `<dateiname>`
   final String filename;
-  /// ungenutze Elemente: <planart>, <nativ>, <woche>, <tageprowoche>, <schulnummer>
+  /// ungenutze Elemente: `<planart>, <nativ>, <woche>, <tageprowoche>, <schulnummer>`
 
   const VPHeader({required this.lastUpdated, required this.dataDate, required this.filename});
   @override
@@ -205,7 +205,7 @@ class VPHolidays {
 class VPClass {
   /// "Name" bzw. Kürzel der Klasse - aus Element `<Kurz>`
   final String className;
-  /// ungenutzes Element: <Hash> (anscheinend immer leer)
+  /// ungenutzes Element: `<Hash>` (anscheinend immer leer)
   /// Zeitblöcke, in denen Stunden stattfinden können - aus Element `<KlStunden>`
   final List<VPHourBlock> hourBlocks;
   /// Kurse der Klasse? Nutzen/Bedeutung unklar (auch keine Verwendung) - aus Element `<Kurse>`
@@ -359,7 +359,7 @@ VPLesson considerLernSaxCancellationForLesson(VPLesson lesson, bool considerIt, 
 class VPTeacher {
   /// Lehrerkürzel - aus Element `<Kurz>`
   final String teacherCode;
-  /// ungenutzes Element: <Hash> (anscheinend immer leer)
+  /// ungenutzes Element: `<Hash>` (anscheinend immer leer)
   /// aus Element `<KlStunden>`
   final List<VPHourBlock> hourBlocks;
   /// aus Element `<Pl>`

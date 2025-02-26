@@ -143,9 +143,7 @@ Future<void> runStuPlanFetchTask() async {
     final data = await readFile(await stuPlanDataFilePath);
     if (data != null) spdata.loadFromJson(data);
   }
-  const secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  const secureStorage = FlutterSecureStorage();
   final creds = CredentialStore();
   if (await secureStorage.containsKey(key: credStorePrefKey)) {
     creds.loadFromJson((await secureStorage.read(key: credStorePrefKey))!);

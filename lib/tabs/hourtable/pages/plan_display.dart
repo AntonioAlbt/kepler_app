@@ -52,6 +52,7 @@ import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
     show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 /// wie viel soll die Stundenplan-Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
 const kSPListExtraScrollSpace = 32.0;
@@ -628,19 +629,68 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
   Widget build(BuildContext context) {
     if (_loading) {
       final info = _getLoadingDescription();
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(
-                color: keplerColorBlue,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.translate(
+            offset: Offset(0, -2),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: "zuletzt geändert am "),
+                  WidgetSpan(child: Skeletonizer(child: Text("00.00.0000, 00:00"))),
+                ],
               ),
             ),
-            Text("Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}..."),
-          ],
-        ),
+          ),
+          
+          Flexible(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Stack(
+                children: [
+                  Skeletonizer(
+                    child: LessonListContainer(
+                      List.generate(7, (i) => VPLesson(schoolHour: i, startTime: null, endTime: null, subjectCode: "Info", subjectChanged: false, teacherCode: "Alb", teacherChanged: false, roomCodes: ["153"], roomChanged: false, subjectID: null, infoText: "Das ist ein Info-Text.")),
+                      "Klasse",
+                      DateTime.now(),
+                      fullLessonListForDate: [
+                        VPLesson(schoolHour: 10, startTime: null, endTime: null, subjectCode: "", subjectChanged: false, teacherCode: "", teacherChanged: false, roomCodes: ["153"], roomChanged: false, subjectID: null, infoText: ""),
+                      ],
+                      onRefresh: () async {},
+                      onSwipeLeft: widget.onSwipeLeft,
+                      onSwipeRight: widget.onSwipeRight,
+                      hideBorder: true,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        // color: Colors.grey.shade900.withAlpha(230),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: SizedBox(height: 32, width: 32, child: CircularProgressIndicator(color: keplerColorBlue)),
+                            ),
+                            Text("Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}..."),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       );
     }
     return Column(
@@ -1067,7 +1117,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
             ?.lessons;
           lessons = unfilteredLessons
             /// nur Stunden anzeigen, bei denen subjectID nicht in der entsprechenden Ausblendungsliste enthalten ist
-            ?.where((element) => !((widget.selectedId ?? 0) < 1 ? stdata.hiddenCourseIDs : stdata.altHiddenCourseIDs[(widget.selectedId ?? 1) - 1].split("|").map((m) => int.parse(m))).contains(element.subjectID))
+            ?.where((element) => !((widget.selectedId ?? 0) < 1 ? stdata.hiddenCourseIDs : stdata.altHiddenCourseIDs[(widget.selectedId ?? 1) - 1].split("|").map((m) => int.tryParse(m)).where((n) => n != null)).contains(element.subjectID))
             .toList();
           allLessonsForDate = data?.classes?.expand((cl) => cl.lessons)?.toList();
           additionalInfo = data?.additionalInfo;
@@ -1185,6 +1235,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       if (t1 != 0) return t1;
       return l1.subjectCode.compareTo(l2.subjectCode);
     });
+    // await Future.delayed(const Duration(seconds: 3));
     setState(() => _loading = false);
     return isOnline ?? false;
   }
@@ -1350,6 +1401,8 @@ class LessonListContainer extends StatelessWidget {
   final SPDisplayMode? mode;
   /// wie viel soll die Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
   final double? extraScrollSpace;
+  final bool hideBorder;
+
   LessonListContainer(
     this.lessons,
     this.className,
@@ -1364,6 +1417,7 @@ class LessonListContainer extends StatelessWidget {
     this.events,
     this.extraScrollSpace,
     this.classHasLessons = false,
+    this.hideBorder = false,
   }) {
     events?.sort((a, b) {
       if (a.date != null && b.date != null) {
@@ -1391,7 +1445,7 @@ class LessonListContainer extends StatelessWidget {
       addEventSelectedDate: date,
       onSwipeLeft: onSwipeLeft,
       onSwipeRight: onSwipeRight,
-      showBorder: lessons != null,
+      showBorder: hideBorder ? false : lessons != null,
       showAddEventButton: mode == SPDisplayMode.yourPlan,
       child: () {
         if (lessons == null || lessons!.isEmpty) {
@@ -1417,7 +1471,7 @@ class LessonListContainer extends StatelessWidget {
                     return infoText;
                   } else if (i == 1) {
                     return Text(
-                      "Events ${getDayDescription(date).toLowerCase()}:",
+                      "Ereignisse ${getDayDescription(date).toLowerCase()}:",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     );
                   } else {
@@ -1438,7 +1492,7 @@ class LessonListContainer extends StatelessWidget {
           if (o is VPLesson) return o.schoolHour;
           return 1000;
         }
-        /// Events werden nur im persönlichen Stundenplan angezeigt
+        /// Ereignisse werden nur im persönlichen Stundenplan angezeigt
         if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
           var insI = 0;
           var lastHr = 0;
@@ -1515,7 +1569,7 @@ class LessonDisplay extends StatelessWidget {
   final int? previousLessonHour;
   /// soll der Info-Dialog beim Antippen angezeigt werden?
   final bool showInfoDialog;
-  /// das zur Stunde zugehörige Fach, für Anzeige von "sonst <Lehrer>" und "sonst <Fach>" bei Änderungen
+  /// das zur Stunde zugehörige Fach, für Anzeige von "sonst `<Lehrer>`" und "sonst `<Fach>`" bei Änderungen
   final VPCSubjectS? subject;
   /// Teil des Fachnamens der Stunde, der entfernt werden soll
   /// weil manche Stunden z.B. als 11DE1 eingetragen sind -> "11" wird entfernt

@@ -168,6 +168,7 @@ class _HomeLSTasksWidgetState extends State<HomeLSTasksWidget> {
       tasksSlice = tasks.sublist(0, min(3, tasks.length));
     }
 
+    if (!mounted) return;
     setState(() {
       loading = false;
     });

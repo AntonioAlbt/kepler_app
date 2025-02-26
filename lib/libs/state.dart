@@ -49,9 +49,7 @@ bool hasDarkTheme(BuildContext context) => Theme.of(context).brightness == Brigh
 /// Keys für alle Sachen, die in den Shared Preferences gespeichert werden
 const newsCachePrefKey = "news_cache";
 const credStorePrefKey = "cred_store";
-const securePrefs = FlutterSecureStorage(
-  aOptions: AndroidOptions(encryptedSharedPreferences: true),
-);
+const securePrefs = FlutterSecureStorage();
 
 /// Mail, die für die Aktivierung des Demo-Modus' verwendet werden muss
 const lernSaxDemoModeMail = "jkgappdemo@jkgc.lernsax.de";

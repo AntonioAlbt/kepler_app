@@ -41,8 +41,8 @@ import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:rss_dart/dart_rss.dart';
 import 'package:synchronized/synchronized.dart';
-import 'package:universal_feed/universal_feed.dart';
 
 const keplerNewsURL = "https://kepler-chemnitz.de/?feed=atom&paged={page}";
 const keplerEvtApiURL = "https://www.kepler-chemnitz.de/wp-json/tribe/events/v1";
@@ -201,14 +201,14 @@ Future<List<NewsEntryData>?> loadNews(int page) async {
   if (res.statusCode == 404) {
     return null;
   }
-  final feed = UniversalFeed.parseFromString(res.body);
+  final feed = AtomFeed.parse(res.body);
   if (feed.items.isEmpty) return null;
   for (var e in feed.items) {
     final data = NewsEntryData()
       ..title = e.title ?? "???"
-      ..createdDate = ((e.published != null) ? e.published!.parseValue() ?? DateTime(2023) : DateTime(2023))
-      ..link = ((e.links?.isNotEmpty == true) ? e.links.first.href : e.guid) ?? "https://kepler-chemnitz.de"
-      ..summary = e.description ?? "..."
+      ..createdDate = ((e.published != null) ? DateTime.parse(e.published ?? DateTime(2023).toIso8601String()) : DateTime(2023))
+      ..link = ((e.links?.isNotEmpty == true) ? e.links.first.href : e.id) ?? "https://kepler-chemnitz.de"
+      ..summary = e.summary ?? "..."
       ..writer = (e.authors?.isNotEmpty == true) ? e.authors.first.name : null
       ..categories = (e.categories?.isNotEmpty == true) ? e.categories.map((e) => e.term ?? "?").toList() : null;
     newNewsData.add(data);
