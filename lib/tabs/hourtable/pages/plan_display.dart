@@ -504,8 +504,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       };
 
   /// generiert anzuzeigende Widgets in Liste für Modus Freie Räume
-  List<Widget> _buildFreeRoomList() {
-    final prefs = Provider.of<Preferences>(context, listen: false);
+  List<Widget> _buildFreeRoomList(Preferences prefs) {
     /// nur für 1. bis 9. Stunde, alles andere gibt es nur extrem selten -> eh alle Räume frei, oder Schule geschlossen
     final occupiedRooms = <int, List<String>>{
       1: [],
@@ -546,7 +545,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
       final freeRoomsList = freeRooms.entries.toList();
       freeRoomsList.sort((e1, e2) =>
           (e1.key?.name ?? "zzzzzzz").compareTo(e2.key?.name ?? "zzzzzzz"));
-      final filteredFreeRoomsList = freeRoomsList.where((e) => prefs.filteredRoomTypes.contains(e.key));
+      final filteredFreeRoomsList = freeRoomsList.where((e) => !prefs.hiddenRoomTypes.contains(e.key));
       children.add(TextButton(
         style: TextButton.styleFrom(
           shape:
@@ -574,7 +573,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 5,
-                  children: filteredFreeRoomsList
+                  children: filteredFreeRoomsList.isNotEmpty ? filteredFreeRoomsList
                     .map((e) => Flexible(
                       child: Row(
                         children: [
@@ -590,7 +589,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         ],
                       ),
                     ))
-                    .toList(),
+                    .toList() : [ Text("alles ausgeblendet", style: TextStyle(fontStyle: FontStyle.italic)) ],
                 ),
               ),
             ],
@@ -706,27 +705,32 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     }(),
                   )
                 : (widget.mode == SPDisplayMode.freeRooms)
-                  ? SPListContainer(
-                      onSwipeLeft: widget.onSwipeLeft,
-                      onSwipeRight: widget.onSwipeRight,
-                      child: () {
-                        final list = _buildFreeRoomList();
-                        if (list.isEmpty) {
-                          return Center(
-                            child: Text(
-                              isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
-                              style: const TextStyle(fontSize: 18),
-                            ),
+                  ? Consumer<Preferences>(
+                    builder: (context, prefs, noData) {
+                      return SPListContainer(
+                        onSwipeLeft: widget.onSwipeLeft,
+                        onSwipeRight: widget.onSwipeRight,
+                        child: () {
+                          final list = _buildFreeRoomList(prefs);
+                          if (list.isEmpty) {
+                            return noData;
+                          }
+                          return ListView.separated(
+                            itemCount: list.length,
+                            shrinkWrap: true,
+                            itemBuilder: (ctx, i) => list[i],
+                            separatorBuilder: (ctx, i) => const Divider(),
                           );
-                        }
-                        return ListView.separated(
-                          itemCount: list.length,
-                          shrinkWrap: true,
-                          itemBuilder: (ctx, i) => list[i],
-                          separatorBuilder: (ctx, i) => const Divider(),
-                        );
-                      }(),
-                    )
+                        }(),
+                      );
+                    },
+                    child: Center(
+                      child: Text(
+                        isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.",
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  )
                   : Consumer<CustomEventManager>(
                     builder: (context, evtmgr, _) {
                       return LessonListContainer(
@@ -1082,7 +1086,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
         }
         if (
           prefs.confettiEnabled &&
-          lessons?.any((lesson) => lesson.teacherCode == "---") == true
+          lessons?.any((lesson) => lesson.teacherCode == "" || lesson.subjectCode == "---") == true
         ) {
           globalConfettiController.play();
         }
@@ -1384,10 +1388,14 @@ class LessonListContainer extends StatelessWidget {
       showAddEventButton: mode == SPDisplayMode.yourPlan,
       child: () {
         if (lessons == null || lessons!.isEmpty) {
-          final infoText = Text(
-            lessons == null ? (isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
-              : "${getDayDescription(date)} kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
+          final infoText = Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              lessons == null ? (isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
+                : "${getDayDescription(date)} ist kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
+              textAlign: TextAlign.center,
+            ),
           );
           if (events == null || events!.isEmpty) {
             return Center(child: infoText);

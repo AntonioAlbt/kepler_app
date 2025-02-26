@@ -192,11 +192,16 @@ class _SetRoomTypeFilterDialogState extends State<SetRoomTypeFilterDialog> {
               return ListTile(
                 contentPadding: EdgeInsets.only(left: 0.0, right: 0.0),
                 leading: IconButton.outlined(
-                    icon: Icon(prefs.filteredRoomTypes.contains(roomType) ? MdiIcons.eye : MdiIcons.eyeOff, size: 20),
-                    onPressed: () =>
-                    prefs.filteredRoomTypes.contains(roomType)
-                        ? (prefs.removeFilteredRoomType(roomType))
-                        : (prefs.addFilteredRoomType(roomType))
+                    icon: Icon(prefs.hiddenRoomTypes.contains(roomType) ? MdiIcons.eyeOff : MdiIcons.eye, size: 20),
+                    onPressed: () {
+                      if (prefs.hiddenRoomTypes.contains(roomType)) {
+                        prefs.removeHiddenRoomType(roomType);
+                        // print("removed ${roomType}");
+                      } else {
+                        prefs.addHiddenRoomType(roomType);
+                        // print("added $roomType ");
+                      }
+                    }
                 ),
                 title: Text(
                   (roomType == RoomType.unassigned) ? "Allgemeine Räume" : roomType.toString(),

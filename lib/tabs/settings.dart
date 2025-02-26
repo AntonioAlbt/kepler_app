@@ -364,7 +364,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   initialValue: prefs.stuPlanShowExams,
                   onToggle: (val) => prefs.stuPlanShowExams = val,
                   title: const Text("Klausuren anzeigen"),
-                  description: const Text("zeigt Klausuren für alle Klassen an, falls vorhanden"),
+                  description: const Text("zeigt Klausuren für alle Jahrgänge an, falls vorhanden\nnur für Jahrgang 11 und 12 empfohlen"),
                   enabled: userType != UserType.nobody,
                 ),
                 rainbowSwitchTile(

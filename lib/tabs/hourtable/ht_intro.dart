@@ -543,6 +543,7 @@ class _SPSubjectSelectorState extends State<SPSubjectSelector> {
             });
           },
           title: const Text("Infos zu Klausuren anzeigen"),
+          subtitle: const Text("nur für Jahrgang 11 und 12 empfohlen"),
         ),
         Padding(
           padding: const EdgeInsets.all(8),

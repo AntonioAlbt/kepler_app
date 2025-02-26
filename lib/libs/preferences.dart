@@ -179,10 +179,10 @@ class Preferences extends SerializableObject with ChangeNotifier {
   set stuPlanShowRoomPlanLink(bool val) => setSaveNotify("sp_show_rpl", val);
 
   /// Filterliste für die anzuzeigenden Raumtypen
-  List<RoomType> get filteredRoomTypes => cast<String>(attributes["filtered_room_types"])?.split(",").map((val) => RoomType.values.firstWhere((t) => t.name == val, orElse: () => RoomType.unassigned)).toList() ?? RoomType.values;
-  set filteredRoomTypes(List<RoomType> val) => setSaveNotify("filtered_room_types", val.map((t) => t.name).join(","));
-  void addFilteredRoomType(RoomType id) => filteredRoomTypes = filteredRoomTypes..add(id);
-  void removeFilteredRoomType(RoomType id) => filteredRoomTypes = filteredRoomTypes..remove(id);
+  List<RoomType> get hiddenRoomTypes => cast<String>(attributes["fr_hidden_rt"])?.split(",").map((val) => RoomType.values.cast<RoomType?>().firstWhere((t) => t!.name == val, orElse: () => null)).where((t) => t != null).cast<RoomType>().toList() ?? [];
+  set hiddenRoomTypes(List<RoomType> val) => setSaveNotify("fr_hidden_rt", val.map((t) => t.name).join(","));
+  void addHiddenRoomType(RoomType id) => hiddenRoomTypes = hiddenRoomTypes..add(id);
+  void removeHiddenRoomType(RoomType id) => hiddenRoomTypes = hiddenRoomTypes..remove(id);
 
   /// Liste der ausgeblendeten Einträge in der Navigationsliste
   List<String> get hiddenNavIDs => cast<String>(attributes["hidden_nav_ids"])?.split(",") ?? [];
