@@ -10,6 +10,9 @@ cd $CI_PRIMARY_REPOSITORY_PATH # change working directory to the root of your cl
 git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
 export PATH="$PATH:$HOME/flutter/bin"
 
+# fix for precache for Flutter v3.29.0, see https://github.com/flutter/flutter/issues/163308
+rm -f $HOME/flutter/engine/src/.gn
+
 # Install Flutter artifacts for iOS (--ios), or macOS (--macos) platforms.
 flutter precache --ios
 

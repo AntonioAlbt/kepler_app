@@ -47,9 +47,8 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
+import 'package:kepler_app/tabs/hourtable/info_dialogs.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
-import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart'
-    show generateExamInfoDialog, generateLessonInfoDialog;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -559,9 +558,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
           foregroundColor: Colors.grey.shade700,
         ),
         onPressed: () => showDialog(
-            context: context,
-            builder: (ctx) =>
-                generateFreeRoomsClickDialog(ctx, freeRoomsList, hour)),
+          context: context,
+          builder: (ctx) => generateFreeRoomsClickDialog(ctx, freeRoomsList, hour),
+        ),
         child: ListTile(
           contentPadding: const EdgeInsets.all(0),
           title: Row(
