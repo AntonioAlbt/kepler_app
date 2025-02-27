@@ -271,11 +271,11 @@ Future<CustomEvent?> showModifyEventDialog(BuildContext context, DateTime select
       ),
     ),
   );
-  if (toEdit != null && openInfoAfterEdit && globalScaffoldContext.mounted) {
+  if (toEdit != null && evt != null && openInfoAfterEdit && globalScaffoldContext.mounted) {
     showModalBottomSheet(
       isScrollControlled: true,
       context: globalScaffoldContext,
-      builder: (ctx) => generateEventInfoSheet(ctx, evt ?? toEdit),
+      builder: (ctx) => generateEventInfoSheet(ctx, evt),
     );
   }
   return evt;

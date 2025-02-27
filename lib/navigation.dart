@@ -81,7 +81,6 @@ class PageIDs {
   static const home = "home";
   static const foodOrder = "foodOrder";
   static const pendel = "pendel";
-  static const ffjkg = "ffjkg";
   static const settings = "settings";
   static const feedback = "feedback";
   static const about = "about";

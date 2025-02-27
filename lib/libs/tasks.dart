@@ -135,8 +135,6 @@ Future<void> runNewsFetchTask() async {
 
 /// verarbeitet alles bezüglich Stundenplan-Änderungen
 Future<void> runStuPlanFetchTask() async {
-  // TODO - future: inform the user about course ids changing -> if a course they had selected doesn't exist anymore (maybe not as a notif but when app opens)
-
   /// alles, was normalerweise im BuildContext bereitsteht, muss hier neu vom Speicher geladen werden
   final spdata = StuPlanData();
   if (await fileExists(await stuPlanDataFilePath)) {

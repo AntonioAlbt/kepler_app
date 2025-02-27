@@ -699,7 +699,7 @@ class LSMailTile extends StatelessWidget {
             ),
             Row(
               children: [
-                SizedBox(width: 28, child: Icon(Icons.mail, color: iconColor)),
+                SizedBox(width: 28, child: Icon(Icons.mail, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey))),
                 Flexible(
                     child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -714,7 +714,7 @@ class LSMailTile extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
-                  SizedBox(width: 28, child: Icon(MdiIcons.account, color: iconColor)),
+                  SizedBox(width: 28, child: Icon(MdiIcons.account, color: iconColor ?? (darkerIcons ? Colors.grey.shade900 : Colors.grey))),
                   Flexible(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 4),

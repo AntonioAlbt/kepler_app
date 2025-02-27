@@ -122,7 +122,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
               child: Text("Letzte Aktualisierung: ${lastUpdate != null ? pendelDateFormat.format(lastUpdate!) : "unbekannt"}"),
             ),
             /// Server ist manchmal offline, dann wird länger nichts aktualisiert -> Hinweis wird angezeigt
-            if (lastUpdate != null && lastUpdate!.difference(DateTime.now()).abs().inHours >= 4) Padding(
+            if (lastUpdate != null && lastUpdate!.difference(DateTime.now()).abs().inHours >= 1) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Card(
                 color: hasDarkTheme(context) ? Colors.red.shade800 : Colors.red,
@@ -283,17 +283,18 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                         ),
                       ),
                     ),
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(text: "Aktuelle Zeit pro voller Drehung: "),
-                          TextSpan(
-                            text: formatForDisplay(period, 2, " h", "unbekannt"),
-                            style: period != null ? const TextStyle(fontWeight: FontWeight.bold) : null,
-                          ),
-                        ],
-                      ),
-                    ),
+                    /// wird nicht mehr von der API angeboten
+                    // Text.rich(
+                    //   TextSpan(
+                    //     children: [
+                    //       const TextSpan(text: "Aktuelle Zeit pro voller Drehung: "),
+                    //       TextSpan(
+                    //         text: formatForDisplay(period, 2, " h", "unbekannt"),
+                    //         style: period != null ? const TextStyle(fontWeight: FontWeight.bold) : null,
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

@@ -60,29 +60,25 @@ class HomeNewsWidgetState extends State<HomeNewsWidget> {
       title: const Text("Aktuelle News"),
       titleColor: Theme.of(context).cardColor,
       child: Consumer<NewsCache>(
-        // TODO: test if this ScrollConfiguration can be removed -> no scrollables below it anymore?
-        builder: (context, newsCache, _) => ScrollConfiguration(
-          behavior: const ScrollBehavior().copyWith(overscroll: false),
-          child: Column(
-            children: separatedListViewWithDividers([
-              ...[0, 1, 2].map((i) => (newsCache.newsData.length > i) ? NewsHomeListTile(newsCache.newsData[i]) : null).where((w) => w != null).toList().cast(),
-              ListTile(
-                title: const Row(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: Text("Weitere News"),
-                    ),
-                    Icon(Icons.open_in_new, size: 20),
-                  ],
-                ),
-                onTap: () {
-                  Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
-                },
-                visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+        builder: (context, newsCache, _) => Column(
+          children: separatedListViewWithDividers([
+            ...[0, 1, 2].map((i) => (newsCache.newsData.length > i) ? NewsHomeListTile(newsCache.newsData[i]) : null).where((w) => w != null).toList().cast(),
+            ListTile(
+              title: const Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: 4),
+                    child: Text("Weitere News"),
+                  ),
+                  Icon(Icons.open_in_new, size: 20),
+                ],
               ),
-            ]),
-          ),
+              onTap: () {
+                Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [NewsPageIDs.main, NewsPageIDs.news];
+              },
+              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+            ),
+          ]),
         ),
       ),
     );

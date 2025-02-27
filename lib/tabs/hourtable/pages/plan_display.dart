@@ -468,6 +468,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                   (s) => s!.subjectID == lessons[i].subjectID,
                   orElse: () => null,
                 ),
+              date: widget.date,
             ),
         ));
         if (i != lessons.length - 1) {
@@ -1544,6 +1545,7 @@ class LessonListContainer extends StatelessWidget {
                           orElse: () => null,
                         ),
                     classNameToStrip: className,
+                    date: date,
                   );
                 } else if (entry is CustomEvent) {
                   return CustomEventDisplay(entry, prevHour);
@@ -1576,9 +1578,11 @@ class LessonDisplay extends StatelessWidget {
   final String? classNameToStrip;
   /// wird der Raum das letzte Mal für den Tag verwendet?
   final bool lastRoomUsageInDay;
+  /// Datum, für Event-Erstellung in Info-Dialog
+  final DateTime date;
 
   const LessonDisplay(this.lesson, this.previousLessonHour, this.lastRoomUsageInDay,
-      {super.key, this.showInfoDialog = true, this.subject, this.classNameToStrip});
+      {super.key, this.showInfoDialog = true, this.subject, this.classNameToStrip, required this.date});
 
   @override
   Widget build(BuildContext context) {
@@ -1592,7 +1596,7 @@ class LessonDisplay extends StatelessWidget {
         onTap: (showInfoDialog)
           ? () => showDialog(
             context: context,
-            builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay),
+            builder: (dialogCtx) => generateLessonInfoDialog(dialogCtx, lesson, subject, classNameToStrip, lastRoomUsageInDay, date),
           ) : null,
         child: Column(
           children: [

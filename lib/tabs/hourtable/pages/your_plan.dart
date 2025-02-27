@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:kepler_app/libs/custom_events.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -320,19 +321,18 @@ Future<bool> stuPlanShowInfoDialog(BuildContext context) async {
 // TODO: Dialoge stattdessen als Popup-Panels von unten erstellen
 
 /// Dialog mit mehr Infos zu einer Stunde erstellen
-Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay) {
-  // TODO: Knopf zum Erstellen von Ereignis für diese Schulstunde an diesem Tag hinzufügen
+Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjectS? subject, String? classNameToReplace, bool lastRoomUsageInDay, DateTime date) {
   return AlertDialog(
     title: Text("Infos zur ${lesson.schoolHour}. Stunde"),
     content: DefaultTextStyle.merge(
       style: const TextStyle(fontSize: 18),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (lesson.startTime != null && lesson.endTime != null) Flexible(
-            child: Text.rich(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (lesson.startTime != null && lesson.endTime != null) Text.rich(
               TextSpan(
                 children: [
                   const WidgetSpan(child: Icon(Icons.access_time, color: Colors.grey)),
@@ -341,9 +341,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                 ],
               ),
             ),
-          ),
-          Flexible(
-            child: Padding(
+            Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text.rich(
                 TextSpan(
@@ -364,9 +362,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                 ),
               ),
             ),
-          ),
-          Flexible(
-            child: Padding(
+            Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text.rich(
                 TextSpan(
@@ -387,9 +383,7 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                 ),
               ),
             ),
-          ),
-          Flexible(
-            child: Padding(
+            Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text.rich(
                 TextSpan(
@@ -407,32 +401,32 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
                 ),
               ),
             ),
-          ),
-          if (lastRoomUsageInDay) Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const WidgetSpan(child: Icon(Icons.last_page, color: Colors.grey)),
-                  const TextSpan(text: " "),
-                  TextSpan(text: "${lesson.roomCodes.length == 1 ? "Der Raum" : "Mind. einer der Räume"} wird das letzte Mal für den Tag verwendet."),
-                ],
+            if (lastRoomUsageInDay) Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const WidgetSpan(child: Icon(Icons.last_page, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: "${lesson.roomCodes.length == 1 ? "Der Raum" : "Mind. einer der Räume"} wird das letzte Mal für den Tag verwendet."),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (lesson.infoText != "") Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
-                  const TextSpan(text: " "),
-                  TextSpan(text: lesson.infoText),
-                ],
+            if (lesson.infoText != "") Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    WidgetSpan(child: Icon(MdiIcons.informationOutline, color: Colors.grey)),
+                    const TextSpan(text: " "),
+                    TextSpan(text: lesson.infoText),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
     actions: [
@@ -446,15 +440,24 @@ Widget generateLessonInfoDialog(BuildContext context, VPLesson lesson, VPCSubjec
           && allKeplerRooms.contains(lesson.roomCodes.first)
           && ((Provider.of<AppState>(context, listen: false).selectedNavPageIDs).toString() != [StuPlanPageIDs.main, StuPlanPageIDs.roomPlans].toString())
           && Provider.of<Preferences>(context, listen: false).stuPlanShowRoomPlanLink
-      )
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            Provider.of<InternalState>(context, listen: false).lastSelectedRoomPlan = lesson.roomCodes.first;
-            Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.roomPlans];
-          },
-          child: Text("Zum Raumplan${lesson.roomCodes.length > 1 ? " für ${lesson.roomCodes.first}" : ""}"),
-        ),
+      ) TextButton(
+        onPressed: () {
+          Navigator.pop(context);
+          Provider.of<InternalState>(context, listen: false).lastSelectedRoomPlan = lesson.roomCodes.first;
+          Provider.of<AppState>(context, listen: false).selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.roomPlans];
+        },
+        child: Text("Zum Raumplan${lesson.roomCodes.length > 1 ? " für ${lesson.roomCodes.first}" : ""}"),
+      ),
+      TextButton(
+        onPressed: () async {
+          final event = await showModifyEventDialog(context, date, CustomEvent(title: "Ereignis", date: date, notify: false, startLesson: lesson.schoolHour, endLesson: lesson.schoolHour));
+          if (event != null) {
+            if (!context.mounted) return;
+            Provider.of<CustomEventManager>(context, listen: false).addEvent(event);
+          }
+        },
+        child: Text("Ereignis erstellen"),
+      ),
       TextButton(
         onPressed: () => Navigator.pop(context),
         child: const Text("Schließen"),
@@ -469,13 +472,13 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
     title: Text("Infos zur Klausur in ${exam.subject}"),
     content: DefaultTextStyle.merge(
       style: const TextStyle(fontSize: 18),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (exam.begin != "") Flexible(
-            child: Padding(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (exam.begin != "") Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text.rich(
                 TextSpan(
@@ -487,9 +490,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.hour != "") Flexible(
-            child: Padding(
+            if (exam.hour != "") Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text.rich(
                 TextSpan(
@@ -501,9 +502,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.duration != "") Flexible(
-            child: Padding(
+            if (exam.duration != "") Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text.rich(
                 TextSpan(
@@ -515,9 +514,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.year != "") Flexible(
-            child: Padding(
+            if (exam.year != "") Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text.rich(
                 TextSpan(
@@ -529,9 +526,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.subject != "") Flexible(
-            child: Padding(
+            if (exam.subject != "") Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text.rich(
                 TextSpan(
@@ -543,9 +538,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.teacher != "") Flexible(
-            child: Padding(
+            if (exam.teacher != "") Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text.rich(
                 TextSpan(
@@ -557,9 +550,7 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-          if (exam.info != "") Flexible(
-            child: Padding(
+            if (exam.info != "") Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text.rich(
                 TextSpan(
@@ -571,8 +562,8 @@ Widget generateExamInfoDialog(BuildContext context, VPExam exam) {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
     actions: [

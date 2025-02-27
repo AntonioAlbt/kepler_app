@@ -112,79 +112,75 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
               /// ist der Benutzer angemeldet und hat den Stundenplan schon eingerichtet?
               else if (!shouldShowStuPlanIntro(stdata, user == UserType.teacher)) SizedBox(
                 height: 200,
-                // TODO: possible qol improvement: propagate scroll event to upper scroll view if this view couldn't scroll -> scroll main view if this one couldn't
-                child: ScrollConfiguration(
-                  behavior: const ScrollBehavior().copyWith(overscroll: false),
-                  /// ist der Benutzer Schüler oder Elternteil? -> Vertretungen für primäre Klasse anzeigen
-                  child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
-                    future: (creds.vpPassword != null) ? IndiwareDataManager.getKlDataForDate(
-                      date,
-                      creds.vpHost!,
-                      creds.vpUser!,
-                      creds.vpPassword!,
-                      forceRefresh: forceRefresh ?? false,
-                    ) : Future<(VPKlData?, bool)>.error("welp"),
-                    initialData: null,
-                    builder: (context, datasn) {
-                      forceRefresh = false;
-                      var dataP = datasn.data;
-                      if (datasn.error != null) {
-                        if (creds.lernSaxLogin == lernSaxDemoModeMail) {
-                          dataP = (const VPKlData(
-                            additionalInfo: [],
-                            classes: [VPClass(className: "Demo", hourBlocks: [], courses: [], subjects: [], lessons: [
-                              VPLesson(schoolHour: 1, startTime: null, endTime: null, subjectCode: "De", subjectChanged: true, teacherCode: "Kol", teacherChanged: true, roomCodes: ["404"], roomChanged: false, subjectID: 1, infoText: "Mathe fällt aus")
-                            ])],
-                            header: VPHeader(lastUpdated: "", dataDate: "", filename: ""),
-                            holidays: VPHolidays(holidayDateStrings: []),
-                          ), true);
-                        } else {
-                          return const Text("Fehler beim Laden der Daten.");
-                        }
-                      }
-                      final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
-                        ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
-                        .where((e) => !stdata.hiddenCourseIDs.contains(e.subjectID)).toList();
-                      return SPWidgetList(
-                        stillLoading: datasn.connectionState != ConnectionState.done,
-                        lessons: lessons,
-                        fullLessonList: dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
-                          ?.lessons,
-                        onRefresh: () => setState(() => forceRefresh = true),
-                        isOnline: dataP?.$2 ?? false,
-                        isSchoolHoliday: stdata.checkIfHoliday(date),
-                      );
-                    }
-                  /// ist der Benutzer ein Lehrer? -> Vertretungen für Lehrer anzeigen
-                  ) : (user == UserType.teacher) ? FutureBuilder(
-                    future: IndiwareDataManager.getLeDataForDate(
-                      date,
-                      creds.vpHost!,
-                      creds.vpUser!,
-                      creds.vpPassword!,
-                      forceRefresh: forceRefresh ?? false,
-                    ),
-                    initialData: null,
-                    builder: (context, datasn) {
-                      forceRefresh = false;
-                      if (datasn.error != null) {
+                child: (user == UserType.pupil || user == UserType.parent) ? FutureBuilder(
+                  future: (creds.vpPassword != null) ? IndiwareDataManager.getKlDataForDate(
+                    date,
+                    // DateTime(2025, 2, 6),
+                    creds.vpHost!,
+                    creds.vpUser!,
+                    creds.vpPassword!,
+                    forceRefresh: forceRefresh ?? false,
+                  ) : Future<(VPKlData?, bool)>.error("welp"),
+                  initialData: null,
+                  builder: (context, datasn) {
+                    forceRefresh = false;
+                    var dataP = datasn.data;
+                    if (datasn.error != null) {
+                      if (creds.lernSaxLogin == lernSaxDemoModeMail) {
+                        dataP = (const VPKlData(
+                          additionalInfo: [],
+                          classes: [VPClass(className: "Demo", hourBlocks: [], courses: [], subjects: [], lessons: [
+                            VPLesson(schoolHour: 1, startTime: null, endTime: null, subjectCode: "De", subjectChanged: true, teacherCode: "Kol", teacherChanged: true, roomCodes: ["404"], roomChanged: false, subjectID: 1, infoText: "Mathe fällt aus")
+                          ])],
+                          header: VPHeader(lastUpdated: "", dataDate: "", filename: ""),
+                          holidays: VPHolidays(holidayDateStrings: []),
+                        ), true);
+                      } else {
                         return const Text("Fehler beim Laden der Daten.");
                       }
-                      final data = datasn.data;
-                      return SPWidgetList(
-                        stillLoading: datasn.connectionState != ConnectionState.done,
-                        lessons: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
-                          .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
-                        fullLessonList: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
-                          .lessons,
-                        onRefresh: () => setState(() => forceRefresh = true),
-                        isOnline: data?.$2 ?? false,
-                        isSchoolHoliday: stdata.checkIfHoliday(date),
-                      );
-                    },
-                  /// nicht erreichbar
-                  ) : const Text("Fehler."),
-                ),
+                    }
+                    final lessons = dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
+                      ?.lessons.where((l) => l.roomChanged || l.subjectChanged || l.teacherChanged || l.infoText != "")
+                      .where((e) => !stdata.hiddenCourseIDs.contains(e.subjectID)).toList();
+                    return SPWidgetList(
+                      stillLoading: datasn.connectionState != ConnectionState.done,
+                      lessons: lessons,
+                      fullLessonList: dataP?.$1?.classes.cast<VPClass?>().firstWhere((cl) => cl!.className == stdata.selectedClassName, orElse: () => null)
+                        ?.lessons,
+                      onRefresh: () => setState(() => forceRefresh = true),
+                      isOnline: dataP?.$2 ?? false,
+                      isSchoolHoliday: stdata.checkIfHoliday(date),
+                    );
+                  }
+                /// ist der Benutzer ein Lehrer? -> Vertretungen für Lehrer anzeigen
+                ) : (user == UserType.teacher) ? FutureBuilder(
+                  future: IndiwareDataManager.getLeDataForDate(
+                    date,
+                    creds.vpHost!,
+                    creds.vpUser!,
+                    creds.vpPassword!,
+                    forceRefresh: forceRefresh ?? false,
+                  ),
+                  initialData: null,
+                  builder: (context, datasn) {
+                    forceRefresh = false;
+                    if (datasn.error != null) {
+                      return const Text("Fehler beim Laden der Daten.");
+                    }
+                    final data = datasn.data;
+                    return SPWidgetList(
+                      stillLoading: datasn.connectionState != ConnectionState.done,
+                      lessons: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
+                        .lessons.where((l) => l.roomChanged || l.subjectChanged || l.teachingClassChanged || l.infoText != "").toList(),
+                      fullLessonList: data?.$1?.teachers.firstWhere((t) => t.teacherCode == stdata.selectedTeacherName)
+                        .lessons,
+                      onRefresh: () => setState(() => forceRefresh = true),
+                      isOnline: data?.$2 ?? false,
+                      isSchoolHoliday: stdata.checkIfHoliday(date),
+                    );
+                  },
+                /// nicht erreichbar
+                ) : const Text("Fehler."),
               /// hat der Benutzer den Stundenplan noch nicht eingerichtet? -> Info und Knopf dazu anzeigen
               ) else Padding(
                 padding: const EdgeInsets.only(top: 0, left: 8, right: 8, bottom: 8),
@@ -372,7 +368,8 @@ class SPWidgetList extends StatelessWidget {
                         index > 0
                             ? lessons!.elementAtOrNull(index - 1)?.schoolHour
                             : null,
-                        false
+                        false,
+                        date: shouldGoToNextPlanDay(context) ? DateTime.now().add(const Duration(days: 1)) : DateTime.now(),
                       ),
                       separatorBuilder: (context, index) => const Divider(height: 24),
                     ),

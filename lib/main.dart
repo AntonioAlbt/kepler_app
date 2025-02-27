@@ -507,8 +507,8 @@ class _KeplerAppState extends State<KeplerApp> {
                         state.selectedNavPageIDs = val.split(".");
                       },
                       entries: destinations,
-                      /// Teiler zwischen Einträgen (hier: zwischen Haupteinträgen und Infos)
-                      dividers: const [6],
+                      /// Teiler, entweder vor FFJKG oder vor Einstellungen einfügen, je nachdem, was sichtbar ist
+                      dividerIDPriority: const [FFJKGPageIDs.main, PageIDs.settings],
                     ),
                     body: tabs[index.first] ?? const Text("Unbekannte Seite."),
                   ),

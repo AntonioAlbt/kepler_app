@@ -354,8 +354,8 @@ class TheDrawer extends StatefulWidget {
   final String selectedIndex;
   final void Function(String index) onDestinationSelected;
   final List<NavEntryData> entries;
-  final List<int>? dividers;
-  TheDrawer({required this.selectedIndex, required this.onDestinationSelected, required this.entries, this.dividers}) : super(key: _drawerKey);
+  final List<String>? dividerIDPriority;
+  TheDrawer({required this.selectedIndex, required this.onDestinationSelected, required this.entries, this.dividerIDPriority}) : super(key: _drawerKey);
 
   @override
   State<TheDrawer> createState() => _TheDrawerState();
@@ -444,16 +444,21 @@ class _TheDrawerState extends State<TheDrawer> {
     final userType = Provider.of<AppState>(context, listen: false).userType;
     /// da dataToEntry nicht berücksichtigt, ob der Benutzer den NavEntry sehen kann, werden unsichtbare vorher
     /// rausgefiltert
-    final entries = widget.entries.where((e) => e.shouldBeVisible(context, userType)).toList().asMap()
+    final visibleEntries = widget.entries.where((e) => e.shouldBeVisible(context, userType)).toList();
+    final entries = visibleEntries.asMap()
       .map((i, entry) => MapEntry(i, dataToEntry(entry, widget.selectedIndex, 0, "", userType))).values
       .toList().cast<Widget>();
-    /// bei jedem dividerIndex einen Divider einfügen
-    /// TODO: make dividers react to hidden entries
-    try {
-      widget.dividers?.forEach((divI) => entries.insert(divI, const Divider()));
-    } catch (_) {
-      /// wahrscheinlich hat der Benutzer nicht genügend Einträge eingeblendet, damit Divider eingefügt werden können
+    /// bei erstmöglichem sichtbaren Eintrag, vor dem ein Divider eingefügt werden soll, Divider einfügen
+    if (widget.dividerIDPriority != null) {
+      for (var eid in widget.dividerIDPriority!) {
+        final i = visibleEntries.indexWhere((e) => e.id == eid);
+        if (i >= 0) {
+          entries.insert(i, const Divider());
+          break;
+        }
+      }
     }
+
     return Drawer(
       child: ListView(
         controller: _controller,

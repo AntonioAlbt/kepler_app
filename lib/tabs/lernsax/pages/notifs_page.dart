@@ -203,7 +203,7 @@ class LSNotificationTile extends StatelessWidget {
           ),
           Row(
             children: [
-              Icon(iconObjectMap[notif.object], color: iconColor),
+              Icon(iconObjectMap[notif.object], color: iconColor ?? (darkerClock ? Colors.grey.shade900 : Colors.grey)),
               Flexible(child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(notif.message),
@@ -215,7 +215,7 @@ class LSNotificationTile extends StatelessWidget {
             padding: const EdgeInsets.only(left: 8, top: 4),
             child: Row(
               children: [
-                if (notif.hasGroupName) Icon(MdiIcons.humanMaleBoard, color: iconColor),
+                if (notif.hasGroupName) Icon(MdiIcons.humanMaleBoard, color: iconColor ?? (darkerClock ? Colors.grey.shade900 : Colors.grey)),
                 if (notif.hasGroupName) Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 4),
@@ -224,7 +224,7 @@ class LSNotificationTile extends StatelessWidget {
                 ),
                 if (notif.hasUserData) Padding(
                   padding: const EdgeInsets.only(left: 8.0),
-                  child: Icon(MdiIcons.account, color: iconColor),
+                  child: Icon(MdiIcons.account, color: iconColor ?? (darkerClock ? Colors.grey.shade900 : Colors.grey)),
                 ),
                 if (notif.hasUserData) Flexible(
                   child: Padding(
