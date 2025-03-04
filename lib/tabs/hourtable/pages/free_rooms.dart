@@ -49,10 +49,10 @@ import 'package:kepler_app/libs/preferences.dart';
 final allKeplerRooms = [
   "K10", "K12",
   ...rooms("0", 1, 7, [2]), "021",
-  ...rooms("1", 7, 17, [13, 14, 15, 16]),
-  ...rooms("2", 1, 19, [6, 12, 14, 15, 16, 17]),
+  ...rooms("1", 7, 17, [14]),
+  ...rooms("2", 1, 19, [6, 12, 15, 16]),
   ...rooms("3", 1, 17, [3, 7, 14, 16]),
-  "TH", "Jb1", "Jb2",
+  "013TH", "Jb1", "Jb2",
 ];
 /// Varianten für Räume, Einteilung für Benutzer
 enum RoomType {
@@ -75,8 +75,8 @@ enum RoomType {
 final specialRoomInfo = {
   RoomType.compSci: ["K10", "K12", "202"],
   RoomType.technic: ["001", "021"],
-  RoomType.sports: ["TH", "Jb1", "Jb2"],
-  RoomType.specialist: ["112", "117", "213", "218", "313", "315"],
+  RoomType.sports: ["013TH", "Jb1", "Jb2"],
+  RoomType.specialist: ["112", "113", "115", "116", "117", "213", "214", "217", "218", "219", "313", "315"],
   RoomType.music: ["317"],
   RoomType.art: ["302"],
 };
