@@ -681,9 +681,9 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                               child: SizedBox(height: 32, width: 32, child: CircularProgressIndicator(color: keplerColorBlue)),
                             ),
                             Expanded(
-                              child:Text(
+                              child: Text(
                                 "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}",
-                                maxLines : 2,
+                                maxLines: 2,
                               ),
                             ),
                           ],
