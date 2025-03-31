@@ -40,12 +40,14 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/checks.dart';
 import 'package:kepler_app/libs/custom_events.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/rainbow.dart';
+import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/info_dialogs.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
@@ -966,8 +968,20 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     super.initState();
   }
 
-  /// falls `forceRefresh == true` wird zwingend versucht, die Daten von Indiware statt aus dem Cache zu laden
   Future<bool> loadData({required bool forceRefresh}) async {
+    try {
+      return await _doLoadData(forceRefresh: forceRefresh).timeout(const Duration(seconds: 20));
+    } catch (e, s) {
+      logCatch("sp-timeout", e, s);
+      lessons = null;
+      setState(() => _loading = false);
+      showSnackBar(text: "Unbekannter Fehler beim Abfragen der Daten! Bitte Mail an $creatorMail schreiben.", error: true);
+      return false;
+    }
+  }
+
+  /// falls `forceRefresh == true` wird zwingend versucht, die Daten von Indiware statt aus dem Cache zu laden
+  Future<bool> _doLoadData({required bool forceRefresh}) async {
     if (!mounted) return false;
     setState(() => _loading = true);
     final state = Provider.of<AppState>(context, listen: false);

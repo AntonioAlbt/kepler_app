@@ -272,15 +272,37 @@ class IndiwareDataManager {
 
   /// versucht, Schüler-Daten ausschließlich vom Cache zu lesen
   static Future<VPKlData?> getCachedKlDataForDate(DateTime date) async {
-    final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml");
+    final fn = "${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-kl.xml";
+    final xml = await readFile(fn);
     if (xml == null) return null;
-    return xmlToKlData(XmlDocument.parse(xml));
+    try {
+      return xmlToKlData(XmlDocument.parse(xml));
+    } catch (e, s) {
+      logCatch("sp-cache", e, s);
+      try {
+        await File(fn).delete();
+      } catch (e, s) {
+        logCatch("sp-cache-del", e, s);
+      }
+      return null;
+    }
   }
   /// versucht, Lehrer-Daten ausschließlich vom Cache zu lesen
   static Future<VPLeData?> getCachedLeDataForDate(DateTime date) async {
-    final xml = await readFile("${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml");
+    final fn = "${await appDataDirPath}$stuplanpath/${fnTimeFormat.format(date)}-le.xml";
+    final xml = await readFile(fn);
     if (xml == null) return null;
-    return xmlToLeData(XmlDocument.parse(xml));
+    try {
+      return xmlToLeData(XmlDocument.parse(xml));
+    } catch (e, s) {
+      logCatch("sp-cache", e, s);
+      try {
+        await File(fn).delete();
+      } catch (e, s) {
+        logCatch("sp-cache-del", e, s);
+      }
+      return null;
+    }
   }
   /// versucht, Klassen.xml ausschließlich vom Cache zu lesen
   static Future<VPKlData?> getCachedKlassenXmlData() async {
