@@ -376,6 +376,14 @@ enum MembershipType {
     MembershipType.class_: 19,
     MembershipType.unknown: -1,
   }[this]!;
+  @override
+  String toString() => switch (this) {
+    MembershipType.institution => "Institution",
+    MembershipType.group => "Gruppe",
+    MembershipType.class_ => "Klasse",
+    MembershipType.unknown => "Unbekannt",
+  };
+  int compareTo(MembershipType other) => toInt().compareTo(other.toInt());
 }
 
 /// Mitgliedschaft in einem Kurs/Gruppe
@@ -829,4 +837,46 @@ class LSNotifSettings {
   final List<String> disabledFacilities;
 
   const LSNotifSettings({required this.id, required this.classLogin, required this.name, required this.object, required this.enabledFacilities, required this.disabledFacilities});
+}
+
+enum LSFileType {
+  file, folder, account, unknown;
+
+  @override
+  String toString() => switch (this) {
+    LSFileType.file => "Datei",
+    LSFileType.folder => "Ordner",
+    LSFileType.account => "Benutzer",
+    LSFileType.unknown => "Unbekannt",
+  };
+}
+
+class LSFileMeta {
+  final int date;
+  final String userLogin;
+  final String? userName;
+
+  const LSFileMeta({required this.date, required this.userLogin, required this.userName});
+}
+
+class LSFileListing {
+  final LSFileType type;
+  final String id;
+  final String parentId;
+  final String name;
+  final String description;
+  final int size;
+  final LSFileMeta created;
+  final LSFileMeta modified;
+
+  const LSFileListing({
+    required this.type,
+    required this.id,
+    required this.parentId,
+    required this.name,
+    required this.description,
+    required this.size,
+    required this.created,
+    required this.modified,
+  });
 }

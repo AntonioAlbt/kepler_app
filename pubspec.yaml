@@ -53,7 +53,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 2.12.0+79
 
 environment:
-  sdk: '^3.2.0'
+  sdk: "3.7.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -122,6 +122,7 @@ dependencies:
   crypto: ^3.0.3
   flutter_html: ^3.0.0-beta.2
   flutter_linkify: ^6.0.0
+  flutter_breadcrumb: ^1.0.1
 
   # libs for stuplan
   xml: ^6.5.0

@@ -41,6 +41,7 @@ import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/navigation.dart';
+import 'package:kepler_app/tabs/lernsax/pages/files_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
@@ -68,9 +69,11 @@ class _LernSaxTabState extends State<LernSaxTab> {
         final token = login == creds.lernSaxLogin ? creds.lernSaxToken : creds.alternativeLSTokens[creds.alternativeLSLogins.indexOf(login ?? "")];
         if (token == null || login == null) return const Center(child: Text("Fehler: Nicht mit LernSax angemeldet."));
         final navPage = state.selectedNavPageIDs.last;
-        if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage(login, token, token != creds.lernSaxToken);
-        if (navPage == LernSaxPageIDs.tasks) return LSTasksPage(login, token, token != creds.lernSaxToken);
-        if (navPage == LernSaxPageIDs.emails) return LSMailsPage(login, token, token != creds.lernSaxToken);
+        final alternative = token != creds.lernSaxToken;
+        if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage(login, token, alternative);
+        if (navPage == LernSaxPageIDs.tasks) return LSTasksPage(login, token, alternative);
+        if (navPage == LernSaxPageIDs.emails) return LSMailsPage(login, token, alternative);
+        if (navPage == LernSaxPageIDs.files) return LSFilesPage(login, token, alternative);
         // if (navPage == LernSaxPageIDs.main) return const LSHomePage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },

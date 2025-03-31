@@ -1181,3 +1181,111 @@ Future<(bool, bool)> deleteMail(String login, String token, { required String fo
     return (true, false);
   }
 }
+
+Future<(bool, List<LSFileListing>?)> listFiles(String login, String token, { required String fileLogin, String? folderId, String? search }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, <LSFileListing>[
+      // LSFileListing(type: LSFileType.file, name: "Datei.txt"),
+    ]);
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: "get_entries",
+        id: 1,
+        params: {
+          "recursive": 0,
+          if (search != null) "search_option": "word_contains", // TODO: "phrase" statt word_contains probieren
+          if (search != null) "search_scope": "meta_data",
+          if (search != null) "search": search,
+          if (folderId != null) "folder_id": folderId,
+        },
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    return (true, (res[0]["result"]["entries"] as List<dynamic>).map((e) => LSFileListing(
+      id: e["id"],
+      parentId: e["parent_id"],
+      name: e["name"],
+      description: e["description"],
+      type: e["type"] == "folder" ? LSFileType.folder : e["type"] == "file" ? LSFileType.file : LSFileType.unknown,
+      size: e["size"],
+      created: LSFileMeta(
+        date: e["created"]["date"],
+        userLogin: e["created"]["user"]["login"],
+        userName: e["created"]["user"]["name_hr"],
+      ),
+      modified: LSFileMeta(
+        date: e["modified"]["date"],
+        userLogin: e["modified"]["user"]["login"],
+        userName: e["modified"]["user"]["name_hr"],
+      ),
+    )).toList());
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}
+
+Future<(bool, Uri?)> getFileDownloadUrl(String login, String token, { required String fileLogin, required String id }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, Uri.parse("https://www.lernsax.de"));
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: "get_file_download_url",
+        id: 1,
+        params: {
+          "id": id,
+        },
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    return (true, Uri.parse(res[0]["result"]["file"]["download_url"]));
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}
+
+class LSFileState {
+  final int usage;
+  final int free;
+  final int limit;
+  final DateTime updated;
+
+  const LSFileState({required this.usage, required this.free, required this.limit, required this.updated});
+}
+
+Future<(bool, LSFileState?)> getFileState(String login, String token, { required String fileLogin }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, LSFileState(usage: 0, free: 0, limit: 0, updated: DateTime.now()));
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: "get_state",
+        id: 1,
+      ),
+    ]);
+    if (!online) return (false, null);
+    if (res[0]["result"]["return"] != "OK") return (true, null);
+    final quota = res[0]["result"]["quota"];
+    return (true, LSFileState(usage: quota["usage"], free: quota["free"], limit: quota["limit"], updated: DateTime.fromMillisecondsSinceEpoch(quota["updated"] * 1000)));
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, null);
+  }
+}

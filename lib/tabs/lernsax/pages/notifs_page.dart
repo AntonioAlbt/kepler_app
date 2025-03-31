@@ -325,7 +325,6 @@ Widget generateLernSaxNotifInfoDialog(BuildContext context, LSNotification notif
 }
 
 /// Eintrag im Dialog, damit alle ordentlich angezeigt werden
-/// TODO: ausprobieren, ob das actually so funktioniert - ist zwar ziemlich lange her, aber ich glaube das lange Text immer abgeschnitten wurden
 class InfoDialogEntry extends StatelessWidget {
   final String text;
   final IconData icon;

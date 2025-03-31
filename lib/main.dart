@@ -61,6 +61,7 @@ import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/lernsax/ls_data.dart';
+import 'package:kepler_app/tabs/lernsax/pages/files_page.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -449,39 +450,35 @@ class _KeplerAppState extends State<KeplerApp> {
       key: Key("mainWidget"),
       builder: (context, state, __) {
         final index = state.selectedNavPageIDs;
-        // PopScopes are weird in comparison to WillPopScope-s, if anyone wants to update them anyway, have fun
-        // maybe helpful for async: https://stackoverflow.com/questions/77500680/willpopscope-is-deprecated-after-flutter-3-12
         final selectedNavEntry = currentlySelectedNavEntry(context);
         return ChangelogLoader(
           // ignore: deprecated_member_use
-          child: WillPopScope(
-            /// der WillPopScope fängt das Schließen der aktuellen Route (hier: der App allgemein) ab und erwartet
-            /// stattdessen das Ergebnis von onWillPop (false = nicht schließen, true = schließen)
-            /// damit z.B. beim Durchführen einer "Zurück"-Aktion (nur Android) erstmal der InfoScreen (falls möglich)
-            /// geschlossen wird, wird das Schließen hier abgefangen
-            onWillPop: () async {
+          child: PopScope(
+            /// der PopScope fängt das Schließen der aktuellen Route (hier: der App allgemein) ab und
+            /// verhindert es abhängig vom Wert von canPop.
+            /// (zusätzlich wird nach jedem (versuchten) Schließen das Callback aufgerufen)
+            canPop: state.infoScreen == null,
+            onPopInvokedWithResult: (popped, _) {
               if (state.infoScreen != null) {
                 if (infoScreenState.tryCloseCurrentScreen()) {
                   state.clearInfoScreen();
                 }
-                return false;
               }
-              return true;
             },
             child: Stack(
               children: [
-                // ignore: deprecated_member_use
-                WillPopScope(
+                PopScope(
                   /// damit beim Durchführen von Zurück auf einer Unterseite, die nicht die ausgewählte Startseite ist,
                   /// nicht die App geschlossen wird, sondern auf die ausgewählte Startseite umgeleitet wird,
-                  /// wird das Schließen-Ereignis hier abgefangen
-                  onWillPop: () async {
-                    if (!listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs)) {
-                      _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
-                      return false;
-                    } else {
-                      return true;
-                    }
+                  /// wird das Schließen-Ereignis hier abgefangen und das Schließen verhindert
+                  canPop: listEquals(_appState.selectedNavPageIDs, _prefs.startNavPageIDs),
+                  onPopInvokedWithResult: (popped, force) {
+                    /// alle PopScopes werden aufgerufen, wenn der Benutzer die Zurück-Aktion ausführt -> auf der Dateien-
+                    /// Seite wird dies aber seperat gehandled, also nur auf die Startseite zurückkehren, wenn es direkt
+                    /// vom Code so bestimmt wird (z.B. mit Navigator.pop(context, true))
+                    if (_appState.selectedNavPageIDs.contains(LernSaxPageIDs.files) && lsFoldersPageKey.currentState?.path.isEmpty != true) return;
+
+                    if (!popped) _appState.selectedNavPageIDs = _prefs.startNavPageIDs;
                   },
                   child: Scaffold(
                     key: globalScaffoldKey,

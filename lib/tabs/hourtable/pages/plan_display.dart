@@ -676,15 +676,16 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.max, 
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: SizedBox(height: 32, width: 32, child: CircularProgressIndicator(color: keplerColorBlue)),
                             ),
-                            Expanded(
+                            Flexible(
                               child: Text(
-                                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}",
+                                "Lädt Stundenplan für ${DateFormat("dd.MM.").format(widget.date)}${info != null ? " ($info)" : ""}...",
                                 maxLines: 2,
                               ),
                             ),

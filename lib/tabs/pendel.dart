@@ -79,7 +79,7 @@ final pendelDateFormat = DateFormat("dd.MM., HH:mm", "de-DE");
 /// - suffix: was soll danach angehangen werden
 /// - orElse: was soll zurückgegeben werden, wenn num == null ist
 String formatForDisplay(double? num, int precision, [String? suffix, String? orElse])
-  => num != null ? ((num * pow(10, precision)).roundToDouble() / pow(10, precision)).toString().replaceAll(".", ",") + (suffix ?? "") : orElse ?? "-";
+  => num != null ? ((num * pow(10, precision)).roundToDouble() / pow(10, precision)).toString().replaceAll(".", ",").replaceAll(RegExp(r",0$"), "") + (suffix ?? "") : orElse ?? "-";
 
 class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProviderStateMixin {
   /// hier war ich extrem inkonsequent mit den privaten Variablen (mit "_"), ist aber auch egal weil eh nie ein

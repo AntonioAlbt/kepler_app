@@ -57,6 +57,7 @@ import 'package:kepler_app/tabs/hourtable/pages/room_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/teacher_plan.dart';
 import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:kepler_app/tabs/lernsax/lernsax.dart';
+import 'package:kepler_app/tabs/lernsax/pages/files_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/mails_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/notifs_page.dart';
 import 'package:kepler_app/tabs/lernsax/pages/tasks_page.dart';
@@ -375,18 +376,19 @@ final destinations = [
             IconButton(onPressed: lernSaxMailsRefreshAction, icon: Icon(Icons.refresh)),
           ],
         ),
+        const NavEntryData(
+          id: LernSaxPageIDs.files,
+          icon: Icon(Icons.folder_copy_outlined),
+          selectedIcon: Icon(Icons.folder_copy),
+          label: Text("Dateien"),
+          navbarActions: [
+            IconButton(onPressed: lernSaxFilesRefreshAction, icon: Icon(Icons.refresh)),
+          ],
+        ),
       ];
 
       /// diese Einträge müssen nicht für jeden Benutzer hinzugefügt werden, da sie sowieso nur auf die App verweisen
       final openInAppList = [
-        const NavEntryData(
-          id: LernSaxPageIDs.files,
-          icon: Icon(Icons.folder_copy_outlined),
-          // selectedIcon: Icon(Icons.folder_copy),
-          label: Text("Dateien"),
-          externalLink: true,
-          onTryOpen: lernSaxOpenInOfficialApp,
-        ),
         NavEntryData(
           id: LernSaxPageIDs.messageBoard,
           icon: Icon(MdiIcons.bulletinBoard),
