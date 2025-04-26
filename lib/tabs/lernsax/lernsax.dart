@@ -73,7 +73,7 @@ class _LernSaxTabState extends State<LernSaxTab> {
         if (navPage == LernSaxPageIDs.notifications) return LSNotificationPage(login, token, alternative);
         if (navPage == LernSaxPageIDs.tasks) return LSTasksPage(login, token, alternative);
         if (navPage == LernSaxPageIDs.emails) return LSMailsPage(login, token, alternative);
-        if (navPage == LernSaxPageIDs.files) return LSFilesPage(login, token, alternative);
+        if (navPage == LernSaxPageIDs.files) return LSFilesPage(login, token, alternative, key: lsFoldersPageKey);
         // if (navPage == LernSaxPageIDs.main) return const LSHomePage();
         return const Text("Unbekannte Seite gefordert. Bitte schließen und erneut probieren.");
       },

@@ -785,14 +785,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
-  select_dialog:
-    dependency: "direct main"
-    description:
-      name: select_dialog
-      sha256: fdc118ba88fa5f880f1c0f4bd9021c392e9dcff04485acd984ae0394a6311dfe
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.2"
   settings_ui:
     dependency: "direct main"
     description:

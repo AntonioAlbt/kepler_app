@@ -1289,3 +1289,114 @@ Future<(bool, LSFileState?)> getFileState(String login, String token, { required
     return (true, null);
   }
 }
+
+Future<(bool, bool)> addFile(String login, String token, { required Uint8List data, required String name, required String folderId, required String fileLogin }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: "add_file",
+        id: 1,
+        params: {
+          "data": base64Encode(data),
+          "folder_id": folderId,
+          "name": name,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+Future<(bool, bool)> deleteLSListing(String login, String token, { required String fileLogin, required LSFileListing listing, bool skipTrash = false }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: listing.type == LSFileType.file ? "delete_file" : "delete_folder",
+        id: 1,
+        params: {
+          "id": listing.id,
+          if (listing.type == LSFileType.file) "skip_trash": skipTrash ? 1 : 0,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+Future<(bool, bool)> createFolder(String login, String token, { required String fileLogin, required String path, required String name }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: "add_folder",
+        id: 1,
+        params: {
+          "name": name,
+          "folder_id": path,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}
+
+Future<(bool, bool)> renameLSListing(String login, String token, { required String fileLogin, required LSFileListing listing, required String newName, String? newFolderId }) async {
+  if (login == lernSaxDemoModeMail) {
+    return (true, false);
+  }
+  try {
+    final (online, res) = await _api([
+      await _useSession(login, token),
+      _focus("files", login: fileLogin),
+      _call(
+        method: listing.type == LSFileType.file ? "set_file" : "set_folder",
+        id: 1,
+        params: {
+          "id": listing.id,
+          "name": newName,
+          if (listing.type == LSFileType.file && newFolderId != null) "folder_id": newFolderId,
+        },
+      ),
+    ]);
+    if (!online) return (false, false);
+    log(res.toString());
+    if (res[0]["result"]["return"] != "OK") return (true, false);
+    return (true, true);
+  } catch (e, s) {
+    logCatch("lernsax", e, s);
+    if (kDebugMode) log("", error: e, stackTrace: s);
+    return (true, false);
+  }
+}

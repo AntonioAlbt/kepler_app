@@ -59,7 +59,11 @@ final versionChanges = {
   78: CLEntry(
     title: "Neue Funktionen für Räume",
     descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt Raumtypen in der \"Freie Zimmer\"-Ansicht für bessere Übersichtlichkeit ausblenden. Außerdem gibt es jetzt einen Link von der Detailansicht einer Stunde zum entsprechenden Raumplan.",
-  )
+  ),
+  80: CLEntry(
+    title: "LernSax-Dateien verwalten",
+    descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt Dateien auf LernSax komplett in der Kepler-App verwalten.",
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen

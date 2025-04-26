@@ -329,18 +329,19 @@ class InfoDialogEntry extends StatelessWidget {
   final String text;
   final IconData icon;
   final EdgeInsets? paddingTop;
-  const InfoDialogEntry({super.key, required this.icon, required this.text, this.paddingTop});
+  final bool smaller;
+  const InfoDialogEntry({super.key, required this.icon, required this.text, this.paddingTop, this.smaller = false});
 
   @override
   Widget build(BuildContext context) {
     final child = Padding(
-      padding: paddingTop ?? const EdgeInsets.only(top: 16),
+      padding: paddingTop ?? EdgeInsets.only(top: smaller ? 8 : 16),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey),
+          SizedBox(width: 24, child: Icon(icon, color: Colors.grey, size: smaller ? 16 : null)),
           Flexible(child: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Text(text, maxLines: 10),
+            child: Text(text, maxLines: 10, style: smaller ? TextStyle(fontSize: 15) : null),
           )),
         ],
       ),
