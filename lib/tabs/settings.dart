@@ -1162,12 +1162,16 @@ Map getExportJson(BuildContext context) {
 void exportJson(BuildContext context) {
   var exportJsonMap = jsonEncode(getExportJson(context));
   final date = "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}_${DateTime.now().hour}-${DateTime.now().minute}";
-  Share.shareXFiles([XFile.fromData(utf8.encode(exportJsonMap.toString()),mimeType: 'application/json')], fileNameOverrides: ['Kepler_App_Einstellungen_Export_$date.json'],
+  SharePlus.instance.share(
+    ShareParams(
+      files: [XFile.fromData(utf8.encode(exportJsonMap.toString()), mimeType: 'application/json')],
+      fileNameOverrides: ['Kepler_App_Einstellungen_Export_$date.json'],
       sharePositionOrigin: Rect.fromLTWH(
-          0, 0,
-          MediaQuery.of(context).size.width,
-          MediaQuery.of(context).size.height / 2
-      )
+        0, 0,
+        MediaQuery.of(context).size.width,
+        MediaQuery.of(context).size.height / 2
+      ),
+    ),
   );
 }
 

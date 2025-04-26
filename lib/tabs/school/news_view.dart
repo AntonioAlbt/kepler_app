@@ -70,7 +70,7 @@ class _NewsViewState extends State<NewsView> {
           /// Link teilen
           IconButton(
             icon: Icon(MdiIcons.shareVariant),
-            onPressed: () => Share.share(widget.newsLink.toString(), sharePositionOrigin: const Rect.fromLTRB(0, 0, 0, 0)),
+            onPressed: () => SharePlus.instance.share(ShareParams(uri: widget.newsLink, sharePositionOrigin: const Rect.fromLTRB(0, 0, 0, 0))),
           ),
         ],
       ),

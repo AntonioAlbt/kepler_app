@@ -163,7 +163,7 @@ class _LogViewPageState extends State<LogViewPage> {
                               }
                               copyFile().then((path) async {
                                 // ignore: use_build_context_synchronously
-                                await Share.shareXFiles([XFile(path, mimeType: "text/plain")], sharePositionOrigin: Rect.fromLTWH(0, 0, MediaQuery.of(this.context).size.width, MediaQuery.of(this.context).size.height / 2));
+                                await SharePlus.instance.share(ShareParams(files: [XFile(path, mimeType: "text/plain")], sharePositionOrigin: Rect.fromLTWH(0, 0, MediaQuery.of(this.context).size.width, MediaQuery.of(this.context).size.height / 2)));
                                 return path;
                               }).then((path) => File(path).delete());
                               Navigator.pop(context);

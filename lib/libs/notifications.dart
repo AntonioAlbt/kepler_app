@@ -222,7 +222,6 @@ Future<int?> scheduleNotification({required String title, required String body, 
     tz.TZDateTime.from(when, tz.local),
     eventNotificationDetails(),
     androidScheduleMode: (await Permission.scheduleExactAlarm.isGranted) ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.exactAllowWhileIdle,
-    uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
     payload: notifKey,
   );
   return nid;
