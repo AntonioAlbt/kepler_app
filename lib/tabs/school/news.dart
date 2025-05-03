@@ -66,6 +66,8 @@ class NewsTabState extends State<NewsTab> {
   int lastNewsPage = 0;
   bool noMoreNews = false;
   bool loading = false;
+  bool _showFilterBar = false;
+  String _filterCategory = "";
 
   late final ScrollController _controller;
   late final NewsCache _newsCache;
@@ -83,6 +85,13 @@ class NewsTabState extends State<NewsTab> {
     if (!loading) _resetNews();
   }
 
+  void toggleFilterMode() {
+    setState(() {
+      _showFilterBar = !_showFilterBar;
+      if (!_showFilterBar) _filterCategory = "";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<NewsCache, Preferences>(
@@ -91,56 +100,87 @@ class NewsTabState extends State<NewsTab> {
           ..sort((a, b) => b.data.createdDate.compareTo(a.data.createdDate));
         return Scaffold(
           /// lädt automatisch mehr News, wenn der Benutzer ganz nach unten gescrollt hat
-          body: LazyLoadScrollView(
-            onEndOfPage: () => _loadMoreNews(),
-            child: Scrollbar(
-              controller: _controller,
-              radius: const Radius.circular(4),
-              thickness: 4.75,
-              child: RefreshIndicator(
-                /// beim Neuladen wird der Cache komplett geleert
-                onRefresh: () async { _resetNews(); },
-                child: ListView.builder(
-                  itemCount: loadedNews.length + 2,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return ListTile(
-                        title: Transform.translate(
-                          offset: const Offset(0, 5),
-                          child: const Text(
-                            "Nachrichten antippen, um sie anzusehen.",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 15
-                            ),
-                          ),
-                        ),
-                        visualDensity: const VisualDensity(vertical: -4),
-                      );
-                    }
-                    if (index == loadedNews.length + 1) {
-                      if (noMoreNews) {
-                        return const ListTile(
-                          title: Text("Keine weiteren News."),
-                        );
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ListTile(
-                          leading: const CircularProgressIndicator(),
-                          title: Text("Lädt${(loadedNews.isNotEmpty) ? " mehr" : ""} News..."),
-                        ),
-                      );
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: loadedNews[index - 1],
-                    );
+          body: Column(
+            children: [
+              if (loadedNews.isNotEmpty) AnimatedSize(
+                duration: const Duration(milliseconds: 100),
+                alignment: Alignment.topCenter,
+                child: (_showFilterBar) ? Padding(
+                  padding: const EdgeInsets.only(top: 16, left: 12, right: 12, bottom: 8),
+                  child: DropdownMenu(
+                    label: Text("Nachrichten nach Kategorie filtern"),
+                    width: double.infinity,
+                    dropdownMenuEntries: loadedNews.map((n) => (n.data.categories ?? [])).reduce((a, b) => a + b).toSet()
+                      .map((category) => DropdownMenuEntry(value: category, label: category)).toList()
+                        ..add(DropdownMenuEntry(value: "", label: "alle")),
+                    initialSelection: "",
+                    leadingIcon: Icon(Icons.filter_alt),
+                    onSelected: (val) => setState(() => _filterCategory = val!),
+                  ),
+                ) : SizedBox(height: 0, width: double.infinity),
+              ),
+              Expanded(
+                child: LazyLoadScrollView(
+                  onEndOfPage: () {
+                    if (_filterCategory == "") _loadMoreNews();
                   },
-                  controller: _controller,
+                  child: Scrollbar(
+                    controller: _controller,
+                    radius: const Radius.circular(4),
+                    thickness: 4.75,
+                    child: RefreshIndicator(
+                      /// beim Neuladen wird der Cache komplett geleert
+                      onRefresh: () async { _resetNews(); },
+                      child: ListView.builder(
+                        itemCount: loadedNews.length + 2,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ListTile(
+                              title: Transform.translate(
+                                offset: const Offset(0, 5),
+                                child: const Text(
+                                  "Nachrichten antippen, um sie anzusehen.",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 15
+                                  ),
+                                ),
+                              ),
+                              visualDensity: const VisualDensity(vertical: -4),
+                            );
+                          }
+                          if (index == loadedNews.length + 1) {
+                            if (noMoreNews) {
+                              return const ListTile(
+                                title: Text("Keine weiteren News."),
+                              );
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: (_filterCategory != "") ? ListTile(
+                                title: Text("Wegen der Filterung werden gerade keine weiteren News geladen."),
+                                subtitle: Text("Bitte ${prefs.preferredPronoun == Pronoun.sie ? "entfernen Sie" : "entferne"} den Filter, um weitere abzufragen."),
+                              ) : ListTile(
+                                leading: const CircularProgressIndicator(),
+                                title: Text("Lädt${(loadedNews.isNotEmpty) ? " mehr" : ""} News..."),
+                              ),
+                            );
+                          }
+
+                          if (!(loadedNews[index - 1].data.categories ?? []).contains(_filterCategory) && _filterCategory != "") return SizedBox.shrink();
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: loadedNews[index - 1],
+                          );
+                        },
+                        controller: _controller,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
           floatingActionButton: AnimatedOpacity(
             opacity: opacity,
@@ -342,4 +382,8 @@ class NewsEntry extends StatelessWidget with SerializableObject {
 
 void newsTabRefreshAction() {
   newsTabKey.currentState?.reload();
+}
+
+void newsTabToggleFilterAction() {
+  newsTabKey.currentState?.toggleFilterMode();
 }

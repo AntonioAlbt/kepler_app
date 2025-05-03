@@ -184,6 +184,7 @@ final destinations = [
         selectedIcon: Icon(Icons.newspaper),
         label: Text("Kepler-News"),
         navbarActions: [
+          IconButton(onPressed: newsTabToggleFilterAction, icon: Icon(Icons.filter_alt)),
           /// viele Seiten mit Daten haben eine ähnliche Aktion, um die Daten händisch neu laden/aktualisieren zu können
           IconButton(onPressed: newsTabRefreshAction, icon: Icon(Icons.refresh)),
         ],
