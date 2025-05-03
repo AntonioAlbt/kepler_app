@@ -298,6 +298,9 @@ class Preferences extends SerializableObject with ChangeNotifier {
   String? get logUpHost => attributes["log_up_url"] ?? kBaseLogUpHost;
   set logUpHost(String? val) => setSaveNotify("log_up_url", val ?? kBaseLogUpHost);
 
+  bool get showLessonsHiddenInfo => attributes["show_spls_hidden"] ?? true;
+  set showLessonsHiddenInfo(bool val) => setSaveNotify("show_spls_hidden", val);
+
   bool loaded = false;
 
   Future<void> save() async {

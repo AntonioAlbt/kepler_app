@@ -51,6 +51,7 @@ import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/info_dialogs.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -810,6 +811,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         // events: evtmgr.events,
                         extraScrollSpace: widget.mode == SPDisplayMode.yourPlan ? kSPListExtraScrollSpace : null,
                         classHasLessons: unfilteredLessons?.isNotEmpty ?? false,
+                        unfilteredLessons: unfilteredLessons,
                       );
                     }
                   ),
@@ -950,7 +952,7 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                     shrinkWrap: true,
                     itemCount: additionalInfo?.length ?? 1,
                     itemBuilder: (context, index) =>
-                        Text(additionalInfo![index]),
+                        SelectableText(additionalInfo![index]),
                   ),
                 ),
               ),
@@ -1407,7 +1409,7 @@ class SPListContainer extends StatelessWidget {
   }
 }
 
-class LessonListContainer extends StatelessWidget {
+class LessonListContainer extends StatefulWidget {
   final List<VPLesson>? lessons;
   final bool classHasLessons;
   final List<VPLesson>? fullLessonListForDate;
@@ -1422,6 +1424,7 @@ class LessonListContainer extends StatelessWidget {
   /// wie viel soll die Liste weiter scrollbar sein, als echt nötig wäre - für "Ereignis hinzufügen"-Knopf
   final double? extraScrollSpace;
   final bool hideBorder;
+  final List<VPLesson>? unfilteredLessons;
 
   LessonListContainer(
     this.lessons,
@@ -1438,6 +1441,7 @@ class LessonListContainer extends StatelessWidget {
     this.extraScrollSpace,
     this.classHasLessons = false,
     this.hideBorder = false,
+    this.unfilteredLessons,
   }) {
     events?.sort((a, b) {
       if (a.date != null && b.date != null) {
@@ -1460,42 +1464,49 @@ class LessonListContainer extends StatelessWidget {
   }
 
   @override
+  State<LessonListContainer> createState() => _LessonListContainerState();
+}
+
+class _LessonListContainerState extends State<LessonListContainer> {
+  List<VPLesson>? lessonsOverride;
+
+  @override
   Widget build(BuildContext context) {
     return SPListContainer(
-      addEventSelectedDate: date,
-      onSwipeLeft: onSwipeLeft,
-      onSwipeRight: onSwipeRight,
-      showBorder: hideBorder ? false : lessons != null,
-      showAddEventButton: mode == SPDisplayMode.yourPlan,
+      addEventSelectedDate: widget.date,
+      onSwipeLeft: widget.onSwipeLeft,
+      onSwipeRight: widget.onSwipeRight,
+      showBorder: widget.hideBorder ? false : widget.lessons != null,
+      showAddEventButton: widget.mode == SPDisplayMode.yourPlan,
       child: () {
-        if (lessons == null || lessons!.isEmpty) {
+        if (widget.lessons == null || widget.lessons!.isEmpty) {
           final infoText = Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
-              lessons == null ? (isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
-                : classHasLessons ? "Alle Stunden werden ausgeblendet."
-                : "${getDayDescription(date)} ist kein Unterricht${mode == SPDisplayMode.roomPlan ? " in diesem Raum" : mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
+              widget.lessons == null ? (widget.isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
+                : widget.classHasLessons ? "Alle Stunden werden ausgeblendet."
+                : "${getDayDescription(widget.date)} ist kein Unterricht${widget.mode == SPDisplayMode.roomPlan ? " in diesem Raum" : widget.mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget.lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
               textAlign: TextAlign.center,
             ),
           );
-          if (events == null || events!.isEmpty) {
+          if (widget.events == null || widget.events!.isEmpty) {
             return Center(child: infoText);
           } else {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: ListView.separated(
-                itemCount: (events?.length ?? 0) + 2,
+                itemCount: (widget.events?.length ?? 0) + 2,
                 itemBuilder: (_, i) {
                   if (i == 0) {
                     return infoText;
                   } else if (i == 1) {
                     return Text(
-                      "Ereignisse ${getDayDescription(date).toLowerCase()}:",
+                      "Ereignisse ${getDayDescription(widget.date).toLowerCase()}:",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     );
                   } else {
-                    return CustomEventDisplay(events![i - 2], i > 2 ? events![i - 3].startLesson ?? -1 : -1);
+                    return CustomEventDisplay(widget.events![i - 2], i > 2 ? widget.events![i - 3].startLesson ?? -1 : -1);
                   }
                 },
                 separatorBuilder: (_, __) => const Divider(),
@@ -1505,19 +1516,75 @@ class LessonListContainer extends StatelessWidget {
         }
         final stdata = Provider.of<StuPlanData>(context, listen: false);
 
-        final mixedList = <Object>[...lessons!];
+        final mixedList = <Object>[...(lessonsOverride ?? widget.lessons!)];
+        if (widget.unfilteredLessons != null && widget.unfilteredLessons!.length > mixedList.length && context.read<Preferences>().showLessonsHiddenInfo) {
+          final hidden = widget.unfilteredLessons!.length - widget.lessons!.length;
+          final sie = context.select<Preferences, bool>((prefs) => prefs.preferredPronoun == Pronoun.sie);
+          mixedList.add(
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  lessonsOverride = widget.unfilteredLessons;
+                });
+              },
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "$hidden ausgeblendete Stunde${hidden == 1 ? "" : "n"}",
+                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                      ),
+                      Text(
+                        "${sie ? "Tippen Sie" : "Tippe"} hier, um sie einzublenden.",
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => yourStuPlanEditAction(),
+                    icon: Icon(Icons.edit),
+                  ),
+                  IconButton(
+                    iconSize: 20,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text("Ausblenden?"),
+                          content: Text("Soll dieser Infotext ausgeblendet werden? Er kann jederzeit in den Einstellungen wieder aktiviert werden."),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Nein")),
+                            TextButton(onPressed: () {
+                              ctx.read<Preferences>().showLessonsHiddenInfo = false;
+                              Navigator.pop(ctx);
+                            }, child: Text("Ja, ausblenden")),
+                          ],
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.visibility_off),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         int hourAt(int i) {
           final o = mixedList[i];
           if (o is CustomEvent) return o.startLesson ?? 1000;
           if (o is VPLesson) return o.schoolHour;
-          return 1000;
+          return 500;
         }
         /// Ereignisse werden nur im persönlichen Stundenplan angezeigt
-        if (mode == SPDisplayMode.yourPlan && events != null && events!.isNotEmpty) {
+        if (widget.mode == SPDisplayMode.yourPlan && widget.events != null && widget.events!.isNotEmpty) {
           var insI = 0;
           var lastHr = 0;
           // var lastStartIns = 0;
-          for (final evt in events!) {
+          for (final evt in widget.events!) {
             if (evt.startLesson == null) {
               // mixedList.insert(lastStartIns, evt);
               // lastStartIns++;
@@ -1540,11 +1607,11 @@ class LessonListContainer extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: RefreshIndicator(
-            onRefresh: onRefresh,
+            onRefresh: widget.onRefresh,
             child: ListView.separated(
-              itemCount: mixedList.length + (extraScrollSpace != null ? 1 : 0),
+              itemCount: mixedList.length + (widget.extraScrollSpace != null ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index == mixedList.length) return SizedBox(height: extraScrollSpace);
+                if (index == mixedList.length) return SizedBox(height: widget.extraScrollSpace);
 
                 final entry = mixedList[index];
                 final prevHour = index > 0 ? (){
@@ -1556,18 +1623,20 @@ class LessonListContainer extends StatelessWidget {
                   return LessonDisplay(
                     entry,
                     prevHour,
-                    fullLessonListForDate != null ? entry.hasLastRoomUsageFromList(fullLessonListForDate!) : false,
-                    subject: stdata.availableSubjects[className]
+                    widget.fullLessonListForDate != null ? entry.hasLastRoomUsageFromList(widget.fullLessonListForDate!) : false,
+                    subject: stdata.availableSubjects[widget.className]
                         ?.cast<VPCSubjectS?>()
                         .firstWhere(
                           (s) => s!.subjectID == entry.subjectID,
                           orElse: () => null,
                         ),
-                    classNameToStrip: className,
-                    date: date,
+                    classNameToStrip: widget.className,
+                    date: widget.date,
                   );
                 } else if (entry is CustomEvent) {
                   return CustomEventDisplay(entry, prevHour);
+                } else if (entry is Widget) {
+                  return entry;
                 } else {
                   return SizedBox.shrink();
                 }
@@ -1756,4 +1825,4 @@ class ExamDisplay extends StatelessWidget {
   }
 }
 
-// boah. mehr als 1600 Zeilen "Code".
+// boah. mehr als 1750 Zeilen "Code".

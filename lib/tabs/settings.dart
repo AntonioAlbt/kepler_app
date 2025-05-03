@@ -401,6 +401,13 @@ class _SettingsTabState extends State<SettingsTab> {
                   onPressed: (_) => showDialog(context: context, builder: (ctx) => SetRoomTypeFilterDialog()),
                   enabled: userType != UserType.nobody,
                 ),
+                rainbowSwitchTile(
+                  initialValue: prefs.showLessonsHiddenInfo,
+                  onToggle: (val) => prefs.showLessonsHiddenInfo = val,
+                  title: const Text("Infotext für ausgeblendete Stunden anzeigen"),
+                  // description: Text("..."),
+                  enabled: userType != UserType.nobody,
+                ),
               ],
             ),
             /// da die Kategorie LernSax selbst nur so wenig Inhalt hat, gibt es auch kaum Einstellungen

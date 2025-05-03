@@ -632,7 +632,7 @@ class _ManageEventSheetState extends State<ManageEventSheet> {
                         title: Text("Pünktliche Benachrichtigungen"),
                         content: Selector<Preferences, bool>(
                           selector: (ctx, prefs) => prefs.preferredPronoun == Pronoun.sie,
-                          builder: (ctx, sie, _) => Text("${sie ? "Sie verwenden" : "Du verwendest"} eine moderne Version von Android. Um die Erinnerung pünktlich anzeigen zu können, benötigt die App die Berechtigung dafür. Bitte ${sie ? "stimmen Sie" : "stimme"} dafür im folgenden Dialog zu."),
+                          builder: (ctx, sie, _) => Text("${sie ? "Sie verwenden" : "Du verwendest"} eine moderne Version von Android. Um die Erinnerung pünktlich anzeigen zu können, benötigt die App die Berechtigung dafür. Bitte ${sie ? "aktivieren Sie" : "aktiviere"} dafür im folgenden Dialog die Einstellung, und kehre dann in die Kepler-App zurück."),
                         ),
                         actions: [
                           TextButton(onPressed: () {
