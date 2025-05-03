@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -59,7 +60,7 @@ class _NewsViewState extends State<NewsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.newsTitle),
+        title: Text(HtmlUnescape().convert(widget.newsTitle)),
         backgroundColor: (hasDarkTheme(context)) ? Colors.blueGrey[800] : Colors.blue.shade100,
         actions: [
           /// Link in externem Browser öffnen

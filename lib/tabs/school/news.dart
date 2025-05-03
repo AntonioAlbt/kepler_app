@@ -267,6 +267,21 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                           text: DateFormat.yMMMMd("de-DE").format(data.createdDate),
                           style: TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
                         ),
+                        WidgetSpan(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 10, right: 3),
+                            child: Transform.translate(
+                              offset: const Offset(0, -2),
+                              child: Icon(MdiIcons.formatListText,
+                                  size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
+                            ),
+                          ),
+                        ),
+                        TextSpan(
+                          text: data.categories?.join(", ") ?? "Keine",
+                          style:
+                              TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
+                        ),
                       ],
                     ),
                   ),
@@ -285,40 +300,25 @@ class NewsEntry extends StatelessWidget with SerializableObject {
                       ),
                     ),
                   ),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        WidgetSpan(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 3),
-                            child: Transform.translate(
-                              offset: const Offset(0, -2),
-                              child: Icon(MdiIcons.formatListText,
-                                  size: 12, color: Colors.grey[(prefs.darkTheme) ? 300 : 700]),
-                            ),
-                          ),
-                        ),
-                        TextSpan(
-                          text: data.categories?.join(", ") ?? "Keine",
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.grey[(prefs.darkTheme) ? 200 : 800]),
-                        ),
-                        WidgetSpan(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 4, right: 1),
-                            child: Icon(MdiIcons.accountEdit, size: 14),
-                          )
-                        ),
-                        TextSpan(
-                          text: "${data.writer}",
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[(prefs.darkTheme) ? 400 : 600]
-                          ),
-                        )
-                      ]
-                    ),
-                  ),
+                  // RichText(
+                  //   text: TextSpan(
+                  //     children: [
+                  //       // WidgetSpan(
+                  //       //   child: Padding(
+                  //       //     padding: const EdgeInsets.only(left: 4, right: 1),
+                  //       //     child: Icon(MdiIcons.accountEdit, size: 14),
+                  //       //   )
+                  //       // ),
+                  //       // TextSpan(
+                  //       //   text: "${data.writer}",
+                  //       //   style: TextStyle(
+                  //       //     fontSize: 10,
+                  //       //     color: Colors.grey[(prefs.darkTheme) ? 400 : 600]
+                  //       //   ),
+                  //       // ),
+                  //     ],
+                  //   ),
+                  // ),
                 ],
               ),
               onTap: () {

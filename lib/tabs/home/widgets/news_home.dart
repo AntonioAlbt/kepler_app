@@ -32,11 +32,13 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/libs/widgets.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home_widget.dart';
+import 'package:kepler_app/tabs/school/news.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:kepler_app/tabs/school/news_view.dart';
 import 'package:provider/provider.dart';
@@ -94,8 +96,8 @@ class NewsHomeListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(data.title),
-      subtitle: Text(data.summary, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(HtmlUnescape().convert(data.title)),
+      subtitle: Text(HtmlUnescape().convert(data.summary.stripHtmlIfNeeded()), maxLines: 1, overflow: TextOverflow.ellipsis),
       visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
       onTap: () => Navigator.push(
         context,
