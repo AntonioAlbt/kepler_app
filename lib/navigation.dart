@@ -67,6 +67,7 @@ import 'package:kepler_app/tabs/school/calendar.dart';
 import 'package:kepler_app/tabs/school/news.dart';
 import 'package:kepler_app/tabs/school/school.dart';
 import 'package:kepler_app/tabs/settings.dart';
+import 'package:kepler_app/tabs/summerfest_schedule.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -80,6 +81,7 @@ const kLernSaxUserNavPrefix = "lslogin:";
 /// Haupteinträge (ohne Unterseiten)
 class PageIDs {
   static const home = "home";
+  static const festSchedule = "festSchedule";
   static const foodOrder = "foodOrder";
   static const pendel = "pendel";
   static const settings = "settings";
@@ -134,6 +136,7 @@ final tabs = {
   NewsPageIDs.main: const SchoolTab(),
   StuPlanPageIDs.main: const HourtableTab(),
   LernSaxPageIDs.main: const LernSaxTab(),
+  PageIDs.festSchedule: const SummerFestSchedulePage(),
   PageIDs.foodOrder: const MealOrderingTab(),
   PageIDs.pendel: PendelInfoTab(),
   FFJKGPageIDs.main: const FFJKGTab(),
@@ -523,6 +526,13 @@ final destinations = [
         return [lernSaxOpenInBrowserEntry(creds.lernSaxLogin!, creds.lernSaxToken!), ...list, ...openInAppList, addEntry];
       }
     }
+  ),
+  const NavEntryData(
+    id: PageIDs.festSchedule,
+    icon: Icon(Icons.event_note_outlined),
+    label: Text("Ablaufplan Sommerfest"),
+    selectedIcon: Icon(Icons.event_note),
+    lockedFor: [UserType.nobody],
   ),
   const NavEntryData(
     id: PageIDs.foodOrder,
