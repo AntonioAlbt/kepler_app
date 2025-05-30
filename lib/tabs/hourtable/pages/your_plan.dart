@@ -31,6 +31,7 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -87,7 +88,7 @@ class YourPlanPageState extends State<YourPlanPage> {
                             children: [
                               // extra IconButton, damit der DropdownButton in der Mitte ist
                               if (stdata.altSelectedClassNames.isEmpty) const IconButton(icon: Icon(Icons.abc, size: 20, color: Colors.transparent), onPressed: null),
-                               DropdownButton<(int, String)>(
+                              DropdownButton<(int, String)>(
                                 items: ([mainSelected, ...stdata.altSelectedClassNames].asMap().entries.map(
                                   (e) => classNameToIndexedDropdownItem(e.value, state.userType == UserType.teacher, e.key, e.key == 0 ? " (primär)" : null)
                                 ).toList()..add(
@@ -230,6 +231,7 @@ class YourPlanPageState extends State<YourPlanPage> {
 
   @override
   void initState() {
+    super.initState();
     final stdata = Provider.of<StuPlanData>(context, listen: false);
     final lastIndex = Provider.of<InternalState>(context, listen: false).lastSelectedClassYourPlan;
     final teacher = Provider.of<AppState>(context, listen: false).userType == UserType.teacher;
@@ -239,7 +241,34 @@ class YourPlanPageState extends State<YourPlanPage> {
       selected = (0, teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!);
     }
     stdata.addListener(stdataListener);
-    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final shBounds = context.read<StuPlanData>().guessSummerHolidayBounds();
+      if (shBounds == null) return;
+      final (shStart, shEnd) = shBounds;
+      final lastRemYear = context.read<InternalState>().lastClassReminderYear;
+      if (shEnd.year <= lastRemYear) return;
+
+      final diff = shEnd.difference(DateTime.now());
+      if (diff.inDays > 0 && diff.inDays < 7 || kDebugMode) {
+        showDialog(context: context, builder: (ctx) => AlertDialog(
+          title: Text("Neues Schuljahr"),
+          content: Selector<Preferences, bool>(
+            selector: (ctx2, prefs) => prefs.preferredPronoun == Pronoun.sie,
+            builder: (_, sie, _) => Text("Bald beginnt ein neues Schuljahr. Daher ${sie ? "sollten Sie" : "solltest Du"} überprüfen, ob ${sie ? "Sie" : "Du"} weiterhin den richtigen Stundenplan mit den richtigen Fächern ${sie ? "ausgewählt haben" : "ausgewählt hast"}. Dafür wird jetzt der Auswahlbildschirm geöffnet."),
+          ),
+          actions: [
+            TextButton(onPressed: () {
+              context.read<AppState>().infoScreen ??= (context.read<AppState>().userType != UserType.teacher)
+                  ? stuPlanPupilIntroScreens()
+                  : stuPlanTeacherIntroScreens();
+              Navigator.pop(ctx);
+            }, child: Text("Okay, öffnen")),
+          ],
+        ));
+        context.read<InternalState>().lastClassReminderYear = shEnd.year;
+      }
+    });
   }
 
   @override

@@ -47,6 +47,7 @@ import 'package:kepler_app/tabs/home/widgets/ls_notifs_home.dart';
 import 'package:kepler_app/tabs/home/widgets/ls_tasks_home.dart';
 import 'package:kepler_app/tabs/home/widgets/news_home.dart';
 import 'package:kepler_app/tabs/home/widgets/stuplan_home.dart';
+import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -127,6 +128,22 @@ class _HomepageTabState extends State<HomepageTab> {
                       showSnackBar(text: "done");
                     },
                     child: const Text("do color test thing"),
+                  ),
+                  if (kDebugFeatures) ElevatedButton(
+                    onPressed: () {
+                      final r = Provider.of<StuPlanData>(context, listen: false).guessSummerHolidayBounds();
+                      if (r == null) return showSnackBar(text: "ITS null!");
+                      final (start, end) = r;
+                      showSnackBar(text: "Start: $start - End: $end");
+                    },
+                    child: const Text("Guess summer holiday bounds"),
+                  ),
+                  if (kDebugFeatures) ElevatedButton(
+                    onPressed: () {
+                      context.read<InternalState>().lastClassReminderYear = 1900;
+                      showSnackBar(text: "resetted");
+                    },
+                    child: const Text("Reset last shown date"),
                   ),
                 ],
               );

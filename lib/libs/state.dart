@@ -254,6 +254,9 @@ class InternalState extends SerializableObject with ChangeNotifier {
   int get lastChangelogShown => attributes["last_cl_shown"] ?? -1;
   set lastChangelogShown(int val) => _setSaveNotify("last_cl_shown", val);
 
+  int get lastClassReminderYear => attributes["last_cr_year"] ?? 1900;
+  set lastClassReminderYear(int val) => _setSaveNotify("last_cr_year", val);
+
   bool loaded = false;
 
   Future<void> save() async {

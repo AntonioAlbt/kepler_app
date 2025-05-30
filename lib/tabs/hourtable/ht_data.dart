@@ -188,6 +188,30 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   }
   bool checkIfHoliday(DateTime date) => holidayDates.any((d) => d.day == date.day && d.month == date.month && d.year == date.year);
 
+
+  // TODO: use this to notify the user of potential plan/class changes in new school year
+  (DateTime, DateTime)? guessSummerHolidayBounds() {
+    final thisYear = DateTime.now().year;
+    List<DateTime> summerHolidays = holidayDates.where((dt) => dt.year == thisYear && dt.month > 5 && dt.month < 10).toList()..sort((a, b) => a.compareTo(b));
+    if (summerHolidays.isEmpty) return null;
+    // print(summerHolidays);
+    int startIndex = 0;
+    int continualDates = 0;
+    int hrDiff;
+    while (startIndex < summerHolidays.length - 1) {
+      hrDiff = summerHolidays[startIndex + continualDates].difference(summerHolidays[startIndex + continualDates + 1]).inHours.abs();
+      while (hrDiff >= 23 && hrDiff <= 25) {
+        continualDates += 1;
+        hrDiff = summerHolidays[startIndex + continualDates].difference(summerHolidays[startIndex + continualDates + 1]).inHours.abs();
+        // print(summerHolidays[startIndex + continualDates]);
+        // print(hrDiff);
+      }
+      if (continualDates >= 4) return (summerHolidays[startIndex].add(const Duration(days: -2)), summerHolidays[startIndex].add(const Duration(days: 6 * 7 - 1)));
+      startIndex += continualDates + 1;
+    }
+    return null;
+  }
+
   final _serializer = Serializer();
   bool loaded = false;
   final Lock _fileLock = Lock();
