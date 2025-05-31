@@ -142,6 +142,7 @@ dependencies:
   timezone: ^0.10.0
   flutter_timezone: ^4.0.0
   uuid: ^4.5.1
+  home_widget: ^0.8.0
 
 dev_dependencies:
   flutter_test:

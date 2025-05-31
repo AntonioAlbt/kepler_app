@@ -33,6 +33,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -150,6 +151,8 @@ class YourPlanPageState extends State<YourPlanPage> {
                                     TextButton(
                                       onPressed: () {
                                         stdata.removeAltSelection(selected.$1 - 1);
+                                        HomeWidget.saveWidgetData("plans_avail", [stdata.selectedClassName, ...stdata.altSelectedClassNames].join("|"));
+                                        HomeWidget.updateWidget(name: "YourPlanWidgetReceiver");
                                         if (!context.mounted) return;
                                         setState(() {
                                           selected = (0, mainSelected);

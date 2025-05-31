@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -397,6 +398,9 @@ class SubjectSelectScreen extends StatelessWidget {
           },
           onFinish: (hidden) {
             Provider.of<StuPlanData>(context, listen: false).hiddenCourseIDs = hidden;
+            HomeWidget.saveWidgetData("plan_setup", true);
+            HomeWidget.saveWidgetData("plans_avail", [stdata.selectedClassName, ...stdata.altSelectedClassNames].join("|"));
+            HomeWidget.updateWidget(name: "YourPlanWidgetReceiver");
             infoScreenState.next();
           },
           availableSubjects: stdata.availableClassSubjects!,
@@ -708,6 +712,9 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
                 stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
                 stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
               }
+              HomeWidget.saveWidgetData("plan_setup", true);
+              HomeWidget.saveWidgetData("plans_avail", [stdata.selectedClassName, ...stdata.altSelectedClassNames].join("|"));
+              HomeWidget.updateWidget(name: "YourPlanWidgetReceiver");
               Navigator.pop(context, true);
             },
             onGoBack: () {
