@@ -37,6 +37,7 @@ import 'dart:io';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -49,7 +50,6 @@ const stuPlanDataPrefsKey = "stuplandata";
 
 /// Speicherpfad für die Stundenplandaten
 Future<String> get stuPlanDataFilePath async => "${await userDataDirPath}/$stuPlanDataPrefsKey-data.json";
-// TODO - future: automatically determine summer holiday end and ask user if their class changed -> maybe with https://ferien-api.de/api/v1/holidays/SN ?
 /// für alle Daten, die für die Offline-Anzeige vom Stundenplan gecached werden müssen
 /// und alle Einstellungen/ausgewählte Optionen bzgl. des Stundenplanes
 class StuPlanData extends SerializableObject with ChangeNotifier {
@@ -146,6 +146,9 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   set altHiddenCourseIDs(List<String> sc) => _setSaveNotify("alt_hidden_course_ids", sc);
   void setHiddenCoursesForAlt(int alt, List<int> hidden) {
     altHiddenCourseIDs = altHiddenCourseIDs..[alt] = hidden.join("|");
+  }
+  List<int> getAltHiddenCourseIDs(int index) {
+    return altHiddenCourseIDs[index].split("|").map((m) => int.tryParse(m)).where((n) => n != null).toList().cast();
   }
 
   /// letzter Zeitpunkt, an dem die verfügbaren Klassen aktualisiert wurden
@@ -260,6 +263,19 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     selectedTeacherName = null;
     altSelectedClassNames = [];
     altHiddenCourseIDs = [];
+  }
+
+  Future<bool> updateWidgets(bool isTeacher) async {
+    if ((isTeacher && selectedTeacherName == null) || (!isTeacher && selectedClassName == null)) {
+      final a = await HomeWidget.saveWidgetData("plan_setup", false);
+      final b = await HomeWidget.updateWidget(androidName: "widgets.YourPlanWidgetReceiver");
+      return (a ?? false) && (b ?? false);
+    }
+    final a = await HomeWidget.saveWidgetData("plan_setup", true);
+    final b = await HomeWidget.saveWidgetData("plans_avail", [isTeacher ? selectedTeacherName : selectedClassName, ...altSelectedClassNames].join("|"));
+    final c = await HomeWidget.saveWidgetData("teacher", isTeacher);
+    final d = await HomeWidget.updateWidget(androidName: "widgets.YourPlanWidgetReceiver");
+    return (a ?? false) && (b ?? false) && (c ?? false) && (d ?? false);
   }
 }
 

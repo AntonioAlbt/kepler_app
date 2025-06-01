@@ -31,9 +31,12 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -57,7 +60,7 @@ class YourPlanPage extends StatefulWidget {
   State<YourPlanPage> createState() => YourPlanPageState();
 }
 
-class YourPlanPageState extends State<YourPlanPage> {
+class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver {
   /// gerade ausgewählter Plan, bestehend aus ( id, Klassenname/Lehrerkürzel )
   /// wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
   /// 
@@ -151,8 +154,7 @@ class YourPlanPageState extends State<YourPlanPage> {
                                     TextButton(
                                       onPressed: () {
                                         stdata.removeAltSelection(selected.$1 - 1);
-                                        HomeWidget.saveWidgetData("plans_avail", [stdata.selectedClassName, ...stdata.altSelectedClassNames].join("|"));
-                                        HomeWidget.updateWidget(name: "YourPlanWidgetReceiver");
+                                        stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
                                         if (!context.mounted) return;
                                         setState(() {
                                           selected = (0, mainSelected);
@@ -233,6 +235,52 @@ class YourPlanPageState extends State<YourPlanPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _loadWidgetData(context.read<AppState>().userType == UserType.teacher);
+    }
+  }
+
+  Future<bool> _loadWidgetData(bool teacher) async {
+    final stdata = context.read<StuPlanData>();
+    final creds = context.read<CredentialStore>();
+    final plans = <String, List<Map>>{};
+    if (teacher) {
+      final (data, isOnline) = await IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!);
+      if (data == null) return false;
+      plans[stdata.selectedTeacherName!] = data.teachers
+        .firstWhere((c) => c.teacherCode == stdata.selectedTeacherName!)
+        .lessons
+        .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
+        .toList();
+    }
+    final names = teacher
+        ? stdata.altSelectedClassNames
+        : [stdata.selectedClassName, ...stdata.altSelectedClassNames];
+    if (names.isNotEmpty) {
+      final (data, isOnline) = await IndiwareDataManager.getKlDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!);
+      if (data == null) return false;
+      for (int i = 0; i < names.length; i++) {
+        final name = names[i];
+        plans[name!] = data.classes
+          .firstWhere((c) => c.className == name)
+          .lessons
+          .where((t) => !((teacher || i >= 1) ? stdata.getAltHiddenCourseIDs(teacher ? i : i - 1) : stdata.hiddenCourseIDs).any((id) => t.subjectID == id))
+          .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
+          .toList();
+      }
+    }
+    final a = await HomeWidget.saveWidgetData("data", jsonEncode({
+      "date": DateFormat("dd-MM-yyyy").format(DateTime.now()),
+      "holiday": stdata.checkIfHoliday(DateTime.now()),
+      "plans": plans,
+    }));
+    final b = await stdata.updateWidgets(teacher);
+    return (a ?? false) && b;
+  }
+
+  @override
   void initState() {
     super.initState();
     final stdata = Provider.of<StuPlanData>(context, listen: false);
@@ -244,6 +292,9 @@ class YourPlanPageState extends State<YourPlanPage> {
       selected = (0, teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!);
     }
     stdata.addListener(stdataListener);
+    _loadWidgetData(teacher);
+
+    WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final shBounds = context.read<StuPlanData>().guessSummerHolidayBounds();
@@ -278,6 +329,7 @@ class YourPlanPageState extends State<YourPlanPage> {
   void dispose() {
     // globalen Context verwenden, weil lokaler Context hier nicht mehr sicher verwendet werden kann
     Provider.of<StuPlanData>(globalScaffoldContext, listen: false).removeListener(stdataListener);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }

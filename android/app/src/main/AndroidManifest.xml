@@ -65,7 +65,12 @@
 
         <activity
             android:name=".widgets.YourPlanWidgetConfigActivity"
-            android:theme="@style/Theme.MaterialComponents.DayNight.Dialog.Alert"/>
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.Dialog.Alert">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
     </application>
 
     <queries>
