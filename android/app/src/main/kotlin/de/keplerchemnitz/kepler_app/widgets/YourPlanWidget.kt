@@ -37,6 +37,7 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -86,55 +87,77 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
             context.startActivity(Intent(context, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
 
-        Box(
-            modifier = GlanceModifier.background(GlanceTheme.colors.widgetBackground)
-                .padding(16.dp).clickable(openSPPage),
-            contentAlignment = Alignment.Center
-        ) {
-            Spacer()
-            Column(verticalAlignment = Alignment.CenterVertically) {
-                if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
-                    IconBar("Wochenende!")
-                    Text(
-                        "Heute ist keine Schule.",
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurface,
-                            textAlign = TextAlign.Center
+        Column(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = GlanceModifier.background(GlanceTheme.colors.widgetBackground)
+                    .padding(16.dp).clickable(openSPPage).wrapContentSize().cornerRadius(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = GlanceModifier.wrapContentSize()
+                ) {
+                    if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                        IconBar("Wochenende!")
+                        Text(
+                            "Heute ist keine Schule.",
+                            style = TextStyle(
+                                color = GlanceTheme.colors.onSurface,
+                                textAlign = TextAlign.Center
+                            )
                         )
-                    )
-                } else {
-                    val dataStr = prefs.getString("data", null)
-                    val data = JSONObject(dataStr ?: "{}")
-                    if (data.has("date") && data.getString("date") == "%02d-%02d-%04d".format(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR))) {
-                        if (data.has("holiday") && data.getBoolean("holiday")) {
-                            IconBar("Frei!")
+                    } else {
+                        val dataStr = prefs.getString("data", null)
+                        val data = JSONObject(dataStr ?: "{}")
+                        if (data.has("date") && data.getString("date") == "%02d-%02d-%04d".format(
+                                cal.get(Calendar.DAY_OF_MONTH),
+                                cal.get(Calendar.MONTH) + 1,
+                                cal.get(Calendar.YEAR)
+                            )
+                        ) {
+                            if (data.has("holiday") && data.getBoolean("holiday")) {
+                                IconBar("Frei!")
+                                Text(
+                                    "Laut dem Stundenplan ist heute frei. In der App kann dies angepasst werden.",
+                                    style = themeStyle()
+                                )
+                                Button("App öffnen", openSPPage)
+                            } else {
+                                IconBar(
+                                    "Stundenplan am %02d.%02d.".format(
+                                        cal.get(Calendar.DAY_OF_MONTH),
+                                        cal.get(Calendar.MONTH) + 1
+                                    )
+                                )
+                                Text(
+                                    "für ${if (plan.contains("-")) "Klasse" else "Jahrgang"} $plan",
+                                    style = TextStyle(
+                                        fontStyle = FontStyle.Italic,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                                val plans = data.getJSONObject("plans")
+                                if (!plans.has(plan)) {
+                                    Text("Fehler bei der Abfrage der Daten.", style = themeStyle())
+                                } else {
+                                    LessonList(
+                                        plans.getJSONArray(plan).jsonObjectIterator().asSequence()
+                                            .toList(), openSPPage, showFullPlan
+                                    )
+                                }
+                            }
+                        } else {
+                            IconBar("Noch keine Daten verfügbar.")
                             Text(
-                                "Laut dem Stundenplan ist heute frei. In der App kann dies angepasst werden.",
+                                "Bitte Kepler-App öffnen, um Stundenplan abzufragen.",
+                                modifier = GlanceModifier.padding(bottom = 4.dp),
                                 style = themeStyle()
                             )
                             Button("App öffnen", openSPPage)
-                        } else {
-                            IconBar("Stundenplan am %02d.%02d.".format(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1))
-                            Text("für ${if (plan.contains("-")) "Klasse" else "Jahrgang"} $plan", style = TextStyle(fontStyle = FontStyle.Italic, fontSize = 12.sp))
-                            val plans = data.getJSONObject("plans")
-                            if (!plans.has(plan)) {
-                                Text("Fehler bei der Abfrage der Daten.", style = themeStyle())
-                            } else {
-                                LessonList(plans.getJSONArray(plan).jsonObjectIterator().asSequence().toList(), openSPPage, showFullPlan)
-                            }
                         }
-                    } else {
-                        IconBar("Noch keine Daten verfügbar.")
-                        Text(
-                            "Bitte Kepler-App öffnen, um Stundenplan abzufragen.",
-                            modifier = GlanceModifier.padding(bottom = 4.dp),
-                            style = themeStyle()
-                        )
-                        Button("App öffnen", openSPPage)
                     }
                 }
             }
-            Spacer()
         }
     }
 

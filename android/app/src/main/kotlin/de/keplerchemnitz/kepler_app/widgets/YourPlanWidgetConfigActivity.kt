@@ -40,7 +40,7 @@ class YourPlanWidgetConfigActivity : Activity() {
         } else {
             val dialog = layoutInflater.inflate(R.layout.your_plan_widget_config_dialog, null)
             val spinner = dialog.findViewById<Spinner>(R.id.yp_config_plan_selector)
-            spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, prefs.getString("plans_avail", null)!!.split("|"))
+            spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefs.getString("plans_avail", null)!!.split("|").map { "${if (it.contains("-")) "Klasse" else "Jahrgang"} $it" })
             val checkbox = dialog.findViewById<CheckBox>(R.id.yp_config_checkbox)
             MaterialAlertDialogBuilder(this)
                 .setTitle("Stundenplan auswählen")

@@ -191,8 +191,6 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
   }
   bool checkIfHoliday(DateTime date) => holidayDates.any((d) => d.day == date.day && d.month == date.month && d.year == date.year);
 
-
-  // TODO: use this to notify the user of potential plan/class changes in new school year
   (DateTime, DateTime)? guessSummerHolidayBounds() {
     final thisYear = DateTime.now().year;
     List<DateTime> summerHolidays = holidayDates.where((dt) => dt.year == thisYear && dt.month > 5 && dt.month < 10).toList()..sort((a, b) => a.compareTo(b));
@@ -265,6 +263,7 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     altHiddenCourseIDs = [];
   }
 
+  // TODO: add widget preview for older Android versions
   Future<bool> updateWidgets(bool isTeacher) async {
     if ((isTeacher && selectedTeacherName == null) || (!isTeacher && selectedClassName == null)) {
       final a = await HomeWidget.saveWidgetData("plan_setup", false);
