@@ -245,15 +245,17 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
   Future<bool> _loadWidgetData(bool teacher) async {
     final stdata = context.read<StuPlanData>();
     final creds = context.read<CredentialStore>();
-    final plans = <String, List<Map>>{};
+    final plans = <List<dynamic>>[];
     if (teacher) {
       final (data, isOnline) = await IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!);
       if (data == null) return false;
-      plans[stdata.selectedTeacherName!] = data.teachers
-        .firstWhere((c) => c.teacherCode == stdata.selectedTeacherName!)
-        .lessons
-        .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
-        .toList();
+      plans.add([stdata.selectedTeacherName!]);
+      plans[0].addAll(
+        data.teachers
+          .firstWhere((c) => c.teacherCode == stdata.selectedTeacherName!)
+          .lessons
+          .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
+      );
     }
     final names = teacher
         ? stdata.altSelectedClassNames
@@ -263,12 +265,19 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
       if (data == null) return false;
       for (int i = 0; i < names.length; i++) {
         final name = names[i];
-        plans[name!] = data.classes
+        plans.add([name!]);
+        final lessons = data.classes
           .firstWhere((c) => c.className == name)
-          .lessons
-          .where((t) => !((teacher || i >= 1) ? stdata.getAltHiddenCourseIDs(teacher ? i : i - 1) : stdata.hiddenCourseIDs).any((id) => t.subjectID == id))
-          .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
-          .toList();
+          .lessons;
+        final hidden = (teacher || i >= 1) ? stdata.getAltHiddenCourseIDs(teacher ? i : i - 1) : stdata.hiddenCourseIDs;
+        plans[i + (teacher ? 1 : 0)].addAll(
+          lessons
+            .where((t) => !hidden.any((id) => t.subjectID == id))
+            .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
+        );
+        if (lessons.any((l) => hidden.any((id) => id == l.subjectID)) && context.read<Preferences>().showLessonsHiddenInfo) {
+          plans[i + (teacher ? 1 : 0)].add({ "hidden": true });
+        }
       }
     }
     final a = await HomeWidget.saveWidgetData("data", jsonEncode({

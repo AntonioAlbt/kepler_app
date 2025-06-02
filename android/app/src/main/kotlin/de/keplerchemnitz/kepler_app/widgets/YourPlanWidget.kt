@@ -58,8 +58,8 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
     @Composable fun themeStyle() = TextStyle(color = GlanceTheme.colors.onSurface)
 
     companion object {
-        private val SMALL = DpSize(175.dp, 100.dp)
-        private val BIGGER = DpSize(200.dp, 100.dp)
+        private val SMALL = DpSize(180.dp, 100.dp)
+        private val BIGGER = DpSize(210.dp, 100.dp)
     }
     override val sizeMode = SizeMode.Responsive(setOf(
         SMALL,
@@ -75,19 +75,13 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
 
     @Composable
     private fun GlanceContent(context: Context, currentState: HomeWidgetGlanceState, id: GlanceId) {
-        val prefs = currentState.preferences
-        val cal = Calendar.getInstance()
-        // return, ohne etwas zu rendern, weil erst nach Konfiguration verfügbar
-        val plan = prefs.getString("$id.selected_plan", null) ?: return
-        if (!prefs.contains("$id.show_full_plan")) return
-        val showFullPlan = prefs.getBoolean("$id.show_full_plan", true)
-
-        val openSPPage = {
-            prefs.edit(commit = true) { putString("start_page", "stuplan") }
-            context.startActivity(Intent(context, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
-
         Column(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            val prefs = currentState.preferences
+            val openSPPage = {
+                prefs.edit(commit = true) { putString("start_page", "stuplan") }
+                context.startActivity(Intent(context, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
             Box(
                 modifier = GlanceModifier.background(GlanceTheme.colors.widgetBackground)
                     .padding(16.dp).clickable(openSPPage).wrapContentSize().cornerRadius(16.dp),
@@ -96,7 +90,29 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
                 Column(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = GlanceModifier.wrapContentSize()
-                ) {
+                ) col2@{
+                    val cal = Calendar.getInstance()
+                    // return, ohne etwas zu rendern, weil erst nach Konfiguration verfügbar
+                    val plan = prefs.getInt("$id.selected_plan", -153)
+                    if (!prefs.contains("$id.show_full_plan") || plan == -153) {
+                        IconBar("Fehler beim Laden.")
+                        Text("Das Widget konnte nicht geladen werden. Bitte entfernen und neu hinzufügen.")
+                        return@col2
+                    }
+                    val showFullPlan = prefs.getBoolean("$id.show_full_plan", true)
+
+                    if (plan == -1) {
+                        IconBar("Stundenplan entfernt.")
+                        Text(
+                            "Bitte dieses Widget entfernen.",
+                            style = TextStyle(
+                                color = GlanceTheme.colors.onSurface,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                        return@col2
+                    }
+
                     if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                         IconBar("Wochenende!")
                         Text(
@@ -123,25 +139,23 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
                                 )
                                 Button("App öffnen", openSPPage)
                             } else {
-                                IconBar(
-                                    "Stundenplan am %02d.%02d.".format(
-                                        cal.get(Calendar.DAY_OF_MONTH),
-                                        cal.get(Calendar.MONTH) + 1
-                                    )
-                                )
-                                Text(
-                                    "für ${if (plan.contains("-")) "Klasse" else "Jahrgang"} $plan",
-                                    style = TextStyle(
-                                        fontStyle = FontStyle.Italic,
-                                        fontSize = 12.sp
-                                    )
-                                )
-                                val plans = data.getJSONObject("plans")
-                                if (!plans.has(plan)) {
+                                IconBar("Heutiger Stundenplan")
+
+                                val plans = data.getJSONArray("plans")
+                                if (plans.length() <= plan) {
                                     Text("Fehler bei der Abfrage der Daten.", style = themeStyle())
                                 } else {
+                                    val kl = (plans[plan] as JSONArray)[0] as String
+                                    Text(
+                                        "für ${if (kl.contains("-")) "Klasse" else "Jahrgang"} $kl ${if (!showFullPlan) "(nur Änderungen)" else ""}",
+                                        style = TextStyle(
+                                            fontStyle = FontStyle.Italic,
+                                            fontSize = 12.sp,
+                                            color = GlanceTheme.colors.onSurface
+                                        )
+                                    )
                                     LessonList(
-                                        plans.getJSONArray(plan).jsonObjectIterator().asSequence()
+                                        (plans[plan] as JSONArray).jsonObjectIterator(1).asSequence()
                                             .toList(), openSPPage, showFullPlan
                                     )
                                 }
@@ -184,17 +198,23 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
     private fun LessonList(lessons: List<JSONObject>, openApp: () -> Unit, showFullPlan: Boolean) {
         val size = LocalSize.current
         val plan = if (showFullPlan) lessons else lessons.filter {
+            if (it.has("hidden")) return@filter true
             val c = it.getJSONObject("changed")
             return@filter c.getBoolean("subject") || c.getBoolean("teacher") || c.getBoolean("rooms")
         }
 
         Spacer(GlanceModifier.height(4.dp))
         Box(GlanceModifier.background(GlanceTheme.colors.surfaceVariant).cornerRadius(8.dp).padding(4.dp)) {
-            if (plan.isEmpty()) Text("Heute keine Vertretungen.")
+            if (plan.isEmpty()) Text("Heute keine Vertretungen (oder alles ausgeblendet).", style = TextStyle(color = GlanceTheme.colors.onSurface))
             else LazyColumn(GlanceModifier.clickable(openApp).padding(2.dp)) {
                 plan.forEachIndexed { i, it ->
-                    val changed = it.getJSONObject("changed")
                     item(i.toLong()) {
+                        if (it.has("hidden")) {
+                            Text("Es wurden Stunden ausgeblendet.", style = TextStyle(color = GlanceTheme.colors.onSurface, fontStyle = FontStyle.Italic))
+                            return@item
+                        }
+
+                        val changed = it.getJSONObject("changed")
                         Row(GlanceModifier.padding(2.dp).clickable(openApp)) {
                             Text(
                                 if (i > 0 && plan[i - 1].getInt("schoolHour") == it.getInt("schoolHour")) "" else "${
@@ -231,7 +251,7 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
                                     )
                                 )
                             }
-                            if (size.width >= BIGGER.width) Row(
+                            Row(
                                 horizontalAlignment = Alignment.End,
                                 modifier = GlanceModifier.fillMaxWidth()
                             ) {
@@ -251,14 +271,13 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
     }
 
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
-        val cal = Calendar.getInstance()
         provideContent {
             Box(
                 modifier = GlanceModifier.background(GlanceTheme.colors.widgetBackground)
                     .padding(16.dp), Alignment.Center
             ) {
                 Column(modifier = GlanceModifier.wrapContentSize()) {
-                    IconBar("Stundenplan am %02d.%02d.".format(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1))
+                    IconBar("Heutiger Stundenplan")
                     val size = LocalSize.current
 
                     Spacer(GlanceModifier.height(4.dp))
@@ -290,7 +309,7 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
                                             )
                                         }
                                     }
-                                    if (size.width >= BIGGER.width) Row(
+                                    Row(
                                         horizontalAlignment = Alignment.End,
                                         modifier = GlanceModifier.fillMaxWidth()
                                     ) {
@@ -319,9 +338,10 @@ class YourPlanWidget : GlanceAppWidget(errorUiLayout = de.keplerchemnitz.kepler_
     }
 }
 
-fun JSONArray.jsonObjectIterator(): Iterator<JSONObject> {
+fun JSONArray.jsonObjectIterator(skip: Int = 0): Iterator<JSONObject> {
+    if (skip < 0) throw IllegalArgumentException()
     return object : Iterator<JSONObject> {
-        var i = 0;
+        var i = skip
         override fun hasNext() = i < this@jsonObjectIterator.length()
         override fun next(): JSONObject {
             if (!hasNext()) throw NoSuchElementException()

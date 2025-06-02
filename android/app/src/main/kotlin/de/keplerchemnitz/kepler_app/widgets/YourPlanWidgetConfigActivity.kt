@@ -28,6 +28,10 @@ class YourPlanWidgetConfigActivity : Activity() {
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_CANCELED, resultValue)
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish()
+            return
+        }
 
         if (!prefs.getBoolean("plan_setup", false)) {
             setResult(RESULT_CANCELED)
@@ -45,13 +49,13 @@ class YourPlanWidgetConfigActivity : Activity() {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Stundenplan auswählen")
                 .setView(dialog)
-                .setPositiveButton("Jetzt platzieren") { _, _ ->
+                .setPositiveButton("Speichern") { _, _ ->
                     val gid = GlanceAppWidgetManager(this).getGlanceIdBy(appWidgetId)
                     prefs.edit {
-                        putString("$gid.selected_plan", spinner.selectedItem.toString())
+                        putInt("$gid.selected_plan", spinner.selectedItemId.toInt())
                         putBoolean("$gid.show_full_plan", !checkbox.isChecked)
                     }
-                    Log.d(null, "set $gid.selected_plan -> ${prefs.getString("$gid.selected_plan", null)}")
+                    Log.d(null, "set $gid.selected_plan -> ${prefs.getInt("$gid.selected_plan", -153)}")
                     setResult(RESULT_OK)
                     runBlocking {
                         launch { YourPlanWidget().update(this@YourPlanWidgetConfigActivity, gid) }
@@ -59,6 +63,7 @@ class YourPlanWidgetConfigActivity : Activity() {
                     finish()
                 }
                 .setNegativeButton("Abbrechen") { _, _ -> setResult(RESULT_CANCELED) }
+                .setOnDismissListener { finish() }
                 .show()
         }
     }

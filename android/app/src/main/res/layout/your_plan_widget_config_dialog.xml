@@ -22,7 +22,7 @@
         android:id="@+id/yp_config_checkbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nur Vertretungen anzeigen"
+        android:text="Nur Änderungen anzeigen"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
 </LinearLayout>
