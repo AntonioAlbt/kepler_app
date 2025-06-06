@@ -332,7 +332,7 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
               /// echte Anzeige vom Stundenplan für den ausgewählten Tag
               child: Selector<StuPlanData, List<DateTime>>(
                 selector: (_, stdata) => stdata.holidayDates,
-                builder: (_, holidayDates, __) => StuPlanDayDisplay(
+                builder: (_, holidayDates, _) => StuPlanDayDisplay(
                   controller: _ctr,
                   date: currentDate,
                   key: ValueKey(currentDate.hashCode +
@@ -1509,7 +1509,7 @@ class _LessonListContainerState extends State<LessonListContainer> {
                     return CustomEventDisplay(widget.events![i - 2], i > 2 ? widget.events![i - 3].startLesson ?? -1 : -1);
                   }
                 },
-                separatorBuilder: (_, __) => const Divider(),
+                separatorBuilder: (_, _) => const Divider(),
               ),
             );
           }

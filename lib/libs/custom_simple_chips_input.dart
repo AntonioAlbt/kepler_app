@@ -202,8 +202,7 @@ class SimpleChipsInput extends StatefulWidget {
 
 class SimpleChipsInputState extends State<SimpleChipsInput> {
   late final TextEditingController _controller;
-  // ignore: prefer_typing_uninitialized_variables
-  late final _formKey;
+  late final GlobalKey<FormState> _formKey;
   final List<String> chips = [];
   late final FocusNode _focusNode;
 

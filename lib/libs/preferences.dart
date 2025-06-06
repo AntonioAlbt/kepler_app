@@ -92,7 +92,7 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
 }
 
 /// Hilfsfunktion für Übertragen (cast-en) von Objekten auf einen anderen Typ
-T? cast<T>(x) => x is T ? x : null;
+T? cast<T>(dynamic x) => x is T ? x : null;
 
 /// Anredepronomen
 enum Pronoun {

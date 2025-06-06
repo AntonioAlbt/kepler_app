@@ -60,7 +60,7 @@ class OpenLinkButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication).catchError((_, __) {
+        launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication).catchError((_, _) {
           showSnackBar(text: "Fehler beim Öffnen.");
           return true;
         });
