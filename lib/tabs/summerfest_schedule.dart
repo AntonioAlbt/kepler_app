@@ -35,18 +35,16 @@ import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/colors.dart';
-import 'package:drive_direct_download/drive_direct_download.dart';
-import 'package:http/http.dart' as http;
 import 'package:kepler_app/main.dart';
 import 'package:provider/provider.dart';
 
-/// Link zur (beliebig benannten) auf Google-Drive gespeicherten Datei Ablaufplan.json
-const String _scheduleJsonUrl = "https://drive.google.com/file/d/1Z-WR9bkXmD6-EPEGZLFoNTZWjUualeWi/view?usp=drive_link";
 
 /// Seite, welche den Ablaufplan lädt und anzeigt
 class SummerFestSchedulePage extends StatefulWidget {
@@ -296,38 +294,28 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
 
   /// Widgetinterne Logik für das Laden der Daten
   Future<void> _loadData() async {
-    final data = await loadScheduleData();
+    Map<String, dynamic>? scheduleData;
+
+    /// Laden und Parsen des der Daten aus den Assets
+    try {
+      final data = await rootBundle.loadString('assets/summerfest_schedule.json');
+      scheduleData = jsonDecode(data);
+      logDebug("summerfest-schedule-data", "loaded data");
+    } catch (e, s) {
+      logCatch("summerfest-schedule-data", e, s);
+    }
+
     setState(() {
-      _scheduleData = data;
+      _scheduleData = scheduleData;
       _loading = false;
     });
-    if (data == null) {
-      showSnackBar(textGen: (sie) => "Fehler beim Abrufen des Ablaufplans. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+    if (scheduleData == null) {
+      showSnackBar(textGen: (sie) => "Fehler beim Abrufen des Ablaufplans.", error: true, clear: true);
     }
     return;
   }
 }
 
-/// Abrufen der Daten von Google Drive, diese werden dann in eine Map überführt
-Future<Map<String, dynamic>?> loadScheduleData() async {
-  final http.Response res;
-  final String encodedScheduleJsonUrl = await DriveDirect.download(driveLink: _scheduleJsonUrl);
-  try {
-    res = await http.get(Uri.parse(encodedScheduleJsonUrl));
-  } catch (e, s) {
-    logCatch("summerfest-schedule-data", e, s);
-    return null;
-  }
-
-  try {
-    final scheduleData = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-    logDebug("summerfest-schedule-data", "loaded data from ${res.request?.url.toString()} and got ${scheduleData.toString()}");
-    return scheduleData;
-  } catch (e, s) {
-    logCatch("summerfest-schedule-data", e, s);
-    return null;
-  }
-}
 
 /// Widget, welche ein einzelnes Ereignis als Box im Layout darstellt.
 /// Für die dynamische Höhe wird auf oberster Ebene ein Flexible zurückgegeben.
@@ -373,6 +361,7 @@ Color? _getColorFromString(String colorString) {
     case "KeplerBlau": return colorWithLightness(keplerColorBlue, darkTheme ? .25 :.55);
     case "KeplerOrange": return colorWithLightness(keplerColorOrange, darkTheme ? .25 : .65);
     case "KeplerGelb": return darkTheme ? colorWithLightness(keplerColorYellow, .25) : keplerColorYellow;
+    case "rot": return colorWithLightness(Color(0xFFD64664), darkTheme ? .25 : .66);
     case "unsichtbar":
     default: return null;
   }

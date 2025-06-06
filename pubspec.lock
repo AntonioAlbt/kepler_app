@@ -161,14 +161,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
-  drive_direct_download:
-    dependency: "direct main"
-    description:
-      name: drive_direct_download
-      sha256: "2d7b1236c1500ef2b7d0d0b742294875ff4db9988d7fdf26f1539538d0404313"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.4"
   enough_serialization:
     dependency: "direct main"
     description:
