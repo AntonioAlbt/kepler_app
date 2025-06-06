@@ -257,6 +257,12 @@ class InternalState extends SerializableObject with ChangeNotifier {
   int get lastClassReminderYear => attributes["last_cr_year"] ?? 1900;
   set lastClassReminderYear(int val) => _setSaveNotify("last_cr_year", val);
 
+  int get yourPlanShownCount => attributes["yp_shown_count"] ?? 0;
+  set yourPlanShownCount(int val) => _setSaveNotify("yp_shown_count", val);
+  void incYourPlanShownCount() {
+    yourPlanShownCount = yourPlanShownCount + 1;
+  }
+
   bool loaded = false;
 
   Future<void> save() async {

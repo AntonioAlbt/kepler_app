@@ -74,7 +74,7 @@ dependencies:
   provider: ^6.1.2
   path_provider: ^2.1.2
   http: ^1.2.2
-  intl: ^0.19.0
+  intl: ^0.20.2
   device_info_plus: ^11.3.2
   flutter_keyboard_visibility: ^6.0.0
   permission_handler: ^12.0.0+1
@@ -127,7 +127,7 @@ dependencies:
   # libs for stuplan
   xml: ^6.5.0
   confetti: ^0.8.0
-  skeletonizer: ^1.4.3
+  skeletonizer: ^2.0.1
 
   # libs for settings
   settings_ui: ^2.0.2
@@ -153,7 +153,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
   # app icon lib
   flutter_launcher_icons: ^0.14.1
