@@ -38,6 +38,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_system_proxy/flutter_system_proxy.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kepler_app/changelog.dart';
 import 'package:kepler_app/colors.dart';
@@ -167,6 +168,8 @@ Future<void> initializeApp() async {
   if (!_prefs.enableInfiniteStuPlanScrolling) await IndiwareDataManager.removeOldCacheFiles();
   final del = await KeplerLogging.deleteLogsOlderThan(DateTime.now().subtract(Duration(days: _prefs.logRetentionDays)));
   if (kDebugMode) print("deleted logs for the following days: $del");
+
+  _stuPlanData.updateWidgets(_appState.userType == UserType.teacher);
 }
 
 /// allererster Schritt, noch bevor Flutter die App selbst initialisiert
@@ -301,7 +304,7 @@ class KeplerApp extends StatefulWidget {
 }
 
 /// Hauptwidget-State für die Kepler-App
-class _KeplerAppState extends State<KeplerApp> {
+class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
   UserType utype = UserType.nobody;
   bool isStuplanInvalid = false;
   bool isLernsaxInvalid = false;
@@ -433,9 +436,34 @@ class _KeplerAppState extends State<KeplerApp> {
       }
     }
 
+    final wsp = await HomeWidget.getWidgetData<String>("start_page");
+    switch (wsp) {
+      case "stuplan":
+        startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+        break;
+    }
+    await HomeWidget.saveWidgetData("start_page", null);
+
     setState(() => _loading = false);
 
     return output;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      final wsp = await HomeWidget.getWidgetData<String>("start_page");
+      switch (wsp) {
+        case "stuplan":
+          /// Da context hier wirklich vom höchsten Widget ist, geht context.read<...>() noch nicht -> aber in main.dart kann
+          /// noch direkt auf alle Provider zugegriffen werden
+          // ignore: use_build_context_synchronously
+          _appState.selectedNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+          break;
+      }
+      await HomeWidget.saveWidgetData("start_page", null);
+    }
   }
 
   bool _loading = true;
@@ -621,6 +649,7 @@ class _KeplerAppState extends State<KeplerApp> {
         }
       }
     });
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
@@ -629,14 +658,22 @@ class _KeplerAppState extends State<KeplerApp> {
     globalConfettiController
       ..stop()
       ..dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  /// wird aus irgendeinem Grund aufgerufen, wenn der Benutzer das Platform-Farmschema ändert
-  /// (und auch für anderes Zeugs, ist aber egal)
+  /// wird aufgerufen, wenn der Benutzer das Farbschema vom Betriebssystem ändert
+  /// - aber MediaQuery gibt hier noch das alte Farbschema zurück!?
+  @override
+  void didChangePlatformBrightness() {
+    deviceInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.light;
+    super.didChangePlatformBrightness();
+  }
+
+  /// wird nach Start von App aufgerufen -> erst hier kann deviceInDarkMode initialisiert werden
   @override
   void didChangeDependencies() {
-    deviceInDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    deviceInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     super.didChangeDependencies();
   }
 }

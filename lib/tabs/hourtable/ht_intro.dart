@@ -396,7 +396,8 @@ class SubjectSelectScreen extends StatelessWidget {
             infoScreenState.previous();
           },
           onFinish: (hidden) {
-            Provider.of<StuPlanData>(context, listen: false).hiddenCourseIDs = hidden;
+            stdata.hiddenCourseIDs = hidden;
+            context.read<StuPlanData>().updateWidgets(context.read<AppState>().userType == UserType.teacher);
             infoScreenState.next();
           },
           availableSubjects: stdata.availableClassSubjects!,
@@ -708,6 +709,7 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
                 stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
                 stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
               }
+              stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
               Navigator.pop(context, true);
             },
             onGoBack: () {

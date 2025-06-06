@@ -86,7 +86,29 @@ final _notifKeyMap = {
   stuPlanNotificationKey: "Änderungen im Stundenplan",
 };
 
-class _SettingsTabState extends State<SettingsTab> {
+class _SettingsTabState extends State<SettingsTab> with WidgetsBindingObserver {
+  bool? _systemInDarkMode = deviceInDarkMode;
+
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    setState(() {
+      _systemInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.light;
+    });
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<Preferences>(
@@ -111,16 +133,13 @@ class _SettingsTabState extends State<SettingsTab> {
             SettingsSection(
               title: const Text("Allgemeines"),
               tiles: [
-                // the way this is implemented can cause minor desync and the dialog showing the wrong system theme, but it's not that big an issue
-                /// falls ein Benutzer das System-Theme ändert, während er in den Einstellungen ist, zeigt dieser Dialog
-                /// noch das alte Theme an (aber das ist ja mal vollkommen egal)
                 selectionSettingsTile(
                   prefs.theme
                       .toString()
-                      .replaceAll("System", "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})"),
+                      .replaceAll("System", "System (${(_systemInDarkMode ?? false) ? "Dunkel" : "Hell"})"),
                   AppTheme.values.map((val) {
                     if (val == AppTheme.system) {
-                      return "System (${(deviceInDarkMode ?? false) ? "Dunkel" : "Hell"})";
+                      return "System (${(_systemInDarkMode ?? false) ? "Dunkel" : "Hell"})";
                     } else {
                       return val.toString();
                     }

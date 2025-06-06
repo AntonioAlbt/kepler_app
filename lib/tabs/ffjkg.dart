@@ -46,9 +46,10 @@ class FFJKGTab extends StatefulWidget {
 class _FFJKGTabState extends State<FFJKGTab> {
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.all(8.0),
-      child: Column(
+      child: ListView(
+        shrinkWrap: true,
         children: [
           Text(
             "FFJKG - Freunde und Förderer des Johannes-Kepler-Gymnasiums",

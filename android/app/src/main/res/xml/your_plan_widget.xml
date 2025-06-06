@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:minWidth="180dp"
+    android:minHeight="120dp"
+    android:resizeMode="horizontal|vertical"
+    android:configure="de.keplerchemnitz.kepler_app.widgets.YourPlanWidgetConfigActivity"
+    android:description="@string/yp_widget_desc"
+    android:updatePeriodMillis="1800000"
+    android:widgetFeatures="reconfigurable"
+    android:previewImage="@drawable/your_plan_widget_preview"
+    tools:ignore="UnusedAttribute" />
+<!-- update every 30 mins -->

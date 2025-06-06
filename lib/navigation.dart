@@ -203,18 +203,6 @@ final destinations = [
       ),
     ],
   ),
-  // if (kDebugMode) const NavEntryData(
-  //   id: "locked_test_teacher",
-  //   icon: Icon(Icons.cases),
-  //   label: Text("Test: Nur für Lehrer"),
-  //   lockedFor: [UserType.nobody, UserType.pupil, UserType.parent]
-  // ),
-  // if (kDebugMode) const NavEntryData(
-  //   id: "locked_test_pupil",
-  //   icon: Icon(Icons.account_box),
-  //   label: Text("Test: Nur für Schüler"),
-  //   lockedFor: [UserType.nobody, UserType.parent, UserType.teacher]
-  // ),
   NavEntryData(
     id: StuPlanPageIDs.main,
     icon: const Icon(Icons.school_outlined),
