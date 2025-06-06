@@ -64,6 +64,10 @@ final versionChanges = {
     title: "LernSax-Dateien verwalten",
     descGen: (sie) => "${sie ? "Sie können" : "Du kannst"} jetzt Dateien auf LernSax komplett in der Kepler-App verwalten.",
   ),
+  83: const CLEntry(
+    title: "Ablaufplan des Sommerfests",
+    description: "Der Ablaufplan des Sommerfests ist jetzt in der Kepler-App verfügbar.",
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen
