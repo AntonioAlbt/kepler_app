@@ -72,16 +72,18 @@ jobs:
           FP: "signing/keystore.jks"
         name: Setup APK signing
       - run: flutter analyze
-      - run: flutter build apk --release --dart-define=beta=$BETA --dart-define=debug_features=$DEBUG --dart-define=debug_notif_data=$DEBUGNOTIF --dart-define=logup_host=$LOGUP_HOST
+      - run: flutter build apk --release --dart-define=beta=$BETA --dart-define=debug_features=$DEBUG --dart-define=debug_notif_data=$DEBUGNOTIF --dart-define=logup_host=$LOGUP_HOST --dart-define=dynamic_data_host=$DYNDATA_HOST
         env:
           BETA: ${{ inputs.beta }}
           DEBUG: ${{ inputs.debugFeatures }}
           DEBUGNOTIF: ${{ inputs.debugNotifyData }}
           LOGUP_HOST: ${{ secrets.LOGUP_HOST }}
+          DYNDATA_HOST: ${{ secrets.DYNDATA_HOST }}
         if: ${{ github.event_name == 'workflow_dispatch' }}
-      - run: flutter build apk --release --dart-define=beta=true --dart-define=logup_host=$LOGUP_HOST
+      - run: flutter build apk --release --dart-define=beta=true --dart-define=logup_host=$LOGUP_HOST --dart-define=dynamic_data_host=$DYNDATA_HOST
         env:
           LOGUP_HOST: ${{ secrets.LOGUP_HOST }}
+          DYNDATA_HOST: ${{ secrets.DYNDATA_HOST }}
         if: ${{ github.event_name != 'workflow_dispatch' }}
       - name: Publish new release
         uses: softprops/action-gh-release@v2
