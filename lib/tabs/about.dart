@@ -33,6 +33,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:kepler_app/build_vars.dart';
+import 'package:kepler_app/libs/dynamic_data.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
@@ -220,6 +221,33 @@ class _AboutTabState extends State<AboutTab> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 2),
+                  child: Text("Dynamische Daten sind aktuell:\n${!DynamicData.available ? "nicht verfügbar" : (!DynamicData.enabled ? "nicht abfragbar" : "verfügbar und abgefragt")}", textAlign: TextAlign.center),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    showSnackBar(text: "Verbindung wird hergestellt...", duration: const Duration(seconds: 5));
+                    if (await DynamicData.init()) {
+                      showSnackBar(text: "Jetzt erfolgreich abgefragt.", clear: true);
+                    } else {
+                      showSnackBar(text: "Verbindung nicht erfolgreich.", clear: true);
+                    }
+                    setState(() {});
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(flex: 0, child: Text("Dynamische Daten neu abfragen")),
+                      Flexible(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(Icons.wifi, size: 16),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (kDebugFeatures) Padding(
