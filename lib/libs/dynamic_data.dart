@@ -20,9 +20,11 @@ class DynamicData {
   static DynStatusData? _status;
   static DynStatusData? get status => _status;
   static bool enabled = false;
+  static bool serverTooNew = false;
 
   static Future<bool> init() async {
     enabled = false;
+    serverTooNew = false;
     if (!available) return false;
 
     final dynamic json;
@@ -53,6 +55,7 @@ class DynamicData {
 
       if (status?.serviceName != "dyn_kepapp_data") return false;
 
+      serverTooNew = status!.version.major > supportedMajorServerVersion;
       enabled = true;
     } on Exception catch (e, s) {
       logCatch("dyndata-json", e, s);

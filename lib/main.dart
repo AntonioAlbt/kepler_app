@@ -274,22 +274,21 @@ class _BackgroundInfoLoaderState extends State<BackgroundInfoLoader> {
     final internal = Provider.of<InternalState>(context, listen: false);
     final version = await PackageInfo.fromPlatform();
     final currentVersion = int.parse(version.buildNumber);
-    // only show changelog for updates, not for features existing on installation
-    /// erfasst letzte angezeigte Version, damit nur bei Aktualisierungen alle neuen
-    /// Änderungen angezeigt werden
-    if (internal.lastChangelogShown < 0) internal.lastChangelogShown = currentVersion;
-    final lastVersion = internal.lastChangelogShown;
-    if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
-      showDialog(context: context, builder: (ctx) => getChangelogDialog(currentVersion, lastVersion, ctx) ?? const AlertDialog());
-      internal.lastChangelogShown = currentVersion;
+
+    if (DynamicData.available && DynamicData.serverTooNew && mounted && !internal.infosShown.contains("app_too_old_for_dynamic")) {
+      await showDialog(context: context, builder: (ctx) => AlertDialog(
+        title: Text("App veraltet"),
+        content: Text("Diese Version der Kepler-App ist zu alt, um dynamische Daten zu unterstützen. Bitte die App aktualisieren."),
+      ));
+      internal.infosShown.add("app_too_old_for_dynamic");
     }
 
     if (DynamicData.enabled && mounted) {
       final latestUpdate = DynamicData.status!.appVersion.code;
       if (internal.lastVersionUpdateReminderShown < latestUpdate && currentVersion < latestUpdate) {
-        showDialog(context: context, builder: (ctx) => AlertDialog(
+        await showDialog(context: context, builder: (ctx) => AlertDialog(
           title: Text("Update verfügbar"),
-          content: Text("Es ist ein Update mit neuen Features oder Verbesserungen für die Kepler-App im Store verfügbar."),
+          content: Text("Es ist ein Update mit neuen Features oder Verbesserungen für die Kepler-App im ${(Platform.isAndroid) ? "Play" : "App"} Store verfügbar."),
           actions: [
             TextButton(
               onPressed: () => launchUrl(
@@ -306,6 +305,15 @@ class _BackgroundInfoLoaderState extends State<BackgroundInfoLoader> {
         ));
         internal.lastVersionUpdateReminderShown = latestUpdate;
       }
+    }
+
+    /// erfasst letzte angezeigte Version, damit nur bei Aktualisierungen alle neuen
+    /// Änderungen angezeigt werden
+    if (internal.lastChangelogShown < 0) internal.lastChangelogShown = currentVersion;
+    final lastVersion = internal.lastChangelogShown;
+    if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
+      showDialog(context: context, builder: (ctx) => getChangelogDialog(currentVersion, lastVersion, ctx) ?? const AlertDialog());
+      internal.lastChangelogShown = currentVersion;
     }
   }
 }

@@ -68,6 +68,10 @@ final versionChanges = {
     title: "Ablaufplan des Sommerfests",
     description: "Der Ablaufplan des Sommerfests ist jetzt in der Kepler-App verfügbar.",
   ),
+  84: const CLEntry(
+    title: "Android-Widget",
+    description: "Die Kepler-App bietet jetzt für Android ein Widget für den Handy-Startbildschirm.",
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen
