@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2024 Antonio Albert
+// Copyright (c) 2023-2025 Lukas Tanneberger, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -377,7 +377,7 @@ class ScheduleBox extends StatelessWidget {
                           child: Text(caption, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w500)),
                         ),
                       ),
-                      if (times.startTime != null) Align(
+                      if (times.endTime != null) Align(
                         alignment: Alignment.bottomRight,
                         child: Padding(
                           padding: const EdgeInsets.all(4),
