@@ -418,7 +418,7 @@ class _LSTaskEntryState extends State<LSTaskEntry> with SingleTickerProviderStat
                                 } else {
                                   launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
                                     .then((_) => showSnackBar(text: "Link wird geöffnet.", clear: true, duration: const Duration(milliseconds: 100)))
-                                    .onError((_, __) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
+                                    .onError((_, _) => showSnackBar(text: "Fehler beim Öffnen des Links.", error: true, clear: true));
                                 }
                               });
                           }, child: const Text("Im Browser öffnen")),
@@ -645,7 +645,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
                   if (color == null) {
                     return AnimatedBuilder(
                       animation: _controller,
-                      builder: (_, __) => Container(
+                      builder: (_, _) => Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -685,7 +685,7 @@ class _LSTaskCheckBoxState extends State<LSTaskCheckBox> with SingleTickerProvid
                       if (color == null) {
                         return AnimatedBuilder(
                           animation: _controller,
-                          builder: (_, __) => Icon(
+                          builder: (_, _) => Icon(
                             Icons.check,
                             size: 16,
                             grade: 200,

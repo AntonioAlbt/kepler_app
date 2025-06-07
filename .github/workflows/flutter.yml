@@ -48,10 +48,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
+          flutter-version: '3.32.1'
       - run: |
           flutter --disable-analytics
           flutter config --no-analytics

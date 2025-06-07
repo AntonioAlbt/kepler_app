@@ -504,7 +504,7 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
     /// der MultiProvider stellt (wie der Name schon sagt) mehrere Datenquellen für die darunterliegenden Widgets bereit
     final mainWidget = Consumer<AppState>(
       key: Key("mainWidget"),
-      builder: (context, state, __) {
+      builder: (context, state, _) {
         final index = state.selectedNavPageIDs;
         final selectedNavEntry = currentlySelectedNavEntry(context);
         return BackgroundInfoLoader(

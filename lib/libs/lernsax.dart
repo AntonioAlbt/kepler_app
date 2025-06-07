@@ -280,7 +280,7 @@ Future<(bool, MOJKGResult)> isMemberOfJKG(String mail, String password) async {
 }
 
 /// API-Antwort für "login" verarbeiten
-MOJKGResult _processMemberResponse(res) {
+MOJKGResult _processMemberResponse(dynamic res) {
   try {
     final response = res[0]["result"];
     if (response["return"] == "FATAL") {
