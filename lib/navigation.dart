@@ -38,6 +38,7 @@ import 'package:kepler_app/build_vars.dart';
 import 'package:kepler_app/drawer.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
+import 'package:kepler_app/libs/dynamic_data.dart';
 import 'package:kepler_app/libs/kepler_app_custom_icons.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/preferences.dart';
@@ -515,12 +516,12 @@ final destinations = [
       }
     }
   ),
-  const NavEntryData(
+  NavEntryData(
     id: PageIDs.festSchedule,
     icon: Icon(Icons.event_note_outlined),
     label: Text("Ablaufplan Sommerfest"),
     selectedIcon: Icon(Icons.event_note),
-    lockedFor: [UserType.nobody],
+    isVisible: (_) => DynamicData.isServiceAvailable("sommerfest"),
   ),
   const NavEntryData(
     id: PageIDs.foodOrder,

@@ -47,6 +47,7 @@ import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/checks.dart';
 import 'package:kepler_app/libs/custom_events.dart';
+import 'package:kepler_app/libs/dynamic_data.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
@@ -67,6 +68,7 @@ import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:workmanager/workmanager.dart';
 
 /// Damit ich in dieser Datei noch ohne Consumer auf die Datenquellen zugreifen kann,
@@ -169,7 +171,9 @@ Future<void> initializeApp() async {
   final del = await KeplerLogging.deleteLogsOlderThan(DateTime.now().subtract(Duration(days: _prefs.logRetentionDays)));
   if (kDebugMode) print("deleted logs for the following days: $del");
 
-  _stuPlanData.updateWidgets(_appState.userType == UserType.teacher);
+  await _stuPlanData.updateWidgets(_appState.userType == UserType.teacher);
+
+  await DynamicData.init();
 }
 
 /// allererster Schritt, noch bevor Flutter die App selbst initialisiert
@@ -245,16 +249,16 @@ class MyApp extends StatelessWidget {
 }
 
 /// Widget, was beim Initialisieren den Changelog der App lädt und anzeigt
-class ChangelogLoader extends StatefulWidget {
+class BackgroundInfoLoader extends StatefulWidget {
   final Widget child;
 
-  const ChangelogLoader({super.key, required this.child});
+  const BackgroundInfoLoader({super.key, required this.child});
 
   @override
-  State<ChangelogLoader> createState() => _ChangelogLoaderState();
+  State<BackgroundInfoLoader> createState() => _BackgroundInfoLoaderState();
 }
 
-class _ChangelogLoaderState extends State<ChangelogLoader> {
+class _BackgroundInfoLoaderState extends State<BackgroundInfoLoader> {
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -278,6 +282,30 @@ class _ChangelogLoaderState extends State<ChangelogLoader> {
     if (computeChangelog(currentVersion, lastVersion).isNotEmpty && mounted) {
       showDialog(context: context, builder: (ctx) => getChangelogDialog(currentVersion, lastVersion, ctx) ?? const AlertDialog());
       internal.lastChangelogShown = currentVersion;
+    }
+
+    if (DynamicData.enabled && mounted) {
+      final latestUpdate = DynamicData.status!.appVersion.code;
+      if (internal.lastVersionUpdateReminderShown < latestUpdate && currentVersion < latestUpdate) {
+        showDialog(context: context, builder: (ctx) => AlertDialog(
+          title: Text("Update verfügbar"),
+          content: Text("Es ist ein Update mit neuen Features oder Verbesserungen für die Kepler-App im Store verfügbar."),
+          actions: [
+            TextButton(
+              onPressed: () => launchUrl(
+                Uri.parse(
+                  Platform.isAndroid
+                      ? "https://play.google.com/store/apps/details?id=de.keplerchemnitz.kepler_app"
+                      : "https://apps.apple.com/de/app/kepler-app/id6499428205",
+                ),
+                mode: LaunchMode.externalNonBrowserApplication,
+              ),
+              child: Text("Im ${(Platform.isAndroid) ? "Play" : "App"} Store öffnen"),
+            ),
+          ],
+        ));
+        internal.lastVersionUpdateReminderShown = latestUpdate;
+      }
     }
   }
 }
@@ -479,7 +507,7 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
       builder: (context, state, __) {
         final index = state.selectedNavPageIDs;
         final selectedNavEntry = currentlySelectedNavEntry(context);
-        return ChangelogLoader(
+        return BackgroundInfoLoader(
           // ignore: deprecated_member_use
           child: PopScope(
             /// der PopScope fängt das Schließen der aktuellen Route (hier: der App allgemein) ab und

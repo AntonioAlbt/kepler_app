@@ -51,3 +51,6 @@ const kCredsDebug = bool.fromEnvironment("creds_debug", defaultValue: false);
 
 /// standardmäßig gewählter Host für VLANT-LogUp (wenn leer = Knopf zum Hochladen wird ausgegraut) -> Verwendung als https://&lt;host&gt;
 const kBaseLogUpHost = String.fromEnvironment("logup_host") == "" ? null : String.fromEnvironment("logup_host");
+
+/// Host für Abfrage von dynamischen Daten (Features deaktiviert wenn nicht gesetzt)
+const kDynamicDataHost = String.fromEnvironment("dynamic_data_host") == "" ? null : String.fromEnvironment("dynamic_data_host");

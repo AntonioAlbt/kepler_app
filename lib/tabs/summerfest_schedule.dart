@@ -31,14 +31,14 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
-import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:kepler_app/libs/dynamic_data.dart';
 
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/preferences.dart';
+import 'package:kepler_app/libs/pronoun_builder.dart';
 import 'package:kepler_app/libs/snack.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/colors.dart';
@@ -133,7 +133,9 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
           ScheduleBox(
             caption: ((layoutChild["balken"] as Map<String, dynamic>)["beschriftung"] as String).replaceAll('[BREAK]', '\u00AD'),
             color: _getColorFromString((layoutChild["balken"] as Map<String, dynamic>)["farbe"]),
-            flex: (layoutChild["balken"] as Map<String, dynamic>)["länge"]),
+            flex: (layoutChild["balken"] as Map<String, dynamic>)["länge"],
+            times: (startTime: layoutChild["times"]?["start"], endTime: layoutChild["times"]?["end"]),
+          ),
         );
       }
       if (layoutChild["typ"] == "vertikal") {
@@ -149,6 +151,7 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
                 caption: (box["beschriftung"] as String).replaceAll('[BREAK]', '\u00AD'),
                 color: _getColorFromString(box["farbe"]),
                 flex: (box["länge"]),
+                times: (startTime: box["times"]?["start"], endTime: box["times"]?["end"]),
               ),
             );
           }
@@ -175,6 +178,11 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
   
   @override
   Widget build(BuildContext context) {
+    if (!DynamicData.enabled) {
+      return Center(
+        child: PronounBuilder((sie) => Text("Dynamische Daten, wie der Sommerfest-Ablaufplan, sind bei ${sie ? "Ihnen" : "Dir"} gerade nicht verfügbar. Bitte ${sie ? "überprüfen Sie Ihre" : "überprüfe Deine"} Internetverbindung, ${sie ? "starten Sie" : "starte"} die App neu oder ${sie ? "probieren Sie" : "probiere"} es später erneut.")),
+      );
+    }
     /// Ladebildschirm
     if (_loading) {
       return const Center(
@@ -279,7 +287,10 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
                 )
               ),
             ),
-            Text("Stand ${_scheduleData!["zuletzt_geändert"] as String} - Änderungen vorbehalten"),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text("Stand ${_scheduleData!["zuletzt_geändert"] as String} - Änderungen vorbehalten"),
+            ),
           ],
         ),
       ),
@@ -298,8 +309,7 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
 
     /// Laden und Parsen des der Daten aus den Assets
     try {
-      final data = await rootBundle.loadString('assets/summerfest_schedule.json');
-      scheduleData = jsonDecode(data);
+      scheduleData = await DynamicData.getSommerfestData();
       logDebug("summerfest-schedule-data", "loaded data");
     } catch (e, s) {
       logCatch("summerfest-schedule-data", e, s);
@@ -321,11 +331,12 @@ class _SummerFestSchedulePageState extends State<SummerFestSchedulePage> {
 /// Für die dynamische Höhe wird auf oberster Ebene ein Flexible zurückgegeben.
 /// Wenn color = null ist die Box unsichtbar.
 class ScheduleBox extends StatelessWidget {
-  const ScheduleBox({super.key, required this.color, required this.flex, this.caption = ""});
+  const ScheduleBox({super.key, required this.color, required this.flex, this.caption = "", required this.times});
 
   final Color? color;
   final int flex;
   final String caption;
+  final ({ String? startTime, String? endTime }) times;
 
   @override
   Widget build(BuildContext context) {
@@ -340,8 +351,51 @@ class ScheduleBox extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     color: color,
                   ),
-                  child: Center(
-                    child: Text(caption),
+                  child: Stack(
+                    children: [
+                      if (times.startTime != null) Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Flexible(
+                              //   child: Padding(
+                              //     padding: EdgeInsets.only(right: 4),
+                              //     child: Icon(MdiIcons.clockOutline, size: 14, color: hasDarkTheme(context) ? Colors.grey : Colors.grey.shade700),
+                              //   ),
+                              // ),
+                              Flexible(flex: 0, child: Text(times.startTime ?? "?", style: TextStyle(color: hasDarkTheme(context) ? Colors.grey : Colors.grey.shade700))),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Text(caption, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w500)),
+                        ),
+                      ),
+                      if (times.startTime != null) Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Flexible(
+                              //   child: Padding(
+                              //     padding: EdgeInsets.only(right: 4),
+                              //     child: Icon(MdiIcons.clockOutline, size: 14, color: hasDarkTheme(context) ? Colors.grey : Colors.grey.shade700),
+                              //   ),
+                              // ),
+                              Flexible(flex: 0, child: Text(times.endTime ?? "?", style: TextStyle(color: hasDarkTheme(context) ? Colors.grey : Colors.grey.shade700))),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               : null,

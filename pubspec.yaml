@@ -127,7 +127,7 @@ dependencies:
   # libs for stuplan
   xml: ^6.5.0
   confetti: ^0.8.0
-  skeletonizer: ^1.4.3
+  skeletonizer: ^2.0.1
 
   # libs for settings
   settings_ui: ^2.0.2
