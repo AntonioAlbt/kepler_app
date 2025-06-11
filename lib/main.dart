@@ -472,13 +472,15 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
       }
     }
 
-    final wsp = await HomeWidget.getWidgetData<String>("start_page");
-    switch (wsp) {
-      case "stuplan":
-        startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
-        break;
+    if (Platform.isAndroid) {
+      final wsp = await HomeWidget.getWidgetData<String>("start_page");
+      switch (wsp) {
+        case "stuplan":
+          startingNavPageIDs = [StuPlanPageIDs.main, StuPlanPageIDs.yours];
+          break;
+      }
+      await HomeWidget.saveWidgetData("start_page", null);
     }
-    await HomeWidget.saveWidgetData("start_page", null);
 
     setState(() => _loading = false);
 
@@ -488,7 +490,7 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && Platform.isAndroid) {
       final wsp = await HomeWidget.getWidgetData<String>("start_page");
       switch (wsp) {
         case "stuplan":
@@ -702,7 +704,11 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
   /// - aber MediaQuery gibt hier noch das alte Farbschema zurück!?
   @override
   void didChangePlatformBrightness() {
-    deviceInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.light;
+    if (Platform.isAndroid) {
+      deviceInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.light;
+    } else if (Platform.isIOS) {
+      deviceInDarkMode = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    }
     super.didChangePlatformBrightness();
   }
 

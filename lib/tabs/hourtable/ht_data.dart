@@ -265,6 +265,8 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
 
   // TODO: add widget preview for older Android versions
   Future<bool> updateWidgets(bool isTeacher) async {
+    if (!Platform.isAndroid) return false;
+
     if ((isTeacher && selectedTeacherName == null) || (!isTeacher && selectedClassName == null)) {
       final a = await HomeWidget.saveWidgetData("plan_setup", false);
       final b = await HomeWidget.updateWidget(androidName: "widgets.YourPlanWidgetReceiver");

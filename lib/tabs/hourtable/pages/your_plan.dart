@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -243,6 +244,8 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
   }
 
   Future<bool> _loadWidgetData(bool teacher) async {
+    if (!Platform.isAndroid) return false;
+
     final stdata = context.read<StuPlanData>();
     final creds = context.read<CredentialStore>();
     final plans = <List<dynamic>>[];
