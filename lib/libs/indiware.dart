@@ -62,7 +62,7 @@ const sUrlMKlXmlPath = "$sUrlMPath/mobdaten/Klassen.xml";
 
 /// Pfad zu Desktopdaten für Lehrer
 const lUrlDPath = "/VplanonlineL";
-/// Pfad zu Mobildaten für Schüler
+/// Pfad zu Mobildaten für Lehrer
 const lUrlMPath = "/VmobilL";
 /// Pfad zu allgemeiner Info-XML-Datei (hier: Lehrer.xml) für Lehrer
 const lUrlMLeXmlPath = "$lUrlMPath/mobdaten/Lehrer.xml";
