@@ -317,31 +317,28 @@ class _LernSaxScreenMainState extends State<LernSaxScreenMain> {
             "Bitte ${sie ? "melden Sie sich" : "melde Dich"} mit ${sie ? "Ihrem" : "Deinem"} JKG-LernSax-Konto an. Damit können wir bestätigen, dass ${sie ? "Sie" : "Du"} wirklich Teil unserer Schule ${sie ? "sind" : "bist"}.",
           ),
         ),
-        SensitiveContent(
-          sensitivity: ContentSensitivity.sensitive,
-          child: Column(
-            children: [
-              TextField(
-                controller: _mailController,
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                decoration: InputDecoration(
-                  labelText: "LernSax-Email-Adresse",
-                  errorText: _mailError,
-                ),
+        Column(
+          children: [
+            TextField(
+              controller: _mailController,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: "LernSax-Email-Adresse",
+                errorText: _mailError,
               ),
-              TextField(
-                controller: _pwController,
-                keyboardType: TextInputType.visiblePassword,
-                autocorrect: false,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "LernSax-Passwort",
-                  errorText: _pwError,
-                ),
+            ),
+            TextField(
+              controller: _pwController,
+              keyboardType: TextInputType.visiblePassword,
+              autocorrect: false,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "LernSax-Passwort",
+                errorText: _pwError,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         Padding(
           padding: EdgeInsets.only(top: 12, bottom: widget.extraPadding ? 16 : 0),
@@ -678,29 +675,26 @@ class _StuPlanScreenMainState extends State<StuPlanScreenMain> {
                 Text("Bitte ${sie ? "geben Sie" : "gebe"} die Anmeldedaten für ${sie ? "Ihren" : "Deinen"} Stundenplan auf plan.kepler-chemnitz.de ${widget.again ? "erneut" : ""} ein."),
                 if (state.userType == UserType.parent) Text("Da ${sie ? "Sie" : "Du"} ein Elternteil ${sie ? "sind" : "bist"}, sollten dies die Anmeldedaten des Schülerstundenplanes sein."),
                 const Padding(padding: EdgeInsets.all(4)),
-                SensitiveContent(
-                  sensitivity: ContentSensitivity.sensitive,
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _userController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: "Benutzername",
-                          errorText: _userErr,
-                        ),
+                Column(
+                  children: [
+                    TextField(
+                      controller: _userController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: "Benutzername",
+                        errorText: _userErr,
                       ),
-                      TextField(
-                        controller: _pwController,
-                        keyboardType: TextInputType.visiblePassword,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: "Passwort",
-                          errorText: _pwErr,
-                        ),
+                    ),
+                    TextField(
+                      controller: _pwController,
+                      keyboardType: TextInputType.visiblePassword,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: "Passwort",
+                        errorText: _pwErr,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 16),

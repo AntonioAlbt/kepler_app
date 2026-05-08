@@ -134,10 +134,8 @@ bool shouldGoToNextPlanDay(BuildContext context) {
 bool isSameDate(DateTime dateTime1, DateTime dateTime2)
   => dateTime1.year == dateTime2.year && dateTime1.month == dateTime2.month && dateTime1.day == dateTime2.day;
 
-/// wurde der Stundenplan heute schonmal aktualisiert?
 bool shouldStuPlanAutoReload(BuildContext context)
-  => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutoOnceDaily &&
-    !isSameDate((Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload ?? DateTime(1900)), DateTime.now());
+  => Provider.of<Preferences>(context, listen: false).reloadStuPlanAutomatically;
 
 /// schönere Beschreibung des Datums relativ zu heutigem Tag wenn möglich, sonst nur Formatierung
 String getDayDescription(DateTime date) {
@@ -210,7 +208,6 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (shouldStuPlanAutoReload(context)) {
         forceRefreshData();
-        Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = DateTime.now();
       }
       final creds = Provider.of<CredentialStore>(context, listen: false);
       if (creds.lernSaxLogin == lernSaxDemoModeMail) return;

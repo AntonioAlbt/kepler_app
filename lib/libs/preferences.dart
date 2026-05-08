@@ -264,8 +264,8 @@ class Preferences extends SerializableObject with ChangeNotifier {
   }
 
   /// soll der Stundenplan einmal täglich neu geladen werden?
-  bool get reloadStuPlanAutoOnceDaily => attributes["sp_rl_on_open_d"] ?? true;
-  set reloadStuPlanAutoOnceDaily(bool val) => setSaveNotify("sp_rl_on_open_d", val);
+  bool get reloadStuPlanAutomatically => attributes["sp_reload_on_open"] ?? true;
+  set reloadStuPlanAutomatically(bool val) => setSaveNotify("sp_reload_on_open", val);
 
   /// sollen Mails in der LernSax-Mail-Liste automatisch beim Vorbeiscrollen heruntergeladen werden?
   bool get lernSaxAutoLoadMailOnScrollBy => attributes["ls_mail_auto_load_osb"] ?? true;

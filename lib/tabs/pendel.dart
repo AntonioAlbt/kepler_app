@@ -218,7 +218,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                                 width: 3,
                                 height: 190,
                               ),
-                              ),
+                            ),
                           ),
                           Center(
                             child: Transform.rotate(
@@ -230,7 +230,7 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                                 width: 3,
                                 height: 190,
                               ),
-                              ),
+                            ),
                           ),
                           Center(
                             child: Transform.rotate(
@@ -313,13 +313,15 @@ class _PendelInfoTabState extends State<PendelInfoTab> with SingleTickerProvider
                         TextSpan(
                           children: [
                             const TextSpan(
-                              text: "Winkel des Pendels um 7:05\n",
+                              text: "Winkel des Pendels um 7:05",
                               style: TextStyle(color: Colors.greenAccent)
                             ),
+                            TextSpan(text: ": ${formatForDisplay(morningPosition?.roundToDouble(), 0, " °", "unbekannt")}\n", style: TextStyle(fontSize: 14)),
                             const TextSpan(
-                              text: "Winkel des Pendels um 14:15\n",
+                              text: "Winkel des Pendels um 14:15",
                               style: TextStyle(color: Colors.redAccent)
                             ),
+                            TextSpan(text: ": ${formatForDisplay(eveningPosition?.roundToDouble(), 0, " °", "unbekannt")}\n", style: TextStyle(fontSize: 14)),
                           ],
                         ),
                       ),

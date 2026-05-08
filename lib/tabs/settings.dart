@@ -304,10 +304,10 @@ class _SettingsTabState extends State<SettingsTab> with WidgetsBindingObserver {
                 /// - es könnte natürlich auch jedes Mal beim Öffnen der App oder Seite sein, aber ich fand es so besser
                 /// - auf modernen Handys wird eh fast alles im RAM gehalten, da gibt es kaum mehr neu öffnen
                 rainbowSwitchTile(
-                  initialValue: prefs.reloadStuPlanAutoOnceDaily,
-                  onToggle: (val) => prefs.reloadStuPlanAutoOnceDaily = val,
+                  initialValue: prefs.reloadStuPlanAutomatically,
+                  onToggle: (val) => prefs.reloadStuPlanAutomatically = val,
                   title: const Text("Beim Öffnen automatisch aktualisieren"),
-                  description: const Text("passiert einmal täglich beim Öffnen des Stundenplanes"),
+                  description: const Text("passiert jedes Mal beim Öffnen des Stundenplanes"),
                   enabled: userType != UserType.nobody,
                 ),
                 /// dafür kann HMTime von indiware.dart gleich passend wiederverwendet werden, weil es einfach zu

@@ -228,12 +228,11 @@ class HomeStuPlanWidgetState extends State<HomeStuPlanWidget> {
     // also check here, because it's shown on the home page
     if (
       !shouldShowStuPlanIntro(Provider.of<StuPlanData>(context, listen: false), state.userType == UserType.teacher) &&
-      prefs.reloadStuPlanAutoOnceDaily
+      prefs.reloadStuPlanAutomatically
     ) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (shouldStuPlanAutoReload(context)) {
           setState(() => forceRefresh = true);
-          Provider.of<InternalState>(context, listen: false).lastStuPlanAutoReload = DateTime.now();
         }
       });
     }
