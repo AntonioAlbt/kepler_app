@@ -488,7 +488,7 @@ class _SPHiddenSubjectSelectorState extends State<SPHiddenSubjectSelector> {
           ],
         ),
         SizedBox(
-          height: MediaQuery.sizeOf(context).height * .5,
+          height: MediaQuery.sizeOf(context).height * .45,
           child: SingleChildScrollView(
             controller: _scctr,
             child: Column(
@@ -690,32 +690,35 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
       builder: (context, _) {
         return AlertDialog(
           title: Text("Stundenplan ${widget.editId != null ? "bearbeiten" : "hinzufügen"}"),
-          content: _newClass == null ? SPClassSelector(
-            preselected: widget.editId != null ? stdata.altSelectedClassNames[widget.editId!] : null,
-            teacherMode: false,
-            onSubmit: (selected) {
-              setState(() => _newClass = selected);
-            },
-            onCancel: () => Navigator.pop(context, false),
-            alternativeAccount: true,
-          ) : SPHiddenSubjectSelector(
-            onFinish: (hidden) {
-              if (widget.editId == null) {
-                /// da zum Benachrichtigen von Änderungen das immer neu gesetzt werden muss, wird hier eine
-                /// Zuweisung verwendet, obwohl nur `add` aufgerufen wurde
-                stdata.altSelectedClassNames = stdata.altSelectedClassNames..add(_newClass!);
-                stdata.altHiddenCourseIDs = stdata.altHiddenCourseIDs..add(hidden.join("|"));
-              } else {
-                stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
-                stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
-              }
-              stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
-              Navigator.pop(context, true);
-            },
-            onGoBack: () {
-              setState(() => _newClass = null);
-            },
-            availableSubjects: stdata.availableSubjects[_newClass!]!,
+          content:
+          SingleChildScrollView(
+            child: _newClass == null ? SPClassSelector(
+              preselected: widget.editId != null ? stdata.altSelectedClassNames[widget.editId!] : null,
+              teacherMode: false,
+              onSubmit: (selected) {
+                setState(() => _newClass = selected);
+              },
+              onCancel: () => Navigator.pop(context, false),
+              alternativeAccount: true,
+            ) : SPHiddenSubjectSelector(
+              onFinish: (hidden) {
+                if (widget.editId == null) {
+                  /// da zum Benachrichtigen von Änderungen das immer neu gesetzt werden muss, wird hier eine
+                  /// Zuweisung verwendet, obwohl nur `add` aufgerufen wurde
+                  stdata.altSelectedClassNames = stdata.altSelectedClassNames..add(_newClass!);
+                  stdata.altHiddenCourseIDs = stdata.altHiddenCourseIDs..add(hidden.join("|"));
+                } else {
+                  stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
+                  stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
+                }
+                stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
+                Navigator.pop(context, true);
+              },
+              onGoBack: () {
+                setState(() => _newClass = null);
+              },
+              availableSubjects: stdata.availableSubjects[_newClass!]!,
+            ),
           ),
         );
       }

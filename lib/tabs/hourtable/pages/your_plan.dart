@@ -78,7 +78,7 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
             RainbowWrapper(builder: (_, color) => Container(color: color?.withValues(alpha: .5))),
             Column(
               children: [
-                if (prefs.showYourPlanAddDropdown) SizedBox(
+                if (stdata.altSelectedClassNames.isNotEmpty || prefs.showYourPlanAddDropdown) SizedBox(
                   height: selected.$1 > 0 ? 90 : 50,
                   child: AppBar(
                     scrolledUnderElevation: 5,

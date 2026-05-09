@@ -72,6 +72,11 @@ final versionChanges = {
     title: "Android-Widget",
     description: "Die Kepler-App bietet jetzt für Android ein Widget für den Handy-Startbildschirm.",
   ),
+  // eigentlich schon in 90, habe das aber dort vergessen
+  92: const CLEntry(
+    title: "Bessere Stundenplan-Aktualisierung",
+    description: "Damit der Stundenplan immer aktuell bleibt, wird er jetzt bei jedem Öffnen der Seite aktualisiert."
+  ),
 };
 
 /// ermittelt alle anzuzeigenden Änderungseinträge mit den zwei gegebenen Versionen

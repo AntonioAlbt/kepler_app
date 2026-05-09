@@ -51,7 +51,6 @@ import 'package:kepler_app/tabs/about.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/info_dialogs.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
-import 'package:kepler_app/tabs/hourtable/pages/your_plan.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -167,12 +166,17 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
   void forceRefreshData() {
     // only clear the cache if loading the new data succeeded (if connected to indiware)
     _ctr.triggerRefresh(forceOnline: true)?.then((val) {
-      if (val) {
+      if (val == true) {
         /// Cache nur für alles in der Zukunft löschen (Stundenplan in Vergangenheit wird sich ja wohl nicht ändern)
         IndiwareDataManager.clearCachedData(excludeDate: DateTime.now());
-        showSnackBar(text: "Stundenplan erfolgreich aktualisiert.", duration: const Duration(seconds: 1));
-      } else {
-        showSnackBar(textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?", error: true, clear: true);
+        showSnackBar(text: "Stundenplan erfolgreich aktualisiert.", duration: const Duration(milliseconds: 500));
+      } else if (val == false) {
+        showSnackBar(
+          textGen: (sie) => "Fehler beim Aktualisieren der Stundenplan-Daten. ${sie ? "Sind Sie" : "Bist Du"} mit dem Internet verbunden?",
+          error: true,
+          clear: true,
+          duration: const Duration(seconds: 2),
+        );
         /// nochmal neu laden, damit wieder gecachete Daten angezeigt werden
         _ctr.triggerRefresh(forceOnline: false);
       }
@@ -361,11 +365,11 @@ class StuPlanDisplayState extends State<StuPlanDisplay> {
 /// - dann kann triggerRefresh vom Elternwidget aufgerufen werden, und es wird eine Funktion im Kindwidget
 ///   aufgerufen
 class StuPlanDayDisplayController {
-  Future<bool> Function(bool forceOnline)? onRefreshListener;
+  Future<bool?> Function(bool forceOnline)? onRefreshListener;
 
-  void setRefreshListener(Future<bool> Function(bool forceOnline) func) => onRefreshListener = func;
+  void setRefreshListener(Future<bool?> Function(bool forceOnline) func) => onRefreshListener = func;
   void clearRefreshListener() => onRefreshListener = null;
-  Future<bool>? triggerRefresh({ required bool forceOnline }) => onRefreshListener?.call(forceOnline);
+  Future<bool?>? triggerRefresh({ required bool forceOnline }) => onRefreshListener?.call(forceOnline);
 
   StuPlanDayDisplayController();
 }
@@ -802,12 +806,18 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
                         mode: widget.mode,
                         fullLessonListForDate: allLessonsForDate,
                         onRefresh: () async {
-                          showSnackBar(text: await loadData(forceRefresh: true) ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.", duration: const Duration(seconds: 2));
+                          final success = await loadData(forceRefresh: true);
+                          if (success != null) {
+                            showSnackBar(
+                              text: success ? "Stundenplan für den aktuellen Tag erfolgreich aktualisiert." : "Aktualisieren gescheitert.",
+                              duration: Duration(seconds: success ? 1 : 2),
+                              error: !success,
+                            );
+                          }
                         },
                         events: widget.mode == SPDisplayMode.yourPlan ? evtmgr.events.where((evt) => isSameDate(evt.date ?? DateTime(1900), widget.date)).toList() : null,
                         // events: evtmgr.events,
-                        extraScrollSpace: widget.mode == SPDisplayMode.yourPlan ? kSPListExtraScrollSpace : null,
-                        classHasLessons: unfilteredLessons?.isNotEmpty ?? false,
+                        extraScrollSpace: (widget.mode == SPDisplayMode.yourPlan && context.read<Preferences>().showYourPlanAddEvents) ? kSPListExtraScrollSpace : null,
                         unfilteredLessons: unfilteredLessons,
                       );
                     }
@@ -968,9 +978,10 @@ class _StuPlanDayDisplayState extends State<StuPlanDayDisplay> {
     super.initState();
   }
 
-  Future<bool> loadData({required bool forceRefresh}) async {
+  Future<bool?> loadData({required bool forceRefresh}) async {
     try {
-      return await _doLoadData(forceRefresh: forceRefresh).timeout(const Duration(seconds: 20));
+      final success = await _doLoadData(forceRefresh: forceRefresh).timeout(const Duration(seconds: 20));
+      return success;
     } catch (e, s) {
       logCatch("sp-timeout", e, s);
       lessons = null;
@@ -1408,7 +1419,6 @@ class SPListContainer extends StatelessWidget {
 
 class LessonListContainer extends StatefulWidget {
   final List<VPLesson>? lessons;
-  final bool classHasLessons;
   final List<VPLesson>? fullLessonListForDate;
   final List<CustomEvent>? events;
   final String className;
@@ -1436,7 +1446,6 @@ class LessonListContainer extends StatefulWidget {
     required this.onRefresh,
     this.events,
     this.extraScrollSpace,
-    this.classHasLessons = false,
     this.hideBorder = false,
     this.unfilteredLessons,
   }) {
@@ -1476,12 +1485,13 @@ class _LessonListContainerState extends State<LessonListContainer> {
       showBorder: widget.hideBorder ? false : widget.lessons != null,
       showAddEventButton: widget.mode == SPDisplayMode.yourPlan,
       child: () {
-        if (widget.lessons == null || widget.lessons!.isEmpty) {
+        final shouldShowLessonsHiddenText = widget.lessons?.isEmpty == true && !context.read<Preferences>().showLessonsHiddenInfo;
+        if (widget.lessons == null || shouldShowLessonsHiddenText) {
           final infoText = Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
               widget.lessons == null ? (widget.isOnline != false ? "Keine Daten verfügbar." : "Keine Verbindung zum Server.")
-                : widget.classHasLessons ? "Alle Stunden werden ausgeblendet."
+                : shouldShowLessonsHiddenText ? "Alle Stunden werden ausgeblendet."
                 : "${getDayDescription(widget.date)} ist kein Unterricht${widget.mode == SPDisplayMode.roomPlan ? " in diesem Raum" : widget.mode == SPDisplayMode.classPlan ? " in dieser Klasse" : ""}.",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget.lessons == null ? hasDarkTheme(context) ? Colors.red.shade300 : Colors.red.shade800 : null),
               textAlign: TextAlign.center,
@@ -1516,7 +1526,6 @@ class _LessonListContainerState extends State<LessonListContainer> {
         final mixedList = <Object>[...(lessonsOverride ?? widget.lessons!)];
         if (widget.unfilteredLessons != null && widget.unfilteredLessons!.length > mixedList.length && context.read<Preferences>().showLessonsHiddenInfo) {
           final hidden = widget.unfilteredLessons!.length - widget.lessons!.length;
-          final sie = context.select<Preferences, bool>((prefs) => prefs.preferredPronoun == Pronoun.sie);
           mixedList.add(
             GestureDetector(
               onTap: () {
@@ -1525,45 +1534,47 @@ class _LessonListContainerState extends State<LessonListContainer> {
                 });
               },
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "$hidden ausgeblendete Stunde${hidden == 1 ? "" : "n"}",
+                          style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                        ),
+                        Text(
+                          "Hier tippen, um einzublenden.",
+                          style: TextStyle(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     children: [
-                      Text(
-                        "$hidden ausgeblendete Stunde${hidden == 1 ? "" : "n"}",
-                        style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
-                      ),
-                      Text(
-                        "${sie ? "Tippen Sie" : "Tippe"} hier, um sie einzublenden.",
-                        style: TextStyle(fontStyle: FontStyle.italic),
+                      IconButton(
+                        iconSize: 24,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text("Ausblenden?"),
+                              content: Text("Soll dieser Infotext ausgeblendet werden? Er kann jederzeit in den Einstellungen wieder aktiviert werden."),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Nein")),
+                                TextButton(onPressed: () {
+                                  ctx.read<Preferences>().showLessonsHiddenInfo = false;
+                                  Navigator.pop(ctx);
+                                }, child: Text("Ja, ausblenden")),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: Icon(Icons.cancel_outlined),
                       ),
                     ],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => yourStuPlanEditAction(),
-                    icon: Icon(Icons.edit),
-                  ),
-                  IconButton(
-                    iconSize: 20,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text("Ausblenden?"),
-                          content: Text("Soll dieser Infotext ausgeblendet werden? Er kann jederzeit in den Einstellungen wieder aktiviert werden."),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Nein")),
-                            TextButton(onPressed: () {
-                              ctx.read<Preferences>().showLessonsHiddenInfo = false;
-                              Navigator.pop(ctx);
-                            }, child: Text("Ja, ausblenden")),
-                          ],
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.visibility_off),
                   ),
                 ],
               ),
