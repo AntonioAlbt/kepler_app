@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Antonio Albert, Lukas Tanneberger
 
 // This file is part of kepler_app.
 
@@ -48,11 +48,11 @@ import 'package:kepler_app/libs/preferences.dart';
 ///   einem Tag nicht verwendet wird, weiß die App nicht über die Existenz des Raumes
 final allKeplerRooms = [
   "K10", "K12",
-  ...rooms("0", 1, 7, [2]), "021",
+  ...rooms("0", 1, 7, [2]), "012", "018", "021",
   ...rooms("1", 7, 17, [14]),
-  ...rooms("2", 1, 19, [6, 12, 15, 16]),
-  ...rooms("3", 1, 17, [3, 7, 14, 16]),
-  "013TH", "Jb1", "Jb2",
+  ...rooms("2", 1, 18, [6, 7, 15]),
+  ...rooms("3", 1, 17, [3, 7, 14]),
+  "TH", "Jb1", "Jb2",
 ];
 /// Varianten für Räume, Einteilung für Benutzer
 enum RoomType {
@@ -73,12 +73,12 @@ enum RoomType {
 // this even more
 /// Zuteilung Räume zu Raumtyp
 final specialRoomInfo = {
-  RoomType.compSci: ["K10", "K12", "202"],
-  RoomType.technic: ["001", "021"],
-  RoomType.sports: ["013TH", "Jb1", "Jb2"],
-  RoomType.specialist: ["112", "113", "115", "116", "117", "213", "214", "217", "218", "219", "313", "315"],
+  RoomType.compSci: ["K10", "K12", "112" "202"],
+  RoomType.technic: ["001"],
+  RoomType.sports: ["TH", "Jb1", "Jb2"],
+  RoomType.specialist: ["113", "115", "116", "117", "213", "214", "216", "217", "218", "306", "313", "315", "316"],
   RoomType.music: ["317"],
-  RoomType.art: ["302"],
+  RoomType.art: ["301", "302", "304"],
 };
 /// Generierung einer Map Raumnummer -> Raumtyp
 final specialRoomMap = (){

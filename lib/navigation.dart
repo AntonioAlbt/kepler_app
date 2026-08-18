@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2025 Antonio Albert, Lukas Tanneberger
 
 // This file is part of kepler_app.
 
