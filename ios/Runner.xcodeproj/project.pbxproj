@@ -7,18 +7,43 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		06A437B58118189D489F8D9B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D29614F7C826D37BA95BC558 /* Foundation.framework */; };
+		0AC5565651C4A37AC24A04A3 /* PlanSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DB861F62B7DBDBA191AC76 /* PlanSelection.swift */; };
 		0ACF24D6DC368927B6450284 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 631A854EBD862E60AAA978C0 /* Pods_Runner.framework */; };
+		0B3144A15AB8EC3D84A92672 /* KeplerWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 716FC9380D966D42FDC09C96 /* KeplerWatchApp.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		17EF43B0F3C163C6F4D2E12F /* KeplerLockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4191F205C7715383C19A4CA0 /* KeplerLockWidget.swift */; };
+		182214C299E87F97203AD1BD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D29614F7C826D37BA95BC558 /* Foundation.framework */; };
 		207186233A18D21DA7151FFC /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D24DFE873921162BC1DB67DE /* Pods_RunnerTests.framework */; };
+		234949D0B7B946CC7F9FDF57 /* KeplerLockWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E910594E70118D4167656BF7 /* KeplerLockWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		3F3948AFC0658C4CEC6128D1 /* KeplerHomeWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821F89FDEA757BF33396E757 /* KeplerHomeWidgets.swift */; };
+		5699CCB8F552AEF1DD83B915 /* DayPlanScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CAEF45305EF4DE6101F06D /* DayPlanScreen.swift */; };
+		65335F29B4AFAB46397DFE59 /* WatchSyncBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6912D1605CEB55242D80D83 /* WatchSyncBridge.swift */; };
+		68F141CA999C0D14A9AF8EA3 /* KeplerWatchWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7F586C91C294EB9746085162 /* KeplerWatchWidget.appex */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
+		88973902A2627CBC94F7DF25 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 873DA2D9C6334E82FA350CB2 /* Assets.xcassets */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		9FFEA876AD3D7FF01F57E1B2 /* WatchSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846C6038B489C6D73D812221 /* WatchSync.swift */; };
+		AABF502495640CB5C29F1952 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C13552AA7D5EEE54AD37A1B2 /* Foundation.framework */; };
+		B35D693B7B781719A9F5ADE6 /* KeplerLockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4191F205C7715383C19A4CA0 /* KeplerLockWidget.swift */; };
+		C27C3D0E70766A81100FDF55 /* KeplerLockWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B2CFB5D92A9C4873348CC0 /* KeplerLockWidgetBundle.swift */; };
+		DADEFCAE9B5BF0E6CB512CB1 /* KeplerWatchWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8F9BAF02A6E2FD7906EB1D /* KeplerWatchWidgetBundle.swift */; };
+		DB4512F1EE52C5966E8E9B92 /* KeplerLockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4191F205C7715383C19A4CA0 /* KeplerLockWidget.swift */; };
+		F808E1CD6FE917C767D63168 /* KeplerWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F28177E009EE402437501FF4 /* KeplerWatch.app */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		00941D1DA3202C13B040F4ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E3F8D497487E6780610BE286;
+			remoteInfo = KeplerWatchWidget;
+		};
 		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -26,9 +51,34 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
+		84D92C2378CC38B5BD2E818E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BCC2A3112B0882A1366E2AB7;
+			remoteInfo = KeplerWatch;
+		};
+		E75F05E052A49862D17FC012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 82252500A343532689B5211F;
+			remoteInfo = KeplerLockWidget;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		87F40E249BAF982301C6067E /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F808E1CD6FE917C767D63168 /* KeplerWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9705A1C41CF9048500538489 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -39,22 +89,53 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E2C5992C80225765B4AAAAD6 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				68F141CA999C0D14A9AF8EA3 /* KeplerWatchWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F5E4A281A421CB17D6D352F0 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				234949D0B7B946CC7F9FDF57 /* KeplerLockWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		11DB861F62B7DBDBA191AC76 /* PlanSelection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PlanSelection.swift; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		221FC3C2085EAD8A40D5ADEB /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		4191F205C7715383C19A4CA0 /* KeplerLockWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeplerLockWidget.swift; sourceTree = "<group>"; };
+		49B2CFB5D92A9C4873348CC0 /* KeplerLockWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeplerLockWidgetBundle.swift; sourceTree = "<group>"; };
 		631A854EBD862E60AAA978C0 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DAD5FD2AB516C4ECE622617 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		6F7BF0D3979C1CB21060A6C8 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		716FC9380D966D42FDC09C96 /* KeplerWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeplerWatchApp.swift; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		7F586C91C294EB9746085162 /* KeplerWatchWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KeplerWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8114E1538F23A02920336DFF /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		821F89FDEA757BF33396E757 /* KeplerHomeWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeplerHomeWidgets.swift; sourceTree = "<group>"; };
+		846C6038B489C6D73D812221 /* WatchSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSync.swift; sourceTree = "<group>"; };
+		873DA2D9C6334E82FA350CB2 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8FDEB19DB35B558AF63E2C3F /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -62,17 +143,51 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9B8F9BAF02A6E2FD7906EB1D /* KeplerWatchWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeplerWatchWidgetBundle.swift; sourceTree = "<group>"; };
+		9E3BAB967E7029498866FDDB /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2FAFC5DCD015E770FFB131E /* KeplerLockWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = KeplerLockWidget.entitlements; sourceTree = "<group>"; };
+		B6912D1605CEB55242D80D83 /* WatchSyncBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSyncBridge.swift; sourceTree = "<group>"; };
 		BA18994DD61FFC854B8C50B4 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		C13552AA7D5EEE54AD37A1B2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		D24DFE873921162BC1DB67DE /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D29614F7C826D37BA95BC558 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		D6B88E380923CA0DDA09CB29 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		E6CAEF45305EF4DE6101F06D /* DayPlanScreen.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DayPlanScreen.swift; sourceTree = "<group>"; };
+		E910594E70118D4167656BF7 /* KeplerLockWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KeplerLockWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F28177E009EE402437501FF4 /* KeplerWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeplerWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F84C502A09D3B811E14AD22D /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		41D1319D63DCF668B6DDB7B6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				182214C299E87F97203AD1BD /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97C146EB1CF9000F007C117D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				0ACF24D6DC368927B6450284 /* Pods_Runner.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA0247A5AC1E3C52075E7F94 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AABF502495640CB5C29F1952 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E75352A817BAE25DA8BE2641 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				06A437B58118189D489F8D9B /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,13 +210,37 @@
 			path = RunnerTests;
 			sourceTree = "<group>";
 		};
+		37F02EA86E4188CB078E6ADD /* KeplerLockWidget */ = {
+			isa = PBXGroup;
+			children = (
+				4191F205C7715383C19A4CA0 /* KeplerLockWidget.swift */,
+				49B2CFB5D92A9C4873348CC0 /* KeplerLockWidgetBundle.swift */,
+				9E3BAB967E7029498866FDDB /* Info.plist */,
+				B2FAFC5DCD015E770FFB131E /* KeplerLockWidget.entitlements */,
+				821F89FDEA757BF33396E757 /* KeplerHomeWidgets.swift */,
+				11DB861F62B7DBDBA191AC76 /* PlanSelection.swift */,
+			);
+			name = KeplerLockWidget;
+			path = KeplerLockWidget;
+			sourceTree = "<group>";
+		};
 		7434C3D4398F280EFD330BA7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				631A854EBD862E60AAA978C0 /* Pods_Runner.framework */,
 				D24DFE873921162BC1DB67DE /* Pods_RunnerTests.framework */,
+				787B5B40EBCAEA72DEEB79BB /* iOS */,
+				9ABFE5521C376D03C0733055 /* watchOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		787B5B40EBCAEA72DEEB79BB /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C13552AA7D5EEE54AD37A1B2 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		9740EEB11CF90186004384FC /* Flutter */ = {
@@ -124,6 +263,9 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				F8A17B9B4E723D2779CEC78E /* Pods */,
 				7434C3D4398F280EFD330BA7 /* Frameworks */,
+				37F02EA86E4188CB078E6ADD /* KeplerLockWidget */,
+				9B51CC6D31B62360CB14D227 /* KeplerWatch */,
+				DDF23952571CB78C29A9D9DC /* KeplerWatchWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -132,6 +274,9 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				E910594E70118D4167656BF7 /* KeplerLockWidget.appex */,
+				F28177E009EE402437501FF4 /* KeplerWatch.app */,
+				7F586C91C294EB9746085162 /* KeplerWatchWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -147,8 +292,40 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				8FDEB19DB35B558AF63E2C3F /* Runner.entitlements */,
+				B6912D1605CEB55242D80D83 /* WatchSyncBridge.swift */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		9ABFE5521C376D03C0733055 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				D29614F7C826D37BA95BC558 /* Foundation.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
+		9B51CC6D31B62360CB14D227 /* KeplerWatch */ = {
+			isa = PBXGroup;
+			children = (
+				716FC9380D966D42FDC09C96 /* KeplerWatchApp.swift */,
+				846C6038B489C6D73D812221 /* WatchSync.swift */,
+				E6CAEF45305EF4DE6101F06D /* DayPlanScreen.swift */,
+				F84C502A09D3B811E14AD22D /* Info.plist */,
+				873DA2D9C6334E82FA350CB2 /* Assets.xcassets */,
+			);
+			name = KeplerWatch;
+			path = KeplerWatch;
+			sourceTree = "<group>";
+		};
+		DDF23952571CB78C29A9D9DC /* KeplerWatchWidget */ = {
+			isa = PBXGroup;
+			children = (
+				9B8F9BAF02A6E2FD7906EB1D /* KeplerWatchWidgetBundle.swift */,
+			);
+			name = KeplerWatchWidget;
+			path = KeplerWatchWidget;
 			sourceTree = "<group>";
 		};
 		F8A17B9B4E723D2779CEC78E /* Pods */ = {
@@ -186,6 +363,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		82252500A343532689B5211F /* KeplerLockWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1239F87A5AD8524581DE6E6 /* Build configuration list for PBXNativeTarget "KeplerLockWidget" */;
+			buildPhases = (
+				374D2EBB149A33206A8A3470 /* Sources */,
+				DA0247A5AC1E3C52075E7F94 /* Frameworks */,
+				BB67A00F9C173502CAB52F71 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KeplerLockWidget;
+			productName = KeplerLockWidget;
+			productReference = E910594E70118D4167656BF7 /* KeplerLockWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -196,6 +390,8 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				F5E4A281A421CB17D6D352F0 /* Embed App Extensions */,
+				87F40E249BAF982301C6067E /* Embed Watch Content */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				9A918710A3B357BEAEE07C6D /* [CP] Embed Pods Frameworks */,
 				39D5EB174630A439DB5A8AD0 /* [CP] Copy Pods Resources */,
@@ -203,11 +399,49 @@
 			buildRules = (
 			);
 			dependencies = (
+				A950B7EC208945ADB008DAEC /* PBXTargetDependency */,
+				EAD7907F4D5EC27598E08497 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
+		};
+		BCC2A3112B0882A1366E2AB7 /* KeplerWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2AF78A41F0AA02686853D010 /* Build configuration list for PBXNativeTarget "KeplerWatch" */;
+			buildPhases = (
+				457245831B6E346843A806FB /* Sources */,
+				E75352A817BAE25DA8BE2641 /* Frameworks */,
+				B442C74AC3D5DB71CAAE5B59 /* Resources */,
+				E2C5992C80225765B4AAAAD6 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6F839BF94DDF0DA28D46286 /* PBXTargetDependency */,
+			);
+			name = KeplerWatch;
+			productName = KeplerWatch;
+			productReference = F28177E009EE402437501FF4 /* KeplerWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E3F8D497487E6780610BE286 /* KeplerWatchWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D34EEC6688508C0AA2767670 /* Build configuration list for PBXNativeTarget "KeplerWatchWidget" */;
+			buildPhases = (
+				0C7720C9FDE3DB9E561F3B89 /* Sources */,
+				41D1319D63DCF668B6DDB7B6 /* Frameworks */,
+				76E2D996619B2D09DBAA94F9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KeplerWatchWidget;
+			productName = KeplerWatchWidget;
+			productReference = 7F586C91C294EB9746085162 /* KeplerWatchWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -243,12 +477,22 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				82252500A343532689B5211F /* KeplerLockWidget */,
+				BCC2A3112B0882A1366E2AB7 /* KeplerWatch */,
+				E3F8D497487E6780610BE286 /* KeplerWatchWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		331C807F294A63A400263BE5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		76E2D996619B2D09DBAA94F9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -263,6 +507,21 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B442C74AC3D5DB71CAAE5B59 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88973902A2627CBC94F7DF25 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB67A00F9C173502CAB52F71 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -381,11 +640,42 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0C7720C9FDE3DB9E561F3B89 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DADEFCAE9B5BF0E6CB512CB1 /* KeplerWatchWidgetBundle.swift in Sources */,
+				B35D693B7B781719A9F5ADE6 /* KeplerLockWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		374D2EBB149A33206A8A3470 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17EF43B0F3C163C6F4D2E12F /* KeplerLockWidget.swift in Sources */,
+				C27C3D0E70766A81100FDF55 /* KeplerLockWidgetBundle.swift in Sources */,
+				3F3948AFC0658C4CEC6128D1 /* KeplerHomeWidgets.swift in Sources */,
+				0AC5565651C4A37AC24A04A3 /* PlanSelection.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		457245831B6E346843A806FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B3144A15AB8EC3D84A92672 /* KeplerWatchApp.swift in Sources */,
+				9FFEA876AD3D7FF01F57E1B2 /* WatchSync.swift in Sources */,
+				5699CCB8F552AEF1DD83B915 /* DayPlanScreen.swift in Sources */,
+				DB4512F1EE52C5966E8E9B92 /* KeplerLockWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,6 +685,7 @@
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
+				65335F29B4AFAB46397DFE59 /* WatchSyncBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,6 +696,24 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		A950B7EC208945ADB008DAEC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KeplerLockWidget;
+			target = 82252500A343532689B5211F /* KeplerLockWidget */;
+			targetProxy = E75F05E052A49862D17FC012 /* PBXContainerItemProxy */;
+		};
+		E6F839BF94DDF0DA28D46286 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KeplerWatchWidget;
+			target = E3F8D497487E6780610BE286 /* KeplerWatchWidget */;
+			targetProxy = 00941D1DA3202C13B040F4ED /* PBXContainerItemProxy */;
+		};
+		EAD7907F4D5EC27598E08497 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KeplerWatch;
+			target = BCC2A3112B0882A1366E2AB7 /* KeplerWatch */;
+			targetProxy = 84D92C2378CC38B5BD2E818E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -428,6 +737,34 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		17FF590CC575733D6560DD34 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatch/KeplerWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatch/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp;
+				PRODUCT_NAME = "Kepler-App";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Profile;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -470,6 +807,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				KEPLER_HOST_BUNDLE_ID = de.kepler-chemnitz.keplerapp;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -485,6 +823,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
@@ -562,6 +901,110 @@
 			};
 			name = Profile;
 		};
+		3B4EF2D2995601DEF1F6FFAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatchWidget/KeplerWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatchWidget/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp.KeplerWatchWidget;
+				PRODUCT_NAME = KeplerWatchWidget;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		7C6FE627CEB5555D0FBE9000 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatchWidget/KeplerWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatchWidget/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp.KeplerWatchWidget;
+				PRODUCT_NAME = KeplerWatchWidget;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Profile;
+		};
+		82BF294F456B4863E9B76B47 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatch/KeplerWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatch/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp;
+				PRODUCT_NAME = "Kepler-App";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		85CC2F7D3114639F9A85F4E6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatchWidget/KeplerWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatchWidget/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp.KeplerWatchWidget;
+				PRODUCT_NAME = KeplerWatchWidget;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -610,6 +1053,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				KEPLER_HOST_BUNDLE_ID = de.kepler-chemnitz.keplerapp;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -659,6 +1103,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				KEPLER_HOST_BUNDLE_ID = de.kepler-chemnitz.keplerapp;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -676,6 +1121,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
@@ -711,6 +1157,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
@@ -738,9 +1185,138 @@
 			};
 			name = Release;
 		};
+		ABE51A2ED6FD146A27798091 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = KeplerLockWidget/KeplerLockWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerLockWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.KeplerLockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B6D7C385E0D3A118A3808CEA /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = KeplerLockWidget/KeplerLockWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerLockWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.KeplerLockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		D246607EC661A18C6C179FDB /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = KeplerLockWidget/KeplerLockWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerLockWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.KeplerLockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		E51BA5B46941F7EB854B1FB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB31CF90195004384FC /* Generated.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = KeplerWatch/KeplerWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 44JU5H63YY;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KeplerWatch/Info.plist;
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.kepler-chemnitz.keplerapp.watchkitapp;
+				PRODUCT_NAME = "Kepler-App";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2AF78A41F0AA02686853D010 /* Build configuration list for PBXNativeTarget "KeplerWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E51BA5B46941F7EB854B1FB6 /* Release */,
+				82BF294F456B4863E9B76B47 /* Debug */,
+				17FF590CC575733D6560DD34 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -767,6 +1343,26 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D34EEC6688508C0AA2767670 /* Build configuration list for PBXNativeTarget "KeplerWatchWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				85CC2F7D3114639F9A85F4E6 /* Release */,
+				3B4EF2D2995601DEF1F6FFAB /* Debug */,
+				7C6FE627CEB5555D0FBE9000 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1239F87A5AD8524581DE6E6 /* Build configuration list for PBXNativeTarget "KeplerLockWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B6D7C385E0D3A118A3808CEA /* Release */,
+				ABE51A2ED6FD146A27798091 /* Debug */,
+				D246607EC661A18C6C179FDB /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
