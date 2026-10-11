@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -32,6 +32,7 @@
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +46,7 @@ import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
 import 'package:kepler_app/tabs/home/home.dart';
 import 'package:kepler_app/tabs/hourtable/pages/free_rooms.dart';
+import 'package:kepler_app/tabs/hourtable/widget_data.dart';
 import 'package:provider/provider.dart';
 
 const prefsPrefKey = "user_preferences";
@@ -78,6 +80,9 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
 
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
+    /// iOS: geteilte Pläne entfernen, sonst zeigen Widgets und Uhr nach dem Abmelden weiter den
+    /// Stundenplan (best-effort, wirft nie)
+    if (Platform.isIOS) clearIOSWidgetData();
     // Provider.of<NewsCache>(ctx, listen: false).clearData();
     // Provider.of<StuPlanData>(ctx, listen: false).clearData();
     Provider.of<InternalState>(ctx, listen: false).introShown = false;

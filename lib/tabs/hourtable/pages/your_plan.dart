@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -45,6 +45,7 @@ import 'package:kepler_app/rainbow.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/hourtable/ht_intro.dart';
 import 'package:kepler_app/tabs/hourtable/pages/plan_display.dart';
+import 'package:kepler_app/tabs/hourtable/widget_data.dart';
 import 'package:provider/provider.dart';
 
 /// zwei Keys, da Bearbeiten des Planes Zugriff auf den State der Seite selbst benötigt
@@ -155,7 +156,11 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
                                     TextButton(
                                       onPressed: () {
                                         stdata.removeAltSelection(selected.$1 - 1);
-                                        stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
+                                        if (Platform.isIOS) {
+                                          updateIOSWidgetDataAfterSelectionChange(context);
+                                        } else {
+                                          stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
+                                        }
                                         if (!context.mounted) return;
                                         setState(() {
                                           selected = (0, mainSelected);
@@ -238,12 +243,27 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+    /// auf iOS übernimmt das Zurückholen der App main.dart (_KeplerAppState) - sonst würden die
+    /// Widgets bei jedem Resume doppelt aktualisiert
+    if (state == AppLifecycleState.resumed && !Platform.isIOS) {
       _loadWidgetData(context.read<AppState>().userType == UserType.teacher);
     }
   }
 
   Future<bool> _loadWidgetData(bool teacher) async {
+    /// iOS: eigener Pfad in widget_data.dart (zusätzlich nächster Schultag, Start-/Endzeiten,
+    /// Uhr). Der Android-Pfad darunter ist unverändert.
+    if (Platform.isIOS) {
+      final stdata = context.read<StuPlanData>();
+      return updateIOSWidgetData(
+        stdata,
+        context.read<CredentialStore>(),
+        context.read<Preferences>(),
+        // dieselbe Regel wie beim Start, beim Zurückholen und im Hintergrund-Task (siehe
+        // iosWidgetTeacherMode) - `teacher` allein wäre bei UserType.nobody immer false
+        iosWidgetTeacherMode(context.read<AppState>().userType, stdata),
+      );
+    }
     if (!Platform.isAndroid) return false;
 
     final stdata = context.read<StuPlanData>();
