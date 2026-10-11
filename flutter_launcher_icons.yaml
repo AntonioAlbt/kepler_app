@@ -1,6 +1,13 @@
 flutter_launcher_icons:
+  # iOS bewusst aus: Die iOS-Icons (Light, Dark, Tinted in AppIcon.appiconset)
+  # erzeugt other/generate_ios_icons.py. Ein Lauf mit ios: true würde diese
+  # Dateien und die Contents.json in ios/Runner/Assets.xcassets/AppIcon.appiconset
+  # überschreiben. Dark-/Tinted-Varianten könnte flutter_launcher_icons zwar
+  # selbst erzeugen (image_path_ios_dark_transparent,
+  # image_path_ios_tinted_grayscale), das Liquid-Glass-Bundle
+  # ios/Runner/AppIcon.icon aber nicht.
+  ios: false
   android: true
-  ios: true
   image_path: "other/full-app-icon.png"
   remove_alpha_ios: true
   min_sdk_android: 21 # android min sdk min:16, default 21
