@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -37,6 +37,7 @@ import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
+import 'package:kepler_app/libs/plan_widgets.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -80,6 +81,8 @@ class ClassSelectScreen extends StatelessWidget {
           onSubmit: (selected) {
             if (teacherMode) {
               stdata.selectedTeacherName = selected;
+              /// für Lehrer folgt keine Fächerauswahl, die die Widgets aktualisiert - also hier
+              updatePlanWidgetsFrom(context, selectionChanged: true);
             } else {
               stdata.selectedClassName = selected;
             }
@@ -397,7 +400,7 @@ class SubjectSelectScreen extends StatelessWidget {
           },
           onFinish: (hidden) {
             stdata.hiddenCourseIDs = hidden;
-            context.read<StuPlanData>().updateWidgets(context.read<AppState>().userType == UserType.teacher);
+            updatePlanWidgetsFrom(context, selectionChanged: true);
             infoScreenState.next();
           },
           availableSubjects: stdata.availableClassSubjects!,
@@ -711,7 +714,7 @@ class _AddNewStuPlanDialogState extends State<AddNewStuPlanDialog> {
                   stdata.setSelectedClassForAlt(widget.editId!, _newClass!);
                   stdata.setHiddenCoursesForAlt(widget.editId!, hidden);
                 }
-                stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
+                updatePlanWidgetsFrom(context, selectionChanged: true);
                 Navigator.pop(context, true);
               },
               onGoBack: () {

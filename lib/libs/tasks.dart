@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -31,18 +31,22 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
+import 'package:kepler_app/libs/plan_widgets.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
+import 'package:kepler_app/libs/watch_sync.dart';
 import 'package:kepler_app/tabs/hourtable/ht_data.dart';
 import 'package:kepler_app/tabs/school/news_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,37 +60,111 @@ void taskCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     if (kDebugMode) print("hey yo im workin' here!");
 
-    final canPostNotifications = await checkNotificationPermission();
-    if (!canPostNotifications) return true;
-
-    final sprefs = await SharedPreferences.getInstance();  
-    final prefs = Preferences();
-    if (sprefs.containsKey(prefsPrefKey)) {
-      prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
-    }
-
-    if (kDebugMode) print("enabledNotifs: ${prefs.enabledNotifs}");
-
-    if (prefs.enabledNotifs.contains(newsNotificationKey)) {
-      try {
-        await runNewsFetchTask();
-      } catch (e, s) {
-        logCatch("nw-tasks", e, s);
-        if (kDebugMode) print("$e - $s");
-        return false;
+    try {
+      return await _runNotificationTasks();
+    } finally {
+      /// iOS: danach die Widget-Daten aktualisieren. Erst nach den Benachrichtigungen, weil iOS
+      /// einem BGAppRefreshTask nur rund 30 Sekunden gibt und der Widget-Schritt bei langsamem Netz
+      /// selbst mehrere Online-Abfragen braucht - er soll die Benachrichtigungen nicht aus dem
+      /// Zeitbudget drängen. Im `finally`, weil er unabhängig von Benachrichtigungen ist: Er läuft
+      /// auch, wenn der Benachrichtigungsteil früh zurückkehrt (keine Berechtigung, Benachrichtigung
+      /// deaktiviert) oder wirft. Fehler fängt er selbst ab, sodass der Rückgabewert (bzw. die
+      /// Exception) des Benachrichtigungsteils unverändert durchgereicht wird.
+      /// Android führt diesen Schritt nicht aus und verhält sich unverändert.
+      if (Platform.isIOS) {
+        try {
+          await runWidgetUpdateTask();
+        } catch (e, s) {
+          logCatch("wd-tasks", e, s);
+          if (kDebugMode) print("$e - $s");
+        }
       }
     }
-    if (prefs.enabledNotifs.contains(stuPlanNotificationKey)) {
-      try {
-        await runStuPlanFetchTask();
-      } catch (e, s) {
-        logCatch("sp-tasks", e, s);
-        if (kDebugMode) print("$e - $s");
-        return false;
-      }
-    }
-    return true;
   });
+}
+
+/// prüft auf neue News bzw. Stundenplan-Änderungen und sendet ggf. Benachrichtigungen. Gibt den
+/// Rückgabewert für [Workmanager.executeTask] zurück (`false` bei einem Fehler).
+Future<bool> _runNotificationTasks() async {
+  final canPostNotifications = await checkNotificationPermission();
+  if (!canPostNotifications) return true;
+
+  final sprefs = await SharedPreferences.getInstance();  
+  final prefs = Preferences();
+  if (sprefs.containsKey(prefsPrefKey)) {
+    prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
+  }
+
+  if (kDebugMode) print("enabledNotifs: ${prefs.enabledNotifs}");
+
+  if (prefs.enabledNotifs.contains(newsNotificationKey)) {
+    try {
+      await runNewsFetchTask();
+    } catch (e, s) {
+      logCatch("nw-tasks", e, s);
+      if (kDebugMode) print("$e - $s");
+      return false;
+    }
+  }
+  if (prefs.enabledNotifs.contains(stuPlanNotificationKey)) {
+    try {
+      await runStuPlanFetchTask();
+    } catch (e, s) {
+      logCatch("sp-tasks", e, s);
+      if (kDebugMode) print("$e - $s");
+      return false;
+    }
+  }
+  return true;
+}
+
+/// aktualisiert im Hintergrund die Daten für die iOS-Widgets (Sperrbildschirm + Homescreen) und
+/// die Apple Watch
+///
+/// Bewusst unabhängig von Benachrichtigungen: Widgets lassen sich nutzen, ohne Benachrichtigungen
+/// zu wollen. Lädt alles Nötige selbst aus dem Speicher, weil im Hintergrund-Isolate (eigene
+/// FlutterEngine) weder ein BuildContext noch die in main.dart geladenen Daten existieren.
+Future<void> runWidgetUpdateTask() async {
+  /// Ohne gesetzte App-Group schlagen saveWidgetData/getWidgetData von home_widget mit einer
+  /// PlatformException ("AppGroupId not set") fehl. Nativ speichert home_widget sie zwar prozessweit,
+  /// aber ob preInitApp() in main.dart in diesem Prozess schon gelaufen ist, ist im Hintergrund nicht
+  /// sichergestellt - deshalb hier (erneut) setzen.
+  await HomeWidget.setAppGroupId(iosWidgetAppGroupId);
+
+  final spdata = StuPlanData();
+  if (await fileExists(await stuPlanDataFilePath)) {
+    final data = await readFile(await stuPlanDataFilePath);
+    if (data != null) spdata.loadFromJson(data);
+  }
+  const secureStorage = FlutterSecureStorage();
+  final creds = CredentialStore();
+  if (await secureStorage.containsKey(key: credStorePrefKey)) {
+    creds.loadFromJson((await secureStorage.read(key: credStorePrefKey))!);
+  }
+  if (!creds.loaded || creds.vpUser == null || creds.vpPassword == null) return;
+  /// Ob überhaupt ein Plan ausgewählt ist (auch nur alternative Klassen), prüft savePlanWidgetData
+  /// selbst - und leert bei fehlender Auswahl die alten Widget-Daten, wie im Vordergrund.
+  if (!spdata.loaded) return;
+
+  final sprefs = await SharedPreferences.getInstance();
+  final prefs = Preferences();
+  if (sprefs.containsKey(prefsPrefKey)) {
+    prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
+  }
+  /// forceRefresh: sonst würde der Plan-Cache genommen, sobald für den Tag schon eine Datei
+  /// existiert, und neue Vertretungen kämen erst nach manuellem Neuladen in der App in den Widgets an.
+  /// Offline fällt savePlanWidgetData auf den Cache zurück. Den Cache schreibt es nie - so
+  /// erkennt runStuPlanFetchTask bei späteren Läufen weiterhin Änderungen gegenüber dem bisherigen
+  /// Stand.
+  /// ohne bekannten Nutzertyp: Lehrerplan, sobald ein Lehrer ausgewählt ist (siehe widgetTeacherMode)
+  final ok = await savePlanWidgetData(spdata, creds, prefs, widgetTeacherMode(UserType.nobody, spdata), forceRefresh: true);
+  /// savePlanWidgetData stößt die Übertragung an die Uhr nur entprellt (per Timer) an - bis der
+  /// abläuft, ist dieser Task längst beendet und iOS hat die App wieder suspendiert. Deshalb hier
+  /// sofort und abgewartet übertragen (bricht dabei den ausstehenden Timer ab).
+  final watchOk = await syncWatchNow();
+  /// bewusst auch im Erfolgsfall geloggt: nur so lässt sich nachvollziehen, ob und wann iOS
+  /// die Hintergrundausführung tatsächlich gestartet hat
+  logDebug("wd-tasks", "Widget-Daten im Hintergrund aktualisiert (erfolgreich: $ok, Uhr: $watchOk)");
 }
 
 /// verarbeitet alles bezüglich neuen News

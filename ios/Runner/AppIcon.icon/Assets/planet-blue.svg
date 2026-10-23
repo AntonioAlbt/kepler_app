@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <mask id="cut-planet-blue" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+    <rect width="1024" height="1024" fill="#fff"/>
+    <circle cx="368.281" cy="662.448" r="191.478" fill="#000"/>
+  </mask>
+  <circle cx="689.912" cy="602.360" r="157.285" fill="#000" mask="url(#cut-planet-blue)"/>
+</svg>

@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -31,13 +31,9 @@
 // Sie sollten eine Kopie der GNU General Public License zusammen mit
 // kepler_app erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
 
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:home_widget/home_widget.dart';
-import 'package:intl/intl.dart';
+import 'package:kepler_app/libs/plan_widgets.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
@@ -61,7 +57,7 @@ class YourPlanPage extends StatefulWidget {
   State<YourPlanPage> createState() => YourPlanPageState();
 }
 
-class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver {
+class YourPlanPageState extends State<YourPlanPage> {
   /// gerade ausgewählter Plan, bestehend aus ( id, Klassenname/Lehrerkürzel )
   /// wenn id = 0 -> primärer Plan, sonst stdata.altSelectedClassNames[id - 1]
   /// 
@@ -155,7 +151,7 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
                                     TextButton(
                                       onPressed: () {
                                         stdata.removeAltSelection(selected.$1 - 1);
-                                        stdata.updateWidgets(context.read<AppState>().userType == UserType.teacher);
+                                        updatePlanWidgetsFrom(context, selectionChanged: true);
                                         if (!context.mounted) return;
                                         setState(() {
                                           selected = (0, mainSelected);
@@ -236,63 +232,6 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      _loadWidgetData(context.read<AppState>().userType == UserType.teacher);
-    }
-  }
-
-  Future<bool> _loadWidgetData(bool teacher) async {
-    if (!Platform.isAndroid) return false;
-
-    final stdata = context.read<StuPlanData>();
-    final creds = context.read<CredentialStore>();
-    final plans = <List<dynamic>>[];
-    if (teacher) {
-      final (data, isOnline) = await IndiwareDataManager.getLeDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!);
-      if (data == null) return false;
-      plans.add([stdata.selectedTeacherName!]);
-      plans[0].addAll(
-        data.teachers
-          .firstWhere((c) => c.teacherCode == stdata.selectedTeacherName!)
-          .lessons
-          .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
-      );
-    }
-    final names = teacher
-        ? stdata.altSelectedClassNames
-        : [stdata.selectedClassName, ...stdata.altSelectedClassNames];
-    if (names.isNotEmpty) {
-      final (data, isOnline) = await IndiwareDataManager.getKlDataForDate(DateTime.now(), creds.vpHost!, creds.vpUser!, creds.vpPassword!);
-      if (data == null) return false;
-      for (int i = 0; i < names.length; i++) {
-        final name = names[i];
-        plans.add([name!]);
-        final lessons = data.classes
-          .firstWhere((c) => c.className == name)
-          .lessons;
-        final hidden = (teacher || i >= 1) ? stdata.getAltHiddenCourseIDs(teacher ? i : i - 1) : stdata.hiddenCourseIDs;
-        plans[i + (teacher ? 1 : 0)].addAll(
-          lessons
-            .where((t) => !hidden.any((id) => t.subjectID == id))
-            .map((l) => { "schoolHour": l.schoolHour, "subject": l.subjectCode, "rooms": l.roomCodes, "teacher": l.teacherCode, "info": l.infoText, "changed": { "subject": l.subjectChanged, "rooms": l.roomChanged, "teacher": l.teacherChanged } })
-        );
-        if (lessons.any((l) => hidden.any((id) => id == l.subjectID)) && context.read<Preferences>().showLessonsHiddenInfo) {
-          plans[i + (teacher ? 1 : 0)].add({ "hidden": true });
-        }
-      }
-    }
-    final a = await HomeWidget.saveWidgetData("data", jsonEncode({
-      "date": DateFormat("dd-MM-yyyy").format(DateTime.now()),
-      "holiday": stdata.checkIfHoliday(DateTime.now()),
-      "plans": plans,
-    }));
-    final b = await stdata.updateWidgets(teacher);
-    return (a ?? false) && b;
-  }
-
-  @override
   void initState() {
     super.initState();
     final stdata = Provider.of<StuPlanData>(context, listen: false);
@@ -304,11 +243,9 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
       selected = (0, teacher ? stdata.selectedTeacherName! : stdata.selectedClassName!);
     }
     stdata.addListener(stdataListener);
-    _loadWidgetData(teacher);
-
-    /// für Android-Launcher-Widgets: damit in diesem Flutter-Widget bei jedem Öffnen der App, auch aus Letzte-Apps-Menü,
-    /// `didChangeAppLifecycleState` aufgerufen wird, um direkt die Widget-Daten zu aktualisieren
-    WidgetsBinding.instance.addObserver(this);
+    /// Widget-Daten beim Öffnen des Stundenplans auffrischen - beim Öffnen bzw. Zurückholen der App
+    /// übernimmt das main.dart (_KeplerAppState)
+    updatePlanWidgetsFrom(context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final shBounds = context.read<StuPlanData>().guessSummerHolidayBounds();
@@ -346,7 +283,6 @@ class YourPlanPageState extends State<YourPlanPage> with WidgetsBindingObserver 
   void dispose() {
     // globalen Context verwenden, weil lokaler Context hier nicht mehr sicher verwendet werden kann
     Provider.of<StuPlanData>(globalScaffoldContext, listen: false).removeListener(stdataListener);
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }

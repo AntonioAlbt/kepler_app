@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -40,6 +40,7 @@ import 'package:kepler_app/colors.dart';
 import 'package:kepler_app/info_screen.dart';
 import 'package:kepler_app/introduction.dart';
 import 'package:kepler_app/libs/indiware.dart';
+import 'package:kepler_app/libs/plan_widgets.dart';
 import 'package:kepler_app/libs/state.dart';
 import 'package:kepler_app/main.dart';
 import 'package:kepler_app/navigation.dart';
@@ -78,6 +79,9 @@ void showLoginScreenAgain({ bool clearData = true, bool closeable = true }) {
 
   if (clearData) {
     Provider.of<CredentialStore>(ctx, listen: false).clearData();
+    /// geteilte Pläne leeren, sonst zeigen Widgets (und Uhr) nach dem Abmelden weiter den
+    /// Stundenplan (best-effort, wirft nie)
+    clearPlanWidgets();
     // Provider.of<NewsCache>(ctx, listen: false).clearData();
     // Provider.of<StuPlanData>(ctx, listen: false).clearData();
     Provider.of<InternalState>(ctx, listen: false).introShown = false;

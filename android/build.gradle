@@ -7,6 +7,19 @@ allprojects {
         google()
         mavenCentral()
     }
+    // The home_widget plugin requests androidx.glance via a dynamic "1.+" version.
+    // Since glance 1.3.0-alpha01 was published, "1.+" resolves to a 1.3.0 alpha, which
+    // requires compileSdk 37 / AGP 9.1.0 and breaks the build. Pin the whole atomic
+    // androidx.glance group to 1.2.0, which needs only compileSdk 35 (the app builds
+    // with compileSdk 36) and provides the generated-previews API our widget code uses.
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'androidx.glance') {
+                details.useVersion '1.2.0'
+                details.because 'home_widget pulls glance via 1.+, which now resolves to an alpha requiring compileSdk 37'
+            }
+        }
+    }
 }
 
 rootProject.buildDir = '../build'

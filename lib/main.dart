@@ -1,5 +1,5 @@
 // kepler_app: app for pupils, teachers and parents of pupils of the JKG
-// Copyright (c) 2023-2025 Antonio Albert
+// Copyright (c) 2023-2026 Jakob Krause, Antonio Albert
 
 // This file is part of kepler_app.
 
@@ -53,6 +53,7 @@ import 'package:kepler_app/libs/indiware.dart';
 import 'package:kepler_app/libs/lernsax.dart';
 import 'package:kepler_app/libs/logging.dart';
 import 'package:kepler_app/libs/notifications.dart';
+import 'package:kepler_app/libs/plan_widgets.dart';
 import 'package:kepler_app/libs/preferences.dart';
 import 'package:kepler_app/libs/proxy.dart';
 import 'package:kepler_app/libs/snack.dart';
@@ -142,9 +143,16 @@ Future<void> initializeApp() async {
     // isInDebugMode: kDebugMode && kDebugNotifData,
   );
 
-  // this is only applicable to android, because for iOS I'm using the background fetch capability - it's interval is configured in the swift app delegate
-  // nur Android unterstützt das direkte Ausführen von Hintergrundaufgaben - auf iOS kümmert sich immer das Betriebssystem darum
-  if (Platform.isAndroid && !((await getNotifLaunchInfo())?.didNotificationLaunchApp ?? false)) {
+  final launchedByNotification = (await getNotifLaunchInfo())?.didNotificationLaunchApp ?? false;
+
+  // Android führt die Aufgabe im angegebenen Takt selbst aus (nicht, wenn die App über eine
+  // Benachrichtigung gestartet wurde). Auf iOS wird damit über BGTaskScheduler eine
+  // Hintergrundausführung angefordert - ohne diesen Aufruf aktualisieren sich Widgets und Uhr nur
+  // beim Öffnen der App. workmanager_apple verwendet dabei nur `initialDelay` als früheste
+  // Startzeit der ersten Ausführung; jede weitere plant das Plugin danach selbst mit dem Abstand aus
+  // ios/Runner/AppDelegate.swift (4 Stunden). Wann tatsächlich ausgeführt wird, entscheidet iOS
+  // nach Nutzungsverhalten und Akkustand.
+  if (!launchedByNotification) {
     Workmanager().registerPeriodicTask(
       fetchTaskName,
       fetchTaskName,
@@ -172,8 +180,6 @@ Future<void> initializeApp() async {
   final del = await KeplerLogging.deleteLogsOlderThan(DateTime.now().subtract(Duration(days: _prefs.logRetentionDays)));
   if (kDebugMode) print("deleted logs for the following days: $del");
 
-  await _stuPlanData.updateWidgets(_appState.userType == UserType.teacher);
-
   await DynamicData.init();
 }
 
@@ -182,6 +188,10 @@ Future<void> initializeApp() async {
 /// angezeigt werden kann
 Future<void> preInitApp() async {
   sharedPreferences = await SharedPreferences.getInstance();
+  /// App-Group für die iOS-Widgets setzen - muss vor dem ersten Lesen/Schreiben über home_widget
+  /// passieren, sonst schlagen saveWidgetData/getWidgetData mit einer PlatformException fehl. Der
+  /// Hintergrund-Task setzt sie zusätzlich selbst (siehe runWidgetUpdateTask in tasks.dart).
+  if (Platform.isIOS) await HomeWidget.setAppGroupId(iosWidgetAppGroupId);
   final sprefs = sharedPreferences;
   if (sprefs.containsKey(prefsPrefKey)) _prefs.loadFromJson(sprefs.getString(prefsPrefKey)!);
   await IndiwareDataManager.createDataDirIfNecessary();
@@ -436,6 +446,12 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
     utype = await calcUT();
     _internalState.lastUserType = utype;
 
+    /// Widget-Daten beim Start aktualisieren, damit Widgets (und Uhr) auch ohne Öffnen des
+    /// Stundenplans aktuelle Daten haben. Erst hier, weil vorher der Nutzertyp nicht feststeht und
+    /// Lehrer sonst einen Schülerplan bekämen (siehe widgetTeacherMode). Best-effort (wirft nie)
+    /// und bewusst nicht awaited, um den Ladebildschirm nicht zu blockieren.
+    updatePlanWidgets(_stuPlanData, _credStore, _prefs, widgetTeacherMode(utype, _stuPlanData));
+
     if (!_internalState.introShown) {
       // _appState.selectedNavPageIDs = ["intro-non-existent"]; // -> is done when setting the selectedNavPageIDs
       _appState.navPagesToOpenAfterNextISClose = [PageIDs.home];
@@ -495,6 +511,15 @@ class _KeplerAppState extends State<KeplerApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
+
+    /// beim Zurückholen aus dem Hintergrund die Widget-Daten auffrischen - sonst aktualisieren sie
+    /// sich nur beim Kaltstart der App oder beim Öffnen von "Dein Stundenplan". Online wird dabei
+    /// gedrosselt abgefragt (siehe updatePlanWidgets). Während des Ladens übernimmt das _load(),
+    /// weil der Nutzertyp vorher nicht feststeht. Best-effort, wirft nie, blockiert nichts.
+    if (state == AppLifecycleState.resumed && !_loading) {
+      updatePlanWidgets(_stuPlanData, _credStore, _prefs, widgetTeacherMode(_appState.userType, _stuPlanData));
+    }
+
     if (state == AppLifecycleState.resumed && Platform.isAndroid) {
       final wsp = await HomeWidget.getWidgetData<String>("start_page");
       switch (wsp) {

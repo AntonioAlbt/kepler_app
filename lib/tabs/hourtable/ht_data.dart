@@ -37,7 +37,6 @@ import 'dart:io';
 
 import 'package:enough_serialization/enough_serialization.dart';
 import 'package:flutter/foundation.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:kepler_app/libs/filesystem.dart';
 import 'package:kepler_app/libs/indiware.dart';
@@ -269,22 +268,6 @@ class StuPlanData extends SerializableObject with ChangeNotifier {
     selectedTeacherName = null;
     altSelectedClassNames = [];
     altHiddenCourseIDs = [];
-  }
-
-  // TODO: add widget preview for older Android versions
-  Future<bool> updateWidgets(bool isTeacher) async {
-    if (!Platform.isAndroid) return false;
-
-    if ((isTeacher && selectedTeacherName == null) || (!isTeacher && selectedClassName == null)) {
-      final a = await HomeWidget.saveWidgetData("plan_setup", false);
-      final b = await HomeWidget.updateWidget(androidName: "widgets.YourPlanWidgetReceiver");
-      return (a ?? false) && (b ?? false);
-    }
-    final a = await HomeWidget.saveWidgetData("plan_setup", true);
-    final b = await HomeWidget.saveWidgetData("plans_avail", [isTeacher ? selectedTeacherName : selectedClassName, ...altSelectedClassNames].join("|"));
-    final c = await HomeWidget.saveWidgetData("teacher", isTeacher);
-    final d = await HomeWidget.updateWidget(androidName: "widgets.YourPlanWidgetReceiver");
-    return (a ?? false) && (b ?? false) && (c ?? false) && (d ?? false);
   }
 }
 
